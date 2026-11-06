@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>{{ phieu }}</h1>
+  <p>{{ phieu.chi_nhanh }} · {{ phieu.thoi_diem_tao|date:"d/m/Y H:i" }}</p>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead>
+        <tr>
+          <th>Mã / thuốc lúc bán</th>
+          <th>Lượng cơ sở</th>
+          <th>Đơn giá (VND)</th>
+          <th>Thành tiền (VND)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dong in cac_dong %}
+          <tr>
+            <td>{{ dong.ma_thuoc_luc_ban }} · {{ dong.ten_thuoc_luc_ban }}</td>
+            <td>{{ dong.so_luong }}</td>
+            <td>{{ dong.don_gia|floatformat:0 }}</td>
+            <td>{{ dong.thanh_tien|floatformat:0 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h2>Tổng tiền tại quầy: {{ tong_tien|floatformat:0 }} VND</h2>
+  </div>
+{% endblock %}

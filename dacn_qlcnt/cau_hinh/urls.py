@@ -5,4 +5,5 @@ urlpatterns = [
     path("tai-khoan/", include("ung_dung.tai_khoan.urls")),
     path("danh-muc/", include("ung_dung.danh_muc.urls")),
     path("kho/", include("ung_dung.kho.urls")),
+    path("ban-hang/", include("ung_dung.ban_hang.urls")),
 ]
