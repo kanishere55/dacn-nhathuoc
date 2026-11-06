@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "ung_dung.ban_hang.apps.BanHangConfig",
     "ung_dung.webgis.apps.WebGISConfig",
     "ung_dung.tro_chuyen.apps.TroChuyenConfig",
+    "ung_dung.du_bao.apps.DuBaoConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
