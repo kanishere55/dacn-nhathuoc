@@ -1,0 +1,39 @@
+<div class="khoi-trang khung-bang">
+  <table>
+    <thead>
+      <tr>
+        {% for cot in cac_cot %}
+          <th>{{ cot }}</th>
+        {% endfor %}
+        {% if duoc_sua %}
+          <th>Thao tác</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for ma,dong in cac_dong %}
+        <tr>
+          {% for o in dong %}
+            <td>{{ o }}</td>
+          {% endfor %}
+          {% if duoc_sua %}
+            <td><a href="{{ ma }}/sua/">Sửa</a></td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td>Chưa có dữ liệu.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<nav class="phan-trang">
+  {% if trang.has_previous %}
+    <a href="?page={{ trang.previous_page_number }}&amp;q={{ request.GET.q|urlencode }}">Trước</a>
+  {% endif %}
+  <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
+  {% if trang.has_next %}
+    <a href="?page={{ trang.next_page_number }}&amp;q={{ request.GET.q|urlencode }}">Sau</a>
+  {% endif %}
+</nav>

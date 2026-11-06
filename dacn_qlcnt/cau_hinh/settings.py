@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "channels",
     "ung_dung.chung.apps.ChungConfig",
     "ung_dung.tai_khoan.apps.TaiKhoanConfig",
+    "ung_dung.danh_muc.apps.DanhMucConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

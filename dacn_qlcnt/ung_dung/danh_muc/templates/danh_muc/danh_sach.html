@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>{{ tieu_de }}</h1>
+  <div class="thanh-cong-cu">
+    <form method="get" hx-get="." hx-target="#bang-danh-muc">
+      <input name="q" placeholder="Tìm mã hoặc tên" value="{{ request.GET.q }}"><button class="nut">Tìm kiếm</button>
+    </form>
+    {% if duoc_sua %}
+      <a class="nut" href="tao/">Thêm mới</a>
+    {% endif %}
+  </div>
+  <div id="bang-danh-muc">
+    {% include "danh_muc/_bang.html" %}
+  </div>
+{% endblock %}
