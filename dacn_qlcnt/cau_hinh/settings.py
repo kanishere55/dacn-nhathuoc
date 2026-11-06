@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "ung_dung.danh_muc.apps.DanhMucConfig",
     "ung_dung.kho.apps.KhoConfig",
     "ung_dung.ban_hang.apps.BanHangConfig",
+    "ung_dung.webgis.apps.WebGISConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -79,6 +80,7 @@ for ten_thu_vien in ("GDAL_LIBRARY_PATH", "GEOS_LIBRARY_PATH"):
 
 AUTH_USER_MODEL = "tai_khoan.TaiKhoan"
 LOGIN_URL = "tai_khoan:dang_nhap"
+OSRM_BASE_URL = os.environ.get("OSRM_BASE_URL", "https://router.project-osrm.org").rstrip("/")
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",

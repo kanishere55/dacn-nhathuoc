@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+{% block dau_trang %}
+  <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+{% endblock %}
+{% block noi_dung %}
+  <h1>Tìm chi nhánh còn đủ thuốc</h1>
+  <p>Chọn đúng thuốc và lượng theo đơn vị cơ sở. Nhận và thanh toán tại quầy.</p>
+  <div class="khung-webgis" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}" data-url-giu="{% url 'webgis:dat_giu' %}" data-osrm="{{ may_chu_osrm }}">
+    <form data-tim-kiem class="khoi-trang form-chinh">
+      {% csrf_token %}
+      <label>Kinh độ<input name="kinh_do" type="number" step="any" min="-180" max="180" value="106.7" required></label>
+      <label>Vĩ độ<input name="vi_do" type="number" step="any" min="-90" max="90" value="10.77" required></label>
+      <button type="button" class="nut nut-phu" data-dinh-vi>Dùng vị trí hiện tại</button>
+      <label>Bán kính (mét)<input name="ban_kinh_met" type="number" min="100" max="50000" value="5000" required></label>
+      <div data-nhu-cau>
+        <div class="nhu-cau">
+          <select name="thuoc" required>
+            <option value="">Chọn thuốc / đơn vị</option>
+            {% for thuoc in cac_thuoc %}
+              <option value="{{ thuoc.pk }}">{{ thuoc.ma_thuoc }} · {{ thuoc.ten_thuoc }} / {{ thuoc.don_vi_tinh }}</option>
+            {% endfor %}
+          </select>
+          <input name="so_luong" type="number" min="1" value="1" required><button type="button" data-xoa-thuoc aria-label="Bỏ thuốc">×</button>
+        </div>
+      </div>
+      <button type="button" class="nut nut-phu" data-them-thuoc>Thêm thuốc</button>
+      <button class="nut">Tìm chi nhánh</button>
+      <p data-thong-bao role="status" aria-live="polite"></p>
+    </form>
+    <div id="ban-do" class="ban-do" aria-label="Bản đồ chi nhánh">
+    </div>
+  </div>
+  <div data-ket-qua class="khoi-trang">
+  </div>
+{% endblock %}
+{% block cuoi_trang %}
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}">
+  </script>
+  <script src="{% static 'webgis/js/ban_do.js' %}" defer>
+  </script>
+{% endblock %}
