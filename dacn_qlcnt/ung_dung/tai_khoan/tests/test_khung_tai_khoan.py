@@ -46,12 +46,13 @@ class KhungTaiKhoanTests(TestCase):
         )
         self.assertIsNone(authenticate(ten_dang_nhap="ngung_hoat_dong", password="Mat-khau-thu!"))
 
-    def test_tao_quan_tri_he_thong_khong_tao_vai_tro_nghiep_vu(self):
+    def test_tao_quan_tri_he_thong_co_vai_tro_quan_tri_chuoi(self):
         tai_khoan = get_user_model().objects.create_superuser(
             "quan_tri_thu", password="Mat-khau-thu!"
         )
         self.assertTrue(tai_khoan.is_superuser)
         self.assertTrue(tai_khoan.is_staff)
+        self.assertEqual(tai_khoan.vai_tro, "quan_tri_chuoi")
         self.assertTrue(tai_khoan.has_perm("quyen_thu_nghiem"))
         self.assertEqual(list(tai_khoan._meta.many_to_many), [])
         with self.assertRaises(ValueError):
@@ -62,6 +63,13 @@ class KhungTaiKhoanTests(TestCase):
             get_user_model().objects.create_user(
                 "tu_nang_quyen", password="Mat-khau-thu!", la_quan_tri_he_thong=True
             )
+        with self.assertRaises(IntegrityError) as loi, transaction.atomic():
+            get_user_model().objects.filter(pk=tai_khoan.pk).update(vai_tro="khach_hang")
+        self.assertEqual(loi.exception.__cause__.sqlstate, "23514")
+        self.assertEqual(
+            loi.exception.__cause__.diag.constraint_name,
+            "kiem_tra__tai_khoan__quan_tri_he_thong_dung_vai_tro",
+        )
 
     def test_cat_dung_toan_bo_khoang_trang_truoc_khi_luu(self):
         khoang_trang = "".join(chr(ma) for ma in MA_KHOANG_TRANG)
@@ -145,6 +153,8 @@ class KhungTaiKhoanTests(TestCase):
                     "dang_hoat_dong",
                     "la_quan_tri_he_thong",
                     "thoi_diem_dang_nhap_cuoi",
+                    "id_chi_nhanh",
+                    "vai_tro",
                 ],
             )
             self.assertTrue(all(cot[1] for cot in cac_cot))

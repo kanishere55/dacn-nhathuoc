@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
+from django.db.models import Q
 
 from ung_dung.chung.van_ban import DaCatKhoangTrang, KhongRong, LaMotDong
 
@@ -16,10 +17,7 @@ class TaiKhoan(AbstractBaseUser):
     ten_dang_nhap = models.TextField(
         "tên đăng nhập",
         db_column="ten_dang_nhap",
-        db_comment=(
-            "Tên một dòng dùng cho khung xác thực kỹ thuật giai đoạn 0; "
-            "người tạo nhập. Chính sách định danh đăng nhập nghiệp vụ chưa duyệt."
-        ),
+        db_comment=("Tên một dòng người tạo nhập, duy nhất và phân biệt hoa thường theo Q10."),
     )
     password = models.CharField(
         "mật khẩu băm",
@@ -41,8 +39,7 @@ class TaiKhoan(AbstractBaseUser):
         db_default=False,
         db_column="la_quan_tri_he_thong",
         db_comment=(
-            "Cờ quản trị kỹ thuật tạo bằng createsuperuser; "
-            "không thay thế bốn vai trò nghiệp vụ trong đề cương."
+            "Cờ quản trị kỹ thuật của Django tạo bằng createsuperuser, chỉ cấp cho quản trị chuỗi."
         ),
     )
     last_login = models.DateTimeField(
@@ -56,19 +53,55 @@ class TaiKhoan(AbstractBaseUser):
         ),
     )
 
+    class VaiTro(models.TextChoices):
+        QUAN_TRI = "quan_tri_chuoi", "Quản trị chuỗi"
+        QUAN_LY = "quan_ly_chi_nhanh", "Quản lý chi nhánh"
+        NHAN_VIEN = "nhan_vien", "Nhân viên"
+        KHACH_HANG = "khach_hang", "Khách hàng"
+
+    vai_tro = models.TextField(
+        choices=VaiTro.choices,
+        db_default="khach_hang",
+        db_column="vai_tro",
+        db_comment="Vai trò nghiệp vụ do quản trị cấp; quan_tri_chuoi quản lý chuỗi, quan_ly_chi_nhanh quản lý cơ sở, nhan_vien làm việc tại cơ sở, khach_hang đặt giữ và chat.",
+    )
+    chi_nhanh = models.ForeignKey(
+        "danh_muc.ChiNhanh",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        db_column="id_chi_nhanh",
+        db_comment="Chi nhánh làm việc của quản lý/nhân viên; NULL với khách và quản trị chuỗi.",
+    )
+
     objects = QuanLyTaiKhoan()
     USERNAME_FIELD = "ten_dang_nhap"
     REQUIRED_FIELDS = []
 
     class Meta:
         db_table = "tai_khoan"
-        db_table_comment = (
-            "Mỗi hàng là một tài khoản xác thực kỹ thuật; "
-            "khung giai đoạn 0 chưa có vai trò hoặc liên kết chi nhánh nghiệp vụ."
-        )
+        db_table_comment = "Mỗi hàng là một tài khoản xác thực có một vai trò nghiệp vụ."
         verbose_name = "tài khoản"
         verbose_name_plural = "tài khoản"
         constraints = [
+            models.CheckConstraint(
+                condition=Q(
+                    vai_tro__in=["quan_tri_chuoi", "quan_ly_chi_nhanh", "nhan_vien", "khach_hang"]
+                ),
+                name="kiem_tra__tai_khoan__vai_tro_hop_le",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(vai_tro__in=["quan_ly_chi_nhanh", "nhan_vien"], chi_nhanh__isnull=False)
+                    | Q(vai_tro__in=["quan_tri_chuoi", "khach_hang"], chi_nhanh__isnull=True)
+                ),
+                name="kiem_tra__tai_khoan__chi_nhanh_dung_vai_tro",
+            ),
+            models.CheckConstraint(
+                condition=Q(la_quan_tri_he_thong=False) | Q(vai_tro="quan_tri_chuoi"),
+                name="kiem_tra__tai_khoan__quan_tri_he_thong_dung_vai_tro",
+                violation_error_message="Tài khoản quản trị hệ thống phải có vai trò quản trị chuỗi.",
+            ),
             models.UniqueConstraint(
                 fields=["ten_dang_nhap"],
                 name="duy_nhat__tai_khoan__ten_dang_nhap",

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>Tài khoản và phân quyền</h1>
+  <a href="{% url 'tai_khoan:tao' %}" class="nut">Tạo tài khoản</a>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead>
+        <tr>
+          <th>Tên đăng nhập</th>
+          <th>Vai trò</th>
+          <th>Chi nhánh</th>
+          <th>Hoạt động</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for muc in cac_tai_khoan %}
+          <tr>
+            <td>{{ muc.ten_dang_nhap }}</td>
+            <td>{{ muc.get_vai_tro_display }}</td>
+            <td>{{ muc.chi_nhanh|default:"—" }}</td>
+            <td>{{ muc.dang_hoat_dong|yesno:"Có,Không" }}</td>
+            <td><a href="{% url 'tai_khoan:sua' muc.pk %}">Sửa</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

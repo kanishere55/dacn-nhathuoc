@@ -76,6 +76,7 @@ for ten_thu_vien in ("GDAL_LIBRARY_PATH", "GEOS_LIBRARY_PATH"):
         globals()[ten_thu_vien] = os.environ[ten_thu_vien]
 
 AUTH_USER_MODEL = "tai_khoan.TaiKhoan"
+LOGIN_URL = "tai_khoan:dang_nhap"
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",

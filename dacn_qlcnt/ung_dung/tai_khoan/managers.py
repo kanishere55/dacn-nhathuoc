@@ -21,6 +21,7 @@ class QuanLyTaiKhoan(BaseUserManager):
 
         extra_fields.setdefault("dang_hoat_dong", True)
         extra_fields.setdefault("la_quan_tri_he_thong", True)
+        extra_fields.setdefault("vai_tro", "quan_tri_chuoi")
         if extra_fields["dang_hoat_dong"] is not True:
             raise ValueError("Quản trị hệ thống phải đang hoạt động.")
         if extra_fields["la_quan_tri_he_thong"] is not True:
