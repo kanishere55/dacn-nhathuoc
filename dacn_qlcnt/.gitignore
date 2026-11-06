@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.ruff_cache/
+staticfiles/
+static/css/da_bien_dich.css
+*.log
+.coverage
+htmlcov/

@@ -1,0 +1,11 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [".venv", "static/vendor", "staticfiles"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+line-ending = "lf"

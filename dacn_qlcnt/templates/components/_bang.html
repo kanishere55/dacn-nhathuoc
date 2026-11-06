@@ -1,0 +1,1 @@
+<div class="khung-bang"><table><caption>{{ chu_thich }}</caption><thead><tr>{% for cot in cac_cot %}<th scope="col">{{ cot }}</th>{% endfor %}</tr></thead><tbody>{% for dong in cac_dong %}<tr>{% for o in dong %}<td>{{ o }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ cac_cot|length }}">Chưa có dữ liệu.</td></tr>{% endfor %}</tbody></table></div>

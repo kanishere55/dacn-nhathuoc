@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+<div class="tieu-de-trang"><p class="chu-dan">TỔNG QUAN</p><h1>Không gian làm việc</h1><p>Quản lý hoạt động nhà thuốc, kết nối các chi nhánh.</p></div>
+<section class="loi-chao" aria-labelledby="tieu-de-chao">
+  <div><span class="nhan-nho">ĐỒNG HÀNH CÙNG NHÀ THUỐC</span><h2 id="tieu-de-chao">Một nơi để theo dõi.<br>Một nguồn dữ liệu thống nhất.</h2><p>Danh mục, hàng hóa và hoạt động tại quầy được tổ chức theo từng phân hệ, với phạm vi truy cập phù hợp.</p></div><div class="bieu-tuong-loi-chao" aria-hidden="true"><i data-lucide="store"></i></div>
+</section>
+<section class="khoi-trang" aria-labelledby="tieu-de-khong-gian"><div class="dau-khoi"><h2 id="tieu-de-khong-gian">Các không gian nghiệp vụ</h2>{% include "components/_nhan_trang_thai.html" with nhan="Chưa mở" %}</div><p class="mo-ta-khoi">Chức năng sẽ hiển thị theo vai trò và chi nhánh được phân công.</p><div class="luoi-phan-he">
+  <article class="the-phan-he"><i data-lucide="package" aria-hidden="true"></i><h3>Hàng hóa & kho</h3><p>Danh mục thuốc, lô và hạn sử dụng.</p></article>
+  <article class="the-phan-he"><i data-lucide="receipt" aria-hidden="true"></i><h3>Hoạt động tại quầy</h3><p>Bán hàng và tiếp nhận đặt giữ.</p></article>
+  <article class="the-phan-he"><i data-lucide="map-pinned" aria-hidden="true"></i><h3>Kết nối chi nhánh</h3><p>Tra cứu vị trí và theo dõi phân bố hàng hóa.</p></article>
+</div></section>
+{% endblock %}
