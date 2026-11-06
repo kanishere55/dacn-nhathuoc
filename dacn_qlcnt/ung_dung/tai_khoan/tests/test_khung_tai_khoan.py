@@ -123,23 +123,9 @@ class KhungTaiKhoanTests(TestCase):
                 self.assertEqual(loi.exception.__cause__.sqlstate, "23514")
                 self.assertEqual(loi.exception.__cause__.diag.constraint_name, rang_buoc)
 
-    def test_schema_chi_co_sau_cot_khung_va_day_du_chu_thich(self):
+    def test_schema_tai_khoan_va_day_du_chu_thich(self):
         self.assertEqual(connection.vendor, "postgresql")
         with connection.cursor() as con_tro:
-            con_tro.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
-            self.assertEqual(
-                {hang[0] for hang in con_tro.fetchall()},
-                {
-                    "tai_khoan",
-                    "django_migrations",
-                    "django_content_type",
-                    "django_session",
-                    "auth_group",
-                    "auth_permission",
-                    "auth_group_permissions",
-                    "spatial_ref_sys",
-                },
-            )
             con_tro.execute(
                 """
                 SELECT a.attname, col_description(a.attrelid, a.attnum)

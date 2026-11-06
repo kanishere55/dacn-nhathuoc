@@ -20,7 +20,7 @@
     <aside class="thanh-ben" :class="{ 'dang-mo': moMenu }" aria-label="Điều hướng chính">
       <a class="thuong-hieu" href="{% url 'chung:trang_chu' %}"><span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span><span>NHÀ THUỐC<small>Quản lý chuỗi</small></span></a>
       <div class="nhan-menu">KHÔNG GIAN LÀM VIỆC</div>
-      <nav><a class="muc-menu dang-chon" href="{% url 'chung:trang_chu' %}" aria-current="page"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Tổng quan</a></nav>
+      {% block menu_chinh %}<nav><a class="muc-menu{% if request.resolver_match.view_name == 'chung:trang_chu' %} dang-chon{% endif %}" href="{% url 'chung:trang_chu' %}"{% if request.resolver_match.view_name == 'chung:trang_chu' %} aria-current="page"{% endif %}><i data-lucide="layout-dashboard" aria-hidden="true"></i>Tổng quan</a></nav>{% endblock %}
       <div class="chan-menu"><i data-lucide="shield-check" aria-hidden="true"></i><span>Quản lý tập trung<br><small>Thống nhất giữa các chi nhánh</small></span></div>
     </aside>
     <div class="vung-chinh">

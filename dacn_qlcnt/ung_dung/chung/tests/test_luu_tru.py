@@ -88,6 +88,39 @@ class KiemTraLuuTruTests(SimpleTestCase):
             (self.thu_muc_goc / f"mau{duoi_tep}").touch()
         self.assertEqual(len(tim_tep_du_lieu(self.thu_muc_goc)), len(DUOI_TEP_ANH))
 
+    def test_duoi_gis_backup_mo_hinh_va_file_nen_duoc_bao_ve(self):
+        cac_duoi_bat_buoc = {
+            ".geojson",
+            ".shp",
+            ".shx",
+            ".dbf",
+            ".prj",
+            ".gpkg",
+            ".kml",
+            ".kmz",
+            ".sql",
+            ".dump",
+            ".backup",
+            ".npy",
+            ".npz",
+            ".h5",
+            ".hdf5",
+            ".pt",
+            ".onnx",
+            ".zip",
+            ".7z",
+        }
+        self.assertTrue(cac_duoi_bat_buoc <= DUOI_TEP_DU_LIEU)
+
+    def test_khong_cam_giay_phep_txt_va_ma_migration(self):
+        thu_muc = self.thu_muc_goc / "static/vendor/font"
+        thu_muc.mkdir(parents=True)
+        (thu_muc / "OFL.txt").write_text("Giấy phép", encoding="utf-8")
+        (self.thu_muc_goc / "0001_tao_bang.py").write_text(
+            'SQL = "CREATE TABLE ..."', encoding="utf-8"
+        )
+        self.assertEqual(tim_tep_du_lieu(self.thu_muc_goc), [])
+
     def test_anh_tai_static_toan_cuc_va_static_phan_he_duoc_phep(self):
         for ten_thu_muc in ("static/vendor", "ung_dung/webgis/static/webgis"):
             thu_muc = self.thu_muc_goc / ten_thu_muc

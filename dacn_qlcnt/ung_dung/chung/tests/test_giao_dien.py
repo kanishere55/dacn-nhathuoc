@@ -1,4 +1,21 @@
-from django.test import SimpleTestCase, override_settings
+from functools import wraps
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.test import RequestFactory, SimpleTestCase, override_settings
+from django.urls import ResolverMatch
+from django.views import View
+from rest_framework.views import APIView
+
+from ung_dung.chung.nhan_dien_trang import nhan_dien_trang
+
+
+class TrangDangLop(View):
+    pass
+
+
+class APIDangLop(APIView):
+    pass
 
 
 class NhanDienTrangTests(SimpleTestCase):
@@ -29,3 +46,39 @@ class NhanDienTrangTests(SimpleTestCase):
         self.assertEqual(phan_hoi.status_code, 404)
         self.assertContains(phan_hoi, "Không tìm thấy trang", status_code=404)
         self.assertNotContains(phan_hoi, "Traceback", status_code=404)
+        self.assertNotContains(phan_hoi, 'aria-current="page"', status_code=404)
+
+    def test_chi_danh_dau_tong_quan_khi_dang_o_trang_chu(self):
+        self.assertContains(self.client.get("/"), 'aria-current="page"', count=1)
+
+    def test_trang_403_khong_danh_dau_tong_quan(self):
+        yeu_cau = RequestFactory().get("/khong-co-quyen/")
+        yeu_cau.resolver_match = None
+        trang = render_to_string("loi/403.html", request=yeu_cau)
+        self.assertNotIn('aria-current="page"', trang)
+
+    @override_settings(DEBUG=True, HIEN_NHAN_DIEN_TRANG=True)
+    def test_nhan_dien_class_view_va_drf_dung_tep_cua_class(self):
+        for lop in (TrangDangLop, APIDangLop):
+            with self.subTest(lop=lop.__name__):
+                yeu_cau = RequestFactory().get("/thu/")
+                yeu_cau.resolver_match = ResolverMatch(lop.as_view(), (), {}, url_name="thu")
+                nhan = nhan_dien_trang(yeu_cau)["nhan_dien"]["view"]
+                self.assertEqual(nhan, f"ung_dung/chung/tests/test_giao_dien.py → {lop.__name__}")
+                self.assertNotIn(".venv/", nhan)
+
+    @override_settings(DEBUG=True, HIEN_NHAN_DIEN_TRANG=True)
+    def test_nhan_dien_function_view_co_decorator(self):
+        def trang_thu(request):
+            return HttpResponse()
+
+        @wraps(trang_thu)
+        def boc(request):
+            return trang_thu(request)
+
+        yeu_cau = RequestFactory().get("/thu/")
+        yeu_cau.resolver_match = ResolverMatch(boc, (), {}, url_name="thu")
+        self.assertEqual(
+            nhan_dien_trang(yeu_cau)["nhan_dien"]["view"],
+            "ung_dung/chung/tests/test_giao_dien.py → trang_thu",
+        )
