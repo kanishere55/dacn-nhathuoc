@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>Báo cáo vận hành</h1>
+  <form method="get" class="khoi-trang form-chinh" hx-get="{% url 'bao_cao:tong_hop' %}" hx-target="#ket-qua-bao-cao" hx-swap="outerHTML" hx-push-url="true">
+    {{ form.as_p }}
+    <button class="nut">Áp dụng bộ lọc</button>
+  </form>
+  {% partialdef ket_qua inline %}
+    <section id="ket-qua-bao-cao" class="khoi-trang" aria-live="polite">
+      {% if bao_cao %}
+        <h2>Chứng từ trong kỳ</h2>
+        <dl class="luoi-phan-he mt-4">
+          <div><dt>Phiếu nhập</dt><dd>{{ bao_cao.so_phieu_nhap }}</dd></div>
+          <div><dt>Phiếu bán</dt><dd>{{ bao_cao.so_phieu_ban }}</dd></div>
+          <div><dt>Đơn đặt giữ</dt><dd>{{ bao_cao.so_don_giu }}</dd></div>
+          <div><dt>Trả nhà cung cấp</dt><dd>{{ bao_cao.so_phieu_tra }}</dd></div>
+          <div><dt>Điều chuyển</dt><dd>{{ bao_cao.so_phieu_chuyen }}</dd></div>
+          <div><dt>Kiểm kê</dt><dd>{{ bao_cao.so_phieu_kiem_ke }}</dd></div>
+          <div><dt>Tiền bán tại quầy</dt><dd>{{ bao_cao.tong_tien_ban|floatformat:"0g" }} đ</dd></div>
+        </dl>
+        <div class="khung-bang">
+          <table>
+            <caption>Biến động trong kỳ và tồn khả dụng hiện tại theo đơn vị</caption>
+            <thead><tr><th scope="col">Đơn vị</th><th scope="col">Nhập</th><th scope="col">Bán</th><th scope="col">Trả NCC</th><th scope="col">Chuyển đi</th><th scope="col">Chuyển đến</th><th scope="col">Điều chỉnh</th><th scope="col">Khả dụng hiện tại</th></tr></thead>
+            <tbody>
+              {% for don_vi, dong in bao_cao.cac_luong %}
+                <tr><td>{{ don_vi }}</td><td>{{ dong.nhap|default:0 }}</td><td>{{ dong.ban|default:0 }}</td><td>{{ dong.tra|default:0 }}</td><td>{{ dong.chuyen_di|default:0 }}</td><td>{{ dong.chuyen_den|default:0 }}</td><td>{{ dong.dieu_chinh|default:0 }}</td><td>{{ dong.kha_dung|default:0 }}</td></tr>
+              {% empty %}<tr><td colspan="8">Chưa có dữ liệu trong phạm vi.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p role="alert">Bộ lọc chưa hợp lệ.</p>{{ form.errors }}
+      {% endif %}
+    </section>
+  {% endpartialdef %}
+{% endblock %}

@@ -9,4 +9,5 @@ urlpatterns = [
     path("ban-do/", include("ung_dung.webgis.urls")),
     path("tro-chuyen/", include("ung_dung.tro_chuyen.urls")),
     path("du-bao/", include("ung_dung.du_bao.urls")),
+    path("bao-cao/", include("ung_dung.bao_cao.urls")),
 ]
