@@ -393,6 +393,85 @@
   .khung-bang {
     overflow-x: auto;
   }
+  .menu-phan-he {
+    display: grid;
+    gap: 2px;
+  }
+  .menu-phan-he .muc-menu {
+    padding-block: 9px;
+  }
+  .thanh-tai-khoan, .thanh-cong-cu {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .thanh-tai-khoan {
+    justify-content: flex-end;
+  }
+  .nut-phu {
+    background: #eaf3ed;
+    color: var(--color-chinh);
+  }
+  .thong-bao {
+    margin-bottom: 16px;
+    border-left: 3px solid var(--color-chinh);
+    background: #eaf3ed;
+    padding: 10px 14px;
+  }
+  .form-chinh input:not([type="checkbox"], [type="hidden"]),
+  .form-chinh select, .form-chinh textarea, .thanh-cong-cu input {
+    border: 1px solid var(--vien);
+    border-radius: 6px;
+    background: white;
+    padding: 8px 10px;
+    max-width: 100%;
+  }
+  .form-chinh label {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .form-chinh p {
+    margin-bottom: 10px;
+  }
+  .duong-dan-noi-dung, .khung-bang a {
+    color: var(--color-chinh);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ban-do {
+    height: 440px;
+    border: 1px solid var(--vien);
+    border-radius: var(--radius-the);
+    margin-top: 20px;
+    isolation: isolate;
+  }
+  .nhu-cau, .ket-qua-chi-nhanh {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-block: 12px;
+  }
+  .ket-qua-chi-nhanh h2 {
+    font-weight: 700;
+  }
+  .cac-tin-nhan {
+    max-height: 50vh;
+    overflow: auto;
+    margin: 16px 0;
+  }
+  .cac-tin-nhan li {
+    padding: 10px 14px;
+    margin-block: 6px;
+    border-radius: 6px;
+    background: #eef4ef;
+    overflow-wrap: anywhere;
+  }
+  .cac-tin-nhan p {
+    white-space: pre-wrap;
+  }
   @media (max-width: 1000px) {
     .thanh-ben {
       width: 220px;
@@ -416,6 +495,7 @@
       inset: 68px auto 0 0;
       width: 245px;
       box-shadow: 10px 0 30px #173a2520;
+      overflow-y: auto;
     }
     .nut-menu {
       display: block;

@@ -2,3 +2,4 @@
 *.ttf binary
 *.woff2 binary
 *.png binary
+static/vendor/leaflet/** -text whitespace=cr-at-eol

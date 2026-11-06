@@ -38,6 +38,17 @@ def main():
     tham_so.add_argument(
         "--pg-bin", type=Path, required=True, help="Thư mục bin của PostgreSQL có PostGIS."
     )
+    tham_so.add_argument(
+        "--test",
+        nargs="*",
+        default=[],
+        help="Giới hạn nhãn test khi phát triển; bỏ trống để chạy toàn bộ.",
+    )
+    tham_so.add_argument(
+        "--salesdaily",
+        type=Path,
+        help="Nạp và chạy thử đủ năm mô hình với CSV nguồn ngoài project.",
+    )
     dau_vao = tham_so.parse_args()
     pg_bin = dau_vao.pg_bin.resolve()
     hau_to = ".exe" if os.name == "nt" else ""
@@ -49,7 +60,7 @@ def main():
         if not cac_gdal or not (pg_bin / "libgeos_c.dll").is_file():
             tham_so.error("Cần GDAL và GEOS của PostGIS trong --pg-bin.")
 
-    thu_muc_tam = Path(tempfile.mkdtemp(prefix="dacn_giai_doan_0_")).resolve()
+    thu_muc_tam = Path(tempfile.mkdtemp(prefix="dacn_kiem_tra_")).resolve()
     du_lieu = thu_muc_tam / "cluster"
     tep_mat_khau = thu_muc_tam / "mat_khau_khoi_tao"
     mat_khau = secrets.token_urlsafe(32)
@@ -147,13 +158,29 @@ def main():
             ["kiem_tra_luu_tru"],
             ["makemigrations", "--check", "--dry-run"],
             ["migrate", "--noinput"],
-            ["test", "--verbosity", "2", "--noinput"],
+            ["kiem_tra_csdl"],
+            ["test", *dau_vao.test, "--verbosity", "1", "--noinput"],
             ["migrate", "tai_khoan", "zero", "--noinput"],
             ["migrate", "chung", "zero", "--noinput"],
             ["migrate", "--noinput"],
+            ["kiem_tra_csdl"],
         ):
             print("\n> manage.py " + " ".join(lenh), flush=True)
             chay([sys.executable, GOC / "manage.py", *lenh], moi_truong)
+        if dau_vao.salesdaily:
+            for lenh in (["nap_pharma_sales", str(dau_vao.salesdaily.resolve())], ["chay_du_bao"]):
+                print("\n> manage.py " + " ".join(lenh), flush=True)
+                chay([sys.executable, GOC / "manage.py", *lenh], moi_truong)
+            chay(
+                [
+                    *psql,
+                    "-d",
+                    "dacn_kiem_tra",
+                    "-c",
+                    "SELECT count(*) AS so_ket_qua, count(*) FILTER (WHERE duoc_chon) AS so_nhom_da_chon FROM ket_qua_mo_hinh;",
+                ],
+                moi_truong,
+            )
         chay(
             [
                 *psql,
@@ -183,7 +210,7 @@ def main():
         if (
             co_the_xoa
             and thu_muc_tam.parent == Path(tempfile.gettempdir()).resolve()
-            and thu_muc_tam.name.startswith("dacn_giai_doan_0_")
+            and thu_muc_tam.name.startswith("dacn_kiem_tra_")
         ):
             shutil.rmtree(thu_muc_tam)
 
