@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>Lô thuốc</h1>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <caption>Mã lô và hạn sử dụng</caption>
+      <thead><tr><th scope="col">Thuốc</th><th scope="col">Lô</th><th scope="col">Hạn dùng</th><th scope="col">Điều kiện bán</th>{% if duoc_sua %}<th scope="col">Thao tác</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for lo in cac_lo %}
+          <tr>
+            <td>{{ lo.thuoc }}</td><td>{{ lo.ma_lo_thuoc }}</td><td>{{ lo.ngay_het_han|date:"d/m/Y" }}</td>
+            <td>{{ lo.duoc_phep_ban|yesno:"Cho phép,Ngừng bán" }}</td>
+            {% if duoc_sua %}
+              <td><form method="post" action="{% url 'kho:lo_thuoc_doi_trang_thai' lo.pk %}">
+                {% csrf_token %}
+                <button class="nut nut-phu" name="duoc_phep_ban" value="{{ lo.duoc_phep_ban|yesno:'0,1' }}">{{ lo.duoc_phep_ban|yesno:"Ngừng bán,Cho phép bán" }}</button>
+              </form></td>
+            {% endif %}
+          </tr>
+        {% empty %}<tr><td colspan="{{ duoc_sua|yesno:'5,4' }}">Chưa có lô thuốc.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

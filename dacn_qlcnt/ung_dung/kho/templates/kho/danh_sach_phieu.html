@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>{{ tieu_de }}</h1>
+  <a class="nut" href="{% url url_tao %}">Tạo chứng từ</a>
+  <div class="khoi-trang">
+    <table>
+      <thead>
+        <tr>
+          <th>Chứng từ</th>
+          <th>Người lập</th>
+          <th>Thời điểm</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for phieu in cac_phieu %}
+          <tr>
+            <td>
+            {% if url_chi_tiet %}
+              <a href="{% url url_chi_tiet phieu.pk %}">{{ phieu }}</a>
+            {% else %}
+              {{ phieu }}
+            {% endif %}
+            </td>
+            <td>{{ phieu.nguoi_lap }}</td>
+            <td>{{ phieu.thoi_diem_tao|date:"d/m/Y H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td>Chưa có chứng từ.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

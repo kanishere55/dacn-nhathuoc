@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+{% block noi_dung %}
+  <h1>{{ tieu_de }}</h1>
+  {% if cac_chi_nhanh %}
+    <form method="get" class="thanh-cong-cu">
+      <label for="chon-chi-nhanh-kiem-ke">Kho cần kiểm kê</label>
+      <select id="chon-chi-nhanh-kiem-ke" name="chi_nhanh">
+        {% for cn in cac_chi_nhanh %}
+          <option value="{{ cn.pk }}"{% if cn == chi_nhanh_da_chon %} selected{% endif %}>{{ cn }}</option>
+        {% endfor %}
+      </select>
+      <button class="nut nut-phu">Mở danh sách lô</button>
+    </form>
+  {% endif %}
+  <form method="post" class="khoi-trang form-chinh" data-formset>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for truong in form %}
+      {% include "components/_o_nhap.html" %}
+    {% endfor %}
+    {{ cac_dong.management_form }}{{ cac_dong.non_form_errors }}
+    <div data-cac-dong>
+      {% for dong in cac_dong %}
+        <fieldset class="dong-phieu">
+          <legend>
+            Dòng {{ forloop.counter }}
+          </legend>
+          {{ dong.non_field_errors }}
+          {% for truong in dong %}
+            {% include "components/_o_nhap.html" %}
+          {% endfor %}
+        </fieldset>
+      {% endfor %}
+    </div>
+    <template data-dong-rong>
+      <fieldset class="dong-phieu">
+        {{ cac_dong.empty_form.as_p }}
+      </fieldset>
+    </template>
+    <button type="button" class="nut nut-phu" data-them-dong>Thêm dòng</button>
+    <button class="nut">Xác nhận chứng từ</button>
+  </form>
+{% endblock %}
+{% block cuoi_trang %}
+  <script src="{% static 'kho/js/dong_phieu.js' %}" defer>
+  </script>
+{% endblock %}

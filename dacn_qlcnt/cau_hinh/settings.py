@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "ung_dung.chung.apps.ChungConfig",
     "ung_dung.tai_khoan.apps.TaiKhoanConfig",
     "ung_dung.danh_muc.apps.DanhMucConfig",
+    "ung_dung.kho.apps.KhoConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

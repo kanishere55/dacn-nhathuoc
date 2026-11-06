@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>{{ tieu_de }}</h1>
+  <p>{{ phieu.nguoi_lap }} · {{ phieu.thoi_diem_tao|date:"d/m/Y H:i" }}</p>
+  <div class="khoi-trang">
+    <table>
+      <thead>
+        <tr>
+          <th>Thuốc</th>
+          <th>Lô</th>
+          <th>Hạn</th>
+          <th>Lượng cơ sở</th>
+          <th>Đơn giá (VND)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dong in cac_dong %}
+          <tr>
+            <td>{{ dong.lo_thuoc.thuoc }}</td>
+            <td>{{ dong.lo_thuoc.ma_lo_thuoc }}</td>
+            <td>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}</td>
+            <td>{{ dong.so_luong }}</td>
+            <td>{{ dong.don_gia|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>{{ phieu }}</h1>
+  <div class="khoi-trang">
+    <table>
+      <thead>
+        <tr>
+          <th>Thuốc / lô</th>
+          <th>Số dư đối chiếu</th>
+          <th>Đếm thực tế</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dong in cac_dong %}
+          <tr>
+            <td>{{ dong.lo_thuoc.thuoc }} / {{ dong.lo_thuoc.ma_lo_thuoc }}</td>
+            <td>{{ dong.so_luong_so_sach }}</td>
+            <td>{{ dong.so_luong_thuc_te }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

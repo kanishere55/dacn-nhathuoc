@@ -1,0 +1,112 @@
+from datetime import timedelta
+from random import Random
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.gis.geos import Point
+from django.db import transaction
+from django.utils import timezone
+
+from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.danh_muc.models import (
+    ChiNhanh,
+    DonViTinh,
+    NhaCungCap,
+    NhanVien,
+    NhomATC,
+    QuyDoiBaoGoi,
+    Thuoc,
+)
+from ung_dung.tai_khoan.services import tao_tai_khoan_ky_thuat
+
+from .phieu_nhap import nhap_hang
+
+CHI_NHANH_MO_PHONG = (
+    ("MP-CN-01", "Nhà thuốc mô phỏng Bến Thành", "Khu vực Bến Thành, TP.HCM", 106.6981, 10.7724),
+    ("MP-CN-02", "Nhà thuốc mô phỏng Tân Định", "Khu vực Tân Định, TP.HCM", 106.6902, 10.7896),
+    ("MP-CN-03", "Nhà thuốc mô phỏng Bình Thạnh", "Khu vực Bình Thạnh, TP.HCM", 106.7132, 10.8031),
+)
+NHOM_MO_PHONG = (
+    ("M01AB", "Kháng viêm nhóm dẫn xuất acid acetic", "Chế phẩm mô phỏng 01"),
+    ("M01AE", "Kháng viêm nhóm dẫn xuất acid propionic", "Chế phẩm mô phỏng 02"),
+    ("N02BA", "Giảm đau nhóm salicylat", "Chế phẩm mô phỏng 03"),
+    ("N02BE", "Giảm đau nhóm anilid", "Chế phẩm mô phỏng 04"),
+    ("N05B", "Nhóm giải lo âu", "Chế phẩm mô phỏng 05"),
+    ("N05C", "Nhóm an thần, gây ngủ", "Chế phẩm mô phỏng 06"),
+    ("R03", "Nhóm dùng cho bệnh tắc nghẽn đường thở", "Chế phẩm mô phỏng 07"),
+    ("R06", "Nhóm kháng histamin toàn thân", "Chế phẩm mô phỏng 08"),
+)
+
+
+@transaction.atomic
+def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
+    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
+    if ChiNhanh.objects.filter(ma_chi_nhanh__startswith="MP-CN-").exists():
+        raise ValueError("Đã có chi nhánh mô phỏng. Lệnh không ghi lặp hoặc ghi đè.")
+    if mat_khau is not None:
+        validate_password(mat_khau)
+    ngau_nhien = Random(1250080021)
+    don_vi, _ = DonViTinh.objects.get_or_create(
+        ma_don_vi_tinh="VIEN", defaults={"ten_don_vi_tinh": "Viên"}
+    )
+    nha_cung_cap = NhaCungCap.objects.create(
+        ma_nha_cung_cap="MP-NCC-01", ten_nha_cung_cap="Nhà cung cấp mô phỏng"
+    )
+    cac_thuoc = []
+    for so, (ma_atc, ten_nhom, ten_thuoc) in enumerate(NHOM_MO_PHONG, start=1):
+        nhom, _ = NhomATC.objects.get_or_create(
+            ma_nhom_atc=ma_atc, defaults={"ten_nhom_atc": ten_nhom}
+        )
+        thuoc = Thuoc.objects.create(
+            ma_thuoc=f"MP-T-{so:02d}",
+            ten_thuoc=ten_thuoc,
+            nhom_atc=nhom,
+            don_vi_tinh=don_vi,
+            ham_luong="Mô phỏng",
+            dang_bao_che="Viên",
+            nha_san_xuat="Nhà sản xuất mô phỏng",
+            gia_ban=ngau_nhien.randrange(2, 16) * 1000,
+            nguong_canh_bao=15,
+        )
+        QuyDoiBaoGoi.objects.create(thuoc=thuoc, ten_quy_doi_bao_goi="Hộp 10 viên", he_so=10)
+        cac_thuoc.append(thuoc)
+    cac_chi_nhanh = []
+    hom_nay = timezone.localdate()
+    for so, (ma, ten, dia_chi, kinh_do, vi_do) in enumerate(CHI_NHANH_MO_PHONG, start=1):
+        chi_nhanh = ChiNhanh.objects.create(
+            ma_chi_nhanh=ma,
+            ten_chi_nhanh=ten,
+            dia_chi=dia_chi,
+            vi_tri=Point(kinh_do, vi_do, srid=4326),
+        )
+        cac_chi_nhanh.append(chi_nhanh)
+        cac_dong = [
+            {
+                "thuoc": thuoc,
+                "ma_lo_thuoc": f"MP-{so:02d}-{thuoc.ma_thuoc}-{lo}",
+                "ngay_het_han": hom_nay + timedelta(days=han),
+                "so_luong": ngau_nhien.randint(12, 80),
+                "don_gia": thuoc.gia_ban // 2,
+            }
+            for thuoc in cac_thuoc
+            for lo, han in ((1, 25), (2, 180))
+        ]
+        nhap_hang(nguoi, chi_nhanh, nha_cung_cap, cac_dong, "Chứng từ mô phỏng")
+    if mat_khau is not None:
+        model = get_user_model()
+        if model.objects.filter(
+            ten_dang_nhap__in=["mp_khach", "mp_nhan_vien", "mp_quan_ly"]
+        ).exists():
+            raise ValueError("Tên tài khoản mô phỏng đã được sử dụng.")
+        tao_tai_khoan_ky_thuat("mp_khach", mat_khau)
+        for ten, vai_tro, ho_ten in (
+            ("mp_nhan_vien", "nhan_vien", "Nhân viên mô phỏng"),
+            ("mp_quan_ly", "quan_ly_chi_nhanh", "Quản lý mô phỏng"),
+        ):
+            tai_khoan = tao_tai_khoan_ky_thuat(
+                ten, mat_khau, vai_tro=vai_tro, chi_nhanh=cac_chi_nhanh[0]
+            )
+            NhanVien.objects.create(
+                ma_nhan_vien=f"MP-{vai_tro.upper()}", ten_nhan_vien=ho_ten, tai_khoan=tai_khoan
+            )
+    return f"Đã tạo {len(cac_chi_nhanh)} chi nhánh và {len(cac_thuoc)} thuốc mô phỏng."

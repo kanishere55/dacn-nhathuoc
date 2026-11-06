@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block noi_dung %}
+  <h1>Cảnh báo kho</h1>
+  <section class="khoi-trang">
+    <h2>Lô hết hạn, sắp hết hạn trong 30 ngày hoặc ngừng bán</h2>
+    {% for dong in cac_dong %}
+      <p>{{ dong.chi_nhanh }} · {{ dong.lo_thuoc.thuoc }} · {{ dong.lo_thuoc.ma_lo_thuoc }} · {{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }} · {{ dong.so_luong }}</p>
+    {% empty %}
+      <p>Không có cảnh báo hạn dùng.</p>
+    {% endfor %}
+  </section>
+  <section class="khoi-trang">
+    <h2>Tồn khả dụng thấp theo thuốc và chi nhánh</h2>
+    {% for chi_nhanh, thuoc in cac_ton_thap %}
+      <p>{{ chi_nhanh }} · {{ thuoc }}: {{ thuoc.kha_dung }} {{ thuoc.don_vi_tinh }} (ngưỡng {{ thuoc.nguong_canh_bao }})</p>
+    {% empty %}
+      <p>Không có cảnh báo tồn thấp.</p>
+    {% endfor %}
+  </section>
+{% endblock %}
