@@ -7,4 +7,5 @@ urlpatterns = [
     path("kho/", include("ung_dung.kho.urls")),
     path("ban-hang/", include("ung_dung.ban_hang.urls")),
     path("ban-do/", include("ung_dung.webgis.urls")),
+    path("tro-chuyen/", include("ung_dung.tro_chuyen.urls")),
 ]
