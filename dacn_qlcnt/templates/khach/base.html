@@ -1,25 +1,25 @@
 {% extends "khung_trang.html" %}
-{% block tieu_de %}Nhà thuốc · Tra cứu và đặt giữ{% endblock %}
+{% block tieu_de %}Nhà thuốc · Mua thuốc trực tuyến, nhận tại nhà thuốc{% endblock %}
 {% block giao_dien %}
   <div class="khung-khach">
     <header class="dau-trang-khach">
       <div class="thanh-nhan-thuoc">
-        <div class="be-rong-khach"><i data-lucide="store" aria-hidden="true"></i> Nhận và thanh toán trực tiếp tại quầy</div>
+        <div class="be-rong-khach"><span><i data-lucide="truck" aria-hidden="true"></i> Giao tận nơi trong bán kính 15 km</span><span><i data-lucide="store" aria-hidden="true"></i> Đặt trước, nhận tại nhà thuốc trong 24 giờ</span></div>
       </div>
       <div class="be-rong-khach thanh-khach">
         <a class="thuong-hieu" href="{% url 'chung:trang_chu' %}">
           <span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span>
-          <span>Nhà thuốc<small>Tra cứu và đặt giữ</small></span>
+          <span>Nhà thuốc<small>Chuỗi nhà thuốc TP.HCM</small></span>
         </a>
         <nav class="menu-khach" aria-label="Điều hướng website khách">
           {% for muc in menu_khach %}
             <a href="{{ muc.duong_dan }}"{% if muc.dang_chon %} aria-current="page"{% endif %}>{{ muc.nhan }}</a>
           {% endfor %}
-          {% if not noi_bo %}
-            <a href="{% url 'ban_hang:gio_dat_giu' %}"{% if request.resolver_match.view_name == 'ban_hang:gio_dat_giu' %} aria-current="page"{% endif %}>Giỏ đặt giữ</a>
-          {% endif %}
         </nav>
         <div class="tac-vu-khach">
+          {% if not noi_bo %}
+            <a class="nut-gio" href="{% url 'ban_hang:gio_hang' %}" aria-label="Giỏ hàng, {{ so_mon_gio }} sản phẩm"{% if request.resolver_match.view_name == 'ban_hang:gio_hang' %} aria-current="page"{% endif %}><i data-lucide="shopping-cart" aria-hidden="true"></i>{% if so_mon_gio %}<span class="so-gio">{{ so_mon_gio }}</span>{% endif %}</a>
+          {% endif %}
           {% if noi_bo %}
             <a class="nut nut-phu" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Khu quản lý</a>
           {% elif user.is_authenticated %}
@@ -38,7 +38,7 @@
     </main>
     <footer class="chan-trang-khach">
       <div class="be-rong-khach">
-        <div><strong>Nhà thuốc</strong><p>Tra cứu thuốc và tìm chi nhánh phù hợp tại TP.HCM.</p></div>
+        <div><strong>Nhà thuốc</strong><p>Tra cứu thuốc, đặt giao tận nơi hoặc nhận tại chi nhánh gần bạn.</p></div>
         <div class="lien-ket-khach">
           <a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Danh mục thuốc</a>
           <a href="{% url 'webgis:ban_do' %}">Bản đồ nhà thuốc</a>

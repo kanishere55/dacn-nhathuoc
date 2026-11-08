@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 
-from ung_dung.ban_hang.gio_dat_giu import SO_LUONG_TOI_DA, SO_THUOC_TOI_DA
+from ung_dung.ban_hang.gio_hang import SO_LUONG_TOI_DA, SO_THUOC_TOI_DA
 from ung_dung.ban_hang.selectors import gio_duoc_giu, lay_dong_gio, lay_gio
 from ung_dung.chung.permissions import NHAN_SU_CHUOI, co_vai_tro
 from ung_dung.danh_muc.selectors import lay_thuoc_cong_khai

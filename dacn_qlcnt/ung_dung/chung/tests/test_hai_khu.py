@@ -17,7 +17,7 @@ class HaiKhuTests(TestCase):
             "danh_muc:thuoc_danh_sach",
             "kho:ton_kho_danh_sach",
             "ban_hang:phieu_ban_danh_sach",
-            "ban_hang:don_dat_giu_danh_sach",
+            "ban_hang:don_hang_danh_sach",
             "tro_chuyen:danh_sach",
             "bao_cao:tong_hop",
             "webgis:ban_do_nhiet",

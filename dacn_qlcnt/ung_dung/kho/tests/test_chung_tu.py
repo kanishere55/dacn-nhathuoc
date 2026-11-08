@@ -44,7 +44,7 @@ class ChungTuKhoTests(TestCase):
         phieu = self.nhap_lo(2, quy_doi)
         ton = TonKho.objects.get(chi_nhanh=d.cn)
         self.assertEqual(ton.so_luong, 20)
-        from ung_dung.ban_hang.services.dat_giu import dat_giu
+        from ung_dung.ban_hang.services.dat_hang import dat_giu
 
         dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 12}])
         dong = {"lo_thuoc": ton.lo_thuoc, "so_luong": 9}

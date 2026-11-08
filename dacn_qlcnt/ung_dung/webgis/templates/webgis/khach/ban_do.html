@@ -12,7 +12,7 @@
   </header>
   <div class="khung-ban-do-khach" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}"
        data-osrm="{{ may_chu_osrm }}" data-gioi-han="{{ gioi_han_so_thuoc }}"
-       {% if tu_gio %}data-url-gio="{% url 'ban_hang:gio_dat_giu' %}"{% endif %}>
+       {% if tu_gio %}data-url-gio="{% url 'ban_hang:dat_hang' %}"{% endif %}>
     <form class="the-khach form-chinh bo-loc-ban-do" data-tim-kiem>
       {% csrf_token %}
       <div>
@@ -33,7 +33,7 @@
               </li>
             {% endfor %}
           </ul>
-          <a class="lien-ket-van-ban" href="{% url 'ban_hang:gio_dat_giu' %}">Sửa thuốc trong giỏ</a>
+          <a class="lien-ket-van-ban" href="{% url 'ban_hang:gio_hang' %}">Sửa thuốc trong giỏ</a>
         {% elif cac_thuoc %}
           <datalist id="goi-y-thuoc" data-goi-y>
             {% for thuoc in cac_thuoc %}

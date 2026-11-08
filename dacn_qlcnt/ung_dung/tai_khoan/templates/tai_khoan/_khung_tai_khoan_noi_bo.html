@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block vi_tri %}Tài khoản của tôi{% endblock %}
 {% block noi_dung %}
-  {% with trang=request.resolver_match.url_name %}
+  {% with ten_trang=request.resolver_match.url_name %}
   <nav class="thanh-cong-cu" aria-label="Mục tài khoản">
-    <a class="nut {% if trang != 'thong_tin' %}nut-phu{% endif %}" href="{% url 'tai_khoan:thong_tin' %}">Thông tin cá nhân</a>
-    <a class="nut {% if trang != 'doi_mat_khau' %}nut-phu{% endif %}" href="{% url 'tai_khoan:doi_mat_khau' %}">Mật khẩu</a>
-    <a class="nut {% if trang != 'doi_email' %}nut-phu{% endif %}" href="{% url 'tai_khoan:doi_email' %}">Email</a>
+    <a class="nut {% if ten_trang != 'thong_tin' %}nut-phu{% endif %}" href="{% url 'tai_khoan:thong_tin' %}">Thông tin cá nhân</a>
+    <a class="nut {% if ten_trang != 'doi_mat_khau' %}nut-phu{% endif %}" href="{% url 'tai_khoan:doi_mat_khau' %}">Mật khẩu</a>
+    <a class="nut {% if ten_trang != 'doi_email' %}nut-phu{% endif %}" href="{% url 'tai_khoan:doi_email' %}">Email</a>
   </nav>
   <div class="noi-dung-tai-khoan">{% block noi_dung_tai_khoan %}{% endblock %}</div>
   {% endwith %}

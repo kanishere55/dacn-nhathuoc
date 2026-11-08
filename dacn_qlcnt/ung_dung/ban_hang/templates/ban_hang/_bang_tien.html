@@ -1,0 +1,7 @@
+<dl class="bang-tien-don">
+  <div><dt>Tiền hàng</dt><dd>{{ don.tien_hang|tien }}</dd></div>
+  {% if don.giam_gia_thanh_vien %}<div><dt>Ưu đãi thành viên</dt><dd>-{{ don.giam_gia_thanh_vien|tien }}</dd></div>{% endif %}
+  {% if don.la_giao_hang %}<div><dt>Phí giao hàng{% if don.khoang_cach_met != None %} ({{ don.khoang_cach_met|km }}){% endif %}</dt><dd>{{ don.phi_giao_hang|tien }}</dd></div>{% endif %}
+  <div class="tong-cong"><dt>Tổng thanh toán</dt><dd>{{ don.tong_thanh_toan|tien }}</dd></div>
+  <div><dt>Thanh toán</dt><dd>{{ don.get_phuong_thuc_thanh_toan_display }} · {{ don.get_trang_thai_thanh_toan_display }}</dd></div>
+</dl>

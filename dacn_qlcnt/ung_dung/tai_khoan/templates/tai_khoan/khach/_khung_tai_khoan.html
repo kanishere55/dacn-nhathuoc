@@ -1,6 +1,6 @@
 {% extends "khach/base.html" %}
 {% block noi_dung %}
-  {% with trang=request.resolver_match.url_name %}
+  {% with ten_trang=request.resolver_match.url_name %}
   <div class="khung-tai-khoan">
     <aside class="menu-tai-khoan" aria-label="Mục tài khoản">
       <div class="chu-tai-khoan">
@@ -8,12 +8,12 @@
         <span><strong>{{ user.ho_ten|default:user.ten_dang_nhap }}</strong><small>@{{ user.ten_dang_nhap }}</small></span>
       </div>
       <nav>
-        <a href="{% url 'tai_khoan:cua_toi' %}"{% if trang == 'cua_toi' %} aria-current="page"{% endif %}><i data-lucide="layout-grid" aria-hidden="true"></i>Tổng quan</a>
-        <a href="{% url 'ban_hang:khach_don_dat_giu_danh_sach' %}"><i data-lucide="package" aria-hidden="true"></i>Đơn của tôi</a>
-        <a href="{% url 'tai_khoan:thong_tin' %}"{% if trang == 'thong_tin' %} aria-current="page"{% endif %}><i data-lucide="user-round" aria-hidden="true"></i>Thông tin cá nhân</a>
-        <a href="{% url 'tai_khoan:so_dia_chi' %}"{% if trang == 'so_dia_chi' or trang == 'them_dia_chi' or trang == 'sua_dia_chi' %} aria-current="page"{% endif %}><i data-lucide="map-pin" aria-hidden="true"></i>Sổ địa chỉ</a>
-        <a href="{% url 'tai_khoan:doi_mat_khau' %}"{% if trang == 'doi_mat_khau' %} aria-current="page"{% endif %}><i data-lucide="key-round" aria-hidden="true"></i>Mật khẩu</a>
-        <a href="{% url 'tai_khoan:doi_email' %}"{% if trang == 'doi_email' %} aria-current="page"{% endif %}><i data-lucide="mail" aria-hidden="true"></i>Email</a>
+        <a href="{% url 'tai_khoan:cua_toi' %}"{% if ten_trang == 'cua_toi' %} aria-current="page"{% endif %}><i data-lucide="layout-grid" aria-hidden="true"></i>Tổng quan</a>
+        <a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}"{% if request.resolver_match.app_name == 'ban_hang' %} aria-current="page"{% endif %}><i data-lucide="package" aria-hidden="true"></i>Đơn của tôi</a>
+        <a href="{% url 'tai_khoan:thong_tin' %}"{% if ten_trang == 'thong_tin' %} aria-current="page"{% endif %}><i data-lucide="user-round" aria-hidden="true"></i>Thông tin cá nhân</a>
+        <a href="{% url 'tai_khoan:so_dia_chi' %}"{% if ten_trang == 'so_dia_chi' or ten_trang == 'them_dia_chi' or ten_trang == 'sua_dia_chi' %} aria-current="page"{% endif %}><i data-lucide="map-pin" aria-hidden="true"></i>Sổ địa chỉ</a>
+        <a href="{% url 'tai_khoan:doi_mat_khau' %}"{% if ten_trang == 'doi_mat_khau' %} aria-current="page"{% endif %}><i data-lucide="key-round" aria-hidden="true"></i>Mật khẩu</a>
+        <a href="{% url 'tai_khoan:doi_email' %}"{% if ten_trang == 'doi_email' %} aria-current="page"{% endif %}><i data-lucide="mail" aria-hidden="true"></i>Email</a>
         <a href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện</a>
       </nav>
       <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">

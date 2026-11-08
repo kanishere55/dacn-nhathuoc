@@ -13,6 +13,8 @@ LOAI_EMAIL = [
     ("mat_khau_da_doi", "Mật khẩu đã đổi"),
     ("email_da_doi", "Email đã đổi"),
     ("ho_so_da_doi", "Hồ sơ đã cập nhật"),
+    ("don_hang_moi", "Xác nhận đặt đơn"),
+    ("don_hang_cap_nhat", "Cập nhật trạng thái đơn"),
 ]
 TRANG_THAI = [("cho_gui", "Chờ gửi"), ("da_gui", "Đã gửi"), ("loi", "Gửi lỗi")]
 

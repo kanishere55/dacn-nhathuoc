@@ -1,0 +1,10 @@
+<ol class="lich-su-don">
+  {% for ls in cac_lich_su reversed %}
+    <li>
+      <time datetime="{{ ls.thoi_diem_tao|date:'c' }}">{{ ls.thoi_diem_tao|date:"H:i d/m/Y" }}</time>
+      <strong>{{ ls.get_den_trang_thai_display|default:ls.den_trang_thai }}</strong>
+      {% if ls.ghi_chu %}<span>{{ ls.ghi_chu }}</span>{% endif %}
+      {% if hien_nguoi %}<small>{% if ls.nguoi_thuc_hien %}{{ ls.nguoi_thuc_hien.ho_ten|default:ls.nguoi_thuc_hien.ten_dang_nhap }}{% else %}Hệ thống{% endif %}</small>{% endif %}
+    </li>
+  {% endfor %}
+</ol>

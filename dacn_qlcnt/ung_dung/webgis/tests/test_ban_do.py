@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
-from ung_dung.ban_hang.services.dat_giu import dat_giu
+from ung_dung.ban_hang.services.dat_hang import dat_giu
 from ung_dung.danh_muc.models import DonViTinh, Thuoc
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 
@@ -92,10 +92,10 @@ class WebGISTests(TestCase):
         self.assertNotContains(trang, 'name="vi_do"')
         self.client.force_login(d.khach)
         self.client.post(
-            reverse("ban_hang:gio_dat_giu_them", args=[d.thuoc.ma_thuoc]), {"so_luong": 2}
+            reverse("ban_hang:gio_hang_them", args=[d.thuoc.ma_thuoc]), {"so_luong": 2}
         )
         trang_tu_gio = self.client.get(reverse("webgis:ban_do"), {"tu_gio": "1"})
-        self.assertContains(trang_tu_gio, f'data-url-gio="{reverse("ban_hang:gio_dat_giu")}"')
+        self.assertContains(trang_tu_gio, f'data-url-gio="{reverse("ban_hang:dat_hang")}"')
         self.assertContains(trang_tu_gio, 'data-so-luong="2"')
         phan_hoi = self.client.post(
             reverse("webgis:dat_giu"),

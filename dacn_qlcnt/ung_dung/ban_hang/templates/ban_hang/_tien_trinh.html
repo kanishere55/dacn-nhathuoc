@@ -1,0 +1,7 @@
+{% if tien_trinh %}
+  <ol class="tien-trinh-don">
+    {% for nhan, da_qua, hien_tai in tien_trinh %}
+      <li class="{% if da_qua %}da-qua{% endif %}{% if hien_tai %} hien-tai{% endif %}"><span class="cham"></span>{{ nhan }}</li>
+    {% endfor %}
+  </ol>
+{% endif %}

@@ -23,3 +23,14 @@ def tien(gia_tri):
     if gia_tri in (None, ""):
         return ""
     return f"{so_nguyen(gia_tri)} đ"
+
+
+@register.filter
+def km(gia_tri):
+    """1850 (mét) → 1,9 km; dưới 1 km giữ đơn vị mét."""
+    if gia_tri in (None, ""):
+        return ""
+    met = float(gia_tri)
+    if met < 1000:
+        return f"{round(met)} m"
+    return f"{met / 1000:.1f} km".replace(".", ",")

@@ -1,0 +1,12 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 14px;border-collapse:collapse;font-size:13px;">
+  {% for dong in cac_dong %}
+    <tr>
+      <td style="padding:8px 0;border-bottom:1px solid #edf1ed;">{{ dong.thuoc.ten_thuoc }}<br><span style="color:#66776e;">{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }} × {{ dong.don_gia|tien }}</span></td>
+      <td align="right" style="padding:8px 0;border-bottom:1px solid #edf1ed;white-space:nowrap;">{{ dong.thanh_tien|tien }}</td>
+    </tr>
+  {% endfor %}
+  <tr><td style="padding:8px 0 2px;color:#66776e;">Tiền hàng</td><td align="right" style="padding:8px 0 2px;">{{ don.tien_hang|tien }}</td></tr>
+  {% if don.giam_gia_thanh_vien %}<tr><td style="padding:2px 0;color:#66776e;">Ưu đãi thành viên</td><td align="right">-{{ don.giam_gia_thanh_vien|tien }}</td></tr>{% endif %}
+  {% if don.la_giao_hang %}<tr><td style="padding:2px 0;color:#66776e;">Phí giao hàng</td><td align="right">{{ don.phi_giao_hang|tien }}</td></tr>{% endif %}
+  <tr><td style="padding:6px 0;font-weight:bold;">Tổng thanh toán</td><td align="right" style="padding:6px 0;font-weight:bold;color:#116b54;">{{ don.tong_thanh_toan|tien }}</td></tr>
+</table>

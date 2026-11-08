@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from ung_dung.ban_hang.models import DonDatGiu
-from ung_dung.ban_hang.services.dat_giu import dat_giu
+from ung_dung.ban_hang.models import DonHang
+from ung_dung.ban_hang.services.dat_hang import dat_giu
 from ung_dung.du_bao.models import DuBaoBayNgay, KetQuaMoHinh, LanThucNghiem, NguonDuLieu
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 from ung_dung.tro_chuyen.services import ghi_tin_nhan, mo_phong
@@ -22,7 +22,7 @@ class BangDieuKhienTests(TestCase):
         cls.don_mot = dat_giu(d.khach, d.cn, nhu_cau)
         cls.don_hai = dat_giu(d.khach, d.cn2, nhu_cau)
         cls.don_het_han = dat_giu(d.khac, d.cn, nhu_cau)
-        DonDatGiu.objects.filter(pk=cls.don_het_han.pk).update(
+        DonHang.objects.filter(pk=cls.don_het_han.pk).update(
             thoi_diem_tao=timezone.now() - timedelta(days=2),
             thoi_diem_het_giu=timezone.now() - timedelta(hours=1),
         )
@@ -79,9 +79,9 @@ class BangDieuKhienTests(TestCase):
         self.assertEqual(trang.context["so_don_cho_nhan"], 2)
         self.assertEqual(trang.context["so_lo_canh_bao"], 2)
         self.assertEqual(trang.context["so_canh_bao_ton_thap"], 1)
-        self.assertContains(trang, self.don_mot.ma_don_dat_giu)
-        self.assertContains(trang, self.don_hai.ma_don_dat_giu)
-        self.assertNotContains(trang, self.don_het_han.ma_don_dat_giu)
+        self.assertContains(trang, self.don_mot.ma_don_hang)
+        self.assertContains(trang, self.don_hai.ma_don_hang)
+        self.assertNotContains(trang, self.don_het_han.ma_don_hang)
         self.assertNotContains(trang, reverse("ban_hang:phieu_ban_tao"))
         self.assertNotContains(trang, "Tin đang chờ ở chi nhánh một")
 
@@ -96,12 +96,12 @@ class BangDieuKhienTests(TestCase):
                 self.assertContains(trang, tieu_de)
                 self.assertContains(trang, self.d.cn.ten_chi_nhanh)
                 self.assertContains(trang, "LO-CN1")
-                self.assertContains(trang, self.don_mot.ma_don_dat_giu)
+                self.assertContains(trang, self.don_mot.ma_don_hang)
                 self.assertContains(trang, "Tin đang chờ ở chi nhánh một")
                 self.assertContains(trang, reverse("tro_chuyen:chi_tiet", args=[self.phong_moi.pk]))
                 self.assertNotContains(trang, "LO-CN2")
-                self.assertNotContains(trang, self.don_hai.ma_don_dat_giu)
-                self.assertNotContains(trang, self.don_het_han.ma_don_dat_giu)
+                self.assertNotContains(trang, self.don_hai.ma_don_hang)
+                self.assertNotContains(trang, self.don_het_han.ma_don_hang)
                 self.assertNotContains(trang, "Tin riêng ở chi nhánh hai")
                 self.assertNotContains(trang, "Câu hỏi đã trả lời")
                 self.assertNotContains(trang, 'id="ban-do-nhiet"')
@@ -118,8 +118,8 @@ class BangDieuKhienTests(TestCase):
         self.client.force_login(self.d.ql2)
         trang = self.client.get(reverse("chung:bang_dieu_khien"))
         self.assertContains(trang, "LO-CN2")
-        self.assertContains(trang, self.don_hai.ma_don_dat_giu)
+        self.assertContains(trang, self.don_hai.ma_don_hang)
         self.assertContains(trang, "Tin riêng ở chi nhánh hai")
         self.assertEqual(trang.context["so_canh_bao_ton_thap"], 0)
         self.assertNotContains(trang, "LO-CN1")
-        self.assertNotContains(trang, self.don_mot.ma_don_dat_giu)
+        self.assertNotContains(trang, self.don_mot.ma_don_hang)

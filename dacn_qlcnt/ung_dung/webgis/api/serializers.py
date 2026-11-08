@@ -2,7 +2,7 @@ from math import isfinite
 
 from rest_framework import serializers
 
-from ung_dung.ban_hang.gio_dat_giu import SO_LUONG_TOI_DA, SO_THUOC_TOI_DA
+from ung_dung.ban_hang.gio_hang import SO_LUONG_TOI_DA, SO_THUOC_TOI_DA
 from ung_dung.danh_muc.models import ChiNhanh, DonViTinh, NhomATC, Thuoc
 
 

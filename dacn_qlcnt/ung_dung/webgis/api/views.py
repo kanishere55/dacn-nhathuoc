@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from ung_dung.ban_hang.services.dat_giu import dat_giu
+from ung_dung.ban_hang.services.dat_hang import dat_giu
 from ung_dung.chung.permissions import kiem_tra_vai_tro, la_quan_tri
 
 from ..selectors import lay_ban_do_nhiet, tim_chi_nhanh
@@ -40,8 +40,8 @@ def tao_dat_giu(request):
         return Response({"loi": loi.messages}, status=400)
     return Response(
         {
-            "ma_don_dat_giu": don.ma_don_dat_giu,
-            "duong_dan": reverse("ban_hang:khach_don_dat_giu_chi_tiet", args=[don.pk]),
+            "ma_don_hang": don.ma_don_hang,
+            "duong_dan": reverse("ban_hang:khach_don_hang_chi_tiet", args=[don.pk]),
         },
         status=201,
     )

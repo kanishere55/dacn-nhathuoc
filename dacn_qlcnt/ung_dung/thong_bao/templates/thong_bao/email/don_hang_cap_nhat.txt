@@ -1,0 +1,12 @@
+{% autoescape off %}Xin chào {{ ho_ten }},
+
+Đơn {{ don.ma_don_hang }} vừa chuyển sang trạng thái: {{ nhan_trang_thai }}.
+{% if loi_nhan %}{{ loi_nhan }}
+{% endif %}{% if ghi_chu %}Ghi chú: {{ ghi_chu }}
+{% endif %}{% if don.trang_thai_thanh_toan == "cho_hoan_tien" %}Đơn đã được thanh toán trước nên nhà thuốc sẽ hoàn tiền cho bạn.
+{% endif %}
+Tổng thanh toán: {{ don.tong_thanh_toan|tien }}
+Xem đơn: {{ url_don }}
+
+{{ ten_thuong_hieu }}
+{% endautoescape %}

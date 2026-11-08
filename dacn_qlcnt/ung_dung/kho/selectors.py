@@ -11,14 +11,16 @@ from .models import LoThuoc, TonKho
 def lay_so_du(*, nguoi=None, chi_nhanh=None, bo_qua_don=None):
     dang_giu = Value(0)
     if apps.is_installed("ung_dung.ban_hang"):
-        PhanBoDatGiu = apps.get_model("ban_hang", "PhanBoDatGiu")
-        giu = PhanBoDatGiu.objects.filter(
+        from ung_dung.ban_hang.models import TRANG_THAI_GIU
+
+        PhanBoDonHang = apps.get_model("ban_hang", "PhanBoDonHang")
+        giu = PhanBoDonHang.objects.filter(
             ton_kho_id=OuterRef("pk"),
-            chi_tiet_don_dat_giu__don_dat_giu__trang_thai="dang_giu",
-            chi_tiet_don_dat_giu__don_dat_giu__thoi_diem_het_giu__gt=timezone.now(),
+            chi_tiet_don_hang__don_hang__trang_thai__in=TRANG_THAI_GIU,
+            chi_tiet_don_hang__don_hang__thoi_diem_het_giu__gt=timezone.now(),
         )
         if bo_qua_don:
-            giu = giu.exclude(chi_tiet_don_dat_giu__don_dat_giu=bo_qua_don)
+            giu = giu.exclude(chi_tiet_don_hang__don_hang=bo_qua_don)
         giu = giu.values("ton_kho_id").annotate(tong=Sum("so_luong")).values("tong")
         dang_giu = Coalesce(
             Subquery(giu, output_field=BigIntegerField()), 0, output_field=BigIntegerField()

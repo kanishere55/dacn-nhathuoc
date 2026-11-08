@@ -1,3 +1,5 @@
+"""Giỏ hàng lưu trong session PostgreSQL; khóa dòng session khi sửa để hai tab không ghi đè."""
+
 from contextlib import contextmanager
 
 from django.contrib.sessions.models import Session
@@ -5,13 +7,11 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from ..gio_dat_giu import KHOA_GIO, SO_LUONG_TOI_DA, SO_THUOC_TOI_DA
-from ..selectors import gio_duoc_giu, lay_dong_gio
-from .dat_giu import dat_giu
+from ..gio_hang import KHOA_GIO, SO_LUONG_TOI_DA, SO_THUOC_TOI_DA
 
 
 @contextmanager
-def _sua_gio(phien):
+def sua_gio(phien):
     if not phien.session_key:
         gio = {}
         yield gio
@@ -47,18 +47,18 @@ def _sua_gio(phien):
 
 
 def them_thuoc(phien, thuoc, so_luong):
-    with _sua_gio(phien) as gio:
+    with sua_gio(phien) as gio:
         ma = str(thuoc.pk)
         if ma not in gio and len(gio) >= SO_THUOC_TOI_DA:
             raise ValidationError(f"Giỏ chứa tối đa {SO_THUOC_TOI_DA} loại thuốc.")
         tong = gio.get(ma, 0) + so_luong
         if tong > SO_LUONG_TOI_DA:
-            raise ValidationError("Số lượng thuốc vượt giới hạn.")
+            raise ValidationError(f"Mỗi thuốc đặt tối đa {SO_LUONG_TOI_DA} đơn vị.")
         gio[ma] = tong
 
 
 def sua_so_luong(phien, id_thuoc, so_luong):
-    with _sua_gio(phien) as gio:
+    with sua_gio(phien) as gio:
         ma = str(id_thuoc)
         if ma not in gio:
             raise ValidationError("Thuốc này không còn trong giỏ.")
@@ -68,15 +68,7 @@ def sua_so_luong(phien, id_thuoc, so_luong):
             del gio[ma]
 
 
-def xac_nhan_gio(phien, nguoi, chi_nhanh):
-    with _sua_gio(phien) as gio:
-        if not gio:
-            raise ValidationError("Giỏ đặt giữ đang trống.")
-        cac_dong = lay_dong_gio(gio)
-        if not gio_duoc_giu(cac_dong):
-            raise ValidationError(
-                "Vui lòng bỏ thuốc đã ngừng kinh doanh hoặc không còn trong danh mục."
-            )
-        don = dat_giu(nguoi, chi_nhanh, cac_dong)
-        gio.clear()
-        return don
+def xoa_cac_thuoc(phien, cac_id_thuoc):
+    with sua_gio(phien) as gio:
+        for ma in cac_id_thuoc:
+            gio.pop(str(ma), None)

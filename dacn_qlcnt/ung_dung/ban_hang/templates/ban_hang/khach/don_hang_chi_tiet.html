@@ -1,0 +1,54 @@
+{% extends "tai_khoan/khach/_khung_tai_khoan.html" %}
+{% block tieu_de %}Đơn {{ don.ma_don_hang }} · {{ block.super }}{% endblock %}
+{% block noi_dung_tai_khoan %}
+  <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}">Đơn của tôi</a><span aria-hidden="true">/</span><span>{{ don.ma_don_hang }}</span></nav>
+  <header class="tieu-de-khach dau-chi-tiet-don">
+    <div><h1>Đơn {{ don.ma_don_hang }}</h1><p>Đặt lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</p></div>
+    {% include "ban_hang/_nhan_don.html" %}
+  </header>
+  <section class="the-khach">
+    {% include "ban_hang/_tien_trinh.html" %}
+    {% if don.con_hieu_luc and don.trang_thai == "dang_giu" %}
+      <p class="thong-diep-don"><i data-lucide="clock" aria-hidden="true"></i>Hàng được giữ tại <strong>{{ don.chi_nhanh.ten_chi_nhanh }}</strong> đến <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong>. Đọc mã đơn cho nhân viên và thanh toán tại quầy.{% if co_ke_don %} Mang theo đơn thuốc của bác sĩ.{% endif %}</p>
+    {% elif don.trang_thai == "cho_xac_nhan" %}
+      <p class="thong-diep-don"><i data-lucide="hourglass" aria-hidden="true"></i>Nhà thuốc sẽ xác nhận đơn trước {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}.</p>
+    {% elif don.trang_thai_thanh_toan == "cho_hoan_tien" %}
+      <p class="thong-diep-don"><i data-lucide="rotate-ccw" aria-hidden="true"></i>Đơn đã thanh toán trước và đang chờ nhà thuốc hoàn tiền.</p>
+    {% endif %}
+  </section>
+  <div class="luoi-chi-tiet-don">
+    <section class="the-khach" aria-labelledby="san-pham-don">
+      <h2 id="san-pham-don">Sản phẩm</h2>
+      <ul class="dong-tom-tat">
+        {% for dong in cac_dong %}
+          <li><span class="anh-nho-dong"><i data-lucide="pill" aria-hidden="true"></i></span><span><a href="{% url 'danh_muc:khach_thuoc_chi_tiet' dong.thuoc.ma_thuoc %}">{{ dong.thuoc.ten_thuoc }}</a><small>{{ dong.so_luong }} × {{ dong.don_gia|tien }}{% if dong.phan_tram_giam %} (giảm {{ dong.phan_tram_giam }}%){% endif %}</small></span><strong>{{ dong.thanh_tien|tien }}</strong></li>
+        {% endfor %}
+      </ul>
+      {% include "ban_hang/_bang_tien.html" %}
+    </section>
+    <section class="the-khach" aria-labelledby="nhan-hang-don">
+      <h2 id="nhan-hang-don">{% if don.la_giao_hang %}Giao hàng{% else %}Nhận tại nhà thuốc{% endif %}</h2>
+      {% if don.la_giao_hang %}
+        <p><strong>{{ don.ten_nguoi_nhan }}</strong> · {{ don.so_dien_thoai_nhan }}</p>
+        <p class="ghi-chu-khach">{{ don.dia_chi_giao }}</p>
+        <p class="ghi-chu-khach">Giao từ {{ don.chi_nhanh.ten_chi_nhanh }}</p>
+      {% else %}
+        <p><strong>{{ don.chi_nhanh.ten_chi_nhanh }}</strong></p>
+        <p class="ghi-chu-khach">{{ don.chi_nhanh.dia_chi }}</p>
+        <p class="ghi-chu-khach">Mở cửa {{ don.chi_nhanh.gio_mo_cua|time:"H:i" }}–{{ don.chi_nhanh.gio_dong_cua|time:"H:i" }}{% if don.chi_nhanh.so_dien_thoai %} · {{ don.chi_nhanh.so_dien_thoai }}{% endif %}</p>
+      {% endif %}
+      {% if don.ghi_chu_khach %}<p class="ghi-chu-khach">Lời nhắn: {{ don.ghi_chu_khach }}</p>{% endif %}
+      <h2>Lịch sử</h2>
+      {% include "ban_hang/_lich_su.html" %}
+      <div class="hanh-dong-khach">
+        <a class="nut nut-phu" href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn nhà thuốc</a>
+        {% if duoc_huy %}
+          <form method="post" action="{% url 'ban_hang:khach_don_hang_huy' don.pk %}" onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')">
+            {% csrf_token %}<input type="hidden" name="ly_do" value="Khách hủy đơn">
+            <button class="nut nut-nguy-hiem" type="submit">Hủy đơn</button>
+          </form>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+{% endblock %}

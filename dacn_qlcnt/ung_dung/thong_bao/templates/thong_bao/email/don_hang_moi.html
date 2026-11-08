@@ -1,0 +1,13 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten }},</p>
+  <p style="margin:0 0 12px;">Nhà thuốc đã nhận đơn <strong>{{ don.ma_don_hang }}</strong> lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }}.</p>
+  {% if don.la_giao_hang %}
+    <p style="margin:0 0 12px;">Giao tới: {{ don.ten_nguoi_nhan }} · {{ don.so_dien_thoai_nhan }}<br>{{ don.dia_chi_giao }}<br>Từ: {{ don.chi_nhanh.ten_chi_nhanh }}</p>
+  {% else %}
+    <p style="margin:0 0 12px;">Nhận tại: <strong>{{ don.chi_nhanh.ten_chi_nhanh }}</strong>, {{ don.chi_nhanh.dia_chi }}.<br>Hàng được giữ đến {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}. Thanh toán khi nhận tại quầy.</p>
+  {% endif %}
+  {% include "thong_bao/email/_bang_don.html" %}
+  <p style="margin:0 0 12px;">Thanh toán: {{ don.get_phuong_thuc_thanh_toan_display }}.</p>
+  <p style="margin:18px 0;"><a href="{{ url_don }}" style="display:inline-block;padding:11px 18px;border-radius:7px;background:#116b54;color:#ffffff;text-decoration:none;font-weight:bold;">Theo dõi đơn</a></p>
+{% endblock %}

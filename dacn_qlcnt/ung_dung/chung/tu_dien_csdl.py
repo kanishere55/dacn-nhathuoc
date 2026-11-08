@@ -16,6 +16,7 @@ TU_VUNG = frozenset(
     can chao cho co de email giao ho loai loi mac mung nguoi nhac otp phien quen sai su tieu van
     anh bat bieu byte cach cao chat chieu chong cong cua dau giam gio hien khop khuyen luu mai
     ngan nuoc pham phu ta tac thi tram y
+    bai bi chua chuan den do hoan lich met moi niem phi phuong thanh that tien toan tong yet
     """.split()
 )
 
@@ -29,6 +30,7 @@ DINH_DANH_CO_BOI_CANH = {
     ("chi_tiet_phieu_ban", "ten_thuoc_luc_ban"),
     # Người nhận có thể khác chủ tài khoản; tên đăng nhập chờ tạo khi đăng ký.
     ("dia_chi_giao_hang", "ten_nguoi_nhan"),
+    ("don_hang", "ten_nguoi_nhan"),
     ("phien_xac_thuc", "ten_dang_nhap_dang_ky"),
 }
 

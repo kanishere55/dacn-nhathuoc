@@ -1,11 +1,12 @@
-from django.db.models import Case, DecimalField, F, Q, Sum, Value, When
+from django.db.models import Count, DecimalField, F, Q, Sum
 from django.db.models.functions import Now
 
 from ung_dung.chung.permissions import la_quan_tri
 from ung_dung.danh_muc.models import Thuoc
+from ung_dung.danh_muc.selectors import them_gia_va_anh
 
-from .gio_dat_giu import KHOA_GIO
-from .models import ChiTietPhieuBan, DonDatGiu, PhieuBan
+from .gio_hang import KHOA_GIO
+from .models import TRANG_THAI_GIU, ChiTietPhieuBan, DonHang, PhieuBan
 
 
 def lay_gio(phien):
@@ -13,30 +14,46 @@ def lay_gio(phien):
 
 
 def lay_dong_gio(gio):
-    cac_thuoc = Thuoc.objects.select_related("don_vi_tinh").in_bulk([int(ma) for ma in gio])
-    return [
-        {"id_thuoc": int(ma), "thuoc": cac_thuoc.get(int(ma)), "so_luong": so_luong}
-        for ma, so_luong in gio.items()
-    ]
+    """Các dòng giỏ kèm giá đang áp dụng; thuốc đã ngừng kinh doanh có thuoc=None."""
+    cac_thuoc = (
+        them_gia_va_anh(Thuoc.objects.filter(dang_hoat_dong=True))
+        .select_related("don_vi_tinh")
+        .in_bulk([int(ma) for ma in gio])
+    )
+    cac_dong = []
+    for ma, so_luong in gio.items():
+        thuoc = cac_thuoc.get(int(ma))
+        cac_dong.append(
+            {
+                "id_thuoc": int(ma),
+                "thuoc": thuoc,
+                "so_luong": so_luong,
+                "thanh_tien": thuoc.don_gia * so_luong if thuoc else 0,
+            }
+        )
+    return cac_dong
 
 
 def gio_duoc_giu(cac_dong):
-    return bool(cac_dong) and all(
-        dong["thuoc"] and dong["thuoc"].dang_hoat_dong for dong in cac_dong
-    )
+    return bool(cac_dong) and all(dong["thuoc"] for dong in cac_dong)
 
 
-def lay_don(nguoi):
+def tom_tat_gio(cac_dong):
+    hop_le = [dong for dong in cac_dong if dong["thuoc"]]
+    return {
+        "tien_hang": sum(dong["thanh_tien"] for dong in hop_le),
+        "so_luong": sum(dong["so_luong"] for dong in hop_le),
+        "co_ke_don": any(dong["thuoc"].la_thuoc_ke_don for dong in hop_le),
+        "hop_le": gio_duoc_giu(cac_dong),
+    }
+
+
+def lay_don(nguoi, *, trang_thai="", hinh_thuc_nhan="", tim=""):
     tap_hop = (
-        DonDatGiu.objects.select_related("chi_nhanh", "khach_hang")
+        DonHang.objects.select_related("chi_nhanh", "khach_hang")
         .annotate(
-            con_hieu_luc=Q(trang_thai="dang_giu", thoi_diem_het_giu__gt=Now()),
-            nhan_trang_thai=Case(
-                When(trang_thai="dang_giu", thoi_diem_het_giu__gt=Now(), then=Value("Đang giữ")),
-                When(trang_thai="da_huy", then=Value("Đã hủy")),
-                When(trang_thai="da_nhan", then=Value("Đã nhận tại quầy")),
-                default=Value("Hết hạn"),
-            ),
+            con_hieu_luc=Q(trang_thai__in=TRANG_THAI_GIU, thoi_diem_het_giu__gt=Now()),
+            qua_han_giu=Q(trang_thai__in=TRANG_THAI_GIU, thoi_diem_het_giu__lte=Now()),
         )
         .order_by("-pk")
     )
@@ -48,15 +65,40 @@ def lay_don(nguoi):
                 else {"chi_nhanh_id": nguoi.chi_nhanh_id}
             )
         )
+    if trang_thai:
+        tap_hop = tap_hop.filter(trang_thai=trang_thai)
+    if hinh_thuc_nhan:
+        tap_hop = tap_hop.filter(hinh_thuc_nhan=hinh_thuc_nhan)
+    if tim:
+        tap_hop = tap_hop.filter(
+            Q(ma_don_hang__icontains=tim)
+            | Q(khach_hang__ten_dang_nhap__icontains=tim)
+            | Q(khach_hang__ho_ten__icontains=tim)
+            | Q(so_dien_thoai_nhan__icontains=tim)
+        )
     return tap_hop
 
 
+def dem_don_theo_trang_thai(nguoi):
+    return dict(
+        lay_don(nguoi)
+        .order_by()
+        .values_list("trang_thai")
+        .annotate(so=Count("pk"))
+        .values_list("trang_thai", "so")
+    )
+
+
 def lay_chi_tiet_don(don):
-    return don.chitietdondatgiu_set.select_related("thuoc__don_vi_tinh").order_by("pk")
+    return don.cac_dong.select_related("thuoc__don_vi_tinh").order_by("pk")
+
+
+def lay_lich_su(don):
+    return don.cac_lich_su.select_related("nguoi_thuc_hien").order_by("thoi_diem_tao", "pk")
 
 
 def lay_phieu_ban(nguoi):
-    tap_hop = PhieuBan.objects.select_related("chi_nhanh", "nguoi_lap").order_by("-pk")
+    tap_hop = PhieuBan.objects.select_related("chi_nhanh", "nguoi_lap", "don_hang").order_by("-pk")
     if not la_quan_tri(nguoi):
         tap_hop = tap_hop.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
     return tap_hop

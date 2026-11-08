@@ -97,16 +97,16 @@
     <div>
       <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="don-cho-nhan">
         <div class="dau-khoi">
-          <h2 id="don-cho-nhan">Đơn đặt giữ đang chờ nhận</h2>
-          <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_dat_giu_danh_sach' %}">Xem tất cả</a>
+          <h2 id="don-cho-nhan">Đơn đang chờ xử lý</h2>
+          <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_danh_sach' %}">Xem tất cả</a>
         </div>
         <ul class="danh-sach-bang-dieu-khien">
           {% for don in cac_don_cho_nhan %}
             <li>
-              <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_dat_giu_chi_tiet' don.pk %}">{{ don.ma_don_dat_giu }}</a>
-              <span>{{ don.khach_hang }} · Hạn nhận {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% if quan_tri_chuoi %} · {{ don.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
+              <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a>
+              <span>{{ don.get_trang_thai_display }} · {{ don.khach_hang }} · Hạn {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% if quan_tri_chuoi %} · {{ don.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
             </li>
-          {% empty %}<li>Chưa có đơn đặt giữ đang chờ nhận.</li>{% endfor %}
+          {% empty %}<li>Không có đơn đang chờ.</li>{% endfor %}
         </ul>
       </section>
       {% if not quan_tri_chuoi %}

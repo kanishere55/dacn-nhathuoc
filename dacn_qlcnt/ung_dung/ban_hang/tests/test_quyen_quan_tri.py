@@ -6,8 +6,9 @@ from django.urls import reverse
 from ung_dung.kho.models import TonKho
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 
-from ..models import DonDatGiu, PhieuBan
-from ..services.dat_giu import dat_giu, huy_giu
+from ..models import DonHang, PhieuBan
+from ..services.dat_hang import dat_giu
+from ..services.don_hang import huy_don
 from ..services.phieu_ban import ban_tai_quay
 
 
@@ -49,13 +50,15 @@ class QuyenQuanTriBanHangTests(TestCase):
             403,
         )
         self.assertNotContains(self.client.get(reverse("webgis:ban_do")), "data-url-giu=")
-        self.assertEqual(DonDatGiu.objects.count(), 1)
+        self.assertEqual(DonHang.objects.count(), 1)
 
     def test_quan_tri_khong_nhan_don_giu(self):
         with self.assertRaises(PermissionDenied):
-            ban_tai_quay(self.quan_tri, self.d.cn2, [], don_dat_giu=self.don)
+            ban_tai_quay(self.quan_tri, self.d.cn2, [], don_hang=self.don)
         self.assertEqual(
-            self.client.post(reverse("ban_hang:don_dat_giu_nhan", args=[self.don.pk])).status_code,
+            self.client.post(
+                reverse("ban_hang:don_hang_xu_ly", args=[self.don.pk, "nhan_tai_quay"])
+            ).status_code,
             403,
         )
         self.assertFalse(PhieuBan.objects.exists())
@@ -64,9 +67,11 @@ class QuyenQuanTriBanHangTests(TestCase):
 
     def test_quan_tri_khong_huy_don_giu(self):
         with self.assertRaises(PermissionDenied):
-            huy_giu(self.quan_tri, self.don)
+            huy_don(self.quan_tri, self.don)
         self.assertEqual(
-            self.client.post(reverse("ban_hang:don_dat_giu_huy", args=[self.don.pk])).status_code,
+            self.client.post(
+                reverse("ban_hang:don_hang_xu_ly", args=[self.don.pk, "huy"])
+            ).status_code,
             403,
         )
         self.don.refresh_from_db()
@@ -86,14 +91,18 @@ class QuyenQuanTriBanHangTests(TestCase):
                 self.client.get(reverse("ban_hang:phieu_ban_chi_tiet", args=[phieu.pk])),
                 str(phieu),
             )
-        trang = self.client.get(reverse("ban_hang:don_dat_giu_danh_sach"))
+        trang = self.client.get(reverse("ban_hang:don_hang_danh_sach"))
         for don in (don_cn1, self.don):
             self.assertContains(trang, str(don))
-            chi_tiet = self.client.get(reverse("ban_hang:don_dat_giu_chi_tiet", args=[don.pk]))
+            chi_tiet = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
             self.assertContains(chi_tiet, str(don))
-            self.assertNotContains(chi_tiet, reverse("ban_hang:don_dat_giu_nhan", args=[don.pk]))
-            self.assertNotContains(chi_tiet, reverse("ban_hang:don_dat_giu_huy", args=[don.pk]))
+            self.assertNotContains(
+                chi_tiet, reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "nhan_tai_quay"])
+            )
+            self.assertNotContains(
+                chi_tiet, reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "huy"])
+            )
         self.client.force_login(d.ql2)
-        chi_tiet = self.client.get(reverse("ban_hang:don_dat_giu_chi_tiet", args=[self.don.pk]))
-        self.assertContains(chi_tiet, "Hủy giữ")
-        self.assertContains(chi_tiet, "Xác nhận nhận và thanh toán tại quầy")
+        chi_tiet = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[self.don.pk]))
+        self.assertContains(chi_tiet, "Hủy đơn")
+        self.assertContains(chi_tiet, "Khách đã nhận và thanh toán tại quầy")

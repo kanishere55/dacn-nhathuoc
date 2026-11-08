@@ -36,6 +36,7 @@ def tao(request):
                 form.cleaned_data["chi_nhanh"],
                 [d for d in cac_dong.cleaned_data if d and not d.get("DELETE")],
                 khoa_yeu_cau=form.cleaned_data["khoa_yeu_cau"],
+                da_kiem_tra_don_thuoc=form.cleaned_data["da_kiem_tra_don_thuoc"],
             )
         except ValidationError as loi:
             form.add_error(None, loi)
@@ -47,7 +48,7 @@ def tao(request):
         {
             "form": form,
             "cac_dong": cac_dong,
-            "tieu_de": "Bán tại quầy · giá hiện tại / đơn vị cơ sở",
+            "tieu_de": "Bán tại quầy · giá đang áp dụng / đơn vị cơ sở",
         },
     )
 

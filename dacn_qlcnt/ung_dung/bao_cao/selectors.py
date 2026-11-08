@@ -3,7 +3,7 @@ from datetime import datetime, time, timedelta
 from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.utils import timezone
 
-from ung_dung.ban_hang.models import ChiTietPhieuBan, DonDatGiu, PhieuBan
+from ung_dung.ban_hang.models import ChiTietPhieuBan, DonHang, PhieuBan
 from ung_dung.chung.permissions import kiem_tra_vai_tro
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 from ung_dung.kho.models import (
@@ -39,7 +39,7 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
     phieu_chuyen = PhieuDieuChuyen.objects.filter(
         Q(chi_nhanh_nguon__in=cac_chi_nhanh) | Q(chi_nhanh_dich__in=cac_chi_nhanh), **trong_ky
     )
-    don = DonDatGiu.objects.filter(chi_nhanh__in=cac_chi_nhanh, **trong_ky)
+    don = DonHang.objects.filter(chi_nhanh__in=cac_chi_nhanh, **trong_ky)
     dong_ban = ChiTietPhieuBan.objects.filter(phieu_ban__in=phieu_ban)
     tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
     cac_luong = {}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block tieu_de %}Đơn hàng · Khu quản lý{% endblock %}
+{% block vi_tri %}Đơn hàng{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">BÁN HÀNG</p>
+    <h1>Đơn hàng</h1>
+    <p>Đơn giao tận nơi và đơn đặt giữ nhận tại quầy của {% if user.vai_tro == "quan_tri_chuoi" %}toàn chuỗi{% else %}chi nhánh{% endif %}.</p>
+  </header>
+  <nav class="tab-quan-ly" aria-label="Lọc theo trạng thái">
+    <a href="?{% if bo_loc.hinh_thuc_nhan %}hinh_thuc_nhan={{ bo_loc.hinh_thuc_nhan }}{% endif %}"{% if not bo_loc.trang_thai %} aria-current="page"{% endif %}>Tất cả <span>{{ tong_so }}</span></a>
+    {% for ma, nhan, so in cac_trang_thai %}{% if so %}<a href="{% querystring trang_thai=ma page=None %}"{% if bo_loc.trang_thai == ma %} aria-current="page"{% endif %}>{{ nhan }} <span>{{ so }}</span></a>{% endif %}{% endfor %}
+  </nav>
+  <form method="get" class="thanh-cong-cu khoi-trang">
+    {% if bo_loc.trang_thai %}<input type="hidden" name="trang_thai" value="{{ bo_loc.trang_thai }}">{% endif %}
+    <label>Hình thức
+      <select name="hinh_thuc_nhan" onchange="this.form.requestSubmit()">
+        <option value="">Tất cả</option>
+        {% for ma, nhan in cac_hinh_thuc %}<option value="{{ ma }}"{% if bo_loc.hinh_thuc_nhan == ma %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Tìm <input type="search" name="tim" value="{{ bo_loc.tim }}" placeholder="Mã đơn, khách, số điện thoại"></label>
+    <button class="nut" type="submit">Lọc</button>
+  </form>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Mã đơn</th><th>Đặt lúc</th><th>Khách</th><th>Hình thức</th>{% if user.vai_tro == "quan_tri_chuoi" %}<th>Chi nhánh</th>{% endif %}<th>Tổng</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        {% for don in trang %}
+          <tr>
+            <td><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a></td>
+            <td>{{ don.thoi_diem_tao|date:"H:i d/m" }}</td>
+            <td>{{ don.khach_hang.ho_ten|default:don.khach_hang.ten_dang_nhap }}</td>
+            <td>{{ don.get_hinh_thuc_nhan_display }}<br><small>{{ don.get_phuong_thuc_thanh_toan_display }}</small></td>
+            {% if user.vai_tro == "quan_tri_chuoi" %}<td>{{ don.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
+            <td>{{ don.tong_thanh_toan|tien }}</td>
+            <td>{% include "ban_hang/_nhan_don.html" %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">Không có đơn phù hợp.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if trang.has_other_pages %}
+    <nav class="thanh-cong-cu" aria-label="Phân trang">
+      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+      <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
+      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

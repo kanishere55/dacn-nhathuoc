@@ -172,7 +172,7 @@
     if (khung.dataset.urlGio) {
       const linkGio = document.createElement('a');
       linkGio.className = 'nut';
-      linkGio.href = khung.dataset.urlGio + '?' + new URLSearchParams({chi_nhanh: chiNhanh.ma_chi_nhanh});
+      linkGio.href = khung.dataset.urlGio + '?' + new URLSearchParams({hinh_thuc_nhan: 'nhan_tai_quay', chi_nhanh: chiNhanh.id_chi_nhanh});
       linkGio.textContent = 'Chọn nhận tại đây';
       tacVu.append(linkGio);
     }

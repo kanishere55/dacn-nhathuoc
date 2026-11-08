@@ -55,7 +55,7 @@ def dieu_huong(request):
         cac_muc.extend(KHO_QUAN_LY)
         cac_muc.append(("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"))
     if noi_bo:
-        cac_muc.append(("ban_hang:don_dat_giu_danh_sach", "Đơn đặt giữ", "shopping-basket"))
+        cac_muc.append(("ban_hang:don_hang_danh_sach", "Đơn hàng", "shopping-basket"))
     if nhan_su:
         cac_muc.append(("tro_chuyen:danh_sach", "Trò chuyện", "messages-square"))
     if quan_tri:
@@ -66,8 +66,10 @@ def dieu_huong(request):
                 ("thong_bao:nhat_ky_email", "Email hệ thống", "mail"),
             )
         )
+    phien = getattr(request, "session", None)
     return {
         "noi_bo": noi_bo,
+        "so_mon_gio": len(phien.get("gio_hang", {})) if phien is not None and not noi_bo else 0,
         "menu_khach": [
             {"duong_dan": reverse(ten), "nhan": nhan, "dang_chon": trang in cac_trang}
             for ten, nhan, cac_trang in MENU_KHACH

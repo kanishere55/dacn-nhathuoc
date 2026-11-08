@@ -54,10 +54,11 @@
         </div>
       {% endif %}
       {% if not noi_bo %}
-        <form class="them-vao-gio" action="{% url 'ban_hang:gio_dat_giu_them' thuoc.ma_thuoc %}" method="post">
+        <form class="them-vao-gio" action="{% url 'ban_hang:gio_hang_them' thuoc.ma_thuoc %}" method="post">
           {% csrf_token %}
           <label for="{{ form_them.so_luong.id_for_label }}">{{ form_them.so_luong.label }}{{ form_them.so_luong }}</label>
-          <button class="nut"><i data-lucide="shopping-basket" aria-hidden="true"></i>Thêm vào giỏ</button>
+          <button class="nut nut-phu" name="next" value="{{ request.path }}"><i data-lucide="shopping-cart" aria-hidden="true"></i>Thêm vào giỏ</button>
+          <button class="nut" name="next" value="{% url 'ban_hang:dat_hang' %}"><i data-lucide="zap" aria-hidden="true"></i>{% if thuoc.la_thuoc_ke_don %}Đặt giữ ngay{% else %}Mua ngay{% endif %}</button>
         </form>
       {% endif %}
       <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Xem chi nhánh còn thuốc này</a>

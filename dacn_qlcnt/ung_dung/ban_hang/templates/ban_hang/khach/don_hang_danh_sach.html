@@ -1,0 +1,33 @@
+{% extends "tai_khoan/khach/_khung_tai_khoan.html" %}
+{% block tieu_de %}Đơn của tôi · {{ block.super }}{% endblock %}
+{% block noi_dung_tai_khoan %}
+  <header class="tieu-de-khach"><h1>Đơn của tôi</h1></header>
+  <nav class="tab-khach" aria-label="Lọc đơn">
+    {% for ma, nhan in cac_nhom %}<a href="?nhom={{ ma }}"{% if ma == nhom %} aria-current="page"{% endif %}>{{ nhan }}</a>{% endfor %}
+  </nav>
+  <div class="cac-the-don">
+    {% for don in trang %}
+      <a class="the-khach the-don" href="{% url 'ban_hang:khach_don_hang_chi_tiet' don.pk %}">
+        <header>
+          <span><strong>{{ don.ma_don_hang }}</strong><small>{{ don.thoi_diem_tao|date:"H:i d/m/Y" }} · {{ don.get_hinh_thuc_nhan_display }}</small></span>
+          {% include "ban_hang/_nhan_don.html" %}
+        </header>
+        <p class="ghi-chu-khach">{% for dong in don.cac_dong.all|slice:":3" %}{{ dong.thuoc.ten_thuoc }} × {{ dong.so_luong }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if don.cac_dong.all|length > 3 %} và {{ don.cac_dong.all|length|add:"-3" }} sản phẩm khác{% endif %}</p>
+        <footer><span>{{ don.chi_nhanh.ten_chi_nhanh }}</span><strong>{{ don.tong_thanh_toan|tien }}</strong></footer>
+      </a>
+    {% empty %}
+      <div class="the-khach khoang-trong-khach">
+        <i data-lucide="package-open" aria-hidden="true"></i>
+        <h2>Chưa có đơn nào</h2>
+        <a class="nut" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Mua thuốc</a>
+      </div>
+    {% endfor %}
+  </div>
+  {% if trang.has_other_pages %}
+    <nav class="phan-trang-khach" aria-label="Phân trang">
+      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+      <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}</span>
+      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}
