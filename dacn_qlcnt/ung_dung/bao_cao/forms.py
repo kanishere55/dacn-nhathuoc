@@ -21,7 +21,7 @@ class LocBaoCaoForm(forms.Form):
         hom_nay = timezone.localdate()
         kwargs.setdefault("initial", {"tu_ngay": hom_nay - timedelta(days=29), "den_ngay": hom_nay})
         super().__init__(*args, **kwargs)
-        self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
+        self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi, ca_chi_nhanh_ngung=True)
 
     def clean(self):
         du_lieu = super().clean()

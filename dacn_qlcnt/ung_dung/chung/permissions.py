@@ -3,26 +3,28 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 
+NHAN_SU_CHI_NHANH = ("quan_ly_chi_nhanh", "nhan_vien")
+NHAN_SU_CHUOI = ("quan_tri_chuoi", *NHAN_SU_CHI_NHANH)
+
+
+def co_vai_tro(nguoi, *vai_tro):
+    return nguoi.is_authenticated and nguoi.is_active and nguoi.vai_tro in vai_tro
+
 
 def la_quan_tri(nguoi):
-    if not nguoi.is_authenticated or not nguoi.is_active:
-        return False
-    vai_tro = getattr(nguoi, "vai_tro", None)
-    return vai_tro == "quan_tri_chuoi" if vai_tro is not None else nguoi.la_quan_tri_he_thong
+    return co_vai_tro(nguoi, "quan_tri_chuoi")
 
 
 def kiem_tra_vai_tro(nguoi, *vai_tro):
     if not nguoi.is_authenticated or not nguoi.is_active:
         raise PermissionDenied("Cần đăng nhập tài khoản đang hoạt động.")
-    if not la_quan_tri(nguoi) and nguoi.vai_tro not in vai_tro:
+    if nguoi.vai_tro not in vai_tro:
         raise PermissionDenied("Bạn không có quyền thực hiện thao tác này.")
 
 
-def kiem_tra_chi_nhanh(nguoi, chi_nhanh, *, quan_ly=False):
-    kiem_tra_vai_tro(
-        nguoi, *(("quan_ly_chi_nhanh",) if quan_ly else ("quan_ly_chi_nhanh", "nhan_vien"))
-    )
-    if not la_quan_tri(nguoi) and nguoi.chi_nhanh_id != chi_nhanh.pk:
+def kiem_tra_quyen_ghi_chi_nhanh(nguoi, chi_nhanh, *, quan_ly=False):
+    kiem_tra_vai_tro(nguoi, *(("quan_ly_chi_nhanh",) if quan_ly else NHAN_SU_CHI_NHANH))
+    if nguoi.chi_nhanh_id != chi_nhanh.pk:
         raise PermissionDenied("Chi nhánh không thuộc phạm vi của bạn.")
 
 

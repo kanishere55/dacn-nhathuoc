@@ -2,7 +2,7 @@ from django.conf import settings
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
 from ung_dung.danh_muc.models import DonViTinh, NhomATC, Thuoc
 
 
@@ -16,6 +16,7 @@ def ban_do(request):
             .select_related("don_vi_tinh")
             .order_by("ten_thuoc"),
             "may_chu_osrm": getattr(settings, "OSRM_BASE_URL", "https://router.project-osrm.org"),
+            "duoc_dat_giu": co_vai_tro(request.user, "khach_hang"),
         },
     )
 

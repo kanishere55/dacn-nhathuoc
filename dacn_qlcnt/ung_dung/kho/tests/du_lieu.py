@@ -43,6 +43,7 @@ def tao_du_lieu():
     ql = nguoi.objects.create_user(
         "quan_ly_thu", password="Mat-khau-thu-2026!", vai_tro="quan_ly_chi_nhanh", chi_nhanh=cn
     )
+    ql2 = nguoi.objects.create_user("quan_ly_thu_hai", vai_tro="quan_ly_chi_nhanh", chi_nhanh=cn2)
     khach = nguoi.objects.create_user("khach_thu", password="Mat-khau-thu-2026!")
     khac = nguoi.objects.create_user("khach_khac", password="Mat-khau-thu-2026!")
     return SimpleNamespace(
@@ -55,6 +56,7 @@ def tao_du_lieu():
         admin=admin,
         nv=nv,
         ql=ql,
+        ql2=ql2,
         khach=khach,
         khac=khac,
     )

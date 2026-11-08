@@ -108,25 +108,28 @@
     nutDuong.className = 'nut nut-phu';
     nutDuong.textContent = 'Xem đường';
     nutDuong.addEventListener('click', xemDuong);
-    const nutGiu = document.createElement('button');
-    nutGiu.type = 'button';
-    nutGiu.className = 'nut';
-    nutGiu.textContent = 'Đặt giữ 24 giờ';
-    nutGiu.addEventListener('click', async () => {
-      nutGiu.disabled = true;
-      try {
-        const don = await goiApi(khung.dataset.urlGiu, {
-          id_chi_nhanh: chiNhanh.id_chi_nhanh, cac_thuoc: yeuCau.cac_thuoc,
-        });
-        window.location.assign(don.duong_dan);
-      } catch (loi) {
-        bao.textContent = loi.message;
-        nutGiu.disabled = false;
-      }
-    });
     const dong = document.createElement('article');
     dong.className = 'ket-qua-chi-nhanh';
-    dong.append(ten, diaChi, nutDuong, nutGiu);
+    dong.append(ten, diaChi, nutDuong);
+    if (khung.dataset.urlGiu) {
+      const nutGiu = document.createElement('button');
+      nutGiu.type = 'button';
+      nutGiu.className = 'nut';
+      nutGiu.textContent = 'Đặt giữ 24 giờ';
+      nutGiu.addEventListener('click', async () => {
+        nutGiu.disabled = true;
+        try {
+          const don = await goiApi(khung.dataset.urlGiu, {
+            id_chi_nhanh: chiNhanh.id_chi_nhanh, cac_thuoc: yeuCau.cac_thuoc,
+          });
+          window.location.assign(don.duong_dan);
+        } catch (loi) {
+          bao.textContent = loi.message;
+          nutGiu.disabled = false;
+        }
+      });
+      dong.append(nutGiu);
+    }
     ketQua.append(dong);
   }
 

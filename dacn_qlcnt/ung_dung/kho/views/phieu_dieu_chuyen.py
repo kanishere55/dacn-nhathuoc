@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
 
 from ..forms import DongThuocFormSet, PhieuDieuChuyenForm
 from ..models import ChiTietPhieuDieuChuyen, PhieuDieuChuyen
@@ -9,7 +9,7 @@ from ..selectors import lay_phieu
 from ..services.phieu_dieu_chuyen import dieu_chuyen
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
 def danh_sach(request):
     return render(
         request,
@@ -17,7 +17,11 @@ def danh_sach(request):
         {
             "tieu_de": "Điều chuyển",
             "cac_phieu": lay_phieu(request.user, PhieuDieuChuyen, "chi_nhanh_nguon"),
-            "url_tao": "kho:phieu_dieu_chuyen_tao",
+            "url_tao": (
+                "kho:phieu_dieu_chuyen_tao"
+                if co_vai_tro(request.user, "quan_ly_chi_nhanh")
+                else None
+            ),
             "url_chi_tiet": "kho:phieu_dieu_chuyen_chi_tiet",
         },
     )
@@ -47,7 +51,7 @@ def tao(request):
     )
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
 def chi_tiet(request, ma):
     phieu = get_object_or_404(lay_phieu(request.user, PhieuDieuChuyen, "chi_nhanh_nguon"), pk=ma)
     return render(

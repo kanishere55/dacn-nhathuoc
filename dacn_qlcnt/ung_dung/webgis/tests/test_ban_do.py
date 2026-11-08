@@ -42,6 +42,7 @@ class WebGISTests(TestCase):
     def test_heatmap_chi_cong_cung_don_vi_va_chi_quan_tri_xem(self):
         d = self.d
         tao_ton(d, "LO-VIEN", luong=7)
+        tao_ton(d, "LO-VIEN-HAI", luong=11, chi_nhanh=d.cn2)
         chai = DonViTinh.objects.create(ma_don_vi_tinh="CHAI", ten_don_vi_tinh="Chai")
         thuoc = Thuoc.objects.create(
             ma_thuoc="DUNG-DICH",
@@ -61,14 +62,28 @@ class WebGISTests(TestCase):
         self.client.force_login(d.nv)
         self.assertEqual(self.client.get(url, loc).status_code, 403)
         self.client.force_login(d.admin)
+        self.assertContains(self.client.get(reverse("webgis:ban_do_nhiet")), "Bản đồ nhiệt")
         kq = self.client.get(url, loc).json()["ket_qua"]
-        self.assertEqual({p["ten_chi_nhanh"]: p["so_luong"] for p in kq}[d.cn.ten_chi_nhanh], 7)
+        self.assertEqual(
+            {p["ten_chi_nhanh"]: p["so_luong"] for p in kq},
+            {d.cn.ten_chi_nhanh: 7, d.cn2.ten_chi_nhanh: 11},
+        )
+        d.cn2.dang_hoat_dong = False
+        d.cn2.save(update_fields=["dang_hoat_dong"])
+        kq = self.client.get(url, loc).json()["ket_qua"]
+        self.assertEqual(
+            {p["ten_chi_nhanh"]: p["so_luong"] for p in kq},
+            {d.cn.ten_chi_nhanh: 7, d.cn2.ten_chi_nhanh: 0},
+        )
 
     def test_trang_khach_render_va_api_giu_thanh_cong(self):
         d = self.d
         tao_ton(d)
         self.assertContains(self.client.get(reverse("webgis:ban_do")), "vendor/leaflet/leaflet.js")
         self.client.force_login(d.khach)
+        self.assertContains(
+            self.client.get(reverse("webgis:ban_do")), f'data-url-giu="{reverse("webgis:dat_giu")}"'
+        )
         phan_hoi = self.client.post(
             reverse("webgis:dat_giu"),
             {"id_chi_nhanh": d.cn.pk, "cac_thuoc": [{"id_thuoc": d.thuoc.pk, "so_luong": 1}]},

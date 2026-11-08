@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from ung_dung.chung.permissions import kiem_tra_chi_nhanh
+from ung_dung.chung.permissions import kiem_tra_quyen_ghi_chi_nhanh
 from ung_dung.chung.van_ban import cat_khoang_trang
 from ung_dung.danh_muc.models import ChiNhanh
 
@@ -11,7 +11,7 @@ from .giao_dich import doi_ve_co_so, ma_chung_tu, phan_bo_fefo, thay_doi_ton
 
 @transaction.atomic
 def dieu_chuyen(nguoi, nguon, dich, cac_dong, ghi_chu=""):
-    kiem_tra_chi_nhanh(nguoi, nguon, quan_ly=True)
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, nguon, quan_ly=True)
     if nguon.pk == dich.pk or not cac_dong:
         raise ValidationError("Cần hai chi nhánh khác nhau và thuốc cần chuyển.")
     cac_chi_nhanh = list(

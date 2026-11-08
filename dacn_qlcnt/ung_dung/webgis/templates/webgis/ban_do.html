@@ -6,7 +6,9 @@
 {% block noi_dung %}
   <h1>Tìm chi nhánh còn đủ thuốc</h1>
   <p>Chọn đúng thuốc và lượng theo đơn vị cơ sở. Nhận và thanh toán tại quầy.</p>
-  <div class="khung-webgis" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}" data-url-giu="{% url 'webgis:dat_giu' %}" data-osrm="{{ may_chu_osrm }}">
+  <div class="khung-webgis" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}"
+       {% if duoc_dat_giu %}data-url-giu="{% url 'webgis:dat_giu' %}"{% endif %}
+       data-osrm="{{ may_chu_osrm }}">
     <form data-tim-kiem class="khoi-trang form-chinh">
       {% csrf_token %}
       <label>Kinh độ<input name="kinh_do" type="number" step="any" min="-180" max="180" value="106.7" required></label>

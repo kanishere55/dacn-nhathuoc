@@ -60,5 +60,5 @@ def lay_ban_do_nhiet(nguoi, nhom_atc, don_vi_tinh):
             "kinh_do": cn.vi_tri.x,
             "so_luong": cac_luong.get(cn.pk, 0),
         }
-        for cn in ChiNhanh.objects.filter(dang_hoat_dong=True)
+        for cn in ChiNhanh.objects.order_by("ma_chi_nhanh")
     ]

@@ -48,9 +48,11 @@ def lay_danh_muc(nguoi, loai, tu_khoa=""):
     return tap_hop
 
 
-def lay_chi_nhanh(nguoi):
-    return (
-        ChiNhanh.objects.filter(dang_hoat_dong=True)
-        .filter(**({} if la_quan_tri(nguoi) else {"pk": nguoi.chi_nhanh_id}))
-        .order_by("ma_chi_nhanh")
-    )
+def lay_chi_nhanh(nguoi, *, ca_chi_nhanh_ngung=False):
+    quan_tri = la_quan_tri(nguoi)
+    cac_chi_nhanh = ChiNhanh.objects.order_by("ma_chi_nhanh")
+    if not quan_tri:
+        cac_chi_nhanh = cac_chi_nhanh.filter(pk=nguoi.chi_nhanh_id)
+    if not (ca_chi_nhanh_ngung and quan_tri):
+        cac_chi_nhanh = cac_chi_nhanh.filter(dang_hoat_dong=True)
+    return cac_chi_nhanh

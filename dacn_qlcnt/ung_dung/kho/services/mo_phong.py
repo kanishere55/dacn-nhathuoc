@@ -19,7 +19,7 @@ from ung_dung.danh_muc.models import (
 )
 from ung_dung.tai_khoan.services import tao_tai_khoan_ky_thuat
 
-from .phieu_nhap import nhap_hang
+from ..models import LoThuoc, TonKho
 
 CHI_NHANH_MO_PHONG = (
     ("MP-CN-01", "Nhà thuốc mô phỏng Bến Thành", "Khu vực Bến Thành, TP.HCM", 106.6981, 10.7724),
@@ -49,9 +49,7 @@ def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
     don_vi, _ = DonViTinh.objects.get_or_create(
         ma_don_vi_tinh="VIEN", defaults={"ten_don_vi_tinh": "Viên"}
     )
-    nha_cung_cap = NhaCungCap.objects.create(
-        ma_nha_cung_cap="MP-NCC-01", ten_nha_cung_cap="Nhà cung cấp mô phỏng"
-    )
+    NhaCungCap.objects.create(ma_nha_cung_cap="MP-NCC-01", ten_nha_cung_cap="Nhà cung cấp mô phỏng")
     cac_thuoc = []
     for so, (ma_atc, ten_nhom, ten_thuoc) in enumerate(NHOM_MO_PHONG, start=1):
         nhom, _ = NhomATC.objects.get_or_create(
@@ -80,18 +78,17 @@ def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
             vi_tri=Point(kinh_do, vi_do, srid=4326),
         )
         cac_chi_nhanh.append(chi_nhanh)
-        cac_dong = [
-            {
-                "thuoc": thuoc,
-                "ma_lo_thuoc": f"MP-{so:02d}-{thuoc.ma_thuoc}-{lo}",
-                "ngay_het_han": hom_nay + timedelta(days=han),
-                "so_luong": ngau_nhien.randint(12, 80),
-                "don_gia": thuoc.gia_ban // 2,
-            }
-            for thuoc in cac_thuoc
-            for lo, han in ((1, 25), (2, 180))
-        ]
-        nhap_hang(nguoi, chi_nhanh, nha_cung_cap, cac_dong, "Chứng từ mô phỏng")
+        # Số dư ban đầu của chi nhánh vừa tạo không phát sinh phiếu nhập.
+        for thuoc in cac_thuoc:
+            for so_lo, han in ((1, 25), (2, 180)):
+                lo = LoThuoc.objects.create(
+                    thuoc=thuoc,
+                    ma_lo_thuoc=f"MP-{so:02d}-{thuoc.ma_thuoc}-{so_lo}",
+                    ngay_het_han=hom_nay + timedelta(days=han),
+                )
+                TonKho.objects.create(
+                    chi_nhanh=chi_nhanh, lo_thuoc=lo, so_luong=ngau_nhien.randint(12, 80)
+                )
     if mat_khau is not None:
         model = get_user_model()
         if model.objects.filter(

@@ -8,7 +8,7 @@ from ..selectors import lay_cac_lo
 from ..services.lo_thuoc import doi_dieu_kien_ban
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
 def danh_sach(request):
     return render(
         request,

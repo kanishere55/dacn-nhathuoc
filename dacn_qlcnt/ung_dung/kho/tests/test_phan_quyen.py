@@ -24,7 +24,7 @@ class PhamViChiNhanhTests(TestCase):
             "don_gia": 1000,
         }
         cua_minh = nhap_hang(d.nv, d.cn, d.ncc, [dong])
-        cua_khac = nhap_hang(d.admin, d.cn2, d.ncc, [dong])
+        cua_khac = nhap_hang(d.ql2, d.cn2, d.ncc, [dong])
         self.client.force_login(d.nv)
         trang = self.client.get(reverse("kho:phieu_nhap_danh_sach"))
         self.assertContains(trang, cua_minh.ma_phieu_nhap)

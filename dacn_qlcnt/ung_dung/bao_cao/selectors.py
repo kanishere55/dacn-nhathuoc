@@ -20,10 +20,10 @@ from ung_dung.kho.selectors import lay_ton_kha_dung
 
 
 def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
-    kiem_tra_vai_tro(nguoi, "quan_ly_chi_nhanh")
+    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi", "quan_ly_chi_nhanh")
     tu_luc = timezone.make_aware(datetime.combine(tu_ngay, time.min))
     den_luc = timezone.make_aware(datetime.combine(den_ngay + timedelta(days=1), time.min))
-    cac_chi_nhanh = lay_chi_nhanh(nguoi)
+    cac_chi_nhanh = lay_chi_nhanh(nguoi, ca_chi_nhanh_ngung=True)
     if chi_nhanh is not None:
         cac_chi_nhanh = cac_chi_nhanh.filter(pk=chi_nhanh.pk)
     trong_ky = {"thoi_diem_tao__gte": tu_luc, "thoi_diem_tao__lt": den_luc}

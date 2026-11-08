@@ -18,7 +18,7 @@ class BaoCaoTests(TestCase):
         tao_ton(d, "LO-1", luong=20)
         tao_ton(d, "LO-2", luong=20, chi_nhanh=d.cn2)
         ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
-        ban_tai_quay(d.admin, d.cn2, [{"thuoc": d.thuoc, "so_luong": 7}])
+        ban_tai_quay(d.ql2, d.cn2, [{"thuoc": d.thuoc, "so_luong": 7}])
         ngay = timezone.localdate()
         pham_vi = lay_bao_cao(d.ql, ngay, ngay)
         self.assertEqual((pham_vi["so_phieu_ban"], pham_vi["tong_tien_ban"]), (1, 6000))
@@ -33,3 +33,14 @@ class BaoCaoTests(TestCase):
         )
         self.assertContains(tra_ve, "Bộ lọc chưa hợp lệ.")
         self.assertNotContains(tra_ve, "<html")
+
+        d.cn2.dang_hoat_dong = False
+        d.cn2.save(update_fields=["dang_hoat_dong"])
+        self.client.force_login(d.admin)
+        tra_ve = self.client.get(
+            reverse("bao_cao:tong_hop"),
+            {"tu_ngay": ngay.isoformat(), "den_ngay": ngay.isoformat(), "chi_nhanh": d.cn2.pk},
+        )
+        self.assertContains(tra_ve, "Chứng từ trong kỳ")
+        self.assertNotContains(tra_ve, "Bộ lọc chưa hợp lệ.")
+        self.assertEqual(lay_bao_cao(d.admin, ngay, ngay, d.cn2)["tong_tien_ban"], 14000)

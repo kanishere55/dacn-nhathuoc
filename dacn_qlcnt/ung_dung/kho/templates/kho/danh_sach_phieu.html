@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block noi_dung %}
   <h1>{{ tieu_de }}</h1>
-  <a class="nut" href="{% url url_tao %}">Tạo chứng từ</a>
+  {% if url_tao %}
+    <a class="nut" href="{% url url_tao %}">Tạo chứng từ</a>
+  {% endif %}
   <div class="khoi-trang">
     <table>
       <thead>

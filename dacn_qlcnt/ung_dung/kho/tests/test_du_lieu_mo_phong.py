@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from ung_dung.danh_muc.models import ChiNhanh, Thuoc
+from ung_dung.kho.models import PhieuNhap, TonKho
 from ung_dung.kho.services.mo_phong import tao_du_lieu_mo_phong
 
 
@@ -14,6 +15,8 @@ class DuLieuMoPhongTests(TestCase):
         tao_du_lieu_mo_phong(self.quan_tri)
         self.assertEqual(ChiNhanh.objects.count(), 3)
         self.assertEqual(Thuoc.objects.count(), 8)
+        self.assertEqual(TonKho.objects.count(), 48)
+        self.assertFalse(PhieuNhap.objects.exists())
         with self.assertRaises(ValueError):
             tao_du_lieu_mo_phong(self.quan_tri)
         self.assertEqual(ChiNhanh.objects.count(), 3)

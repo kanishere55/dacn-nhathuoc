@@ -3,7 +3,7 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError
 from django.db import connection
 
-from ung_dung.chung.permissions import kiem_tra_chi_nhanh
+from ung_dung.chung.permissions import kiem_tra_quyen_ghi_chi_nhanh
 from ung_dung.danh_muc.models import ChiNhanh
 
 from ..models import TonKho
@@ -15,7 +15,7 @@ def ma_chung_tu(tien_to):
 
 
 def khoa_chi_nhanh(nguoi, chi_nhanh, *, quan_ly=False):
-    kiem_tra_chi_nhanh(nguoi, chi_nhanh, quan_ly=quan_ly)
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, chi_nhanh, quan_ly=quan_ly)
     return khoa_kho(chi_nhanh)
 
 

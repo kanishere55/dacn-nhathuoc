@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import NHAN_SU_CHI_NHANH, NHAN_SU_CHUOI, co_vai_tro, yeu_cau_vai_tro
 from ung_dung.kho.forms import DongThuocFormSet
 
 from ..forms import PhieuBanForm
@@ -9,7 +9,7 @@ from ..selectors import chi_tiet_ban, lay_phieu_ban, tong_tien_ban
 from ..services.phieu_ban import ban_tai_quay
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh", "nhan_vien")
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 def danh_sach(request):
     return render(
         request,
@@ -17,13 +17,15 @@ def danh_sach(request):
         {
             "tieu_de": "Bán hàng tại quầy",
             "cac_phieu": lay_phieu_ban(request.user),
-            "url_tao": "ban_hang:phieu_ban_tao",
+            "url_tao": (
+                "ban_hang:phieu_ban_tao" if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH) else None
+            ),
             "url_chi_tiet": "ban_hang:phieu_ban_chi_tiet",
         },
     )
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh", "nhan_vien")
+@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
 def tao(request):
     form = PhieuBanForm(request.POST or None, nguoi=request.user)
     cac_dong = DongThuocFormSet(request.POST or None)
@@ -50,7 +52,7 @@ def tao(request):
     )
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh", "nhan_vien")
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 def chi_tiet(request, ma):
     phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
     return render(

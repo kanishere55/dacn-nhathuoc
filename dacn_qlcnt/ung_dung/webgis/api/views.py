@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from ung_dung.ban_hang.services.dat_giu import dat_giu
-from ung_dung.chung.permissions import la_quan_tri
+from ung_dung.chung.permissions import kiem_tra_vai_tro, la_quan_tri
 
 from ..selectors import lay_ban_do_nhiet, tim_chi_nhanh
 from .serializers import DatGiuSerializer, NhietSerializer, TimKiemSerializer
@@ -22,6 +22,7 @@ def tim_kiem(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def tao_dat_giu(request):
+    kiem_tra_vai_tro(request.user, "khach_hang")
     form = DatGiuSerializer(data=request.data)
     form.is_valid(raise_exception=True)
     try:

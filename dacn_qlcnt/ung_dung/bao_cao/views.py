@@ -8,7 +8,7 @@ from .forms import LocBaoCaoForm
 from .selectors import lay_bao_cao
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
 @require_GET
 @vary_on_headers("HX-Request")
 def tong_hop(request):

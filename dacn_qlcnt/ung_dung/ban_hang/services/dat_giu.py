@@ -4,7 +4,11 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from ung_dung.chung.permissions import kiem_tra_chi_nhanh, kiem_tra_vai_tro
+from ung_dung.chung.permissions import (
+    NHAN_SU_CHI_NHANH,
+    kiem_tra_quyen_ghi_chi_nhanh,
+    kiem_tra_vai_tro,
+)
 from ung_dung.danh_muc.models import Thuoc
 from ung_dung.kho.services.giao_dich import doi_ve_co_so, khoa_kho, ma_chung_tu, phan_bo_fefo
 
@@ -13,8 +17,7 @@ from ..models import ChiTietDonDatGiu, DonDatGiu, PhanBoDatGiu
 
 @transaction.atomic
 def dat_giu(nguoi, chi_nhanh, cac_dong):
-    if not nguoi.is_authenticated or not nguoi.is_active or nguoi.vai_tro != "khach_hang":
-        raise PermissionDenied("Chỉ tài khoản khách hàng được đặt giữ.")
+    kiem_tra_vai_tro(nguoi, "khach_hang")
     khoa_kho(chi_nhanh)
     if not cac_dong:
         raise ValidationError("Cần ít nhất một thuốc để đặt giữ.")
@@ -43,12 +46,12 @@ def dat_giu(nguoi, chi_nhanh, cac_dong):
 
 @transaction.atomic
 def huy_giu(nguoi, don):
-    kiem_tra_vai_tro(nguoi, "khach_hang", "nhan_vien", "quan_ly_chi_nhanh")
+    kiem_tra_vai_tro(nguoi, "khach_hang", *NHAN_SU_CHI_NHANH)
     if nguoi.vai_tro == "khach_hang":
         if don.khach_hang_id != nguoi.pk:
             raise PermissionDenied("Đơn không thuộc bạn.")
     else:
-        kiem_tra_chi_nhanh(nguoi, don.chi_nhanh)
+        kiem_tra_quyen_ghi_chi_nhanh(nguoi, don.chi_nhanh)
     khoa_kho(don.chi_nhanh, cho_phep_ngung=True)
     don = DonDatGiu.objects.select_for_update().get(pk=don.pk)
     if don.trang_thai == "da_nhan":
