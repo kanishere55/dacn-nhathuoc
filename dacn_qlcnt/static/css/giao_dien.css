@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./khach.css";
+@import "./bang_dieu_khien.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {
@@ -240,53 +241,6 @@
     margin: 0;
     line-height: 1.8;
   }
-  .loi-chao {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 25px;
-    margin-top: 32px;
-    padding: 38px 40px;
-    background: #e7eee3;
-    border: 1px solid #dbe4d6;
-    border-radius: var(--radius-the);
-  }
-  .nhan-nho {
-    font-size: 9px;
-    letter-spacing: .1em;
-    color: var(--color-chinh);
-    font-weight: 600;
-  }
-  .loi-chao h2 {
-    font-size: 27px;
-    font-weight: 600;
-    line-height: 1.55;
-    margin: 14px 0;
-    letter-spacing: -.03em;
-  }
-  .loi-chao p {
-    max-width: 580px;
-    color: #536c5e;
-    font-size: 12px;
-    line-height: 1.9;
-    margin: 0;
-  }
-  .bieu-tuong-loi-chao {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 110px;
-    height: 110px;
-    background: #d8e5d2;
-    border: 1px solid #cbd9c5;
-    border-radius: 50%;
-    color: var(--color-chinh);
-  }
-  .bieu-tuong-loi-chao svg.lucide {
-    width: 50px;
-    height: 50px;
-    stroke-width: 1.25;
-  }
   .khoi-trang {
     margin-top: 30px;
     padding: 26px 28px;
@@ -313,39 +267,10 @@
     font-size: 10px;
     white-space: nowrap;
   }
-  .mo-ta-khoi {
-    font-size: 12px;
-    color: var(--chu-phu);
-    line-height: 1.8;
-    margin: 10px 0 25px;
-  }
   .luoi-phan-he {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
-  }
-  .the-phan-he {
-    border: 1px solid #e4e9e2;
-    border-radius: 8px;
-    padding: 22px 20px;
-    background: #fbfcfa;
-  }
-  .the-phan-he > svg.lucide {
-    color: var(--color-chinh);
-    margin-bottom: 16px;
-    width: 23px;
-    height: 23px;
-  }
-  .the-phan-he h3 {
-    font-size: 12px;
-    font-weight: 600;
-    margin: 0 0 8px;
-  }
-  .the-phan-he p {
-    font-size: 11px;
-    color: var(--chu-phu);
-    line-height: 1.8;
-    margin: 0;
   }
   .cuoi-trang {
     padding: 18px 44px;
@@ -496,16 +421,6 @@
       padding: 0 20px;
     }
     .nhan-he-thong {
-      display: none;
-    }
-    .loi-chao {
-      margin-top: 24px;
-      padding: 26px 24px;
-    }
-    .loi-chao h2 {
-      font-size: 23px;
-    }
-    .bieu-tuong-loi-chao {
       display: none;
     }
     .khoi-trang {

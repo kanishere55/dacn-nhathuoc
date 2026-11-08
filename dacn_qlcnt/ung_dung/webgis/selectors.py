@@ -5,7 +5,8 @@ from django.db.models import Sum
 from django.urls import reverse
 
 from ung_dung.chung.permissions import kiem_tra_vai_tro
-from ung_dung.danh_muc.models import ChiNhanh
+from ung_dung.danh_muc.models import ChiNhanh, DonViTinh, NhomATC
+from ung_dung.danh_muc.selectors import lay_thuoc_cong_khai
 from ung_dung.kho.selectors import lay_ton_kha_dung, loc_chi_nhanh_du_thuoc
 
 
@@ -29,6 +30,16 @@ def tim_chi_nhanh(kinh_do, vi_do, ban_kinh_met, cac_thuoc):
         }
         for cn in loc_chi_nhanh_du_thuoc(cac_chi_nhanh, cac_thuoc)[:50]
     ]
+
+
+def lay_tuy_chon_ban_do_nhiet():
+    mac_dinh = lay_thuoc_cong_khai().values_list("nhom_atc_id", "don_vi_tinh_id").first()
+    return {
+        "cac_nhom": list(NhomATC.objects.order_by("ma_nhom_atc")),
+        "cac_don_vi": list(DonViTinh.objects.order_by("ma_don_vi_tinh")),
+        "id_nhom_mac_dinh": mac_dinh[0] if mac_dinh else None,
+        "id_don_vi_mac_dinh": mac_dinh[1] if mac_dinh else None,
+    }
 
 
 def lay_ban_do_nhiet(nguoi, nhom_atc, don_vi_tinh):

@@ -1,0 +1,152 @@
+@layer components {
+  .dau-bang-dieu-khien {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+  }
+  .dau-bang-dieu-khien h1 {
+    font-weight: 700;
+  }
+  .dau-bang-dieu-khien .chu-dan {
+    margin-bottom: 6px;
+  }
+  .tac-vu-bang-dieu-khien {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tac-vu-bang-dieu-khien .nut {
+    gap: 6px;
+  }
+  .tac-vu-bang-dieu-khien svg.lucide {
+    width: 16px;
+    height: 16px;
+  }
+  .chi-so-bang-dieu-khien {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-block: 20px;
+  }
+  .chi-so-bang-dieu-khien > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--vien);
+    border-radius: var(--radius-the);
+    padding: 14px 15px;
+  }
+  .chi-so-bang-dieu-khien dt {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+  .chi-so-bang-dieu-khien dt svg.lucide {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--color-chinh);
+  }
+  .chi-so-bang-dieu-khien dd {
+    font-size: 26px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  .khoi-trang.muc-bang-dieu-khien {
+    min-width: 0;
+    margin-top: 16px;
+    padding: clamp(14px, 2.3vw, 22px);
+  }
+  .muc-bang-dieu-khien .dau-khoi {
+    flex-wrap: wrap;
+    gap: 5px 14px;
+    margin-bottom: 8px;
+  }
+  .muc-bang-dieu-khien h2 {
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .muc-bang-dieu-khien h3 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-block: 14px 4px;
+  }
+  .mo-ta-bang-dieu-khien {
+    color: var(--chu-phu);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .luoi-bang-dieu-khien,
+  .hien-thi-ban-do-nhiet {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+    gap: 14px;
+  }
+  .danh-sach-bang-dieu-khien li {
+    display: grid;
+    gap: 4px;
+    padding-block: 9px;
+    border-top: 1px solid var(--vien);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .danh-sach-bang-dieu-khien li > span {
+    color: var(--chu-phu);
+  }
+  .danh-sach-bang-dieu-khien li > a {
+    justify-self: start;
+    font-weight: 600;
+  }
+  .loc-ban-do-nhiet {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(120px, 1fr) auto;
+    gap: 9px;
+    align-items: end;
+    margin-block: 14px 12px;
+  }
+  .loc-ban-do-nhiet label {
+    margin: 0;
+  }
+  .loc-ban-do-nhiet select {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    min-height: 42px;
+  }
+  .hien-thi-ban-do-nhiet .ban-do {
+    margin-top: 0;
+    height: clamp(290px, 40vh, 440px);
+  }
+  .hien-thi-ban-do-nhiet h3 {
+    margin-top: 0;
+  }
+  @media (max-width: 900px) {
+    .chi-so-bang-dieu-khien {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .luoi-bang-dieu-khien,
+    .hien-thi-ban-do-nhiet {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .hien-thi-ban-do-nhiet {
+      gap: 12px;
+    }
+  }
+  @media (max-width: 540px) {
+    .loc-ban-do-nhiet {
+      grid-template-columns: 1fr;
+    }
+    .loc-ban-do-nhiet .nut {
+      justify-self: start;
+    }
+  }
+}

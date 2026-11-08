@@ -1,12 +1,11 @@
 (() => {
-  const form = document.querySelector('[data-nhiet]');
-  const bao = form.querySelector('[data-trang-thai]');
-  const bang = document.querySelector('[data-so-lieu]');
-  const banDo = L.map('ban-do').setView([10.77, 106.7], 12);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19,
-  }).addTo(banDo);
+  const khung = document.querySelector('[data-khung-nhiet]');
+  const banDo = window.taoBanDoNhaThuoc(khung.querySelector('[data-ban-do-nhiet]'));
+  const form = khung.querySelector('[data-nhiet]');
+  if (!form) return;
+  const bao = khung.querySelector('[data-trang-thai]');
+  const bang = khung.querySelector('[data-so-lieu]');
+  const chiNhanh = L.layerGroup().addTo(banDo);
 
   let lopNhiet;
   let dangTai;
@@ -28,16 +27,29 @@
       const max = cacDiem.reduce((lonNhat, diem) => Math.max(lonNhat, diem.so_luong), 0);
       const coHang = cacDiem.filter(diem => diem.so_luong > 0);
       lopNhiet?.remove();
+      chiNhanh.clearLayers();
       lopNhiet = L.heatLayer(
         coHang.map(diem => [diem.vi_do, diem.kinh_do, diem.so_luong]),
         {radius: 35, max: max || 1},
       ).addTo(banDo);
 
       bang.replaceChildren(...cacDiem.map(diem => {
-        const dong = document.createElement('p');
-        dong.textContent = `${diem.ten_chi_nhanh}: ${diem.so_luong} ${donVi}`;
+        const dong = document.createElement('li');
+        const ten = document.createElement('strong');
+        const luong = document.createElement('span');
+        const nhan = document.createElement('span');
+        ten.textContent = diem.ten_chi_nhanh;
+        luong.textContent = diem.so_luong.toLocaleString('vi-VN') + ' ' + donVi.toLocaleLowerCase('vi-VN');
+        dong.append(ten, luong);
+        nhan.textContent = ten.textContent + ' · ' + luong.textContent;
+        L.circleMarker([diem.vi_do, diem.kinh_do], {
+          radius: 5, color: '#116b54', fillColor: '#fff', fillOpacity: 0.9,
+        }).bindPopup(nhan).addTo(chiNhanh);
         return dong;
       }));
+      if (cacDiem.length) {
+        banDo.fitBounds(cacDiem.map(diem => [diem.vi_do, diem.kinh_do]), {padding: [26, 26], maxZoom: 15});
+      }
       bao.textContent = max
         ? `Thang nhiệt 0 đến ${max} ${donVi}. Cập nhật ${new Date().toLocaleTimeString('vi-VN')}.`
         : 'Không có tồn khả dụng trong nhóm và đơn vị đã chọn.';
@@ -47,4 +59,5 @@
       }
     }
   });
+  form.requestSubmit();
 })();

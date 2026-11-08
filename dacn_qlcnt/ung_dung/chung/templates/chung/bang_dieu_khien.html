@@ -1,36 +1,133 @@
 {% extends "base.html" %}
-{% block tieu_de %}Tổng quan quản lý · Nhà thuốc{% endblock %}
+{% load static %}
+{% block tieu_de %}{{ tieu_de }} · Nhà thuốc{% endblock %}
+{% block vi_tri %}Tổng quan{% endblock %}
+{% block dau_trang %}
+  {% if quan_tri_chuoi %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endif %}
+{% endblock %}
 {% block noi_dung %}
-  <div class="tieu-de-trang">
-    <p class="chu-dan">TỔNG QUAN</p>
-    <h1>Không gian làm việc</h1>
-    <p>Quản lý hoạt động nhà thuốc, kết nối các chi nhánh.</p>
-  </div>
-  <section class="loi-chao" aria-labelledby="tieu-de-chao">
+  <header class="dau-bang-dieu-khien">
+    <div class="tieu-de-trang">
+      <p class="chu-dan">{% if quan_tri_chuoi %}TOÀN CHUỖI{% else %}{{ chi_nhanh.ma_chi_nhanh }}{% endif %}</p>
+      <h1>{{ tieu_de }}</h1>
+      {% if quan_tri_chuoi %}
+        <p>Theo dõi tồn khả dụng, cảnh báo kho và nhu cầu thuốc ở các chi nhánh.</p>
+      {% else %}
+        <p>{{ chi_nhanh.ten_chi_nhanh }} · {{ chi_nhanh.dia_chi }}</p>
+      {% endif %}
+    </div>
+    <div class="tac-vu-bang-dieu-khien">
+      {% if quan_tri_chuoi or quan_ly_chi_nhanh %}
+        <a class="nut nut-phu" href="{% url 'bao_cao:tong_hop' %}"><i data-lucide="chart-no-axes-column" aria-hidden="true"></i>Xem báo cáo</a>
+      {% endif %}
+      {% if not quan_tri_chuoi %}
+        <a class="nut" href="{% url 'ban_hang:phieu_ban_tao' %}"><i data-lucide="receipt" aria-hidden="true"></i>Bán tại quầy</a>
+      {% endif %}
+    </div>
+  </header>
+  <dl class="chi-so-bang-dieu-khien" aria-label="Số liệu tổng quan">
+    {% if quan_tri_chuoi %}
+      <div><dt><i data-lucide="store" aria-hidden="true"></i>Chi nhánh</dt><dd>{{ so_chi_nhanh }}</dd></div>
+    {% endif %}
+    <div><dt><i data-lucide="calendar-clock" aria-hidden="true"></i>Lô cần theo dõi</dt><dd>{{ so_lo_canh_bao }}</dd></div>
+    <div><dt><i data-lucide="package-minus" aria-hidden="true"></i>Cảnh báo tồn thấp</dt><dd>{{ so_canh_bao_ton_thap }}</dd></div>
+    <div><dt><i data-lucide="shopping-basket" aria-hidden="true"></i>Đơn đang chờ nhận</dt><dd>{{ so_don_cho_nhan }}</dd></div>
+    {% if not quan_tri_chuoi %}
+      <div><dt><i data-lucide="messages-square" aria-hidden="true"></i>Cuộc trò chuyện chờ phản hồi</dt><dd>{{ so_cuoc_co_tin_moi }}</dd></div>
+    {% endif %}
+  </dl>
+  {% if quan_tri_chuoi %}
+    {% include "webgis/_ban_do_nhiet.html" %}
+    <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="tom-tat-du-bao">
+      <div class="dau-khoi">
+        <h2 id="tom-tat-du-bao">Dự báo lượng bán</h2>
+        <a class="duong-dan-noi-dung" href="{% url 'du_bao:ket_qua' %}#kich-ban">Kịch bản nguy cơ thiếu hàng</a>
+      </div>
+      {% if lan_du_bao %}
+        <p class="mo-ta-bang-dieu-khien">{{ lan_du_bao.nguon_du_lieu }} · {{ lan_du_bao.nguon_du_lieu.don_vi_nguon }} · lần chạy {{ lan_du_bao.thoi_diem_tao|date:"d/m/Y" }}</p>
+        {% if cac_du_bao %}
+          <div class="khung-bang">
+            <table>
+              <caption>Tóm tắt dự báo tổng lượng bán trong 7 ngày sau mốc quan sát</caption>
+              <thead><tr><th scope="col">ATC</th><th scope="col">Mô hình</th><th scope="col">Dự báo 7 ngày</th><th scope="col">MAE kiểm thử</th><th scope="col">RMSE kiểm thử</th></tr></thead>
+              <tbody>
+                {% for dong in cac_du_bao %}
+                  <tr>
+                    <td>{{ dong.ket_qua_mo_hinh.ma_atc_nguon }}</td><td>{{ dong.ket_qua_mo_hinh.mo_hinh }}</td>
+                    <td>{{ dong.so_luong_du_bao|floatformat:2 }}</td><td>{{ dong.ket_qua_mo_hinh.mae_kiem_thu|floatformat:2 }}</td><td>{{ dong.ket_qua_mo_hinh.rmse_kiem_thu|floatformat:2 }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a class="duong-dan-noi-dung" href="{% url 'du_bao:ket_qua' %}">Xem tất cả kết quả dự báo</a>
+        {% else %}
+          <p class="mo-ta-bang-dieu-khien">Lần thực nghiệm này chưa có dự báo sau mốc quan sát.</p>
+        {% endif %}
+      {% else %}
+        <p class="mo-ta-bang-dieu-khien">Chưa có kết quả thực nghiệm để hiển thị.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+  <div class="luoi-bang-dieu-khien">
+    <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="canh-bao-kho">
+      <div class="dau-khoi">
+        <h2 id="canh-bao-kho">Cảnh báo kho</h2>
+        <a class="duong-dan-noi-dung" href="{% url 'kho:canh_bao' %}">Xem tất cả</a>
+      </div>
+      <h3>Hạn dùng và trạng thái lô</h3>
+      <ul class="danh-sach-bang-dieu-khien">
+        {% for dong in cac_lo_canh_bao %}
+          <li>
+            <strong>{{ dong.lo_thuoc.thuoc.ten_thuoc }} · {{ dong.lo_thuoc.ma_lo_thuoc }}</strong>
+            <span>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}{% if not dong.lo_thuoc.duoc_phep_ban %} · Ngừng bán{% endif %}{% if quan_tri_chuoi %} · {{ dong.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
+          </li>
+        {% empty %}<li>Chưa có cảnh báo về lô.</li>{% endfor %}
+      </ul>
+      <h3>Tồn dưới ngưỡng</h3>
+      <ul class="danh-sach-bang-dieu-khien">
+        {% for chi_nhanh_ton, thuoc in cac_canh_bao_ton_thap %}
+          <li>
+            <strong>{{ thuoc.ten_thuoc }}</strong>
+            <span>Còn {{ thuoc.kha_dung }} {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }} · Ngưỡng {{ thuoc.nguong_canh_bao }}{% if quan_tri_chuoi %} · {{ chi_nhanh_ton.ten_chi_nhanh }}{% endif %}</span>
+          </li>
+        {% empty %}<li>Chưa có cảnh báo tồn thấp.</li>{% endfor %}
+      </ul>
+    </section>
     <div>
-      <span class="nhan-nho">ĐỒNG HÀNH CÙNG NHÀ THUỐC</span>
-      <h2 id="tieu-de-chao">Một nơi để theo dõi.<br>Một nguồn dữ liệu thống nhất.</h2>
-      <p>Danh mục, hàng hóa và hoạt động tại quầy được tổ chức theo từng phân hệ, với phạm vi truy cập phù hợp.</p>
+      <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="don-cho-nhan">
+        <div class="dau-khoi">
+          <h2 id="don-cho-nhan">Đơn đặt giữ đang chờ nhận</h2>
+          <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_dat_giu_danh_sach' %}">Xem tất cả</a>
+        </div>
+        <ul class="danh-sach-bang-dieu-khien">
+          {% for don in cac_don_cho_nhan %}
+            <li>
+              <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_dat_giu_chi_tiet' don.pk %}">{{ don.ma_don_dat_giu }}</a>
+              <span>{{ don.khach_hang }} · Hạn nhận {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% if quan_tri_chuoi %} · {{ don.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
+            </li>
+          {% empty %}<li>Chưa có đơn đặt giữ đang chờ nhận.</li>{% endfor %}
+        </ul>
+      </section>
+      {% if not quan_tri_chuoi %}
+        <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="tin-moi">
+          <div class="dau-khoi">
+            <h2 id="tin-moi">Tin nhắn chờ phản hồi</h2>
+            <a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:danh_sach' %}">Mở trò chuyện</a>
+          </div>
+          <ul class="danh-sach-bang-dieu-khien">
+            {% for phong in cac_cuoc_co_tin_moi %}
+              <li>
+                <a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">{{ phong.khach_hang }}</a>
+                <span>{{ phong.noi_dung_cuoi|truncatechars:96 }} · {{ phong.luc_gui_cuoi|date:"H:i d/m" }}</span>
+              </li>
+            {% empty %}<li>Chưa có tin từ khách cần phản hồi.</li>{% endfor %}
+          </ul>
+        </section>
+      {% endif %}
     </div>
-    <div class="bieu-tuong-loi-chao" aria-hidden="true">
-      <i data-lucide="store"></i>
-    </div>
-  </section>
-  <section class="khoi-trang" aria-labelledby="tieu-de-khong-gian">
-    <div class="dau-khoi">
-      <h2 id="tieu-de-khong-gian">Các không gian nghiệp vụ</h2>
-    </div>
-    <p class="mo-ta-khoi">Menu hiển thị chức năng theo vai trò và chi nhánh được phân công.</p>
-    <div class="luoi-phan-he">
-      <article class="the-phan-he">
-        <i data-lucide="package" aria-hidden="true"></i><h3>Hàng hóa & kho</h3><p>Danh mục thuốc, lô và hạn sử dụng.</p>
-      </article>
-      <article class="the-phan-he">
-        <i data-lucide="receipt" aria-hidden="true"></i><h3>Hoạt động tại quầy</h3><p>Bán hàng và tiếp nhận đặt giữ.</p>
-      </article>
-      <article class="the-phan-he">
-        <i data-lucide="map-pinned" aria-hidden="true"></i><h3>Kết nối chi nhánh</h3><p>Tra cứu vị trí và theo dõi phân bố hàng hóa.</p>
-      </article>
-    </div>
-  </section>
+  </div>
+{% endblock %}
+{% block cuoi_trang %}
+  {% if quan_tri_chuoi %}{% include "webgis/_tai_nguyen_nhiet.html" %}{% endif %}
 {% endblock %}

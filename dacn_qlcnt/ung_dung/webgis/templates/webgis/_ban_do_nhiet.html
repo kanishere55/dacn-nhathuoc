@@ -1,0 +1,33 @@
+<section id="ban-do-nhiet" class="khoi-trang muc-bang-dieu-khien" data-khung-nhiet aria-labelledby="tieu-de-ban-do-nhiet">
+  <div class="dau-khoi">
+    <h2 id="tieu-de-ban-do-nhiet">Bản đồ nhiệt tồn khả dụng</h2>
+  </div>
+  <p class="mo-ta-bang-dieu-khien">So sánh lượng có thể bán giữa các chi nhánh theo cùng nhóm ATC và đơn vị cơ sở.</p>
+  {% if ban_do_nhiet.cac_nhom and ban_do_nhiet.cac_don_vi %}
+    <form class="form-chinh loc-ban-do-nhiet" data-nhiet data-url="{% url 'webgis:du_lieu_nhiet' %}">
+      <label>Nhóm ATC
+        <select name="nhom_atc" required>
+          {% for nhom in ban_do_nhiet.cac_nhom %}
+            <option value="{{ nhom.pk }}"{% if nhom.pk == ban_do_nhiet.id_nhom_mac_dinh %} selected{% endif %}>{{ nhom.ma_nhom_atc }} · {{ nhom.ten_nhom_atc }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Đơn vị cơ sở
+        <select name="don_vi_tinh" required>
+          {% for dv in ban_do_nhiet.cac_don_vi %}
+            <option value="{{ dv.pk }}"{% if dv.pk == ban_do_nhiet.id_don_vi_mac_dinh %} selected{% endif %}>{{ dv.ten_don_vi_tinh }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="nut">Cập nhật bản đồ</button>
+    </form>
+  {% endif %}
+  <div class="hien-thi-ban-do-nhiet">
+    <div class="ban-do" data-ban-do-nhiet aria-label="Bản đồ nhiệt tồn khả dụng các chi nhánh"></div>
+    <div>
+      <h3>Tồn theo chi nhánh</h3>
+      <p data-trang-thai class="mo-ta-bang-dieu-khien" role="status">{% if not ban_do_nhiet.cac_nhom or not ban_do_nhiet.cac_don_vi %}Cần có nhóm ATC và đơn vị cơ sở để hiển thị tồn khả dụng.{% endif %}</p>
+      <ul data-so-lieu class="danh-sach-bang-dieu-khien"></ul>
+    </div>
+  </div>
+</section>

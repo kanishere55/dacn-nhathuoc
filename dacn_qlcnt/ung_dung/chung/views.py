@@ -8,6 +8,7 @@ from ung_dung.danh_muc.selectors import (
 )
 
 from .permissions import NHAN_SU_CHUOI, yeu_cau_vai_tro
+from .selectors import lay_bang_dieu_khien
 
 
 @require_GET
@@ -26,4 +27,4 @@ def trang_chu(request):
 @yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 @require_GET
 def bang_dieu_khien(request):
-    return render(request, "chung/bang_dieu_khien.html")
+    return render(request, "chung/bang_dieu_khien.html", lay_bang_dieu_khien(request.user))

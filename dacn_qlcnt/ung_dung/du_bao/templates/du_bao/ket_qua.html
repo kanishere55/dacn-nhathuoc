@@ -29,7 +29,7 @@
         </table>
       </div>
     </section>
-    <section class="khoi-trang">
+    <section class="khoi-trang" id="kich-ban">
       <h2>Minh họa nguy cơ thiếu hàng</h2>
       <p>Nhập số giả định theo cùng đơn vị và kỳ dự báo. Hệ thống so sánh tồn sau khi trừ giữ và dự trữ với tổng dự báo.</p>
       <form method="post" class="form-chinh">{% csrf_token %}{{ form.as_p }}<button class="nut">Lưu kịch bản</button></form>
@@ -46,6 +46,6 @@
       </div>
     </section>
   {% else %}
-    <p class="khoi-trang">Chưa có thực nghiệm. Dùng lệnh nạp nguồn và chạy dự báo trong README.</p>
+    <p class="khoi-trang" id="kich-ban">Chưa có thực nghiệm. Dùng lệnh nạp nguồn và chạy dự báo trong README.</p>
   {% endif %}
 {% endblock %}
