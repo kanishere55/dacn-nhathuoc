@@ -1,9 +1,12 @@
+import asyncio
 import os
+from unittest import skipUnless
 from uuid import uuid4
 
 from channels.db import database_sync_to_async
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
@@ -20,7 +23,14 @@ KENH_THU = (
     {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {"hosts": [MAY_CHU_REDIS_TEST]},
+            "CONFIG": {
+                "hosts": [
+                    {
+                        **settings.CHANNEL_LAYERS["default"]["CONFIG"]["hosts"][0],
+                        "address": MAY_CHU_REDIS_TEST,
+                    }
+                ]
+            },
         }
     }
     if MAY_CHU_REDIS_TEST
@@ -83,6 +93,19 @@ class TroChuyenTests(TransactionTestCase):
         finally:
             await khach.disconnect()
             await nhan_vien.disconnect()
+
+    @skipUnless(MAY_CHU_REDIS_TEST, "Cần Redis thật để kiểm tra phòng chờ tin.")
+    async def test_socket_van_tra_loi_sau_mot_chu_ky_cho_tin_redis(self):
+        khach = self.ket_noi(self.d.khach)
+        self.assertTrue((await khach.connect())[0])
+        try:
+            self.assertEqual((await khach.receive_json_from())["loai"], "lich_su")
+            # Đợi qua một lượt BZPOPMIN để phát hiện lỗi hai timeout đều là 5 giây.
+            await asyncio.sleep(6)
+            await khach.send_json_to({"loai": "kiem_tra_ket_noi"})
+            self.assertEqual(await khach.receive_json_from(), {"loai": "ket_noi_con_song"})
+        finally:
+            await khach.disconnect()
 
     async def test_kiem_tra_ket_noi_va_lay_tin_da_luu_sau_khi_noi_lai(self):
         khach = self.ket_noi(self.d.khach)

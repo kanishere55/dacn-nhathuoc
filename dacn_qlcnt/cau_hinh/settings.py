@@ -116,7 +116,16 @@ REST_FRAMEWORK = {
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")]},
+        "CONFIG": {
+            "hosts": [
+                {
+                    "address": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0"),
+                    "socket_connect_timeout": 5,
+                    # Channels Redis chờ lệnh BZPOPMIN tới 5 giây khi phòng chưa có tin.
+                    "socket_timeout": 10,
+                }
+            ]
+        },
     }
 }
 LOGGING = {
