@@ -1,13 +1,34 @@
 from functools import wraps
+from os import utime
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.test import RequestFactory, TestCase, override_settings
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import ResolverMatch
 from django.views import View
 from rest_framework.views import APIView
 
 from ung_dung.chung.nhan_dien_trang import nhan_dien_trang
+
+
+class TaiNguyenGiaoDienTests(SimpleTestCase):
+    def test_khung_trang_doi_url_css_sau_khi_build_lai(self):
+        with TemporaryDirectory() as thu_muc, self.settings(STATICFILES_DIRS=[thu_muc]):
+            tep = Path(thu_muc, "css", "da_bien_dich.css")
+            tep.parent.mkdir()
+            tep.write_text(".khung-khach { display: block; }", encoding="utf-8")
+            utime(tep, (1_700_000_000, 1_700_000_000))
+            url_cu = f"/static/css/da_bien_dich.css?v={tep.stat().st_mtime_ns:x}"
+            self.assertIn(f'href="{url_cu}"', render_to_string("khung_trang.html"))
+
+            tep.write_text(".khung-khach { display: grid; }", encoding="utf-8")
+            utime(tep, (1_700_000_001, 1_700_000_001))
+            url_moi = f"/static/css/da_bien_dich.css?v={tep.stat().st_mtime_ns:x}"
+            trang = render_to_string("khung_trang.html")
+            self.assertIn(f'href="{url_moi}"', trang)
+            self.assertNotIn(url_cu, trang)
 
 
 class TrangDangLop(View):

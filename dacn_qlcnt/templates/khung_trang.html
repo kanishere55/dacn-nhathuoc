@@ -1,4 +1,4 @@
-{% load static nhan_dien %}
+{% load static nhan_dien tai_nguyen %}
 <!doctype html>
 <html lang="vi">
 <head>
@@ -7,7 +7,7 @@
   <meta name="htmx-config" content='{"historyCacheSize":0,"allowEval":false,"includeIndicatorStyles":false}'>
   <title>{% block tieu_de %}Nhà thuốc{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'bieu_tuong.svg' %}">
-  <link rel="stylesheet" href="{% static 'css/da_bien_dich.css' %}">
+  <link rel="stylesheet" href="{% url_css_giao_dien %}">
   <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
   <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
   <script defer src="{% static 'vendor/lucide/lucide.min.js' %}"></script>
