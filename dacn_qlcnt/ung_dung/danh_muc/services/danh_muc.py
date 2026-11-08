@@ -7,7 +7,7 @@ from ung_dung.chung.permissions import kiem_tra_vai_tro
 from ung_dung.chung.ten_csdl import MA_NGHIEP_VU
 from ung_dung.chung.van_ban import cat_khoang_trang
 
-from ..models import QuyDoiBaoGoi, Thuoc
+from ..models import KhuyenMai, QuyDoiBaoGoi, Thuoc
 from ..selectors import DANH_MUC
 
 
@@ -43,6 +43,33 @@ def luu_danh_muc(nguoi, loai, du_lieu, doi_tuong=None):
         raise ValidationError(
             "Hồ sơ nhân viên phải liên kết tài khoản nhân viên hoặc quản lý chi nhánh."
         )
+    if isinstance(doi_tuong, KhuyenMai):
+        kiem_khuyen_mai_trung(doi_tuong)
     doi_tuong.full_clean()
     doi_tuong.save()
     return doi_tuong
+
+
+def kiem_khuyen_mai_trung(khuyen_mai):
+    """Một thuốc chỉ có một đợt giảm giá đang hoạt động trong cùng một ngày.
+
+    Khóa dòng thuốc để hai quản trị lưu cùng lúc không tạo được hai đợt trùng.
+    """
+    if not khuyen_mai.dang_hoat_dong:
+        return
+    Thuoc.objects.select_for_update().get(pk=khuyen_mai.thuoc_id)
+    trung = (
+        KhuyenMai.objects.filter(
+            thuoc_id=khuyen_mai.thuoc_id,
+            dang_hoat_dong=True,
+            ngay_bat_dau__lte=khuyen_mai.ngay_ket_thuc,
+            ngay_ket_thuc__gte=khuyen_mai.ngay_bat_dau,
+        )
+        .exclude(pk=khuyen_mai.pk)
+        .first()
+    )
+    if trung:
+        raise ValidationError(
+            f"Thuốc đã có đợt {trung.ma_khuyen_mai} từ {trung.ngay_bat_dau:%d/%m/%Y} "
+            f"đến {trung.ngay_ket_thuc:%d/%m/%Y}. Hãy dừng đợt đó hoặc chọn ngày khác."
+        )

@@ -1,27 +1,82 @@
 {% extends "khach/base.html" %}
-{% block tieu_de %}{{ thuoc.ten_thuoc }} · Nhà thuốc{% endblock %}
+{% block tieu_de %}{{ thuoc.ten_thuoc }} · {{ block.super }}{% endblock %}
 {% block noi_dung %}
-  <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Danh mục thuốc</a><span aria-hidden="true">/</span><span>{{ thuoc.ma_thuoc }}</span></nav>
-  <section class="the-khach thong-tin-thuoc-khach" aria-labelledby="ten-thuoc">
-    <div class="hinh-thuoc-khach" aria-hidden="true"><i data-lucide="pill"></i></div>
-    <div>
-      <p class="chu-dan">{{ thuoc.nhom_atc.ma_nhom_atc }} · {{ thuoc.ma_thuoc }}</p>
+  <nav class="vi-tri-khach" aria-label="Đường dẫn trang">
+    <a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Thuốc</a><span aria-hidden="true">/</span>
+    {% if thuoc.danh_muc_san_pham %}<a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}?danh_muc={{ thuoc.danh_muc_san_pham.ma_danh_muc_san_pham|urlencode }}">{{ thuoc.danh_muc_san_pham }}</a><span aria-hidden="true">/</span>{% endif %}
+    <span>{{ thuoc.ten_thuoc }}</span>
+  </nav>
+  <section class="the-khach chi-tiet-thuoc" aria-labelledby="ten-thuoc">
+    <div class="bo-anh-thuoc" x-data="{ chon: 0 }">
+      <div class="anh-chinh-thuoc">
+        {% for anh in cac_anh %}
+          <img src="{% url 'danh_muc:anh_thuoc' anh.pk %}" alt="{{ thuoc.ten_thuoc }} – ảnh {{ forloop.counter }}" width="{{ anh.chieu_rong }}" height="{{ anh.chieu_cao }}" x-show="chon === {{ forloop.counter0 }}"{% if not forloop.first %} x-cloak{% endif %}>
+        {% empty %}
+          <span class="anh-thay-the"><i data-lucide="pill" aria-hidden="true"></i></span>
+        {% endfor %}
+        {% if thuoc.phan_tram_giam %}<span class="nhan-giam">-{{ thuoc.phan_tram_giam }}%</span>{% endif %}
+      </div>
+      {% if cac_anh|length > 1 %}
+        <div class="anh-nho-thuoc" role="tablist" aria-label="Chọn ảnh">
+          {% for anh in cac_anh %}
+            <button type="button" role="tab" @click="chon = {{ forloop.counter0 }}" :aria-selected="chon === {{ forloop.counter0 }}"><img src="{% url 'danh_muc:anh_thuoc' anh.pk %}" alt="Ảnh {{ forloop.counter }}" loading="lazy"></button>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="thong-tin-chinh-thuoc">
+      <div class="cac-nhan-thuoc">
+        {% if thuoc.danh_muc_san_pham %}<span class="nhan-khach">{{ thuoc.danh_muc_san_pham }}</span>{% endif %}
+        {% if thuoc.la_thuoc_ke_don %}<span class="nhan-ke-don"><i data-lucide="file-text" aria-hidden="true"></i>Thuốc kê đơn</span>{% else %}<span class="nhan-khong-ke-don">Không kê đơn</span>{% endif %}
+      </div>
       <h1 id="ten-thuoc">{{ thuoc.ten_thuoc }}</h1>
-      <p class="gia-thuoc-khach">{{ thuoc.gia_ban|floatformat:"0g" }} đ <span>/ {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span></p>
+      <p class="ma-thuoc-khach">Mã {{ thuoc.ma_thuoc }}{% if thuoc.so_dang_ky %} · SĐK {{ thuoc.so_dang_ky }}{% endif %} · {{ thuoc.nha_san_xuat }}</p>
+      <div class="khoi-gia-thuoc">
+        <p class="gia-thuoc-khach">{{ thuoc.don_gia|tien }} <span>/ {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span></p>
+        {% if thuoc.phan_tram_giam %}
+          <p class="gia-goc-khach"><del>{{ thuoc.gia_ban|tien }}</del> · {{ thuoc.ten_khuyen_mai }} đến hết {{ thuoc.ngay_het_khuyen_mai|date:"d/m/Y" }}</p>
+        {% endif %}
+      </div>
+      {% if thuoc.mo_ta_ngan %}<p class="mo-ta-ngan-thuoc">{{ thuoc.mo_ta_ngan }}</p>{% endif %}
       <dl class="chi-so-thuoc">
+        {% if thuoc.hoat_chat %}<div class="o-rong"><dt>Hoạt chất</dt><dd>{{ thuoc.hoat_chat }}</dd></div>{% endif %}
         <div><dt>Hàm lượng</dt><dd>{{ thuoc.ham_luong|default:"—" }}</dd></div>
         <div><dt>Dạng bào chế</dt><dd>{{ thuoc.dang_bao_che|default:"—" }}</dd></div>
-        <div><dt>Nhà sản xuất</dt><dd>{{ thuoc.nha_san_xuat|default:"—" }}</dd></div>
-        <div><dt>Đơn vị cơ sở</dt><dd>{{ thuoc.don_vi_tinh.ten_don_vi_tinh }}</dd></div>
+        <div><dt>Quy cách</dt><dd>{{ thuoc.quy_cach_dong_goi|default:"—" }}</dd></div>
+        <div><dt>Xuất xứ</dt><dd>{{ thuoc.nuoc_san_xuat|default:"—" }}</dd></div>
+        <div><dt>Nhóm điều trị</dt><dd>{{ thuoc.nhom_atc.ma_nhom_atc }} · {{ thuoc.nhom_atc.ten_nhom_atc }}</dd></div>
+        <div><dt>Đơn vị bán</dt><dd>{{ thuoc.don_vi_tinh.ten_don_vi_tinh }}</dd></div>
       </dl>
+      {% if thuoc.la_thuoc_ke_don %}
+        <div class="canh-bao-ke-don" role="note">
+          <i data-lucide="shield-alert" aria-hidden="true"></i>
+          <p><strong>Thuốc bán theo đơn.</strong> Theo Luật Dược, thuốc này không bán qua giao hàng. Bạn có thể đặt giữ tại một chi nhánh và mang đơn thuốc của bác sĩ tới quầy để dược sĩ kiểm tra trước khi bán.</p>
+        </div>
+      {% endif %}
       {% if not noi_bo %}
         <form class="them-vao-gio" action="{% url 'ban_hang:gio_dat_giu_them' thuoc.ma_thuoc %}" method="post">
           {% csrf_token %}
-          <label for="{{ form_them.so_luong.id_for_label }}">{{ form_them.so_luong.label }} ({{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}){{ form_them.so_luong }}</label>
-          <button class="nut"><i data-lucide="shopping-basket" aria-hidden="true"></i>Thêm vào giỏ đặt giữ</button>
+          <label for="{{ form_them.so_luong.id_for_label }}">{{ form_them.so_luong.label }}{{ form_them.so_luong }}</label>
+          <button class="nut"><i data-lucide="shopping-basket" aria-hidden="true"></i>Thêm vào giỏ</button>
         </form>
       {% endif %}
-      <a class="nut nut-phu" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Tìm nhà thuốc còn thuốc này</a>
+      <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Xem chi nhánh còn thuốc này</a>
     </div>
   </section>
+  {% if cac_muc_noi_dung %}
+    <section class="the-khach noi-dung-thuoc" aria-label="Thông tin sử dụng">
+      {% for tieu_de, noi_dung in cac_muc_noi_dung %}
+        <article><h2>{{ tieu_de }}</h2>{{ noi_dung|linebreaks }}</article>
+      {% endfor %}
+      <p class="ghi-chu-khach">Thông tin chỉ để tham khảo, không thay thế tư vấn của bác sĩ hoặc dược sĩ. Đọc kỹ hướng dẫn sử dụng trước khi dùng.</p>
+    </section>
+  {% endif %}
+  {% if cung_danh_muc %}
+    <section class="muc-khach" aria-labelledby="cung-danh-muc">
+      <div class="dau-muc-khach"><h2 id="cung-danh-muc">Cùng danh mục</h2></div>
+      <div class="luoi-thuoc-khach">
+        {% for khac in cung_danh_muc %}{% include "danh_muc/khach/_the_thuoc.html" with thuoc=khac only %}{% endfor %}
+      </div>
+    </section>
+  {% endif %}
 {% endblock %}

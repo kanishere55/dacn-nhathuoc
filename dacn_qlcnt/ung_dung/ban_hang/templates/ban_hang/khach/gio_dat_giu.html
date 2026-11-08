@@ -16,7 +16,7 @@
               <div>
                 {% if dong.thuoc and dong.thuoc.dang_hoat_dong %}
                   <a class="ten-thuoc-khach" href="{% url 'danh_muc:khach_thuoc_chi_tiet' dong.thuoc.ma_thuoc %}">{{ dong.thuoc.ten_thuoc }}</a>
-                  <p class="ghi-chu-khach">{{ dong.thuoc.gia_ban|floatformat:"0g" }} đ / {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</p>
+                  <p class="ghi-chu-khach">{{ dong.thuoc.gia_ban|tien }} / {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</p>
                 {% else %}
                   <strong>{{ dong.thuoc.ten_thuoc|default:"Thuốc không còn trong danh mục" }}</strong>
                   <p class="ghi-chu-khach">Vui lòng bỏ thuốc này để tiếp tục.</p>

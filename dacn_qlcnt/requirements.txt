@@ -24,8 +24,9 @@ numpy==2.5.4
 packaging==26.3
 pandas==3.1.1
 patsy==1.0.3
-psycopg==3.3.8
+pillow==13.0.0
 psycopg-binary==3.3.8
+psycopg==3.3.8
 pycparser==3.12
 pyOpenSSL==26.4.0
 python-dateutil==4.0.0

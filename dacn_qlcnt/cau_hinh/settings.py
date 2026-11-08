@@ -62,7 +62,8 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "ung_dung.chung.nhan_dien_trang.nhan_dien_trang",
                 "ung_dung.chung.dieu_huong.dieu_huong",
-            ]
+            ],
+            "builtins": ["ung_dung.chung.templatetags.dinh_dang"],
         },
     }
 ]

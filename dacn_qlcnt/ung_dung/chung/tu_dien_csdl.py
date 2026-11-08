@@ -14,6 +14,8 @@ TU_VUNG = frozenset(
     thoai thoi thong thu thuc thuoc tiet tin tinh toi ton tra trang tri tro tru tu tuong tuyen
     vai vi vien vuot xac xgboost xuat yeu
     can chao cho co de email giao ho loai loi mac mung nguoi nhac otp phien quen sai su tieu van
+    anh bat bieu byte cach cao chat chieu chong cong cua dau giam gio hien khop khuyen luu mai
+    ngan nuoc pham phu ta tac thi tram y
     """.split()
 )
 

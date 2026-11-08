@@ -10,7 +10,9 @@ from django.utils import timezone
 from ung_dung.chung.permissions import kiem_tra_vai_tro
 from ung_dung.danh_muc.models import (
     ChiNhanh,
+    DanhMucSanPham,
     DonViTinh,
+    KhuyenMai,
     NhaCungCap,
     NhanVien,
     NhomATC,
@@ -36,6 +38,23 @@ NHOM_MO_PHONG = (
     ("R03", "Nhóm dùng cho bệnh tắc nghẽn đường thở", "Chế phẩm mô phỏng 07"),
     ("R06", "Nhóm kháng histamin toàn thân", "Chế phẩm mô phỏng 08"),
 )
+DANH_MUC_MO_PHONG = (
+    ("GIAM-DAU", "Giảm đau, hạ sốt", "Thuốc giảm đau, hạ sốt thông dụng.", "thermometer", 1),
+    ("KHANG-VIEM", "Kháng viêm", "Thuốc kháng viêm không steroid.", "flame", 2),
+    ("THAN-KINH", "Thần kinh, giấc ngủ", "Thuốc an thần và giải lo âu, bán theo đơn.", "brain", 3),
+    ("HO-HAP", "Hô hấp, dị ứng", "Thuốc dùng cho đường thở và dị ứng.", "wind", 4),
+)
+# Mã thuốc -> (mã danh mục, là thuốc kê đơn). Nhóm N05 là thuốc kê đơn ngoài thực tế.
+XEP_THUOC_MO_PHONG = {
+    "MP-T-01": ("KHANG-VIEM", False),
+    "MP-T-02": ("KHANG-VIEM", False),
+    "MP-T-03": ("GIAM-DAU", False),
+    "MP-T-04": ("GIAM-DAU", False),
+    "MP-T-05": ("THAN-KINH", True),
+    "MP-T-06": ("THAN-KINH", True),
+    "MP-T-07": ("HO-HAP", False),
+    "MP-T-08": ("HO-HAP", False),
+}
 NHAN_SU_MO_PHONG = (
     ("mp_quan_ly", "quan_ly_chi_nhanh", "Quản lý mô phỏng"),
     ("mp_nhan_vien", "nhan_vien", "Nhân viên mô phỏng"),
@@ -125,7 +144,64 @@ def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
         )
     if mat_khau is not None:
         tao_tai_khoan_ky_thuat("mp_khach", mat_khau)
+    bo_sung_noi_dung_mo_phong(nguoi)
     return (
         f"Đã tạo {len(CHI_NHANH_MO_PHONG)} chi nhánh và {len(cac_thuoc)} thuốc mô phỏng. "
         "Mỗi chi nhánh có một quản lý, một nhân viên và một phiếu nhập ban đầu."
     )
+
+
+@transaction.atomic
+def bo_sung_noi_dung_mo_phong(nguoi):
+    """Thêm danh mục, nội dung hiển thị, giờ mở cửa và khuyến mãi cho dữ liệu mô phỏng.
+
+    Chạy lại được: chỉ điền chỗ còn trống, không ghi đè nội dung quản trị đã sửa.
+    """
+    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
+    cac_danh_muc = {}
+    for ma, ten, mo_ta, bieu_tuong, thu_tu in DANH_MUC_MO_PHONG:
+        cac_danh_muc[ma], _ = DanhMucSanPham.objects.get_or_create(
+            ma_danh_muc_san_pham=ma,
+            defaults={
+                "ten_danh_muc_san_pham": ten,
+                "mo_ta": mo_ta,
+                "bieu_tuong": bieu_tuong,
+                "thu_tu": thu_tu,
+            },
+        )
+    for thuoc in Thuoc.objects.filter(ma_thuoc__in=XEP_THUOC_MO_PHONG).select_for_update():
+        ma_danh_muc, ke_don = XEP_THUOC_MO_PHONG[thuoc.ma_thuoc]
+        if thuoc.danh_muc_san_pham_id is None:
+            thuoc.danh_muc_san_pham = cac_danh_muc[ma_danh_muc]
+            thuoc.la_thuoc_ke_don = ke_don
+        thuoc.quy_cach_dong_goi = thuoc.quy_cach_dong_goi or "Hộp 10 vỉ x 10 viên"
+        thuoc.nuoc_san_xuat = thuoc.nuoc_san_xuat or "Việt Nam"
+        thuoc.mo_ta_ngan = thuoc.mo_ta_ngan or "Sản phẩm mô phỏng phục vụ chạy thử hệ thống."
+        thuoc.cong_dung = thuoc.cong_dung or (
+            "Nội dung mô phỏng. Khi vận hành thật, quản trị nhập công dụng theo tờ hướng "
+            "dẫn sử dụng đã được Bộ Y tế phê duyệt."
+        )
+        thuoc.cach_dung = thuoc.cach_dung or "Dùng theo chỉ dẫn của bác sĩ hoặc dược sĩ."
+        thuoc.bao_quan = thuoc.bao_quan or "Nơi khô, dưới 30°C, tránh ánh sáng."
+        thuoc.save()
+    for so, chi_nhanh in enumerate(
+        ChiNhanh.objects.filter(ma_chi_nhanh__startswith="MP-CN-").order_by("ma_chi_nhanh"),
+        start=1,
+    ):
+        if not chi_nhanh.so_dien_thoai:
+            chi_nhanh.so_dien_thoai = f"028390000{so:02d}"
+            chi_nhanh.save(update_fields=["so_dien_thoai"])
+    hom_nay = timezone.localdate()
+    for ma_thuoc, phan_tram in (("MP-T-03", 10), ("MP-T-07", 15)):
+        thuoc = Thuoc.objects.filter(ma_thuoc=ma_thuoc).first()
+        if thuoc:
+            KhuyenMai.objects.get_or_create(
+                ma_khuyen_mai=f"MP-KM-{ma_thuoc[-2:]}",
+                defaults={
+                    "ten_khuyen_mai": "Ưu đãi mô phỏng tháng này",
+                    "thuoc": thuoc,
+                    "phan_tram_giam": phan_tram,
+                    "ngay_bat_dau": hom_nay,
+                    "ngay_ket_thuc": hom_nay + timedelta(days=30),
+                },
+            )

@@ -1,1 +1,51 @@
-{% extends "base.html" %}{% block noi_dung %}<h1>{{ tieu_de }}</h1><form method="post" class="khoi-trang form-chinh">{% csrf_token %}{{ form.non_field_errors }}{% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}<button class="nut">Lưu</button></form>{% endblock %}
+{% extends "base.html" %}
+{% block vi_tri %}{{ tieu_de }}{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">DANH MỤC</p>
+    <h1>{% if doi_tuong %}Sửa {{ tieu_de|lower }}: {{ doi_tuong }}{% else %}Thêm {{ tieu_de|lower }}{% endif %}</h1>
+  </header>
+  <form method="post" class="form-chinh form-danh-muc">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for tieu_de_nhom, cac_truong in form.cac_nhom %}
+      <fieldset class="khoi-trang nhom-form">
+        {% if tieu_de_nhom %}<legend>{{ tieu_de_nhom }}</legend>{% endif %}
+        <div class="luoi-form">
+          {% for truong, rong in cac_truong %}
+            <div{% if rong %} class="o-rong"{% endif %}>{% include "components/_o_nhap.html" %}</div>
+          {% endfor %}
+        </div>
+      </fieldset>
+    {% endfor %}
+    <div class="thanh-cong-cu hanh-dong-form">
+      <button class="nut" type="submit">Lưu</button>
+      <a class="nut nut-phu" href="{% url 'danh_muc:'|add:loai|add:'_danh_sach' %}">Quay lại danh sách</a>
+    </div>
+  </form>
+  {% if form_anh %}
+    <section class="khoi-trang" aria-labelledby="tieu-de-anh">
+      <div class="dau-khoi"><h2 id="tieu-de-anh">Ảnh hiển thị cho khách</h2><span class="nhan-trang-thai">{{ cac_anh|length }}/8 ảnh</span></div>
+      <ul class="luoi-anh-quan-ly">
+        {% for anh in cac_anh %}
+          <li>
+            <img src="{% if loai == 'thuoc' %}{% url 'danh_muc:anh_thuoc' anh.pk %}{% else %}{% url 'danh_muc:anh_chi_nhanh' anh.pk %}{% endif %}" alt="Ảnh {{ forloop.counter }}" loading="lazy" width="{{ anh.chieu_rong }}" height="{{ anh.chieu_cao }}">
+            <div>
+              {% if forloop.first %}<span class="nhan-trang-thai">Ảnh đại diện</span>{% else %}
+                <form method="post" action="{% url 'danh_muc:anh_dai_dien' loai doi_tuong.pk anh.pk %}">{% csrf_token %}<button class="nut nut-phu" type="submit">Làm ảnh đại diện</button></form>
+              {% endif %}
+              <form method="post" action="{% url 'danh_muc:anh_xoa' loai doi_tuong.pk anh.pk %}" onsubmit="return confirm('Xóa ảnh này?')">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
+            </div>
+          </li>
+        {% empty %}
+          <li class="khong-co-anh">Chưa có ảnh. Website sẽ hiện biểu tượng thay thế.</li>
+        {% endfor %}
+      </ul>
+      <form method="post" enctype="multipart/form-data" action="{% url 'danh_muc:anh_tai_len' loai doi_tuong.pk %}" class="form-chinh tai-anh">
+        {% csrf_token %}
+        {% with truong=form_anh.cac_anh %}{% include "components/_o_nhap.html" %}{% endwith %}
+        <button class="nut" type="submit">Tải ảnh lên</button>
+      </form>
+    </section>
+  {% endif %}
+{% endblock %}

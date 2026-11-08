@@ -1,38 +1,67 @@
 {% extends "khach/base.html" %}
-{% block tieu_de %}Danh mục thuốc · Nhà thuốc{% endblock %}
+{% block tieu_de %}{% if danh_muc_chon %}{{ danh_muc_chon.ten_danh_muc_san_pham }}{% else %}Danh mục thuốc{% endif %} · {{ block.super }}{% endblock %}
 {% block noi_dung %}
+  <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'chung:trang_chu' %}">Trang chủ</a><span aria-hidden="true">/</span>{% if danh_muc_chon %}<a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Thuốc</a><span aria-hidden="true">/</span><span>{{ danh_muc_chon.ten_danh_muc_san_pham }}</span>{% else %}<span>Thuốc</span>{% endif %}</nav>
   <header class="tieu-de-khach">
-    <p class="chu-dan">TRA CỨU</p>
-    <h1>Danh mục thuốc</h1>
-    <p>Tìm theo tên, mã thuốc hoặc lọc theo nhóm ATC.</p>
+    <h1>{% if danh_muc_chon %}{{ danh_muc_chon.ten_danh_muc_san_pham }}{% else %}Tất cả thuốc{% endif %}</h1>
+    <p>{% if danh_muc_chon.mo_ta %}{{ danh_muc_chon.mo_ta }}{% else %}Tìm theo tên, hoạt chất hoặc mã thuốc; lọc theo danh mục và nhóm điều trị.{% endif %}</p>
   </header>
-  <form method="get" class="the-khach bo-loc-khach" aria-label="Lọc danh mục thuốc">
-    <label for="tu-khoa-thuoc">Tên hoặc mã thuốc
-      <input type="search" id="tu-khoa-thuoc" name="q" value="{{ tu_khoa }}" maxlength="150" placeholder="Nhập tên hoặc mã">
-    </label>
-    <label for="nhom-atc-thuoc">Nhóm ATC
-      <select id="nhom-atc-thuoc" name="nhom">
-        <option value="">Tất cả nhóm</option>
-        {% for nhom in cac_nhom %}
-          <option value="{{ nhom.ma_nhom_atc }}"{% if nhom.ma_nhom_atc == ma_nhom %} selected{% endif %}>{{ nhom.ma_nhom_atc }} · {{ nhom.ten_nhom_atc }}</option>
+  <form method="get" class="khung-danh-muc" aria-label="Lọc danh mục thuốc">
+    <aside class="loc-danh-muc the-khach">
+      <h2>Danh mục</h2>
+      <ul class="cac-danh-muc-loc">
+        <li><a href="{% querystring danh_muc=None page=None %}"{% if not bo_loc.ma_danh_muc %} aria-current="true"{% endif %}><i data-lucide="layout-grid" aria-hidden="true"></i>Tất cả</a></li>
+        {% for dm in cac_danh_muc %}
+          <li><a href="{% querystring danh_muc=dm.ma_danh_muc_san_pham page=None %}"{% if dm.ma_danh_muc_san_pham == bo_loc.ma_danh_muc %} aria-current="true"{% endif %}><i data-lucide="{{ dm.bieu_tuong }}" aria-hidden="true"></i><span>{{ dm.ten_danh_muc_san_pham }}</span><small>{{ dm.so_thuoc }}</small></a></li>
         {% endfor %}
-      </select>
-    </label>
-    <button class="nut" type="submit"><i data-lucide="search" aria-hidden="true"></i>Tìm thuốc</button>
+      </ul>
+      {% if bo_loc.ma_danh_muc %}<input type="hidden" name="danh_muc" value="{{ bo_loc.ma_danh_muc }}">{% endif %}
+      <h2>Lọc thêm</h2>
+      <label class="lua-chon-mot-dong"><input type="checkbox" name="khong_ke_don" value="1"{% if bo_loc.khong_ke_don %} checked{% endif %} onchange="this.form.requestSubmit()">Chỉ thuốc không kê đơn</label>
+      <label class="lua-chon-mot-dong"><input type="checkbox" name="dang_giam" value="1"{% if bo_loc.dang_giam %} checked{% endif %} onchange="this.form.requestSubmit()">Đang giảm giá</label>
+      <label class="nhom-loc" for="nhom-atc-thuoc">Nhóm điều trị (ATC)
+        <select id="nhom-atc-thuoc" name="nhom" onchange="this.form.requestSubmit()">
+          <option value="">Tất cả nhóm</option>
+          {% for nhom in cac_nhom %}
+            <option value="{{ nhom.ma_nhom_atc }}"{% if nhom.ma_nhom_atc == bo_loc.ma_nhom %} selected{% endif %}>{{ nhom.ma_nhom_atc }} · {{ nhom.ten_nhom_atc }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </aside>
+    <section class="ket-qua-danh-muc">
+      <div class="thanh-tim-danh-muc">
+        <label class="o-tim-co-bieu-tuong" for="tu-khoa-thuoc">
+          <i data-lucide="search" aria-hidden="true"></i>
+          <span class="sr-only">Tên, hoạt chất hoặc mã thuốc</span>
+          <input type="search" id="tu-khoa-thuoc" name="q" value="{{ bo_loc.tu_khoa }}" maxlength="150" placeholder="Tên thuốc, hoạt chất hoặc mã">
+        </label>
+        <label class="o-sap-xep">Sắp xếp
+          <select name="sap_xep" onchange="this.form.requestSubmit()">
+            {% for ma, nhan in ten_sap_xep.items %}<option value="{{ ma }}"{% if ma == bo_loc.sap_xep %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
+          </select>
+        </label>
+        <button class="nut" type="submit">Tìm</button>
+      </div>
+      <p class="dau-ket-qua-khach">{{ trang.paginator.count }} sản phẩm{% if bo_loc.tu_khoa %} khớp “{{ bo_loc.tu_khoa }}”{% endif %}</p>
+      <div class="luoi-thuoc-khach">
+        {% for thuoc in trang %}
+          {% include "danh_muc/khach/_the_thuoc.html" with thuoc=thuoc only %}
+        {% empty %}
+          <div class="the-khach khoang-trong-khach o-rong-luoi">
+            <i data-lucide="search-x" aria-hidden="true"></i>
+            <h2>Không có thuốc phù hợp</h2>
+            <p>Hãy đổi từ khóa hoặc bỏ bớt bộ lọc.</p>
+            <a class="nut nut-phu" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem tất cả thuốc</a>
+          </div>
+        {% endfor %}
+      </div>
+      {% if trang.has_other_pages %}
+        <nav class="phan-trang-khach" aria-label="Trang danh mục thuốc">
+          {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+          <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}</span>
+          {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+        </nav>
+      {% endif %}
+    </section>
   </form>
-  <div class="dau-ket-qua-khach">{{ trang.paginator.count }} thuốc{% if tu_khoa %} khớp với “{{ tu_khoa }}”{% endif %}</div>
-  <div class="luoi-thuoc-khach">
-    {% for thuoc in trang %}
-      {% include "danh_muc/khach/_the_thuoc.html" with thuoc=thuoc only %}
-    {% empty %}
-      <p class="the-khach">Không tìm thấy thuốc phù hợp. Bạn có thể đổi từ khóa hoặc nhóm ATC.</p>
-    {% endfor %}
-  </div>
-  {% if trang.has_other_pages %}
-    <nav class="phan-trang-khach" aria-label="Trang danh mục thuốc">
-      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
-      <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}</span>
-      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
-    </nav>
-  {% endif %}
 {% endblock %}

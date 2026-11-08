@@ -6,6 +6,8 @@ from .permissions import NHAN_SU_CHI_NHANH, co_vai_tro, la_quan_tri
 DANH_MUC = (
     ("danh_muc:chi_nhanh_danh_sach", "Chi nhánh", "store"),
     ("danh_muc:thuoc_danh_sach", "Thuốc", "pill"),
+    ("danh_muc:danh_muc_san_pham_danh_sach", "Danh mục sản phẩm", "layout-list"),
+    ("danh_muc:khuyen_mai_danh_sach", "Khuyến mãi", "badge-percent"),
     ("danh_muc:nhom_atc_danh_sach", "Nhóm ATC", "tags"),
     ("danh_muc:don_vi_tinh_danh_sach", "Đơn vị tính", "ruler"),
     ("danh_muc:quy_doi_bao_goi_danh_sach", "Quy đổi bao gói", "package"),

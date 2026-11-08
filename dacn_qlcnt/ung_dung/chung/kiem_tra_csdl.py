@@ -34,6 +34,8 @@ def kiem_cot(truong, thong_tin, checks, ket_noi, bao_loi):
     kieu, bat_buoc, mac_dinh, chu_thich, loai_pg = thong_tin
     bang = truong.model._meta.db_table
     kieu_model = truong.db_type(ket_noi).lower().replace("varchar", "character varying")
+    if kieu_model == "time":
+        kieu_model = "time without time zone"
     if kieu.lower().replace(", ", ",") != kieu_model.replace(", ", ",") or bat_buoc == truong.null:
         bao_loi("L05", f"{cot} có kiểu hoặc NULL khác khai báo: {kieu}")
     if cot.startswith("id_") and not (truong.primary_key or truong.many_to_one):

@@ -1,10 +1,21 @@
+{% url 'danh_muc:khach_thuoc_chi_tiet' thuoc.ma_thuoc as duong_dan %}
 <article class="the-khach the-thuoc">
-  <div class="bieu-tuong-thuoc"><i data-lucide="pill" aria-hidden="true"></i></div>
-  <p class="ma-thuoc-khach">{{ thuoc.nhom_atc.ma_nhom_atc }} · {{ thuoc.ma_thuoc }}</p>
-  <h3><a href="{% url 'danh_muc:khach_thuoc_chi_tiet' thuoc.ma_thuoc %}">{{ thuoc.ten_thuoc }}</a></h3>
-  <p class="chu-phu-khach">{{ thuoc.ham_luong }} · {{ thuoc.dang_bao_che }}</p>
+  <a class="anh-the-thuoc" href="{{ duong_dan }}" tabindex="-1" aria-hidden="true">
+    {% if thuoc.id_anh_dai_dien %}
+      <img src="{% url 'danh_muc:anh_thuoc' thuoc.id_anh_dai_dien %}" alt="" loading="lazy">
+    {% else %}
+      <span class="anh-thay-the"><i data-lucide="pill"></i></span>
+    {% endif %}
+    {% if thuoc.phan_tram_giam %}<span class="nhan-giam">-{{ thuoc.phan_tram_giam }}%</span>{% endif %}
+  </a>
+  <p class="ma-thuoc-khach">{{ thuoc.danh_muc_san_pham|default:thuoc.nhom_atc.ten_nhom_atc }}</p>
+  <h3><a href="{{ duong_dan }}">{{ thuoc.ten_thuoc }}</a></h3>
+  <p class="chu-phu-khach">{{ thuoc.quy_cach_dong_goi|default:thuoc.dang_bao_che }}</p>
+  {% if thuoc.la_thuoc_ke_don %}<span class="nhan-ke-don"><i data-lucide="file-text" aria-hidden="true"></i>Thuốc kê đơn</span>{% endif %}
   <div class="cuoi-the-thuoc">
-    <p><strong>{{ thuoc.gia_ban|floatformat:"0g" }} đ</strong><small> / {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></p>
-    <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_chi_tiet' thuoc.ma_thuoc %}" aria-label="Xem {{ thuoc.ten_thuoc }}">Chi tiết <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+    <p class="gia-the">
+      <strong>{{ thuoc.don_gia|tien }}</strong><small> / {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small>
+      {% if thuoc.phan_tram_giam %}<del>{{ thuoc.gia_ban|tien }}</del>{% endif %}
+    </p>
   </div>
 </article>

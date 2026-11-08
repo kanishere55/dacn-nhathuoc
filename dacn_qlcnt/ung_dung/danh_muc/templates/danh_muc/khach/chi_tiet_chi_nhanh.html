@@ -9,6 +9,18 @@
     <h1>{{ chi_nhanh.ten_chi_nhanh }}</h1>
     <p>{{ chi_nhanh.dia_chi }}</p>
   </header>
+  <div class="thong-tin-chi-nhanh">
+    {% if cac_anh %}
+      <div class="anh-chi-nhanh">
+        {% for anh in cac_anh|slice:":3" %}<img src="{% url 'danh_muc:anh_chi_nhanh' anh.pk %}" alt="{{ chi_nhanh.ten_chi_nhanh }} – ảnh {{ forloop.counter }}" loading="lazy">{% endfor %}
+      </div>
+    {% endif %}
+    <dl class="the-khach chi-so-chi-nhanh">
+      <div><dt><i data-lucide="clock" aria-hidden="true"></i>Giờ mở cửa</dt><dd>{{ chi_nhanh.gio_mo_cua|time:"H:i" }} – {{ chi_nhanh.gio_dong_cua|time:"H:i" }} hằng ngày {% if dang_mo_cua %}<span class="nhan-dang-mo">Đang mở cửa</span>{% else %}<span class="nhan-da-dong">Đã đóng cửa</span>{% endif %}</dd></div>
+      {% if chi_nhanh.so_dien_thoai %}<div><dt><i data-lucide="phone" aria-hidden="true"></i>Điện thoại</dt><dd><a href="tel:{{ chi_nhanh.so_dien_thoai }}">{{ chi_nhanh.so_dien_thoai }}</a></dd></div>{% endif %}
+      <div><dt><i data-lucide="map-pin" aria-hidden="true"></i>Địa chỉ</dt><dd>{{ chi_nhanh.dia_chi }}</dd></div>
+    </dl>
+  </div>
   <div class="hanh-dong-khach">
     {% if not noi_bo %}
       <a class="nut" href="{% url 'tro_chuyen:khach_danh_sach' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện với chi nhánh</a>

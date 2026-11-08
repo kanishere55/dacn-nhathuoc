@@ -20,23 +20,35 @@
     <img class="minh-hoa-nha-thuoc" src="{% static 'chung/hinh/nha_thuoc.svg' %}" width="400" height="260" alt="">
   </section>
 
-  <section class="muc-khach" aria-labelledby="nhom-thuoc">
+  <section class="muc-khach" aria-labelledby="danh-muc-khach">
     <div class="dau-muc-khach">
-      <div><p class="chu-dan">DANH MỤC</p><h2 id="nhom-thuoc">Nhóm thuốc</h2></div>
+      <div><p class="chu-dan">DANH MỤC</p><h2 id="danh-muc-khach">Mua theo nhu cầu</h2></div>
       <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem tất cả<i data-lucide="arrow-right" aria-hidden="true"></i></a>
     </div>
-    <ul class="cac-nhom-khach">
-      {% for nhom in cac_nhom %}
-        <li><a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}?nhom={{ nhom.ma_nhom_atc|urlencode }}"><strong>{{ nhom.ma_nhom_atc }}</strong><span>{{ nhom.ten_nhom_atc }}</span></a></li>
+    <ul class="cac-danh-muc-trang-chu">
+      {% for dm in cac_danh_muc %}
+        <li><a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}?danh_muc={{ dm.ma_danh_muc_san_pham|urlencode }}"><span class="bieu-tuong-danh-muc"><i data-lucide="{{ dm.bieu_tuong }}" aria-hidden="true"></i></span><strong>{{ dm.ten_danh_muc_san_pham }}</strong><small>{{ dm.so_thuoc }} sản phẩm</small></a></li>
       {% empty %}
-        <li>Danh mục nhóm thuốc đang được cập nhật.</li>
+        <li>Danh mục đang được cập nhật.</li>
       {% endfor %}
     </ul>
   </section>
 
+  {% if thuoc_giam_gia %}
+    <section class="muc-khach" aria-labelledby="dang-giam-gia">
+      <div class="dau-muc-khach">
+        <div><p class="chu-dan">ƯU ĐÃI</p><h2 id="dang-giam-gia">Đang giảm giá</h2></div>
+        <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}?dang_giam=1&amp;sap_xep=giam_nhieu">Xem tất cả ưu đãi<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+      </div>
+      <div class="luoi-thuoc-khach">
+        {% for thuoc in thuoc_giam_gia %}{% include "danh_muc/khach/_the_thuoc.html" with thuoc=thuoc only %}{% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
   <section class="muc-khach" aria-labelledby="thuoc-danh-muc">
     <div class="dau-muc-khach">
-      <div><p class="chu-dan">TRA CỨU</p><h2 id="thuoc-danh-muc">Thuốc trong danh mục</h2></div>
+      <div><p class="chu-dan">SẢN PHẨM</p><h2 id="thuoc-danh-muc">Thuốc trong danh mục</h2></div>
       <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem danh mục<i data-lucide="arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="luoi-thuoc-khach">

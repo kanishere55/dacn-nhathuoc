@@ -24,6 +24,8 @@ class DanhMucTests(TestCase):
                 "kinh_do": "106.7",
                 "vi_do": "10.77",
                 "dang_hoat_dong": "on",
+                "gio_mo_cua": "07:00",
+                "gio_dong_cua": "22:00",
             },
         )
         self.assertEqual(phan_hoi.status_code, 302)

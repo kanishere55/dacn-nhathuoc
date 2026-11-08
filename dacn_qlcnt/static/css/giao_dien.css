@@ -2,6 +2,7 @@
 @import "./khach.css";
 @import "./bang_dieu_khien.css";
 @import "./tai_khoan.css";
+@import "./danh_muc.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {
