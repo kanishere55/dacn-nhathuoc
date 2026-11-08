@@ -1,0 +1,23 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}{{ tieu_de }} · Nhà thuốc{% endblock %}
+{% block noi_dung %}
+  <section class="the-khach khung-xac-thuc" aria-label="{{ tieu_de }}">
+    <p class="chu-dan">TÀI KHOẢN</p>
+    <h1>{{ tieu_de }}</h1>
+    <p class="chu-phu-khach">Đăng nhập để theo dõi đơn giữ và trò chuyện với chi nhánh.</p>
+    <form method="post" class="form-chinh">
+      {% csrf_token %}
+      {% if quay_lai %}<input type="hidden" name="next" value="{{ quay_lai }}">{% endif %}
+      {{ form.non_field_errors }}
+      {% for truong in form %}
+        {% include "components/_o_nhap.html" %}
+      {% endfor %}
+      <button class="nut">{{ tieu_de }}</button>
+    </form>
+    {% if dang_ky %}
+      <p>Đã có tài khoản? <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_nhap' %}">Đăng nhập</a></p>
+    {% else %}
+      <p>Chưa có tài khoản? <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_ky' %}">Đăng ký khách hàng</a></p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,8 @@
+<table>
+  <thead><tr><th scope="col">Thuốc</th><th scope="col">Lượng</th><th scope="col">Đơn vị cơ sở</th></tr></thead>
+  <tbody>
+    {% for dong in cac_dong %}
+      <tr><td>{{ dong.thuoc }}</td><td>{{ dong.so_luong }}</td><td>{{ dong.thuoc.don_vi_tinh }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

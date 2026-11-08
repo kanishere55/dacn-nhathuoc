@@ -1,0 +1,25 @@
+{% load static nhan_dien %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"historyCacheSize":0,"allowEval":false,"includeIndicatorStyles":false}'>
+  <title>{% block tieu_de %}Nhà thuốc{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'bieu_tuong.svg' %}">
+  <link rel="stylesheet" href="{% static 'css/da_bien_dich.css' %}">
+  <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
+  <script defer src="{% static 'vendor/lucide/lucide.min.js' %}"></script>
+  <script defer src="{% static 'chung/js/giao_dien.js' %}"></script>
+  {% block dau_trang %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'>
+  <a href="#noi-dung" class="bo-qua">Đến nội dung chính</a>
+  {% block giao_dien %}{% endblock %}
+  {% if nhan_dien %}
+    <div class="nhan-dien-trang" role="note">{{ nhan_dien.url }} · {{ nhan_dien.view }} · {% ten_template %}</div>
+  {% endif %}
+  {% block cuoi_trang %}{% endblock %}
+</body>
+</html>

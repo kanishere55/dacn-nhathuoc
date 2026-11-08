@@ -5,14 +5,7 @@
   <p>Hạn nhận và thanh toán tại quầy {{ don.thoi_diem_het_giu|date:"d/m/Y H:i" }}.</p>
   <p>Giá hiện tại được xác nhận khi nhận tại quầy.</p>
   <div class="khoi-trang khung-bang">
-    <table>
-      <thead><tr><th>Thuốc</th><th>Lượng</th><th>Đơn vị cơ sở</th></tr></thead>
-      <tbody>
-        {% for dong in cac_dong %}
-          <tr><td>{{ dong.thuoc }}</td><td>{{ dong.so_luong }}</td><td>{{ dong.thuoc.don_vi_tinh }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "ban_hang/_dong_don_giu.html" with cac_dong=cac_dong only %}
   </div>
   {% if don.con_hieu_luc and duoc_huy %}
     <div class="thanh-cong-cu">

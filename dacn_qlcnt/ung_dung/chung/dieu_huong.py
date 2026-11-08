@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 
-from .permissions import la_quan_tri
+from .permissions import NHAN_SU_CHI_NHANH, co_vai_tro, la_quan_tri
 
 DANH_MUC = (
     ("danh_muc:chi_nhanh_danh_sach", "Chi nhánh", "store"),
@@ -23,30 +23,38 @@ KHO_QUAN_LY = (
     ("kho:phieu_dieu_chuyen_danh_sach", "Điều chuyển", "repeat"),
     ("kho:phieu_kiem_ke_danh_sach", "Kiểm kê", "clipboard-check"),
 )
+MENU_KHACH = (
+    ("chung:trang_chu", "Trang chủ", ("chung:trang_chu",)),
+    (
+        "danh_muc:khach_thuoc_danh_sach",
+        "Tra cứu thuốc",
+        ("danh_muc:khach_thuoc_danh_sach", "danh_muc:khach_thuoc_chi_tiet"),
+    ),
+    ("webgis:ban_do", "Tìm nhà thuốc", ("webgis:ban_do", "danh_muc:khach_chi_nhanh_chi_tiet")),
+)
 
 
 def dieu_huong(request):
     nguoi = getattr(request, "user", None) or AnonymousUser()
-    trang = request.resolver_match.view_name if request.resolver_match else ""
-    cac_muc = [("chung:trang_chu", "Tổng quan", "layout-dashboard")]
-    vai_tro = nguoi.vai_tro if nguoi.is_authenticated and nguoi.is_active else ""
+    ket_qua = getattr(request, "resolver_match", None)
+    trang = ket_qua.view_name if ket_qua else ""
     quan_tri = la_quan_tri(nguoi)
-    nhan_su = vai_tro in {"nhan_vien", "quan_ly_chi_nhanh"}
-    quan_ly = vai_tro == "quan_ly_chi_nhanh"
-    if not vai_tro or vai_tro == "khach_hang":
-        cac_muc.append(("webgis:ban_do", "Tìm chi nhánh", "map-pinned"))
+    nhan_su = co_vai_tro(nguoi, *NHAN_SU_CHI_NHANH)
+    quan_ly = co_vai_tro(nguoi, "quan_ly_chi_nhanh")
+    noi_bo = quan_tri or nhan_su
+    cac_muc = [("chung:bang_dieu_khien", "Tổng quan", "layout-dashboard")] if noi_bo else []
     if quan_tri:
         cac_muc.append(("tai_khoan:danh_sach", "Tài khoản", "user-round"))
-    if quan_tri or nhan_su:
+    if noi_bo:
         cac_muc.extend(DANH_MUC)
         cac_muc.extend(KHO)
         cac_muc.append(("ban_hang:phieu_ban_danh_sach", "Bán tại quầy", "receipt"))
     if quan_tri or quan_ly:
         cac_muc.extend(KHO_QUAN_LY)
         cac_muc.append(("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"))
-    if quan_tri or nhan_su or vai_tro == "khach_hang":
+    if noi_bo:
         cac_muc.append(("ban_hang:don_dat_giu_danh_sach", "Đơn đặt giữ", "shopping-basket"))
-    if nhan_su or vai_tro == "khach_hang":
+    if nhan_su:
         cac_muc.append(("tro_chuyen:danh_sach", "Trò chuyện", "messages-square"))
     if quan_tri:
         cac_muc.extend(
@@ -56,8 +64,13 @@ def dieu_huong(request):
             )
         )
     return {
+        "noi_bo": noi_bo,
+        "menu_khach": [
+            {"duong_dan": reverse(ten), "nhan": nhan, "dang_chon": trang in cac_trang}
+            for ten, nhan, cac_trang in MENU_KHACH
+        ],
         "menu_ung_dung": [
             {"duong_dan": reverse(ten), "nhan": nhan, "bieu_tuong": icon, "dang_chon": ten == trang}
             for ten, nhan, icon in cac_muc
-        ]
+        ],
     }

@@ -1,0 +1,67 @@
+{% extends "khach/base.html" %}
+{% load static %}
+{% block tieu_de %}Trang chủ · Nhà thuốc{% endblock %}
+{% block noi_dung %}
+  <section class="gioi-thieu-khach" aria-labelledby="tieu-de-trang-chu">
+    <div class="noi-dung-gioi-thieu">
+      <p class="chu-dan">CHUỖI NHÀ THUỐC · TP.HCM</p>
+      <h1 id="tieu-de-trang-chu">Tìm thuốc, chọn nhà thuốc gần bạn</h1>
+      <p>Tra cứu thuốc, xem chi nhánh còn đủ hàng và đặt giữ để đến nhận tại quầy.</p>
+      <form class="tim-nhanh" method="get" action="{% url 'danh_muc:khach_thuoc_danh_sach' %}">
+        <label for="tim-trang-chu" class="sr-only">Tên hoặc mã thuốc</label>
+        <input type="search" id="tim-trang-chu" name="q" maxlength="150" placeholder="Nhập tên hoặc mã thuốc">
+        <button class="nut" type="submit"><i data-lucide="search" aria-hidden="true"></i>Tra cứu</button>
+      </form>
+      <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}">
+        <i data-lucide="map-pin" aria-hidden="true"></i>Tìm nhà thuốc gần bạn
+        <i data-lucide="arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+    <img class="minh-hoa-nha-thuoc" src="{% static 'chung/hinh/nha_thuoc.svg' %}" width="400" height="260" alt="">
+  </section>
+
+  <section class="muc-khach" aria-labelledby="nhom-thuoc">
+    <div class="dau-muc-khach">
+      <div><p class="chu-dan">DANH MỤC</p><h2 id="nhom-thuoc">Nhóm thuốc</h2></div>
+      <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem tất cả<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <ul class="cac-nhom-khach">
+      {% for nhom in cac_nhom %}
+        <li><a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}?nhom={{ nhom.ma_nhom_atc|urlencode }}"><strong>{{ nhom.ma_nhom_atc }}</strong><span>{{ nhom.ten_nhom_atc }}</span></a></li>
+      {% empty %}
+        <li>Danh mục nhóm thuốc đang được cập nhật.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="muc-khach" aria-labelledby="thuoc-danh-muc">
+    <div class="dau-muc-khach">
+      <div><p class="chu-dan">TRA CỨU</p><h2 id="thuoc-danh-muc">Thuốc trong danh mục</h2></div>
+      <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem danh mục<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="luoi-thuoc-khach">
+      {% for thuoc in cac_thuoc %}
+        {% include "danh_muc/khach/_the_thuoc.html" with thuoc=thuoc only %}
+      {% empty %}
+        <p>Chưa có thuốc đang kinh doanh.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="muc-khach" aria-labelledby="chi-nhanh-khach">
+    <div class="dau-muc-khach">
+      <div><p class="chu-dan">NHẬN TẠI QUẦY</p><h2 id="chi-nhanh-khach">Các nhà thuốc trong chuỗi</h2></div>
+      <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}">Mở bản đồ<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="luoi-khach-ba">
+      {% for chi_nhanh in cac_chi_nhanh %}
+        <a class="the-khach the-chi-nhanh" href="{% url 'danh_muc:khach_chi_nhanh_chi_tiet' chi_nhanh.ma_chi_nhanh %}">
+          <i data-lucide="map-pin" aria-hidden="true"></i>
+          <span><strong>{{ chi_nhanh.ten_chi_nhanh }}</strong><small>{{ chi_nhanh.dia_chi }}</small></span>
+        </a>
+      {% empty %}
+        <p>Chưa có chi nhánh hoạt động.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

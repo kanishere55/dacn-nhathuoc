@@ -1,25 +1,10 @@
-{% load static nhan_dien %}
-<!doctype html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="htmx-config" content='{"historyCacheSize":0,"allowEval":false,"includeIndicatorStyles":false}'>
-  <title>{% block tieu_de %}Nhà thuốc · Không gian làm việc{% endblock %}</title>
-  <link rel="icon" type="image/svg+xml" href="{% static 'bieu_tuong.svg' %}">
-  <link rel="stylesheet" href="{% static 'css/da_bien_dich.css' %}">
-  <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
-  <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
-  <script defer src="{% static 'vendor/lucide/lucide.min.js' %}"></script>
-  <script defer src="{% static 'chung/js/giao_dien.js' %}"></script>
-  {% block dau_trang %}{% endblock %}
-</head>
-<body hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'>
-  <a href="#noi-dung" class="bo-qua">Đến nội dung chính</a>
+{% extends "khung_trang.html" %}
+{% block tieu_de %}Nhà thuốc · Khu quản lý{% endblock %}
+{% block giao_dien %}
   <div class="khung-ung-dung" x-data="{ moMenu: false }">
     <aside class="thanh-ben" :class="{ 'dang-mo': moMenu }" aria-label="Điều hướng chính">
-      <a class="thuong-hieu" href="{% url 'chung:trang_chu' %}"><span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span><span>NHÀ THUỐC<small>Quản lý chuỗi</small></span></a>
-      <div class="nhan-menu">KHÔNG GIAN LÀM VIỆC</div>
+      <a class="thuong-hieu" href="{% url 'chung:bang_dieu_khien' %}"><span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span><span>NHÀ THUỐC<small>Quản lý chuỗi</small></span></a>
+      <div class="nhan-menu">KHU QUẢN LÝ</div>
       {% block menu_chinh %}
         <nav class="menu-phan-he">
           {% for muc in menu_ung_dung %}
@@ -30,7 +15,13 @@
       <div class="chan-menu"><i data-lucide="shield-check" aria-hidden="true"></i><span>Quản lý tập trung<br><small>Thống nhất giữa các chi nhánh</small></span></div>
     </aside>
     <div class="vung-chinh">
-      <header class="dau-trang"><div class="flex items-center gap-3"><button class="nut-menu" @click="moMenu = !moMenu" :aria-expanded="moMenu" aria-label="Đóng mở điều hướng"><i data-lucide="menu" aria-hidden="true"></i></button><span class="duong-dan">Không gian làm việc <span>/</span> {% block vi_tri %}Tổng quan{% endblock %}</span></div><span class="nhan-he-thong">NHÀ THUỐC</span></header>
+      <header class="dau-trang">
+        <div class="flex items-center gap-3">
+          <button class="nut-menu" @click="moMenu = !moMenu" :aria-expanded="moMenu" aria-label="Đóng mở điều hướng"><i data-lucide="menu" aria-hidden="true"></i></button>
+          <span class="duong-dan">Khu quản lý <span>/</span> {% block vi_tri %}Nghiệp vụ{% endblock %}</span>
+        </div>
+        <a class="duong-dan-noi-dung" href="{% url 'chung:trang_chu' %}">Website khách hàng</a>
+      </header>
       <main id="noi-dung" tabindex="-1">
         <div class="thanh-tai-khoan">
           {% if user.is_authenticated %}
@@ -45,9 +36,6 @@
         {% block noi_dung %}{% endblock %}
       </main>
       <footer class="cuoi-trang">Hệ thống quản lý chuỗi nhà thuốc</footer>
-      {% if nhan_dien %}<div class="nhan-dien-trang" role="note">{{ nhan_dien.url }} · {{ nhan_dien.view }} · {% ten_template %}</div>{% endif %}
     </div>
   </div>
-  {% block cuoi_trang %}{% endblock %}
-</body>
-</html>
+{% endblock %}

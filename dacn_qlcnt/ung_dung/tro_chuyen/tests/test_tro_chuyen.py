@@ -37,12 +37,15 @@ class TroChuyenTests(TransactionTestCase):
     def test_khach_chi_doc_duoc_phong_cua_minh(self):
         self.client.force_login(self.d.khac)
         self.assertEqual(
-            self.client.get(reverse("tro_chuyen:chi_tiet", args=[self.phong.pk])).status_code, 404
+            self.client.get(reverse("tro_chuyen:khach_chi_tiet", args=[self.phong.pk])).status_code,
+            404,
         )
-        self.assertNotContains(self.client.get(reverse("tro_chuyen:danh_sach")), str(self.d.khach))
+        self.assertNotContains(
+            self.client.get(reverse("tro_chuyen:khach_danh_sach")), str(self.d.khach)
+        )
         self.client.force_login(self.d.khach)
         self.assertContains(
-            self.client.get(reverse("tro_chuyen:chi_tiet", args=[self.phong.pk])), "Tin nhắn"
+            self.client.get(reverse("tro_chuyen:khach_chi_tiet", args=[self.phong.pk])), "Tin nhắn"
         )
 
     def ket_noi(self, nguoi):

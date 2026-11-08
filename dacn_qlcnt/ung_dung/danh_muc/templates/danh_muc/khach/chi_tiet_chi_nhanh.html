@@ -1,0 +1,24 @@
+{% extends "khach/base.html" %}
+{% load l10n static %}
+{% block tieu_de %}{{ chi_nhanh.ten_chi_nhanh }} · Nhà thuốc{% endblock %}
+{% block dau_trang %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endblock %}
+{% block noi_dung %}
+  <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'webgis:ban_do' %}">Tìm nhà thuốc</a><span aria-hidden="true">/</span><span>{{ chi_nhanh.ma_chi_nhanh }}</span></nav>
+  <header class="tieu-de-khach">
+    <p class="chu-dan">CHI NHÁNH</p>
+    <h1>{{ chi_nhanh.ten_chi_nhanh }}</h1>
+    <p>{{ chi_nhanh.dia_chi }}</p>
+  </header>
+  <div class="hanh-dong-khach">
+    {% if not noi_bo %}
+      <a class="nut" href="{% url 'tro_chuyen:khach_danh_sach' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện với chi nhánh</a>
+    {% endif %}
+    <a class="nut nut-phu" href="{% url 'webgis:ban_do' %}"><i data-lucide="map" aria-hidden="true"></i>Tìm thuốc trên bản đồ</a>
+  </div>
+  <div class="ban-do" data-vi-tri-chi-nhanh data-vi-do="{{ chi_nhanh.vi_tri.y|unlocalize }}"
+       data-kinh-do="{{ chi_nhanh.vi_tri.x|unlocalize }}" aria-label="Vị trí chi nhánh trên bản đồ"></div>
+{% endblock %}
+{% block cuoi_trang %}
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
+  <script src="{% static 'danh_muc/js/chi_nhanh_khach.js' %}" defer></script>
+{% endblock %}

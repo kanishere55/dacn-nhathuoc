@@ -2,18 +2,6 @@
 {% load static %}
 {% block noi_dung %}
   <h1>Trò chuyện với {{ phong.chi_nhanh }}</h1>
-  <section class="khoi-trang" data-tro-chuyen data-ma-phong="{{ phong.pk }}">
-    <p role="status" aria-live="polite" data-trang-thai>Đang kết nối…</p>
-    <ol class="cac-tin-nhan" data-cac-tin aria-live="polite">
-      {% for tin in cac_tin %}
-        <li data-id-tin="{{ tin.id_tin_nhan }}"><strong>{{ tin.nguoi_gui }}</strong><p>{{ tin.noi_dung }}</p></li>
-      {% endfor %}
-    </ol>
-    <form class="form-chinh">
-      <label for="noi-dung-tin">Tin nhắn</label>
-      <textarea id="noi-dung-tin" name="noi_dung" rows="3" maxlength="2000" required></textarea>
-      <button class="nut" disabled>Gửi</button>
-    </form>
-  </section>
+  {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong cac_tin=cac_tin only %}
 {% endblock %}
 {% block cuoi_trang %}<script defer src="{% static 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}

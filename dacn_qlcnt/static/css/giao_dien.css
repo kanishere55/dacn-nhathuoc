@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./khach.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {

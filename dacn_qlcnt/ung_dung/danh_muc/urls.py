@@ -1,9 +1,18 @@
-from django.urls import path
+from django.urls import include, path
 
-from .views import chi_nhanh, don_vi_tinh, nha_cung_cap, nhan_vien, nhom_atc, quy_doi_bao_goi, thuoc
+from .views import (
+    chi_nhanh,
+    don_vi_tinh,
+    khach,
+    nha_cung_cap,
+    nhan_vien,
+    nhom_atc,
+    quy_doi_bao_goi,
+    thuoc,
+)
 
 app_name = "danh_muc"
-urlpatterns = [
+quan_ly = [
     path("chi-nhanh/", chi_nhanh.danh_sach, name="chi_nhanh_danh_sach"),
     path("chi-nhanh/tao/", chi_nhanh.tao, name="chi_nhanh_tao"),
     path("chi-nhanh/<int:ma>/sua/", chi_nhanh.sua, name="chi_nhanh_sua"),
@@ -25,4 +34,10 @@ urlpatterns = [
     path("nhan-vien/", nhan_vien.danh_sach, name="nhan_vien_danh_sach"),
     path("nhan-vien/tao/", nhan_vien.tao, name="nhan_vien_tao"),
     path("nhan-vien/<int:ma>/sua/", nhan_vien.sua, name="nhan_vien_sua"),
+]
+urlpatterns = [
+    path("thuoc/", khach.danh_sach_thuoc, name="khach_thuoc_danh_sach"),
+    path("thuoc/<str:ma>/", khach.chi_tiet_thuoc, name="khach_thuoc_chi_tiet"),
+    path("chi-nhanh/<str:ma>/", khach.chi_tiet_chi_nhanh, name="khach_chi_nhanh_chi_tiet"),
+    path("quan-ly/danh-muc/", include(quan_ly)),
 ]

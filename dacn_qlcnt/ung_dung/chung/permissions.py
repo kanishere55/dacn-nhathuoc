@@ -1,7 +1,7 @@
 from functools import wraps
 
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import redirect
 
 NHAN_SU_CHI_NHANH = ("quan_ly_chi_nhanh", "nhan_vien")
 NHAN_SU_CHUOI = ("quan_tri_chuoi", *NHAN_SU_CHI_NHANH)
@@ -33,7 +33,7 @@ def yeu_cau_vai_tro(*vai_tro):
         @wraps(ham)
         def xu_ly(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return redirect("tai_khoan:dang_nhap")
+                return redirect_to_login(request.get_full_path())
             kiem_tra_vai_tro(request.user, *vai_tro)
             return ham(request, *args, **kwargs)
 

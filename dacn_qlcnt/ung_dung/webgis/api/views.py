@@ -34,7 +34,7 @@ def tao_dat_giu(request):
     return Response(
         {
             "ma_don_dat_giu": don.ma_don_dat_giu,
-            "duong_dan": reverse("ban_hang:don_dat_giu_chi_tiet", args=[don.pk]),
+            "duong_dan": reverse("ban_hang:khach_don_dat_giu_chi_tiet", args=[don.pk]),
         },
         status=201,
     )

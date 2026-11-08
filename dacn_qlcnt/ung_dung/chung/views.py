@@ -1,5 +1,29 @@
 from django.shortcuts import render
+from django.views.decorators.http import require_GET
+
+from ung_dung.danh_muc.selectors import (
+    lay_chi_nhanh_cong_khai,
+    lay_nhom_thuoc_cong_khai,
+    lay_thuoc_cong_khai,
+)
+
+from .permissions import NHAN_SU_CHUOI, yeu_cau_vai_tro
 
 
+@require_GET
 def trang_chu(request):
-    return render(request, "chung/trang_chu.html")
+    return render(
+        request,
+        "chung/khach/trang_chu.html",
+        {
+            "cac_nhom": lay_nhom_thuoc_cong_khai()[:8],
+            "cac_thuoc": lay_thuoc_cong_khai()[:4],
+            "cac_chi_nhanh": lay_chi_nhanh_cong_khai()[:3],
+        },
+    )
+
+
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@require_GET
+def bang_dieu_khien(request):
+    return render(request, "chung/bang_dieu_khien.html")

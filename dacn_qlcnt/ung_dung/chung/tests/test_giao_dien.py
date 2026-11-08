@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.test import RequestFactory, SimpleTestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import ResolverMatch
 from django.views import View
 from rest_framework.views import APIView
@@ -18,7 +18,7 @@ class APIDangLop(APIView):
     pass
 
 
-class NhanDienTrangTests(SimpleTestCase):
+class NhanDienTrangTests(TestCase):
     @override_settings(DEBUG=True, HIEN_NHAN_DIEN_TRANG=True)
     def test_hien_du_ba_thanh_phan(self):
         phan_hoi = self.client.get("/")
@@ -27,7 +27,7 @@ class NhanDienTrangTests(SimpleTestCase):
             "chung:trang_chu",
             "ung_dung/chung/views.py",
             "trang_chu",
-            "chung/trang_chu.html",
+            "chung/khach/trang_chu.html",
         ):
             self.assertContains(phan_hoi, muc)
 
@@ -48,7 +48,7 @@ class NhanDienTrangTests(SimpleTestCase):
         self.assertNotContains(phan_hoi, "Traceback", status_code=404)
         self.assertNotContains(phan_hoi, 'aria-current="page"', status_code=404)
 
-    def test_chi_danh_dau_tong_quan_khi_dang_o_trang_chu(self):
+    def test_chi_danh_dau_trang_chu_khi_dang_o_trang_chu(self):
         self.assertContains(self.client.get("/"), 'aria-current="page"', count=1)
 
     def test_trang_403_khong_danh_dau_tong_quan(self):

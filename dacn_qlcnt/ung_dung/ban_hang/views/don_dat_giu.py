@@ -15,12 +15,12 @@ from ..services.dat_giu import huy_giu
 from ..services.phieu_ban import ban_tai_quay
 
 
-@yeu_cau_vai_tro("khach_hang", *NHAN_SU_CHUOI)
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 def danh_sach(request):
     return render(request, "ban_hang/don_dat_giu.html", {"cac_don": lay_don(request.user)})
 
 
-@yeu_cau_vai_tro("khach_hang", *NHAN_SU_CHUOI)
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 def chi_tiet(request, ma):
     don = get_object_or_404(lay_don(request.user), pk=ma)
     return render(
@@ -29,14 +29,14 @@ def chi_tiet(request, ma):
         {
             "don": don,
             "cac_dong": lay_chi_tiet_don(don),
-            "duoc_huy": co_vai_tro(request.user, "khach_hang", *NHAN_SU_CHI_NHANH),
+            "duoc_huy": co_vai_tro(request.user, *NHAN_SU_CHI_NHANH),
             "duoc_nhan": co_vai_tro(request.user, *NHAN_SU_CHI_NHANH),
         },
     )
 
 
 @require_POST
-@yeu_cau_vai_tro("khach_hang", *NHAN_SU_CHI_NHANH)
+@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
 def huy(request, ma):
     don = get_object_or_404(lay_don(request.user), pk=ma)
     try:

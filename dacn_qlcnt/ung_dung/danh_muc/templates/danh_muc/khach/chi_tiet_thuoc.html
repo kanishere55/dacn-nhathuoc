@@ -1,0 +1,20 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}{{ thuoc.ten_thuoc }} · Nhà thuốc{% endblock %}
+{% block noi_dung %}
+  <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Danh mục thuốc</a><span aria-hidden="true">/</span><span>{{ thuoc.ma_thuoc }}</span></nav>
+  <section class="the-khach thong-tin-thuoc-khach" aria-labelledby="ten-thuoc">
+    <div class="hinh-thuoc-khach" aria-hidden="true"><i data-lucide="pill"></i></div>
+    <div>
+      <p class="chu-dan">{{ thuoc.nhom_atc.ma_nhom_atc }} · {{ thuoc.ma_thuoc }}</p>
+      <h1 id="ten-thuoc">{{ thuoc.ten_thuoc }}</h1>
+      <p class="gia-thuoc-khach">{{ thuoc.gia_ban|floatformat:"0g" }} đ <span>/ {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span></p>
+      <dl class="chi-so-thuoc">
+        <div><dt>Hàm lượng</dt><dd>{{ thuoc.ham_luong|default:"—" }}</dd></div>
+        <div><dt>Dạng bào chế</dt><dd>{{ thuoc.dang_bao_che|default:"—" }}</dd></div>
+        <div><dt>Nhà sản xuất</dt><dd>{{ thuoc.nha_san_xuat|default:"—" }}</dd></div>
+        <div><dt>Đơn vị cơ sở</dt><dd>{{ thuoc.don_vi_tinh.ten_don_vi_tinh }}</dd></div>
+      </dl>
+      <a class="nut" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Tìm nhà thuốc còn thuốc này</a>
+    </div>
+  </section>
+{% endblock %}

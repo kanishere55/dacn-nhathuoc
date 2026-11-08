@@ -1,13 +1,13 @@
 from django.urls import path
 
-from . import views
 from .api import views as api
+from .views import khach, noi_bo
 
 app_name = "webgis"
 urlpatterns = [
-    path("", views.ban_do, name="ban_do"),
-    path("ban-do-nhiet/", views.ban_do_nhiet, name="ban_do_nhiet"),
-    path("api/tim-kiem/", api.tim_kiem, name="tim_kiem"),
-    path("api/dat-giu/", api.tao_dat_giu, name="dat_giu"),
-    path("api/ban-do-nhiet/", api.ban_do_nhiet, name="du_lieu_nhiet"),
+    path("ban-do/", khach.ban_do, name="ban_do"),
+    path("ban-do/api/tim-kiem/", api.tim_kiem, name="tim_kiem"),
+    path("ban-do/api/dat-giu/", api.tao_dat_giu, name="dat_giu"),
+    path("quan-ly/ban-do/ban-do-nhiet/", noi_bo.ban_do_nhiet, name="ban_do_nhiet"),
+    path("quan-ly/ban-do/api/ban-do-nhiet/", api.ban_do_nhiet, name="du_lieu_nhiet"),
 ]

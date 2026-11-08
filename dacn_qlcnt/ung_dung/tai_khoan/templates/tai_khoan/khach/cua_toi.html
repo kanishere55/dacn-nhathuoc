@@ -1,0 +1,23 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}Tài khoản của tôi · Nhà thuốc{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-khach">
+    <p class="chu-dan">TÀI KHOẢN</p>
+    <h1>Tài khoản của tôi</h1>
+    <p>Xin chào, {{ user.ten_dang_nhap }}.</p>
+  </header>
+  <div class="luoi-khach-ba">
+    <a class="the-khach the-chi-nhanh" href="{% url 'ban_hang:khach_don_dat_giu_danh_sach' %}">
+      <i data-lucide="clipboard-list" aria-hidden="true"></i>
+      <span><strong>Đơn đặt giữ của tôi</strong><small>Xem trạng thái và hạn nhận tại quầy.</small></span>
+    </a>
+    <a class="the-khach the-chi-nhanh" href="{% url 'tro_chuyen:khach_danh_sach' %}">
+      <i data-lucide="messages-square" aria-hidden="true"></i>
+      <span><strong>Trò chuyện</strong><small>Trao đổi với nhân viên của chi nhánh.</small></span>
+    </a>
+  </div>
+  <form class="hanh-dong-khach" method="post" action="{% url 'tai_khoan:dang_xuat' %}">
+    {% csrf_token %}
+    <button class="nut nut-phu" type="submit"><i data-lucide="log-out" aria-hidden="true"></i>Đăng xuất</button>
+  </form>
+{% endblock %}

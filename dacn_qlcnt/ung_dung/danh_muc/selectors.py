@@ -56,3 +56,26 @@ def lay_chi_nhanh(nguoi, *, ca_chi_nhanh_ngung=False):
     if not (ca_chi_nhanh_ngung and quan_tri):
         cac_chi_nhanh = cac_chi_nhanh.filter(dang_hoat_dong=True)
     return cac_chi_nhanh
+
+
+def lay_chi_nhanh_cong_khai():
+    return ChiNhanh.objects.filter(dang_hoat_dong=True).order_by("ma_chi_nhanh")
+
+
+def lay_thuoc_cong_khai(tu_khoa="", ma_nhom=""):
+    cac_thuoc = (
+        Thuoc.objects.filter(dang_hoat_dong=True)
+        .select_related("don_vi_tinh", "nhom_atc")
+        .order_by("ten_thuoc", "ma_thuoc")
+    )
+    if tu_khoa:
+        cac_thuoc = cac_thuoc.filter(
+            Q(ten_thuoc__icontains=tu_khoa) | Q(ma_thuoc__icontains=tu_khoa)
+        )
+    if ma_nhom:
+        cac_thuoc = cac_thuoc.filter(nhom_atc__ma_nhom_atc=ma_nhom)
+    return cac_thuoc
+
+
+def lay_nhom_thuoc_cong_khai():
+    return NhomATC.objects.filter(thuoc__dang_hoat_dong=True).distinct().order_by("ma_nhom_atc")

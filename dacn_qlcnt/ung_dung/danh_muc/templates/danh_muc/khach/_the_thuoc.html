@@ -1,0 +1,10 @@
+<article class="the-khach the-thuoc">
+  <div class="bieu-tuong-thuoc"><i data-lucide="pill" aria-hidden="true"></i></div>
+  <p class="ma-thuoc-khach">{{ thuoc.nhom_atc.ma_nhom_atc }} · {{ thuoc.ma_thuoc }}</p>
+  <h3><a href="{% url 'danh_muc:khach_thuoc_chi_tiet' thuoc.ma_thuoc %}">{{ thuoc.ten_thuoc }}</a></h3>
+  <p class="chu-phu-khach">{{ thuoc.ham_luong }} · {{ thuoc.dang_bao_che }}</p>
+  <div class="cuoi-the-thuoc">
+    <p><strong>{{ thuoc.gia_ban|floatformat:"0g" }} đ</strong><small> / {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></p>
+    <a class="lien-ket-noi-bat" href="{% url 'danh_muc:khach_thuoc_chi_tiet' thuoc.ma_thuoc %}" aria-label="Xem {{ thuoc.ten_thuoc }}">Chi tiết <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+  </div>
+</article>

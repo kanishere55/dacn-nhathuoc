@@ -1,0 +1,47 @@
+{% extends "khung_trang.html" %}
+{% block tieu_de %}Nhà thuốc · Tra cứu và đặt giữ{% endblock %}
+{% block giao_dien %}
+  <div class="khung-khach">
+    <header class="dau-trang-khach">
+      <div class="thanh-nhan-thuoc">
+        <div class="be-rong-khach"><i data-lucide="store" aria-hidden="true"></i> Nhận và thanh toán trực tiếp tại quầy</div>
+      </div>
+      <div class="be-rong-khach thanh-khach">
+        <a class="thuong-hieu" href="{% url 'chung:trang_chu' %}">
+          <span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span>
+          <span>Nhà thuốc<small>Tra cứu và đặt giữ</small></span>
+        </a>
+        <nav class="menu-khach" aria-label="Điều hướng website khách">
+          {% for muc in menu_khach %}
+            <a href="{{ muc.duong_dan }}"{% if muc.dang_chon %} aria-current="page"{% endif %}>{{ muc.nhan }}</a>
+          {% endfor %}
+        </nav>
+        <div class="tac-vu-khach">
+          {% if noi_bo %}
+            <a class="nut nut-phu" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Khu quản lý</a>
+          {% elif user.is_authenticated %}
+            <a class="nut nut-phu" href="{% url 'tai_khoan:cua_toi' %}"><i data-lucide="user-round" aria-hidden="true"></i>Tài khoản</a>
+          {% else %}
+            <a class="nut nut-phu" href="{% url 'tai_khoan:dang_nhap' %}"><i data-lucide="user-round" aria-hidden="true"></i>Đăng nhập</a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+    <main class="noi-dung-khach" id="noi-dung" tabindex="-1">
+      {% for message in messages %}
+        <p class="thong-bao{% if message.level_tag == 'error' %} thong-bao-loi{% endif %}" role="status">{{ message }}</p>
+      {% endfor %}
+      {% block noi_dung %}{% endblock %}
+    </main>
+    <footer class="chan-trang-khach">
+      <div class="be-rong-khach">
+        <div><strong>Nhà thuốc</strong><p>Tra cứu thuốc và tìm chi nhánh phù hợp tại TP.HCM.</p></div>
+        <div class="lien-ket-khach">
+          <a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Danh mục thuốc</a>
+          <a href="{% url 'webgis:ban_do' %}">Bản đồ nhà thuốc</a>
+          {% if not noi_bo %}<a href="{% url 'tro_chuyen:khach_danh_sach' %}">Trò chuyện với chi nhánh</a>{% endif %}
+        </div>
+      </div>
+    </footer>
+  </div>
+{% endblock %}

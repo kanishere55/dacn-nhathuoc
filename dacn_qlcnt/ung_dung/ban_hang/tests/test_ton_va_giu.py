@@ -54,7 +54,7 @@ class TonVaGiuTests(TestCase):
         )
         self.assertEqual(lay_ton_kha_dung().get(pk=ton.pk).kha_dung, 10)
         self.client.force_login(self.d.khach)
-        phan_hoi = self.client.get(reverse("ban_hang:don_dat_giu_chi_tiet", args=[don.pk]))
+        phan_hoi = self.client.get(reverse("ban_hang:khach_don_dat_giu_chi_tiet", args=[don.pk]))
         self.assertContains(phan_hoi, "Hết hạn")
         self.assertNotContains(phan_hoi, "Hủy giữ")
         self.assertEqual(giai_phong_het_han(), 1)
