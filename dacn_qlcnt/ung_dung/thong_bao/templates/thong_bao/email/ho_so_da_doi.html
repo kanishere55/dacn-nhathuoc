@@ -1,0 +1,5 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten|default:ten_dang_nhap }},</p>
+  <p style="margin:0 0 12px;">Thông tin hồ sơ của tài khoản <strong>{{ ten_dang_nhap }}</strong> vừa được cập nhật lúc {{ thoi_diem|date:"H:i d/m/Y" }}: {{ cac_muc_doi|join:", " }}.</p>
+{% endblock %}

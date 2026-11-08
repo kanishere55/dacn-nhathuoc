@@ -1,0 +1,6 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten|default:ten_dang_nhap }},</p>
+  <p style="margin:0 0 12px;">Email đăng ký của tài khoản <strong>{{ ten_dang_nhap }}</strong> vừa được đổi sang <strong>{{ email_moi_che }}</strong> lúc {{ thoi_diem|date:"H:i d/m/Y" }}. Từ nay thông báo đơn hàng và mã xác thực sẽ gửi tới email mới.</p>
+  <p style="margin:0 0 12px;">Nếu không phải bạn, hãy liên hệ nhà thuốc để khóa tài khoản.</p>
+{% endblock %}

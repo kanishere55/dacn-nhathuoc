@@ -1,0 +1,24 @@
+{% extends "tai_khoan/khach/_khung_xac_thuc.html" %}
+{% block tieu_de %}{{ tieu_de }} · {{ block.super }}{% endblock %}
+{% block noi_dung_xac_thuc %}
+  <h1>{{ tieu_de }}</h1>
+  <p class="mo-ta-xac-thuc">{{ ghi_chu|default:"Nhập mã 6 chữ số vừa gửi tới email của bạn. Mã có hiệu lực trong 10 phút." }}</p>
+  <p class="email-nhan-ma"><i data-lucide="mail" aria-hidden="true"></i>{{ email_che }}</p>
+  <form method="post" class="form-chinh" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}
+    <button class="nut" type="submit">{{ nut }}</button>
+  </form>
+  <form method="post" action="{{ duong_dan_gui_lai }}" class="gui-lai-ma"
+        x-data="{ con: {{ giay_cho }} }"
+        x-init="const dem = setInterval(() => { if (con > 0) con--; else clearInterval(dem) }, 1000)">
+    {% csrf_token %}
+    <span>Chưa nhận được mã?</span>
+    <button type="submit" :disabled="con > 0">
+      <span x-show="con > 0" x-text="'Gửi lại sau ' + con + ' giây'">Gửi lại mã</span>
+      <span x-show="con === 0">Gửi lại mã</span>
+    </button>
+  </form>
+  <p class="phan-cach-xac-thuc">Hãy kiểm tra cả thư mục Spam hoặc Quảng cáo nếu không thấy email.</p>
+{% endblock %}

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "ung_dung.tro_chuyen.apps.TroChuyenConfig",
     "ung_dung.du_bao.apps.DuBaoConfig",
     "ung_dung.bao_cao.apps.BaoCaoConfig",
+    "ung_dung.thong_bao.apps.ThongBaoConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -85,6 +86,9 @@ for ten_thu_vien in ("GDAL_LIBRARY_PATH", "GEOS_LIBRARY_PATH"):
 AUTH_USER_MODEL = "tai_khoan.TaiKhoan"
 LOGIN_URL = "tai_khoan:dang_nhap"
 OSRM_BASE_URL = os.environ.get("OSRM_BASE_URL", "https://router.project-osrm.org").rstrip("/")
+NOMINATIM_BASE_URL = os.environ.get(
+    "NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org"
+).rstrip("/")
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -103,6 +107,8 @@ TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# E034 giới hạn tên index 30 ký tự vì Oracle; PostgreSQL cho 63 byte và ten_rang_buoc đã kiểm.
+SILENCED_SYSTEM_CHECKS = ["models.E034"]
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -128,6 +134,31 @@ CHANNEL_LAYERS = {
         },
     }
 }
+# Tên hiển thị và địa chỉ website dùng trong email; đặt trong .env khi triển khai.
+TEN_THUONG_HIEU = os.environ.get("TEN_THUONG_HIEU", "Nhà thuốc")
+URL_WEBSITE = os.environ.get("URL_WEBSITE", "http://127.0.0.1:8000").rstrip("/")
+# Dịch vụ bản đồ công cộng yêu cầu User-Agent định danh ứng dụng gọi tới.
+HTTP_USER_AGENT = f"DACN-QuanLyNhaThuoc/1.0 (+{URL_WEBSITE})"
+
+# Email: thiếu tài khoản SMTP thì in email ra console để chạy thử trên máy cá nhân.
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_TIMEOUT = 20
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD
+    else "django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    f"{TEN_THUONG_HIEU} <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "khong-tra-loi@localhost",
+)
+# Gửi SMTP ở luồng nền sau commit để trang không chờ máy chủ thư.
+EMAIL_GUI_NEN = os.environ.get("EMAIL_GUI_NEN", "True").lower() == "true"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

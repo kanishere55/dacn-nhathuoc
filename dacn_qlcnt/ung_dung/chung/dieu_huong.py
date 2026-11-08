@@ -61,6 +61,7 @@ def dieu_huong(request):
             (
                 ("webgis:ban_do_nhiet", "Bản đồ nhiệt", "map"),
                 ("du_bao:ket_qua", "Dự báo", "chart-line"),
+                ("thong_bao:nhat_ky_email", "Email hệ thống", "mail"),
             )
         )
     return {

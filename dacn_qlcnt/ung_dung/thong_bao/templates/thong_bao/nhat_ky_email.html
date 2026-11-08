@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block tieu_de %}Email hệ thống · Khu quản lý{% endblock %}
+{% block vi_tri %}Email hệ thống{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">THÔNG BÁO</p>
+    <h1>Email hệ thống</h1>
+    <p>Mọi email website đã gửi: mã xác thực (đã che mã), thông báo tài khoản và đơn hàng, kèm kết quả từ máy chủ SMTP.</p>
+  </header>
+  <form method="get" class="thanh-cong-cu khoi-trang">
+    <label>Loại
+      <select name="loai_email">
+        <option value="">Tất cả</option>
+        {% for ma, nhan in cac_loai %}<option value="{{ ma }}"{% if bo_loc.loai_email == ma %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Trạng thái
+      <select name="trang_thai">
+        <option value="">Tất cả</option>
+        {% for ma, nhan in cac_trang_thai %}<option value="{{ ma }}"{% if bo_loc.trang_thai == ma %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Người nhận <input type="search" name="tim" value="{{ bo_loc.tim }}" placeholder="email"></label>
+    <button class="nut" type="submit">Lọc</button>
+  </form>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Thời điểm</th><th>Loại</th><th>Người nhận</th><th>Tiêu đề</th><th>Kết quả</th></tr></thead>
+      <tbody>
+        {% for email in trang %}
+          <tr>
+            <td>{{ email.thoi_diem_tao|date:"H:i d/m/Y" }}</td>
+            <td>{{ email.get_loai_email_display }}</td>
+            <td>{{ email.email_nhan }}</td>
+            <td>
+              <details><summary>{{ email.tieu_de }}</summary><pre class="noi-dung-email">{{ email.noi_dung_van_ban }}</pre></details>
+            </td>
+            <td>{% include "components/_nhan_trang_thai.html" with nhan=email.get_trang_thai_display %}{% if email.chi_tiet_loi %}<br><small>{{ email.chi_tiet_loi }}</small>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">Chưa có email nào.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if trang.has_other_pages %}
+    <nav class="thanh-cong-cu" aria-label="Phân trang">
+      {% if trang.has_previous %}<a class="nut nut-phu" href="?{% for k, v in bo_loc.items %}{{ k }}={{ v|urlencode }}&{% endfor %}trang={{ trang.previous_page_number }}">Trang trước</a>{% endif %}
+      <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
+      {% if trang.has_next %}<a class="nut nut-phu" href="?{% for k, v in bo_loc.items %}{{ k }}={{ v|urlencode }}&{% endfor %}trang={{ trang.next_page_number }}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

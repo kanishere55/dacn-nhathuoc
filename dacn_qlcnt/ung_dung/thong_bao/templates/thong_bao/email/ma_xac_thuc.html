@@ -1,0 +1,7 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten|default:"bạn" }},</p>
+  <p style="margin:0 0 16px;">Mã xác thực để {{ muc_dich }} là:</p>
+  <p style="margin:0 0 16px;font-size:30px;letter-spacing:8px;font-weight:bold;color:#116b54;">{{ ma_otp }}</p>
+  <p style="margin:0 0 12px;">Mã có hiệu lực trong {{ so_phut }} phút và chỉ dùng được một lần. Không chia sẻ mã này với bất kỳ ai, kể cả nhân viên nhà thuốc.</p>
+{% endblock %}

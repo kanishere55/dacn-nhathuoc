@@ -142,7 +142,7 @@
   .tim-nhanh input,
   .bo-loc-khach input,
   .bo-loc-khach select,
-  .khung-khach .form-chinh :is(input:not([type="hidden"]), select, textarea) {
+  .khung-khach .form-chinh :is(input:not([type="hidden"], [type="checkbox"], [type="radio"]), select, textarea) {
     width: 100%;
     min-width: 0;
     min-height: 44px;

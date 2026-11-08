@@ -1,23 +1,18 @@
-{% extends "khach/base.html" %}
-{% block tieu_de %}{{ tieu_de }} · Nhà thuốc{% endblock %}
-{% block noi_dung %}
-  <section class="the-khach khung-xac-thuc" aria-label="{{ tieu_de }}">
-    <p class="chu-dan">TÀI KHOẢN</p>
-    <h1>{{ tieu_de }}</h1>
-    <p class="chu-phu-khach">Đăng nhập để theo dõi đơn giữ và trò chuyện với chi nhánh.</p>
-    <form method="post" class="form-chinh">
-      {% csrf_token %}
-      {% if quay_lai %}<input type="hidden" name="next" value="{{ quay_lai }}">{% endif %}
-      {{ form.non_field_errors }}
-      {% for truong in form %}
-        {% include "components/_o_nhap.html" %}
-      {% endfor %}
-      <button class="nut">{{ tieu_de }}</button>
-    </form>
-    {% if dang_ky %}
-      <p>Đã có tài khoản? <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_nhap' %}">Đăng nhập</a></p>
-    {% else %}
-      <p>Chưa có tài khoản? <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_ky' %}">Đăng ký khách hàng</a></p>
-    {% endif %}
-  </section>
+{% extends "tai_khoan/khach/_khung_xac_thuc.html" %}
+{% block tieu_de %}Đăng nhập · {{ block.super }}{% endblock %}
+{% block noi_dung_xac_thuc %}
+  <h1>Đăng nhập</h1>
+  <p class="mo-ta-xac-thuc">Dùng tên đăng nhập hoặc email đã xác thực.</p>
+  <form method="post" class="form-chinh" novalidate>
+    {% csrf_token %}
+    {% if quay_lai %}<input type="hidden" name="next" value="{{ quay_lai }}">{% endif %}
+    {{ form.non_field_errors }}
+    {% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}
+    <button class="nut" type="submit"><i data-lucide="log-in" aria-hidden="true"></i>Đăng nhập</button>
+  </form>
+  <div class="lien-ket-phu-xac-thuc">
+    <a href="{% url 'tai_khoan:quen_mat_khau' %}">Quên mật khẩu?</a>
+    <a href="{% url 'tai_khoan:quen_ten_dang_nhap' %}">Quên tên đăng nhập?</a>
+  </div>
+  <p class="phan-cach-xac-thuc">Chưa có tài khoản? <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_ky' %}">Đăng ký</a></p>
 {% endblock %}

@@ -1,1 +1,11 @@
-<div class="nhom-truong">{{ truong.label_tag }}{{ truong }}{% if truong.help_text %}<small>{{ truong.help_text }}</small>{% endif %}{{ truong.errors }}</div>
+{% if truong.widget_type == "checkbox" %}
+<div class="nhom-truong">
+  <label class="lua-chon-mot-dong">{{ truong }} {{ truong.label }}</label>
+  {% if truong.help_text %}<small>{{ truong.help_text }}</small>{% endif %}{{ truong.errors }}
+</div>
+{% else %}
+<div class="nhom-truong">
+  <label for="{{ truong.id_for_label }}">{{ truong.label }}{% if not truong.field.required %} <span class="chu-tuy-chon">(tùy chọn)</span>{% endif %}</label>
+  {{ truong }}{% if truong.help_text %}<small>{{ truong.help_text }}</small>{% endif %}{{ truong.errors }}
+</div>
+{% endif %}

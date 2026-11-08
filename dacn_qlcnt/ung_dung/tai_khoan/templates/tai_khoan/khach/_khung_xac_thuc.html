@@ -1,0 +1,20 @@
+{% extends "khach/base.html" %}
+{% block noi_dung %}
+  <div class="khung-xac-thuc-doi">
+    <aside class="gioi-thieu-xac-thuc" aria-hidden="true">
+      <div>
+        <p class="chu-dan">TÀI KHOẢN KHÁCH HÀNG</p>
+        <h2>Mua thuốc đúng cách, nhận nhanh tại nhà thuốc gần bạn</h2>
+      </div>
+      <ul class="loi-ich-xac-thuc">
+        <li><span class="bieu-tuong-loi-ich"><i data-lucide="map-pin"></i></span><span><strong>Chọn chi nhánh còn hàng</strong>Xem chi nhánh đủ thuốc gần vị trí của bạn.</span></li>
+        <li><span class="bieu-tuong-loi-ich"><i data-lucide="truck"></i></span><span><strong>Giao tận nơi hoặc nhận tại quầy</strong>Theo dõi trạng thái đơn ở một chỗ.</span></li>
+        <li><span class="bieu-tuong-loi-ich"><i data-lucide="shield-check"></i></span><span><strong>Dược sĩ tư vấn</strong>Trò chuyện trực tiếp với nhân viên chi nhánh.</span></li>
+      </ul>
+      <p class="chu-nho-xac-thuc">Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ.</p>
+    </aside>
+    <section class="the-xac-thuc">
+      {% block noi_dung_xac_thuc %}{% endblock %}
+    </section>
+  </div>
+{% endblock %}

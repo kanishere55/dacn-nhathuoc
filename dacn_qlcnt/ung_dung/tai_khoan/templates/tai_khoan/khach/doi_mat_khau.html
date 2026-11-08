@@ -1,0 +1,17 @@
+{% extends khung %}
+{% block tieu_de %}Đổi mật khẩu · {{ block.super }}{% endblock %}
+{% block noi_dung_tai_khoan %}
+  <header class="tieu-de-khach">
+    <p class="chu-dan">BẢO MẬT</p>
+    <h1>Đổi mật khẩu</h1>
+    <p>Sau khi đổi, các thiết bị khác đang đăng nhập sẽ phải đăng nhập lại.</p>
+  </header>
+  <section class="the-khach the-form-tai-khoan">
+    <form method="post" class="form-chinh" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}
+      <button class="nut" type="submit"><i data-lucide="key-round" aria-hidden="true"></i>Đổi mật khẩu</button>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% autoescape off %}Xin chào {{ ho_ten }},
+
+Tài khoản {{ ten_dang_nhap }} đã được tạo và xác thực email.
+Mở tài khoản của tôi: {{ url_website }}/tai-khoan-cua-toi/
+
+{{ ten_thuong_hieu }}
+{% endautoescape %}

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ tieu_de }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6f3;font-family:Arial,Helvetica,sans-serif;color:#25372f;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f3;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #dce4dc;border-radius:12px;">
+          <tr>
+            <td style="padding:20px 28px;border-bottom:1px solid #dce4dc;">
+              <span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border-radius:7px;background:#116b54;color:#ffffff;font-weight:bold;">+</span>
+              <strong style="font-size:16px;vertical-align:middle;margin-left:8px;">{{ ten_thuong_hieu }}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:26px 28px 8px;font-size:14px;line-height:1.6;">
+              <h1 style="margin:0 0 14px;font-size:20px;line-height:1.35;color:#184436;">{% block tieu_de_noi_dung %}{{ tieu_de }}{% endblock %}</h1>
+              {% block noi_dung %}{% endblock %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 28px 24px;font-size:12px;line-height:1.5;color:#66776e;">
+              Email này được gửi tự động từ {{ ten_thuong_hieu }}, vui lòng không trả lời.<br>
+              Nếu bạn không thực hiện thao tác này, hãy bỏ qua email hoặc đổi mật khẩu ngay.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

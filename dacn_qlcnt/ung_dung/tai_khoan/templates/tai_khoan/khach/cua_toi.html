@@ -1,23 +1,40 @@
-{% extends "khach/base.html" %}
-{% block tieu_de %}Tài khoản của tôi · Nhà thuốc{% endblock %}
-{% block noi_dung %}
+{% extends khung %}
+{% block tieu_de %}Tài khoản của tôi · {{ block.super }}{% endblock %}
+{% block noi_dung_tai_khoan %}
   <header class="tieu-de-khach">
     <p class="chu-dan">TÀI KHOẢN</p>
-    <h1>Tài khoản của tôi</h1>
-    <p>Xin chào, {{ user.ten_dang_nhap }}.</p>
+    <h1>Xin chào, {{ user.ho_ten|default:user.ten_dang_nhap }}</h1>
+    <p>Quản lý đơn hàng, địa chỉ nhận hàng và thông tin đăng nhập của bạn.</p>
   </header>
-  <div class="luoi-khach-ba">
-    <a class="the-khach the-chi-nhanh" href="{% url 'ban_hang:khach_don_dat_giu_danh_sach' %}">
-      <i data-lucide="clipboard-list" aria-hidden="true"></i>
-      <span><strong>Đơn đặt giữ của tôi</strong><small>Xem trạng thái và hạn nhận tại quầy.</small></span>
+  {% if not user.email %}
+    <div class="canh-bao-email" role="note">
+      <i data-lucide="mail-warning" aria-hidden="true"></i>
+      <p>Tài khoản chưa có email nên chưa nhận được thông báo đơn hàng và không thể tự lấy lại mật khẩu. <a href="{% url 'tai_khoan:doi_email' %}">Thêm email ngay</a></p>
+    </div>
+  {% endif %}
+  <div class="luoi-khach-hai">
+    <a class="the-khach the-thong-ke-tai-khoan" href="{% url 'ban_hang:khach_don_dat_giu_danh_sach' %}">
+      <span class="bieu-tuong-the"><i data-lucide="package" aria-hidden="true"></i></span>
+      <span><strong>Đơn của tôi</strong><small>Theo dõi đơn đặt giữ và đơn giao hàng.</small></span>
     </a>
-    <a class="the-khach the-chi-nhanh" href="{% url 'tro_chuyen:khach_danh_sach' %}">
-      <i data-lucide="messages-square" aria-hidden="true"></i>
-      <span><strong>Trò chuyện</strong><small>Trao đổi với nhân viên của chi nhánh.</small></span>
+    <a class="the-khach the-thong-ke-tai-khoan" href="{% url 'tai_khoan:so_dia_chi' %}">
+      <span class="bieu-tuong-the"><i data-lucide="map-pin" aria-hidden="true"></i></span>
+      <span><strong>Sổ địa chỉ</strong><small>{{ so_dia_chi }} địa chỉ đã lưu.</small></span>
     </a>
   </div>
-  <form class="hanh-dong-khach" method="post" action="{% url 'tai_khoan:dang_xuat' %}">
-    {% csrf_token %}
-    <button class="nut nut-phu" type="submit"><i data-lucide="log-out" aria-hidden="true"></i>Đăng xuất</button>
-  </form>
+  <section class="the-khach">
+    <div class="hang-thong-tin-khach">
+      <h2>Thông tin tài khoản</h2>
+      <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:thong_tin' %}">Chỉnh sửa<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <dl class="bang-thong-tin-tai-khoan">
+      <dt>Họ và tên</dt><dd>{{ user.ho_ten|default:"—" }}</dd>
+      <dt>Tên đăng nhập</dt><dd>{{ user.ten_dang_nhap }}</dd>
+      <dt>Email</dt>
+      <dd>{{ user.email|default:"Chưa có" }}{% if user.email %}{% if user.da_xac_thuc_email %}<span class="nhan-da-xac-thuc"><i data-lucide="badge-check" aria-hidden="true"></i>Đã xác thực</span>{% else %}<span class="nhan-chua-xac-thuc">Chưa xác thực</span>{% endif %}{% endif %}</dd>
+      <dt>Số điện thoại</dt><dd>{{ user.so_dien_thoai|default:"—" }}</dd>
+      <dt>Địa chỉ mặc định</dt><dd>{% if dia_chi_mac_dinh %}{{ dia_chi_mac_dinh.dia_chi }}{% else %}Chưa chọn{% endif %}</dd>
+      <dt>Ngày tham gia</dt><dd>{{ user.thoi_diem_tao|date:"d/m/Y" }}</dd>
+    </dl>
+  </section>
 {% endblock %}

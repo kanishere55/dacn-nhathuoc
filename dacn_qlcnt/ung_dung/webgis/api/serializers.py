@@ -35,3 +35,12 @@ class DatGiuSerializer(serializers.Serializer):
 class NhietSerializer(serializers.Serializer):
     nhom_atc = serializers.PrimaryKeyRelatedField(queryset=NhomATC.objects.all())
     don_vi_tinh = serializers.PrimaryKeyRelatedField(queryset=DonViTinh.objects.all())
+
+
+class TimDiaChiSerializer(serializers.Serializer):
+    q = serializers.CharField(min_length=3, max_length=200, trim_whitespace=True)
+
+
+class ToaDoSerializer(serializers.Serializer):
+    vi_do = serializers.FloatField(min_value=8.0, max_value=23.5)
+    kinh_do = serializers.FloatField(min_value=102.0, max_value=110.0)

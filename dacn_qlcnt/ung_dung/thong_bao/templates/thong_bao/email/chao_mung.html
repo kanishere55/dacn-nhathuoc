@@ -1,0 +1,6 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten }},</p>
+  <p style="margin:0 0 12px;">Tài khoản <strong>{{ ten_dang_nhap }}</strong> đã được tạo và xác thực email. Bạn có thể tra cứu thuốc, đặt giữ tại quầy, đặt giao hàng và theo dõi đơn ngay trên website.</p>
+  <p style="margin:18px 0;"><a href="{{ url_website }}/tai-khoan-cua-toi/" style="display:inline-block;padding:11px 18px;border-radius:7px;background:#116b54;color:#ffffff;text-decoration:none;font-weight:bold;">Mở tài khoản của tôi</a></p>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten|default:ten_dang_nhap }},</p>
+  <p style="margin:0 0 12px;">Mật khẩu của tài khoản <strong>{{ ten_dang_nhap }}</strong> vừa được {{ cach_doi }} lúc {{ thoi_diem|date:"H:i d/m/Y" }}.</p>
+  <p style="margin:0 0 12px;">Nếu không phải bạn, hãy dùng chức năng quên mật khẩu để lấy lại tài khoản ngay: <a href="{{ url_website }}/tai-khoan/quen-mat-khau/" style="color:#116b54;">{{ url_website }}/tai-khoan/quen-mat-khau/</a></p>
+{% endblock %}

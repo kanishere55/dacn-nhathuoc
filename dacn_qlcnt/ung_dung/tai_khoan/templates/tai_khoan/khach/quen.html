@@ -1,0 +1,13 @@
+{% extends "tai_khoan/khach/_khung_xac_thuc.html" %}
+{% block tieu_de %}{{ tieu_de }} · {{ block.super }}{% endblock %}
+{% block noi_dung_xac_thuc %}
+  <h1>{{ tieu_de }}</h1>
+  <p class="mo-ta-xac-thuc">{{ mo_ta }}</p>
+  <form method="post" class="form-chinh" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}
+    <button class="nut" type="submit">{{ nut }}</button>
+  </form>
+  <p class="phan-cach-xac-thuc"><a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_nhap' %}"><i data-lucide="arrow-left" aria-hidden="true"></i>Quay lại đăng nhập</a></p>
+{% endblock %}

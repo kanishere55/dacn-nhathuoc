@@ -1,0 +1,32 @@
+{% extends khung %}
+{% block tieu_de %}Sổ địa chỉ · {{ block.super }}{% endblock %}
+{% block noi_dung_tai_khoan %}
+  <header class="tieu-de-khach">
+    <p class="chu-dan">GIAO HÀNG</p>
+    <h1>Sổ địa chỉ</h1>
+    <p>Lưu tối đa {{ toi_da }} địa chỉ. Địa chỉ mặc định được chọn sẵn khi đặt giao hàng.</p>
+  </header>
+  <div class="luoi-dia-chi">
+    {% for dia_chi in cac_dia_chi %}
+      <article class="the-khach the-dia-chi{% if dia_chi.pk == id_mac_dinh %} la-mac-dinh{% endif %}">
+        <header>
+          <strong>{{ dia_chi.ten_nguoi_nhan }}</strong>
+          {% if dia_chi.pk == id_mac_dinh %}<span class="nhan-khach">Mặc định</span>{% endif %}
+        </header>
+        <span>{{ dia_chi.so_dien_thoai }}</span>
+        <p>{{ dia_chi.dia_chi }}</p>
+        {% if dia_chi.ghi_chu %}<p class="ghi-chu-khach">Ghi chú: {{ dia_chi.ghi_chu }}</p>{% endif %}
+        <div class="tac-vu-dia-chi">
+          <a href="{% url 'tai_khoan:sua_dia_chi' dia_chi.pk %}">Sửa</a>
+          {% if dia_chi.pk != id_mac_dinh %}
+            <form method="post" action="{% url 'tai_khoan:dat_dia_chi_mac_dinh' dia_chi.pk %}">{% csrf_token %}<button type="submit">Đặt làm mặc định</button></form>
+          {% endif %}
+          <form method="post" action="{% url 'tai_khoan:xoa_dia_chi' dia_chi.pk %}" onsubmit="return confirm('Xóa địa chỉ này khỏi sổ?')">{% csrf_token %}<button class="nut-xoa" type="submit">Xóa</button></form>
+        </div>
+      </article>
+    {% endfor %}
+    {% if cac_dia_chi|length < toi_da %}
+      <a class="the-them-dia-chi" href="{% url 'tai_khoan:them_dia_chi' %}"><i data-lucide="map-pin-plus" aria-hidden="true"></i>Thêm địa chỉ mới</a>
+    {% endif %}
+  </div>
+{% endblock %}

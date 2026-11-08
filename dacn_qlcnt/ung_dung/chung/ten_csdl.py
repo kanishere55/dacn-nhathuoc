@@ -6,6 +6,10 @@ from .van_ban import DaCatKhoangTrang, KhongRong, LaMotDong
 
 MA_NGHIEP_VU = r"^[A-Z0-9][A-Z0-9_-]{0,31}$"
 MA_UUID = r"^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+# Email lưu chữ thường sau khi chuẩn hóa ở form; phần tên miền phải có dấu chấm.
+EMAIL = r"^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$"
+# Số điện thoại Việt Nam dạng nội địa: di động 10 chữ số, cố định 11 chữ số.
+SO_DIEN_THOAI = r"^0[0-9]{9,10}$"
 
 # Chỉ rút gọn tên bảng trong tên ràng buộc khi tên đầy đủ vượt giới hạn PostgreSQL.
 TEN_RUT_GON = {
@@ -21,6 +25,7 @@ TEN_RUT_GON = {
     "ket_qua_mo_hinh": "ket_qua",
     "du_bao_bay_ngay": "du_bao",
     "quan_sat_ban_hang": "quan_sat",
+    "phien_xac_thuc": "xac_thuc",
 }
 
 
@@ -31,7 +36,7 @@ def ten_rang_buoc(loai, bang, *mo_ta):
     return ten
 
 
-def rang_buoc_van_ban(bang, cot, *, rong=False, nhieu_dong=False, dinh_dang=None):
+def rang_buoc_van_ban(bang, cot, *, rong=False, nhieu_dong=False, dinh_dang=None, nhan=None):
     cac_luat = [(DaCatKhoangTrang(cot), "da_cat_khoang_trang")]
     if not rong:
         cac_luat.append((KhongRong(cot), "khong_rong"))
@@ -41,7 +46,8 @@ def rang_buoc_van_ban(bang, cot, *, rong=False, nhieu_dong=False, dinh_dang=None
         dinh_dang = MA_NGHIEP_VU
     if dinh_dang:
         cac_luat.append((Q(**{f"{cot}__regex": dinh_dang}), "dung_dinh_dang"))
-    ten_cot = "ma" if cot.startswith("ma_") else "ten" if cot.startswith("ten_") else cot
+    # `nhan` đặt tên cột trong tên ràng buộc khi cột ma_/ten_ không phải định danh của bảng.
+    ten_cot = nhan or ("ma" if cot.startswith("ma_") else "ten" if cot.startswith("ten_") else cot)
     return [
         models.CheckConstraint(
             condition=bieu_thuc, name=ten_rang_buoc("kiem_tra", bang, f"{ten_cot}_{luat}")

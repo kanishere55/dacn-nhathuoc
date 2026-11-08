@@ -17,7 +17,7 @@ from ung_dung.danh_muc.models import (
     QuyDoiBaoGoi,
     Thuoc,
 )
-from ung_dung.tai_khoan.services import tao_tai_khoan_ky_thuat
+from ung_dung.tai_khoan.services.tai_khoan import tao_tai_khoan_ky_thuat
 
 from .phieu_nhap import nhap_hang
 

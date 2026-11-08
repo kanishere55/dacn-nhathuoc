@@ -1,0 +1,7 @@
+{% autoescape off %}Chúng tôi nhận được yêu cầu nhắc tên đăng nhập cho email này.
+
+Tên đăng nhập của bạn: {{ ten_dang_nhap }}
+Đăng nhập: {{ url_website }}/tai-khoan/dang-nhap/
+
+{{ ten_thuong_hieu }}
+{% endautoescape %}

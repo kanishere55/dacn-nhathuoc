@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./khach.css";
 @import "./bang_dieu_khien.css";
+@import "./tai_khoan.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {
@@ -429,5 +430,24 @@
     .cuoi-trang, .nhan-dien-trang {
       padding-inline: 20px;
     }
+  }
+}
+
+@layer components {
+  .lua-chon-mot-dong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .lua-chon-mot-dong input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--color-chinh);
+  }
+  .chu-tuy-chon {
+    font-weight: 400;
+    color: var(--chu-phu);
+    font-size: 12px;
   }
 }

@@ -8,7 +8,14 @@ from ung_dung.ban_hang.services.dat_giu import dat_giu
 from ung_dung.chung.permissions import kiem_tra_vai_tro, la_quan_tri
 
 from ..selectors import lay_ban_do_nhiet, tim_chi_nhanh
-from .serializers import DatGiuSerializer, NhietSerializer, TimKiemSerializer
+from ..services.dia_chi import dia_chi_tu_toa_do, tim_dia_chi
+from .serializers import (
+    DatGiuSerializer,
+    NhietSerializer,
+    TimDiaChiSerializer,
+    TimKiemSerializer,
+    ToaDoSerializer,
+)
 
 
 @api_view(["POST"])
@@ -48,3 +55,25 @@ def ban_do_nhiet(request):
     form = NhietSerializer(data=request.query_params)
     form.is_valid(raise_exception=True)
     return Response({"ket_qua": lay_ban_do_nhiet(request.user, **form.validated_data)})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def tim_dia_chi_api(request):
+    form = TimDiaChiSerializer(data=request.query_params)
+    form.is_valid(raise_exception=True)
+    try:
+        return Response({"ket_qua": tim_dia_chi(form.validated_data["q"])})
+    except ValidationError as loi:
+        return Response({"loi": loi.messages}, status=503)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def dia_chi_tu_toa_do_api(request):
+    form = ToaDoSerializer(data=request.query_params)
+    form.is_valid(raise_exception=True)
+    try:
+        return Response({"dia_chi": dia_chi_tu_toa_do(**form.validated_data)})
+    except ValidationError as loi:
+        return Response({"loi": loi.messages}, status=503)

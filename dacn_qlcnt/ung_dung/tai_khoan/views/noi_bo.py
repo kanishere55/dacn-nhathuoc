@@ -6,7 +6,7 @@ from ung_dung.chung.permissions import yeu_cau_vai_tro
 
 from ..forms import TaiKhoanForm
 from ..selectors import lay_tai_khoan
-from ..services import luu_tai_khoan
+from ..services.tai_khoan import luu_tai_khoan
 
 
 @yeu_cau_vai_tro("quan_tri_chuoi")

@@ -1,0 +1,22 @@
+{% extends "tai_khoan/khach/_khung_xac_thuc.html" %}
+{% block tieu_de %}Đăng ký · {{ block.super }}{% endblock %}
+{% block noi_dung_xac_thuc %}
+  <h1>Tạo tài khoản</h1>
+  <p class="mo-ta-xac-thuc">Chúng tôi sẽ gửi mã 6 chữ số tới email để xác thực trước khi tạo tài khoản.</p>
+  <form method="post" class="form-chinh" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% with truong=form.ho_ten %}{% include "components/_o_nhap.html" %}{% endwith %}
+    <div class="hai-cot-form">
+      {% with truong=form.email %}{% include "components/_o_nhap.html" %}{% endwith %}
+      {% with truong=form.so_dien_thoai %}{% include "components/_o_nhap.html" %}{% endwith %}
+    </div>
+    {% with truong=form.ten_dang_nhap %}{% include "components/_o_nhap.html" %}{% endwith %}
+    <div class="hai-cot-form">
+      {% with truong=form.mat_khau %}{% include "components/_o_nhap.html" %}{% endwith %}
+      {% with truong=form.nhap_lai_mat_khau %}{% include "components/_o_nhap.html" %}{% endwith %}
+    </div>
+    <button class="nut" type="submit"><i data-lucide="mail-check" aria-hidden="true"></i>Gửi mã xác thực</button>
+  </form>
+  <p class="phan-cach-xac-thuc">Đã có tài khoản? <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_nhap' %}">Đăng nhập</a></p>
+{% endblock %}

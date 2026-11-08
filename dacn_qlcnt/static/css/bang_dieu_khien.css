@@ -150,3 +150,12 @@
     }
   }
 }
+@layer components {
+  .noi-dung-email {
+    max-width: 60ch;
+    margin-top: 8px;
+    white-space: pre-wrap;
+    font: 12px/1.5 ui-monospace, monospace;
+    color: var(--chu-phu);
+  }
+}

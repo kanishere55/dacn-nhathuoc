@@ -13,6 +13,7 @@ TU_VUNG = frozenset(
     quyet rmse rong rung sach san sarimax sat sau sha256 so tai tang tao te ten thai thieu
     thoai thoi thong thu thuc thuoc tiet tin tinh toi ton tra trang tri tro tru tu tuong tuyen
     vai vi vien vuot xac xgboost xuat yeu
+    can chao cho co de email giao ho loai loi mac mung nguoi nhac otp phien quen sai su tieu van
     """.split()
 )
 
@@ -24,6 +25,9 @@ DINH_DANH_CO_BOI_CANH = {
     ("ket_qua_mo_hinh", "ma_atc_nguon"),
     ("chi_tiet_phieu_ban", "ma_thuoc_luc_ban"),
     ("chi_tiet_phieu_ban", "ten_thuoc_luc_ban"),
+    # Người nhận có thể khác chủ tài khoản; tên đăng nhập chờ tạo khi đăng ký.
+    ("dia_chi_giao_hang", "ten_nguoi_nhan"),
+    ("phien_xac_thuc", "ten_dang_nhap_dang_ky"),
 }
 
 TEN_CAM = {"du_lieu", "thong_tin", "gia_tri", "noi_dung", "cot_moi"}

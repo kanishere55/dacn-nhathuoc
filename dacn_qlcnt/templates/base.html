@@ -25,7 +25,7 @@
       <main id="noi-dung" tabindex="-1">
         <div class="thanh-tai-khoan">
           {% if user.is_authenticated %}
-            <span>{{ user.ten_dang_nhap }} · {{ user.get_vai_tro_display }}</span>
+            <a class="duong-dan-noi-dung" href="{% url 'tai_khoan:thong_tin' %}">{{ user.ho_ten|default:user.ten_dang_nhap }} · {{ user.get_vai_tro_display }}</a>
             <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">{% csrf_token %}<button class="nut nut-phu">Đăng xuất</button></form>
           {% else %}
             <a class="nut nut-phu" href="{% url 'tai_khoan:dang_nhap' %}">Đăng nhập</a>

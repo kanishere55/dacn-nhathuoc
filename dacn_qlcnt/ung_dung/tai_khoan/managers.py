@@ -5,7 +5,7 @@ class QuanLyTaiKhoan(BaseUserManager):
     use_in_migrations = True
 
     def create_user(self, ten_dang_nhap, password=None, **extra_fields):
-        from .services import tao_tai_khoan_ky_thuat
+        from .services.tai_khoan import tao_tai_khoan_ky_thuat
 
         if extra_fields.get("la_quan_tri_he_thong", False):
             raise ValueError("Dùng create_superuser để tạo quản trị hệ thống.")
@@ -17,7 +17,7 @@ class QuanLyTaiKhoan(BaseUserManager):
         )
 
     def create_superuser(self, ten_dang_nhap, password=None, **extra_fields):
-        from .services import tao_tai_khoan_ky_thuat
+        from .services.tai_khoan import tao_tai_khoan_ky_thuat
 
         extra_fields.setdefault("dang_hoat_dong", True)
         extra_fields.setdefault("la_quan_tri_he_thong", True)

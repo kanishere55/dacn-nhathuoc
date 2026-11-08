@@ -1,0 +1,21 @@
+{% extends khung %}
+{% block tieu_de %}Thông tin cá nhân · {{ block.super }}{% endblock %}
+{% block noi_dung_tai_khoan %}
+  <header class="tieu-de-khach">
+    <p class="chu-dan">TÀI KHOẢN</p>
+    <h1>Thông tin cá nhân</h1>
+    <p>Họ tên và số điện thoại dùng khi nhà thuốc liên hệ về đơn hàng.</p>
+  </header>
+  <section class="the-khach the-form-tai-khoan">
+    <form method="post" class="form-chinh" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}
+      <dl class="bang-thong-tin-tai-khoan">
+        <dt>Tên đăng nhập</dt><dd>{{ user.ten_dang_nhap }}</dd>
+        <dt>Email</dt><dd>{{ user.email|default:"Chưa có" }} · <a class="lien-ket-van-ban" href="{% url 'tai_khoan:doi_email' %}">{% if user.email %}Đổi email{% else %}Thêm email{% endif %}</a></dd>
+      </dl>
+      <button class="nut" type="submit"><i data-lucide="save" aria-hidden="true"></i>Lưu thay đổi</button>
+    </form>
+  </section>
+{% endblock %}

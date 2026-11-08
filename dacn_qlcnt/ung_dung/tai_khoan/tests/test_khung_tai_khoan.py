@@ -155,6 +155,12 @@ class KhungTaiKhoanTests(TestCase):
                     "thoi_diem_dang_nhap_cuoi",
                     "id_chi_nhanh",
                     "vai_tro",
+                    "da_xac_thuc_email",
+                    "email",
+                    "ho_ten",
+                    "so_dien_thoai",
+                    "thoi_diem_tao",
+                    "id_dia_chi_giao_hang_mac_dinh",
                 ],
             )
             self.assertTrue(all(cot[1] for cot in cac_cot))

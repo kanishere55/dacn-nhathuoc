@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 
 NHAN_SU_CHI_NHANH = ("quan_ly_chi_nhanh", "nhan_vien")
 NHAN_SU_CHUOI = ("quan_tri_chuoi", *NHAN_SU_CHI_NHANH)
+MOI_VAI_TRO = ("khach_hang", *NHAN_SU_CHUOI)
 
 
 def co_vai_tro(nguoi, *vai_tro):
