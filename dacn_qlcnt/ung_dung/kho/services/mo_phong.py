@@ -19,7 +19,7 @@ from ung_dung.danh_muc.models import (
 )
 from ung_dung.tai_khoan.services import tao_tai_khoan_ky_thuat
 
-from ..models import LoThuoc, TonKho
+from .phieu_nhap import nhap_hang
 
 CHI_NHANH_MO_PHONG = (
     ("MP-CN-01", "Nhà thuốc mô phỏng Bến Thành", "Khu vực Bến Thành, TP.HCM", 106.6981, 10.7724),
@@ -36,6 +36,10 @@ NHOM_MO_PHONG = (
     ("R03", "Nhóm dùng cho bệnh tắc nghẽn đường thở", "Chế phẩm mô phỏng 07"),
     ("R06", "Nhóm kháng histamin toàn thân", "Chế phẩm mô phỏng 08"),
 )
+NHAN_SU_MO_PHONG = (
+    ("mp_quan_ly", "quan_ly_chi_nhanh", "Quản lý mô phỏng"),
+    ("mp_nhan_vien", "nhan_vien", "Nhân viên mô phỏng"),
+)
 
 
 @transaction.atomic
@@ -43,13 +47,26 @@ def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
     kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
     if ChiNhanh.objects.filter(ma_chi_nhanh__startswith="MP-CN-").exists():
         raise ValueError("Đã có chi nhánh mô phỏng. Lệnh không ghi lặp hoặc ghi đè.")
+    cac_hau_to = ["" if so == 1 else f"_{so:02d}" for so in range(1, len(CHI_NHANH_MO_PHONG) + 1)]
+    cac_ten_dang_nhap = [
+        f"{ten}{hau_to}" for hau_to in cac_hau_to for ten, _, _ in NHAN_SU_MO_PHONG
+    ]
     if mat_khau is not None:
         validate_password(mat_khau)
+        cac_ten_dang_nhap.append("mp_khach")
+    if get_user_model().objects.filter(ten_dang_nhap__in=cac_ten_dang_nhap).exists():
+        raise ValueError("Tên tài khoản mô phỏng đã được sử dụng.")
+
+    # Mã duy nhất giữ hai lượt chạy đồng thời khỏi cùng sinh dữ liệu.
+    nha_cung_cap, da_tao = NhaCungCap.objects.get_or_create(
+        ma_nha_cung_cap="MP-NCC-01", defaults={"ten_nha_cung_cap": "Nhà cung cấp mô phỏng"}
+    )
+    if not da_tao:
+        raise ValueError("Đã có nhà cung cấp mô phỏng. Lệnh không ghi lặp hoặc ghi đè.")
     ngau_nhien = Random(1250080021)
     don_vi, _ = DonViTinh.objects.get_or_create(
         ma_don_vi_tinh="VIEN", defaults={"ten_don_vi_tinh": "Viên"}
     )
-    NhaCungCap.objects.create(ma_nha_cung_cap="MP-NCC-01", ten_nha_cung_cap="Nhà cung cấp mô phỏng")
     cac_thuoc = []
     for so, (ma_atc, ten_nhom, ten_thuoc) in enumerate(NHOM_MO_PHONG, start=1):
         nhom, _ = NhomATC.objects.get_or_create(
@@ -68,42 +85,47 @@ def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
         )
         QuyDoiBaoGoi.objects.create(thuoc=thuoc, ten_quy_doi_bao_goi="Hộp 10 viên", he_so=10)
         cac_thuoc.append(thuoc)
-    cac_chi_nhanh = []
     hom_nay = timezone.localdate()
-    for so, (ma, ten, dia_chi, kinh_do, vi_do) in enumerate(CHI_NHANH_MO_PHONG, start=1):
+    for so, (mau, hau_to) in enumerate(zip(CHI_NHANH_MO_PHONG, cac_hau_to, strict=True), start=1):
+        ma, ten, dia_chi, kinh_do, vi_do = mau
         chi_nhanh = ChiNhanh.objects.create(
             ma_chi_nhanh=ma,
             ten_chi_nhanh=ten,
             dia_chi=dia_chi,
             vi_tri=Point(kinh_do, vi_do, srid=4326),
         )
-        cac_chi_nhanh.append(chi_nhanh)
-        # Số dư ban đầu của chi nhánh vừa tạo không phát sinh phiếu nhập.
-        for thuoc in cac_thuoc:
-            for so_lo, han in ((1, 25), (2, 180)):
-                lo = LoThuoc.objects.create(
-                    thuoc=thuoc,
-                    ma_lo_thuoc=f"MP-{so:02d}-{thuoc.ma_thuoc}-{so_lo}",
-                    ngay_het_han=hom_nay + timedelta(days=han),
-                )
-                TonKho.objects.create(
-                    chi_nhanh=chi_nhanh, lo_thuoc=lo, so_luong=ngau_nhien.randint(12, 80)
-                )
-    if mat_khau is not None:
-        model = get_user_model()
-        if model.objects.filter(
-            ten_dang_nhap__in=["mp_khach", "mp_nhan_vien", "mp_quan_ly"]
-        ).exists():
-            raise ValueError("Tên tài khoản mô phỏng đã được sử dụng.")
-        tao_tai_khoan_ky_thuat("mp_khach", mat_khau)
-        for ten, vai_tro, ho_ten in (
-            ("mp_nhan_vien", "nhan_vien", "Nhân viên mô phỏng"),
-            ("mp_quan_ly", "quan_ly_chi_nhanh", "Quản lý mô phỏng"),
-        ):
+        cac_tai_khoan = {}
+        for ten, vai_tro, ho_ten in NHAN_SU_MO_PHONG:
             tai_khoan = tao_tai_khoan_ky_thuat(
-                ten, mat_khau, vai_tro=vai_tro, chi_nhanh=cac_chi_nhanh[0]
+                f"{ten}{hau_to}", mat_khau, vai_tro=vai_tro, chi_nhanh=chi_nhanh
             )
             NhanVien.objects.create(
-                ma_nhan_vien=f"MP-{vai_tro.upper()}", ten_nhan_vien=ho_ten, tai_khoan=tai_khoan
+                ma_nhan_vien=f"MP-{vai_tro.upper()}{hau_to}",
+                ten_nhan_vien=ho_ten,
+                tai_khoan=tai_khoan,
             )
-    return f"Đã tạo {len(cac_chi_nhanh)} chi nhánh và {len(cac_thuoc)} thuốc mô phỏng."
+            cac_tai_khoan[vai_tro] = tai_khoan
+        cac_dong = [
+            {
+                "thuoc": thuoc,
+                "ma_lo_thuoc": f"MP-{so:02d}-{thuoc.ma_thuoc}-{so_lo}",
+                "ngay_het_han": hom_nay + timedelta(days=han),
+                "so_luong": ngau_nhien.randint(12, 80),
+                "don_gia": thuoc.gia_ban // 2,
+            }
+            for thuoc in cac_thuoc
+            for so_lo, han in ((1, 25), (2, 180))
+        ]
+        nhap_hang(
+            cac_tai_khoan["quan_ly_chi_nhanh"],
+            chi_nhanh,
+            nha_cung_cap,
+            cac_dong,
+            "Nhập tồn ban đầu mô phỏng",
+        )
+    if mat_khau is not None:
+        tao_tai_khoan_ky_thuat("mp_khach", mat_khau)
+    return (
+        f"Đã tạo {len(CHI_NHANH_MO_PHONG)} chi nhánh và {len(cac_thuoc)} thuốc mô phỏng. "
+        "Mỗi chi nhánh có một quản lý, một nhân viên và một phiếu nhập ban đầu."
+    )

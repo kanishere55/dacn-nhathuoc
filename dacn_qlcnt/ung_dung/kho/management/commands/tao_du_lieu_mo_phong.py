@@ -17,7 +17,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--kem-tai-khoan",
             action="store_true",
-            help="Tạo thêm khách, quản lý và nhân viên mô phỏng.",
+            help="Tạo thêm khách và đặt mật khẩu đăng nhập cho các tài khoản mô phỏng.",
         )
 
     def handle(self, *args, **options):
