@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from ung_dung.chung.permissions import kiem_tra_chi_nhanh
+from ung_dung.chung.van_ban import cat_khoang_trang
 from ung_dung.danh_muc.models import ChiNhanh
 
 from ..models import ChiTietPhieuDieuChuyen, PhieuDieuChuyen, TonKho
@@ -24,7 +25,7 @@ def dieu_chuyen(nguoi, nguon, dich, cac_dong, ghi_chu=""):
         chi_nhanh_nguon=nguon,
         chi_nhanh_dich=dich,
         nguoi_lap=nguoi,
-        ghi_chu=ghi_chu.strip(),
+        ghi_chu=cat_khoang_trang(ghi_chu),
     )
     for dong in cac_dong:
         thuoc = dong["thuoc"]

@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
 
+from ung_dung.chung.van_ban import cat_khoang_trang
+
 from ..models import ChiTietPhieuNhap, ChiTietPhieuTraNhaCungCap, PhieuTraNhaCungCap
 from ..selectors import lay_so_du
 from .giao_dich import khoa_chi_nhanh, ma_chung_tu, thay_doi_ton
@@ -16,7 +18,7 @@ def tra_nha_cung_cap(nguoi, phieu_nhap, cac_dong, ghi_chu=""):
         ma_phieu_tra_nha_cung_cap=ma_chung_tu("PT"),
         phieu_nhap=phieu_nhap,
         nguoi_lap=nguoi,
-        ghi_chu=ghi_chu.strip(),
+        ghi_chu=cat_khoang_trang(ghi_chu),
     )
     for dong in cac_dong:
         lo, luong = dong["lo_thuoc"], dong["so_luong"]

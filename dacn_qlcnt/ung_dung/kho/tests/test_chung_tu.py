@@ -2,10 +2,11 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from ung_dung.danh_muc.models import QuyDoiBaoGoi
-from ung_dung.kho.models import PhieuKiemKe, PhieuTraNhaCungCap, TonKho
+from ung_dung.kho.models import PhieuDieuChuyen, PhieuKiemKe, PhieuTraNhaCungCap, TonKho
 from ung_dung.kho.services.phieu_dieu_chuyen import dieu_chuyen
 from ung_dung.kho.services.phieu_kiem_ke import kiem_ke
 from ung_dung.kho.services.phieu_nhap import nhap_hang
@@ -72,3 +73,39 @@ class ChungTuKhoTests(TestCase):
         kiem_ke(d.ql, d.cn, [dong])
         ton.refresh_from_db()
         self.assertEqual(ton.so_luong, 12)
+
+    def test_dieu_chuyen_cat_ky_tu_vo_hinh_o_hai_dau_ghi_chu(self):
+        self.nhap_lo(20)
+        self.client.force_login(self.d.ql)
+        phan_hoi = self.client.post(
+            reverse("kho:phieu_dieu_chuyen_tao"),
+            {
+                "chi_nhanh_nguon": self.d.cn.pk,
+                "chi_nhanh_dich": self.d.cn2.pk,
+                "ghi_chu": "\u200b\ufeffChuyển để bổ sung tồn\u200b",
+                "form-TOTAL_FORMS": "1",
+                "form-INITIAL_FORMS": "0",
+                "form-0-thuoc": self.d.thuoc.pk,
+                "form-0-so_luong": "7",
+            },
+        )
+        self.assertEqual(phan_hoi.status_code, 302)
+        self.assertEqual(PhieuDieuChuyen.objects.get().ghi_chu, "Chuyển để bổ sung tồn")
+
+    def test_tra_nha_cung_cap_chap_nhan_ghi_chu_toan_ky_tu_vo_hinh(self):
+        phieu_nhap = self.nhap_lo(20)
+        lo_thuoc_id = TonKho.objects.get(chi_nhanh=self.d.cn).lo_thuoc_id
+        self.client.force_login(self.d.ql)
+        phan_hoi = self.client.post(
+            reverse("kho:phieu_tra_tao"),
+            {
+                "phieu_nhap": phieu_nhap.pk,
+                "ghi_chu": "\ufeff\u200b",
+                "form-TOTAL_FORMS": "1",
+                "form-INITIAL_FORMS": "0",
+                "form-0-lo_thuoc": lo_thuoc_id,
+                "form-0-so_luong": "7",
+            },
+        )
+        self.assertEqual(phan_hoi.status_code, 302)
+        self.assertEqual(PhieuTraNhaCungCap.objects.get().ghi_chu, "")

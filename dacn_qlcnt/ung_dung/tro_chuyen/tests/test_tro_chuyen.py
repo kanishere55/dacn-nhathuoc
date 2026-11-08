@@ -4,6 +4,7 @@ from uuid import uuid4
 from channels.db import database_sync_to_async
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
+from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
 
@@ -11,7 +12,7 @@ from ung_dung.kho.tests.du_lieu import tao_du_lieu
 
 from ..models import TinNhan
 from ..routing import websocket_urlpatterns
-from ..services import mo_phong
+from ..services import ghi_tin_nhan, mo_phong
 
 # Mặc định test không phụ thuộc dịch vụ ngoài. Runner Redis cung cấp URL riêng.
 MAY_CHU_REDIS_TEST = os.environ.get("DACN_TEST_REDIS_URL")
@@ -79,3 +80,31 @@ class TroChuyenTests(TransactionTestCase):
         finally:
             await khach.disconnect()
             await nhan_vien.disconnect()
+
+    async def test_kiem_tra_ket_noi_va_lay_tin_da_luu_sau_khi_noi_lai(self):
+        khach = self.ket_noi(self.d.khach)
+        self.assertTrue((await khach.connect())[0])
+        try:
+            self.assertEqual(await khach.receive_json_from(), {"loai": "lich_su", "cac_tin": []})
+            await khach.send_json_to({"loai": "kiem_tra_ket_noi"})
+            self.assertEqual(await khach.receive_json_from(), {"loai": "ket_noi_con_song"})
+            self.assertEqual(await TinNhan.objects.acount(), 0)
+        finally:
+            await khach.disconnect()
+
+        tin, _ = await database_sync_to_async(ghi_tin_nhan)(
+            self.d.nv, self.phong, str(uuid4()), "Tin lưu lúc khách mất mạng"
+        )
+        khach = self.ket_noi(self.d.khach)
+        self.assertTrue((await khach.connect())[0])
+        try:
+            lich_su = await khach.receive_json_from()
+            self.assertEqual(lich_su["loai"], "lich_su")
+            self.assertEqual([muc["id_tin_nhan"] for muc in lich_su["cac_tin"]], [tin.pk])
+            await get_user_model().objects.filter(pk=self.d.khach.pk).aupdate(dang_hoat_dong=False)
+            await khach.send_json_to({"loai": "kiem_tra_ket_noi"})
+            self.assertEqual(
+                await khach.receive_output(), {"type": "websocket.close", "code": 4403}
+            )
+        finally:
+            await khach.disconnect()

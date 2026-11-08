@@ -68,6 +68,10 @@ class TroChuyenConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"loai": "loi", "thong_bao": "Tin nhắn sai định dạng."})
             return
         try:
+            if content.get("loai") == "kiem_tra_ket_noi":
+                await self.kiem_quyen()
+                await self.send_json({"loai": "ket_noi_con_song"})
+                return
             tin, da_tao = await self.luu_tin(content.get("ma_tin_nhan"), content.get("noi_dung"))
         except PermissionDenied:
             await self.close(code=4403)
