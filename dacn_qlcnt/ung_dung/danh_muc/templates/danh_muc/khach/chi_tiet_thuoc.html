@@ -14,7 +14,14 @@
         <div><dt>Nhà sản xuất</dt><dd>{{ thuoc.nha_san_xuat|default:"—" }}</dd></div>
         <div><dt>Đơn vị cơ sở</dt><dd>{{ thuoc.don_vi_tinh.ten_don_vi_tinh }}</dd></div>
       </dl>
-      <a class="nut" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Tìm nhà thuốc còn thuốc này</a>
+      {% if not noi_bo %}
+        <form class="them-vao-gio" action="{% url 'ban_hang:gio_dat_giu_them' thuoc.ma_thuoc %}" method="post">
+          {% csrf_token %}
+          <label for="{{ form_them.so_luong.id_for_label }}">{{ form_them.so_luong.label }} ({{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}){{ form_them.so_luong }}</label>
+          <button class="nut"><i data-lucide="shopping-basket" aria-hidden="true"></i>Thêm vào giỏ đặt giữ</button>
+        </form>
+      {% endif %}
+      <a class="nut nut-phu" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Tìm nhà thuốc còn thuốc này</a>
     </div>
   </section>
 {% endblock %}

@@ -1,0 +1,3 @@
+KHOA_GIO = "gio_dat_giu"
+SO_THUOC_TOI_DA = 30
+SO_LUONG_TOI_DA = 2_147_483_647

@@ -30,6 +30,10 @@ class WebGISTests(TestCase):
             )
         self.assertEqual(phan_hoi.status_code, 200)
         self.assertEqual([k["id_chi_nhanh"] for k in phan_hoi.json()["ket_qua"]], [d.cn2.pk])
+        self.assertEqual(
+            phan_hoi.json()["ket_qua"][0]["duong_dan"],
+            reverse("danh_muc:khach_chi_nhanh_chi_tiet", args=[d.cn2.ma_chi_nhanh]),
+        )
         sql = " ".join(q["sql"].lower() for q in cac_truy_van)
         self.assertIn("st_dwithin", sql)
         self.assertIn("st_distance", sql)
@@ -79,11 +83,20 @@ class WebGISTests(TestCase):
     def test_trang_khach_render_va_api_giu_thanh_cong(self):
         d = self.d
         tao_ton(d)
-        self.assertContains(self.client.get(reverse("webgis:ban_do")), "vendor/leaflet/leaflet.js")
+        trang = self.client.get(reverse("webgis:ban_do"), {"thuoc": d.thuoc.ma_thuoc})
+        self.assertContains(trang, "vendor/leaflet/leaflet.js")
+        self.assertContains(trang, "Dùng vị trí của tôi")
+        self.assertContains(trang, 'list="goi-y-thuoc"')
+        self.assertContains(trang, f'value="{d.thuoc.ten_thuoc} · {d.thuoc.ma_thuoc}"')
+        self.assertNotContains(trang, 'name="kinh_do"')
+        self.assertNotContains(trang, 'name="vi_do"')
         self.client.force_login(d.khach)
-        self.assertContains(
-            self.client.get(reverse("webgis:ban_do")), f'data-url-giu="{reverse("webgis:dat_giu")}"'
+        self.client.post(
+            reverse("ban_hang:gio_dat_giu_them", args=[d.thuoc.ma_thuoc]), {"so_luong": 2}
         )
+        trang_tu_gio = self.client.get(reverse("webgis:ban_do"), {"tu_gio": "1"})
+        self.assertContains(trang_tu_gio, f'data-url-gio="{reverse("ban_hang:gio_dat_giu")}"')
+        self.assertContains(trang_tu_gio, 'data-so-luong="2"')
         phan_hoi = self.client.post(
             reverse("webgis:dat_giu"),
             {"id_chi_nhanh": d.cn.pk, "cac_thuoc": [{"id_thuoc": d.thuoc.pk, "so_luong": 1}]},

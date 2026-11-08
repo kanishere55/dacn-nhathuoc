@@ -50,6 +50,26 @@ def lay_ton_kha_dung(**tham_so):
     return lay_so_du(**tham_so).filter(dieu_kien_lo_hop_le())
 
 
+def loc_chi_nhanh_du_thuoc(cac_chi_nhanh, cac_dong):
+    nhu_cau = {}
+    for dong in cac_dong:
+        ma = dong["thuoc"].pk
+        nhu_cau[ma] = nhu_cau.get(ma, 0) + dong["so_luong"]
+    so_du = (
+        lay_ton_kha_dung()
+        .filter(chi_nhanh__in=cac_chi_nhanh, lo_thuoc__thuoc_id__in=nhu_cau)
+        .order_by()
+        .values("chi_nhanh_id", "lo_thuoc__thuoc_id")
+        .annotate(luong=Sum("kha_dung"))
+    )
+    bang = {(dong["chi_nhanh_id"], dong["lo_thuoc__thuoc_id"]): dong["luong"] for dong in so_du}
+    return [
+        cn
+        for cn in cac_chi_nhanh
+        if all(bang.get((cn.pk, ma), 0) >= luong for ma, luong in nhu_cau.items())
+    ]
+
+
 def lay_bang_ton(nguoi):
     return (
         lay_so_du(nguoi=nguoi)

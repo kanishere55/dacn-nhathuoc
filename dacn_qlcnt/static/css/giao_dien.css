@@ -448,16 +448,6 @@
     margin-top: 20px;
     isolation: isolate;
   }
-  .nhu-cau, .ket-qua-chi-nhanh {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    margin-block: 12px;
-  }
-  .ket-qua-chi-nhanh h2 {
-    font-weight: 700;
-  }
   .cac-tin-nhan {
     max-height: 50vh;
     overflow: auto;

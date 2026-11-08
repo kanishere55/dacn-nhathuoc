@@ -2,8 +2,28 @@ from django.db.models import Case, DecimalField, F, Q, Sum, Value, When
 from django.db.models.functions import Now
 
 from ung_dung.chung.permissions import la_quan_tri
+from ung_dung.danh_muc.models import Thuoc
 
+from .gio_dat_giu import KHOA_GIO
 from .models import ChiTietPhieuBan, DonDatGiu, PhieuBan
+
+
+def lay_gio(phien):
+    return phien.get(KHOA_GIO, {})
+
+
+def lay_dong_gio(gio):
+    cac_thuoc = Thuoc.objects.select_related("don_vi_tinh").in_bulk([int(ma) for ma in gio])
+    return [
+        {"id_thuoc": int(ma), "thuoc": cac_thuoc.get(int(ma)), "so_luong": so_luong}
+        for ma, so_luong in gio.items()
+    ]
+
+
+def gio_duoc_giu(cac_dong):
+    return bool(cac_dong) and all(
+        dong["thuoc"] and dong["thuoc"].dang_hoat_dong for dong in cac_dong
+    )
 
 
 def lay_don(nguoi):

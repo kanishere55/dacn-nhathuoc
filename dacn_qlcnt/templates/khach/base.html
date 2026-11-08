@@ -15,6 +15,9 @@
           {% for muc in menu_khach %}
             <a href="{{ muc.duong_dan }}"{% if muc.dang_chon %} aria-current="page"{% endif %}>{{ muc.nhan }}</a>
           {% endfor %}
+          {% if not noi_bo %}
+            <a href="{% url 'ban_hang:gio_dat_giu' %}"{% if request.resolver_match.view_name == 'ban_hang:gio_dat_giu' %} aria-current="page"{% endif %}>Giỏ đặt giữ</a>
+          {% endif %}
         </nav>
         <div class="tac-vu-khach">
           {% if noi_bo %}

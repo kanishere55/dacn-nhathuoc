@@ -1,0 +1,74 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}Giỏ đặt giữ · Nhà thuốc{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-khach">
+    <p class="chu-dan">Nhận thuốc tại nhà thuốc</p>
+    <h1>Giỏ đặt giữ</h1>
+    <p>Chọn chi nhánh có đủ thuốc trong giỏ. Thuốc được giữ sau khi bạn xác nhận.</p>
+  </header>
+  {% if cac_dong %}
+    <div class="khung-gio-dat-giu">
+      <section class="the-khach" aria-labelledby="thuoc-trong-gio">
+        <h2 id="thuoc-trong-gio">Thuốc trong giỏ</h2>
+        <ul class="cac-dong-gio">
+          {% for dong in cac_dong %}
+            <li class="dong-gio">
+              <div>
+                {% if dong.thuoc and dong.thuoc.dang_hoat_dong %}
+                  <a class="ten-thuoc-khach" href="{% url 'danh_muc:khach_thuoc_chi_tiet' dong.thuoc.ma_thuoc %}">{{ dong.thuoc.ten_thuoc }}</a>
+                  <p class="ghi-chu-khach">{{ dong.thuoc.gia_ban|floatformat:"0g" }} đ / {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</p>
+                {% else %}
+                  <strong>{{ dong.thuoc.ten_thuoc|default:"Thuốc không còn trong danh mục" }}</strong>
+                  <p class="ghi-chu-khach">Vui lòng bỏ thuốc này để tiếp tục.</p>
+                {% endif %}
+              </div>
+              <div class="tac-vu-dong-gio">
+                {% if dong.thuoc and dong.thuoc.dang_hoat_dong %}
+                  <form class="sua-dong-gio" action="{% url 'ban_hang:gio_dat_giu_sua' dong.id_thuoc %}" method="post">
+                    {% csrf_token %}
+                    <label class="sr-only" for="luong-{{ dong.id_thuoc }}">Số lượng {{ dong.thuoc.ten_thuoc }}</label>
+                    <input id="luong-{{ dong.id_thuoc }}" name="so_luong" type="number" inputmode="numeric" min="1" max="{{ gioi_han_so_luong|stringformat:'d' }}" value="{{ dong.so_luong|stringformat:'d' }}" required>
+                    <button class="nut nut-phu" aria-label="Cập nhật số lượng {{ dong.thuoc.ten_thuoc }}">Cập nhật</button>
+                  </form>
+                {% endif %}
+                <form action="{% url 'ban_hang:gio_dat_giu_sua' dong.id_thuoc %}" method="post">
+                  {% csrf_token %}<input type="hidden" name="so_luong" value="0">
+                  <button class="nut nut-phu" aria-label="Bỏ {{ dong.thuoc.ten_thuoc|default:'thuốc' }} khỏi giỏ">Bỏ</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+        <a class="lien-ket-van-ban" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Tra cứu thêm thuốc</a>
+      </section>
+      <section class="the-khach nhan-tai-quay" aria-labelledby="noi-nhan-thuoc">
+        <h2 id="noi-nhan-thuoc">Chi nhánh nhận thuốc</h2>
+        {% if co_chi_nhanh_du_hang %}
+          <a class="lien-ket-van-ban" href="{% url 'webgis:ban_do' %}?tu_gio=1"><i data-lucide="map-pin" aria-hidden="true"></i>Tìm chi nhánh gần bạn</a>
+          {% if user.is_authenticated %}
+            <form class="form-chinh" action="{% url 'ban_hang:gio_dat_giu_xac_nhan' %}" method="post">
+              {% csrf_token %}
+              <label for="{{ form.chi_nhanh.id_for_label }}">{{ form.chi_nhanh.label }}{{ form.chi_nhanh }}</label>
+              <p class="ghi-chu-khach">Đơn được giữ trong 24 giờ. Nhận và thanh toán tại quầy.</p>
+              <button class="nut"><i data-lucide="calendar-check" aria-hidden="true"></i>Xác nhận đặt giữ</button>
+            </form>
+          {% else %}
+            <p>Đăng nhập để chọn chi nhánh và xác nhận đơn.</p>
+            <a class="nut" href="{{ url_dang_nhap }}">Đăng nhập để đặt giữ</a>
+          {% endif %}
+        {% elif hop_le %}
+          <p>Chưa có chi nhánh nào còn đủ toàn bộ số thuốc. Bạn có thể điều chỉnh số lượng trong giỏ.</p>
+        {% else %}
+          <p>Bỏ thuốc đã ngừng kinh doanh để xem các chi nhánh còn đủ hàng.</p>
+        {% endif %}
+      </section>
+    </div>
+  {% else %}
+    <section class="the-khach khoang-trong-khach">
+      <i data-lucide="shopping-basket" aria-hidden="true"></i>
+      <h2>Giỏ của bạn đang trống</h2>
+      <p>Thêm thuốc từ danh mục để tìm nơi nhận tại quầy.</p>
+      <a class="nut" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem danh mục thuốc</a>
+    </section>
+  {% endif %}
+{% endblock %}

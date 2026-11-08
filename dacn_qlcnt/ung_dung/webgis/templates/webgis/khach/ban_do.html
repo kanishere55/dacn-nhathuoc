@@ -1,44 +1,84 @@
 {% extends "khach/base.html" %}
 {% load static %}
+{% block tieu_de %}Tìm nhà thuốc · Nhà thuốc{% endblock %}
 {% block dau_trang %}
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 {% endblock %}
 {% block noi_dung %}
-  <h1>Tìm chi nhánh còn đủ thuốc</h1>
-  <p>Chọn đúng thuốc và lượng theo đơn vị cơ sở. Nhận và thanh toán tại quầy.</p>
-  <div class="khung-webgis" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}"
-       {% if duoc_dat_giu %}data-url-giu="{% url 'webgis:dat_giu' %}"{% endif %}
-       data-osrm="{{ may_chu_osrm }}">
-    <form data-tim-kiem class="khoi-trang form-chinh">
+  <header class="tieu-de-khach">
+    <p class="chu-dan">Bản đồ nhà thuốc</p>
+    <h1>Tìm chi nhánh còn đủ thuốc</h1>
+    <p>Chọn điểm xuất phát và thuốc cần tìm. Kết quả chỉ hiện chi nhánh còn đủ số lượng bạn chọn.</p>
+  </header>
+  <div class="khung-ban-do-khach" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}"
+       data-osrm="{{ may_chu_osrm }}" data-gioi-han="{{ gioi_han_so_thuoc }}"
+       {% if tu_gio %}data-url-gio="{% url 'ban_hang:gio_dat_giu' %}"{% endif %}>
+    <form class="the-khach form-chinh bo-loc-ban-do" data-tim-kiem>
       {% csrf_token %}
-      <label>Kinh độ<input name="kinh_do" type="number" step="any" min="-180" max="180" value="106.7" required></label>
-      <label>Vĩ độ<input name="vi_do" type="number" step="any" min="-90" max="90" value="10.77" required></label>
-      <button type="button" class="nut nut-phu" data-dinh-vi>Dùng vị trí hiện tại</button>
-      <label>Bán kính (mét)<input name="ban_kinh_met" type="number" min="100" max="50000" value="5000" required></label>
-      <div data-nhu-cau>
-        <div class="nhu-cau">
-          <select name="thuoc" required>
-            <option value="">Chọn thuốc / đơn vị</option>
-            {% for thuoc in cac_thuoc %}
-              <option value="{{ thuoc.pk }}">{{ thuoc.ma_thuoc }} · {{ thuoc.ten_thuoc }} / {{ thuoc.don_vi_tinh }}</option>
-            {% endfor %}
-          </select>
-          <input name="so_luong" type="number" min="1" value="1" required><button type="button" data-xoa-thuoc aria-label="Bỏ thuốc">×</button>
+      <div>
+        <h2>1. Chọn điểm xuất phát</h2>
+        <p class="ghi-chu-khach" data-vi-tri role="status">Bấm vào bản đồ hoặc dùng định vị.</p>
+        <div class="nut-vi-tri">
+          <button type="button" class="nut nut-phu" data-dinh-vi><i data-lucide="locate-fixed" aria-hidden="true"></i>Dùng vị trí của tôi</button>
+          <button type="button" class="nut nut-phu" data-tam-ban-do>Dùng tâm bản đồ</button>
         </div>
       </div>
-      <button type="button" class="nut nut-phu" data-them-thuoc>Thêm thuốc</button>
-      <button class="nut">Tìm chi nhánh</button>
-      <p data-thong-bao role="status" aria-live="polite"></p>
+      <div>
+        <h2>2. Chọn thuốc cần tìm</h2>
+        {% if tu_gio %}
+          <ul class="thuoc-tu-gio" data-nhu-cau>
+            {% for dong in cac_dong %}
+              <li data-dong-thuoc data-id-thuoc="{{ dong.id_thuoc }}" data-so-luong="{{ dong.so_luong|stringformat:'d' }}">
+                <strong>{{ dong.thuoc.ten_thuoc }}</strong><span>{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+          <a class="lien-ket-van-ban" href="{% url 'ban_hang:gio_dat_giu' %}">Sửa thuốc trong giỏ</a>
+        {% elif cac_thuoc %}
+          <datalist id="goi-y-thuoc" data-goi-y>
+            {% for thuoc in cac_thuoc %}
+              <option value="{{ thuoc.ten_thuoc }} · {{ thuoc.ma_thuoc }}" data-id-thuoc="{{ thuoc.pk }}"
+                      data-don-vi="{{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}"></option>
+            {% endfor %}
+          </datalist>
+          <div data-nhu-cau>
+            <div class="dong-thuoc-ban-do" data-dong-thuoc>
+              <label>Tên hoặc mã thuốc<input data-thuoc list="goi-y-thuoc" autocomplete="off" placeholder="Gõ để tìm thuốc"
+                    {% if thuoc_ban_dau %}value="{{ thuoc_ban_dau.ten_thuoc }} · {{ thuoc_ban_dau.ma_thuoc }}"{% endif %} required></label>
+              <label>Số lượng<span data-don-vi>{% if thuoc_ban_dau %} · {{ thuoc_ban_dau.don_vi_tinh.ten_don_vi_tinh|lower }}{% endif %}</span><input data-so-luong type="number" inputmode="numeric" min="1" max="{{ gioi_han_so_luong|stringformat:'d' }}" value="1" required></label>
+              <button type="button" class="nut nut-phu" data-xoa-thuoc>Bỏ thuốc</button>
+            </div>
+          </div>
+          <button type="button" class="nut nut-phu" data-them-thuoc><i data-lucide="plus" aria-hidden="true"></i>Thêm thuốc</button>
+        {% else %}
+          <p>Danh mục hiện chưa có thuốc đang kinh doanh.</p>
+        {% endif %}
+      </div>
+      <label>Phạm vi tìm kiếm
+        <select name="ban_kinh_met">
+          <option value="1000">1 km</option>
+          <option value="3000">3 km</option>
+          <option value="5000" selected>5 km</option>
+          <option value="10000">10 km</option>
+          <option value="20000">20 km</option>
+          <option value="50000">50 km</option>
+        </select>
+      </label>
+      <button class="nut"{% if not tu_gio and not cac_thuoc %} disabled{% endif %}><i data-lucide="search" aria-hidden="true"></i>Tìm chi nhánh</button>
     </form>
-    <div id="ban-do" class="ban-do" aria-label="Bản đồ chi nhánh">
+    <div class="the-khach khung-lop-ban-do">
+      <div class="ban-do" data-ban-do aria-label="Bản đồ chi nhánh"></div>
+      <p class="ghi-chu-khach" data-lo-trinh role="status">Chọn một chi nhánh trong kết quả để xem đường đi.</p>
     </div>
-  </div>
-  <div data-ket-qua class="khoi-trang">
+    <section class="ket-qua-ban-do" aria-labelledby="danh-sach-ket-qua">
+      <h2 id="danh-sach-ket-qua">Chi nhánh phù hợp</h2>
+      <p data-thong-bao role="status">Kết quả sẽ hiện sau khi bạn tìm kiếm.</p>
+      <div class="luoi-khach-ba" data-ket-qua></div>
+    </section>
   </div>
 {% endblock %}
 {% block cuoi_trang %}
-  <script src="{% static 'vendor/leaflet/leaflet.js' %}">
-  </script>
-  <script src="{% static 'webgis/js/ban_do.js' %}" defer>
-  </script>
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
+  <script src="{% static 'webgis/js/nen_ban_do.js' %}" defer></script>
+  <script src="{% static 'webgis/js/ban_do.js' %}" defer></script>
 {% endblock %}
