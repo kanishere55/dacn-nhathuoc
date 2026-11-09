@@ -296,31 +296,31 @@ class Thuoc(models.Model):
         blank=True,
         db_default="",
         db_column="cong_dung",
-        db_comment="Công dụng, chỉ định theo tờ hướng dẫn; văn bản nhiều dòng.",
+        db_comment="Công dụng, chỉ định theo tờ hướng dẫn; HTML định dạng đã làm sạch bằng nh3.",
     )
     cach_dung = models.TextField(
         blank=True,
         db_default="",
         db_column="cach_dung",
-        db_comment="Liều dùng và cách dùng; văn bản nhiều dòng.",
+        db_comment="Liều dùng và cách dùng; HTML định dạng đã làm sạch bằng nh3.",
     )
     chong_chi_dinh = models.TextField(
         blank=True,
         db_default="",
         db_column="chong_chi_dinh",
-        db_comment="Chống chỉ định; văn bản nhiều dòng.",
+        db_comment="Chống chỉ định; HTML định dạng đã làm sạch bằng nh3.",
     )
     tac_dung_phu = models.TextField(
         blank=True,
         db_default="",
         db_column="tac_dung_phu",
-        db_comment="Tác dụng không mong muốn; văn bản nhiều dòng.",
+        db_comment="Tác dụng không mong muốn; HTML định dạng đã làm sạch bằng nh3.",
     )
     luu_y = models.TextField(
         blank=True,
         db_default="",
         db_column="luu_y",
-        db_comment="Thận trọng và lưu ý khi dùng; văn bản nhiều dòng.",
+        db_comment="Thận trọng và lưu ý khi dùng; HTML định dạng đã làm sạch bằng nh3.",
     )
     bao_quan = models.TextField(
         blank=True,

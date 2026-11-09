@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.gis.geos import Point
 
+from ung_dung.chung.truong_form import TruongPhongPhu
 from ung_dung.chung.van_ban import cat_khoang_trang
 
 from .selectors import DANH_MUC
@@ -62,7 +63,7 @@ NHAN = {
 # Cột văn bản được nhập nhiều dòng; cột văn bản khác dùng ô một dòng.
 NHIEU_DONG = {"cong_dung", "cach_dung", "chong_chi_dinh", "tac_dung_phu", "luu_y"}
 # Ô một dòng thường dài, chiếm cả hàng trên form.
-TRUONG_RONG = {"mo_ta_ngan", "hoat_chat", "dia_chi", "mo_ta", "ten_khuyen_mai"}
+TRUONG_RONG = {"mo_ta_ngan", "hoat_chat", "dia_chi", "mo_ta", "ten_khuyen_mai", "bao_quan"}
 NHOM_TRUONG = {
     "thuoc": [
         (
@@ -117,11 +118,14 @@ NHOM_TRUONG = {
 class FormDanhMuc(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for ten, truong in self.fields.items():
-            if isinstance(truong.widget, forms.Textarea) and ten not in NHIEU_DONG:
-                truong.widget = forms.TextInput()
+        for ten, truong in list(self.fields.items()):
+            if ten in NHIEU_DONG:
+                # Nội dung dài soạn như văn bản Word, lưu HTML đã làm sạch.
+                self.fields[ten] = TruongPhongPhu(
+                    label=truong.label, required=False, help_text=truong.help_text
+                )
             elif isinstance(truong.widget, forms.Textarea):
-                truong.widget.attrs.update(rows=4)
+                truong.widget = forms.TextInput()
             elif isinstance(truong, forms.DateField):
                 truong.widget = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
             elif isinstance(truong, forms.TimeField):

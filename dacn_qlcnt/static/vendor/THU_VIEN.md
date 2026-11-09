@@ -14,3 +14,6 @@ Tải bằng `python cong_cu/tai_thu_vien.py`. Không gọi CDN từ trình duy�
 | `be_vietnam_pro/BeVietnamPro-SemiBold.ttf` | https://raw.githubusercontent.com/google/fonts/main/ofl/bevietnampro/BeVietnamPro-SemiBold.ttf | `bd8e27eb02720b9d91e59e4f10a90878643219f25ce6a8d9a4f06a8a88d3bb71` |
 | `be_vietnam_pro/BeVietnamPro-Bold.ttf` | https://raw.githubusercontent.com/google/fonts/main/ofl/bevietnampro/BeVietnamPro-Bold.ttf | `7f738fe5c43c8872807b20e2d30d42163618de8a4daf7f48a939adac32c16847` |
 | `be_vietnam_pro/OFL.txt` | https://raw.githubusercontent.com/google/fonts/main/ofl/bevietnampro/OFL.txt | `6b7f8f73609a25ea78c891e34cf37b06f8a676b7ea986e941e43b009110f2a85` |
+| `quill/quill.min.js` | https://unpkg.com/quill@2.0.3/dist/quill.js | `f6157c72ac9b3f51cdead426335688a027b12405d9d6a4daadd38a676b2d7ff2` |
+| `quill/quill.snow.css` | https://unpkg.com/quill@2.0.3/dist/quill.snow.css | `1c7948cd13aa92fac6390319bc1e5e461823da171519d3a768db56164f871636` |
+| `quill/LICENSE` | https://raw.githubusercontent.com/slab/quill/v2.0.3/LICENSE | `395c12b616d6f58238b4be39284d4d9221b58dd6e1f1e34d9ab537e34abbb022` |

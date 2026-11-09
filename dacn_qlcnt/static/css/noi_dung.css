@@ -1,0 +1,165 @@
+/* Trình soạn thảo: để ngoài @layer vì quill.snow.css không thuộc lớp nào và sẽ thắng mọi lớp. */
+.trinh-soan-thao {
+  border: 1px solid var(--vien);
+  border-radius: 9px;
+  background: #fff;
+  overflow: hidden;
+}
+.trinh-soan-thao:focus-within {
+  border-color: var(--color-chinh);
+  box-shadow: 0 0 0 3px rgb(17 107 84 / 0.12);
+}
+.trinh-soan-thao .ql-toolbar.ql-snow {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  padding: 6px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--vien);
+  background: #f6f9f7;
+  font-family: var(--font-sans);
+}
+.trinh-soan-thao .ql-toolbar.ql-snow .ql-formats {
+  margin-right: 6px;
+  padding-right: 6px;
+  border-right: 1px solid #dfe7e1;
+}
+.trinh-soan-thao .ql-toolbar.ql-snow .ql-formats:last-child {
+  border-right: 0;
+}
+.trinh-soan-thao .ql-snow .ql-picker-label::before,
+.trinh-soan-thao .ql-snow .ql-picker-item::before {
+  font-family: var(--font-sans);
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-item::before {
+  content: "Đoạn văn";
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+  content: "Tiêu đề lớn";
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-label[data-value="3"]::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
+  content: "Tiêu đề nhỏ";
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-header {
+  width: 116px;
+}
+.trinh-soan-thao .ql-snow.ql-toolbar button:hover .ql-stroke,
+.trinh-soan-thao .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.trinh-soan-thao .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke {
+  stroke: var(--color-chinh);
+}
+.trinh-soan-thao .ql-snow.ql-toolbar button:hover .ql-fill,
+.trinh-soan-thao .ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--color-chinh);
+}
+.trinh-soan-thao .ql-snow.ql-toolbar button.ql-active,
+.trinh-soan-thao .ql-snow.ql-toolbar button:hover {
+  border-radius: 5px;
+  background: #e3efe7;
+}
+.trinh-soan-thao .ql-container.ql-snow {
+  border: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+.trinh-soan-thao .ql-editor {
+  min-height: 150px;
+  max-height: 420px;
+  padding: 12px 14px;
+  line-height: 1.65;
+  overflow-y: auto;
+}
+.trinh-soan-thao .ql-editor.ql-blank::before {
+  left: 14px;
+  color: #9aa9a1;
+  font-style: normal;
+}
+.trinh-soan-thao .ql-snow .ql-tooltip {
+  z-index: 5;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+}
+.trinh-soan-thao .ql-snow .ql-tooltip[data-mode="link"]::before {
+  content: "Địa chỉ liên kết:";
+}
+.trinh-soan-thao .ql-snow .ql-tooltip::before {
+  content: "Mở liên kết:";
+}
+.trinh-soan-thao .ql-snow .ql-tooltip a.ql-action::after {
+  content: "Sửa";
+}
+.trinh-soan-thao .ql-snow .ql-tooltip a.ql-remove::before {
+  content: "Gỡ";
+}
+.trinh-soan-thao .ql-snow .ql-tooltip.ql-editing a.ql-action::after {
+  content: "Lưu";
+}
+
+
+@layer components {
+  /* Nội dung định dạng hiển thị cho khách */
+  .noi-dung-phong-phu {
+    color: #2b3d35;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+  }
+  .noi-dung-phong-phu > * + * {
+    margin-top: 0.7em;
+  }
+  .noi-dung-phong-phu h2 {
+    margin-top: 1.2em;
+    font-size: 1.2em;
+    font-weight: 700;
+  }
+  .noi-dung-phong-phu h3,
+  .noi-dung-phong-phu h4 {
+    margin-top: 1em;
+    font-size: 1.05em;
+    font-weight: 700;
+  }
+  .noi-dung-phong-phu ul,
+  .noi-dung-phong-phu ol {
+    padding-left: 1.4em;
+  }
+  .noi-dung-phong-phu ul {
+    list-style: disc;
+  }
+  .noi-dung-phong-phu ol {
+    list-style: decimal;
+  }
+  .noi-dung-phong-phu li + li {
+    margin-top: 0.25em;
+  }
+  .noi-dung-phong-phu li::marker {
+    color: var(--color-chinh);
+  }
+  .noi-dung-phong-phu a {
+    color: var(--color-chinh);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .noi-dung-phong-phu blockquote {
+    padding: 10px 14px;
+    border-left: 3px solid var(--color-chinh);
+    border-radius: 0 8px 8px 0;
+    background: #f2f8f4;
+  }
+  .noi-dung-phong-phu strong {
+    font-weight: 700;
+  }
+  .noi-dung-phong-phu .ql-align-center {
+    text-align: center;
+  }
+  .noi-dung-phong-phu .ql-align-right {
+    text-align: right;
+  }
+  .noi-dung-phong-phu .ql-align-justify {
+    text-align: justify;
+  }
+}

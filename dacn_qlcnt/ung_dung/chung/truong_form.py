@@ -60,3 +60,30 @@ class TruongSoDienThoai(forms.CharField):
         if not re.fullmatch(SO_DIEN_THOAI, so):
             raise ValidationError("Số điện thoại cần 10 chữ số (di động) hoặc 11 chữ số (cố định).")
         return so
+
+
+class TrinhSoanThao(forms.Textarea):
+    """Ô soạn nội dung có thanh công cụ định dạng (Quill); thiếu JS vẫn dùng như textarea."""
+
+    class Media:
+        css = {"all": ("vendor/quill/quill.snow.css",)}
+        js = ("vendor/quill/quill.min.js", "chung/js/trinh_soan_thao.js")
+
+    def __init__(self, attrs=None):
+        super().__init__({"rows": 8, "data-trinh-soan-thao": "", **(attrs or {})})
+
+
+class TruongPhongPhu(forms.CharField):
+    """Nội dung định dạng: làm sạch HTML bằng nh3 trước khi lưu."""
+
+    widget = TrinhSoanThao
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("max_length", 20000)
+        kwargs["strip"] = False
+        super().__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        from .noi_dung_phong_phu import lam_sach_html
+
+        return lam_sach_html(super().to_python(value) or "")

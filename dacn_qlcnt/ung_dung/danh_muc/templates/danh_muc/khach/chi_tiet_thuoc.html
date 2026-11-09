@@ -67,7 +67,7 @@
   {% if cac_muc_noi_dung %}
     <section class="the-khach noi-dung-thuoc" aria-label="Thông tin sử dụng">
       {% for tieu_de, noi_dung in cac_muc_noi_dung %}
-        <article><h2>{{ tieu_de }}</h2>{{ noi_dung|linebreaks }}</article>
+        <article><h2>{{ tieu_de }}</h2><div class="noi-dung-phong-phu">{{ noi_dung|phong_phu }}</div></article>
       {% endfor %}
       <p class="ghi-chu-khach">Thông tin chỉ để tham khảo, không thay thế tư vấn của bác sĩ hoặc dược sĩ. Đọc kỹ hướng dẫn sử dụng trước khi dùng.</p>
     </section>

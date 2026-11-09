@@ -34,3 +34,13 @@ def km(gia_tri):
     if met < 1000:
         return f"{round(met)} m"
     return f"{met / 1000:.1f} km".replace(".", ",")
+
+
+@register.filter
+def phong_phu(noi_dung):
+    """Nội dung từ trình soạn thảo: làm sạch lại rồi đánh dấu an toàn."""
+    from django.utils.safestring import mark_safe
+
+    from ung_dung.chung.noi_dung_phong_phu import hien_thi
+
+    return mark_safe(hien_thi(noi_dung))  # noqa: S308 - đã làm sạch bằng nh3
