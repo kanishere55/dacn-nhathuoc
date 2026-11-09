@@ -65,6 +65,9 @@ def dieu_huong(request):
                 ("webgis:ban_do_nhiet", "Bản đồ nhiệt", "map"),
                 ("du_bao:ket_qua", "Dự báo", "chart-line"),
                 ("thong_bao:nhat_ky_email", "Email hệ thống", "mail"),
+                ("noi_dung:banner_danh_sach", "Banner trang chủ", "gallery-horizontal"),
+                ("noi_dung:trang_danh_sach", "Trang thông tin", "file-text"),
+                ("noi_dung:thong_tin", "Thông tin cửa hàng", "store"),
             )
         )
     phien = getattr(request, "session", None)

@@ -18,7 +18,8 @@ TU_VUNG = frozenset(
     ngan nuoc pham phu ta tac thi tram y
     bai bi chua chuan den do hoan lich met moi niem phi phuong thanh that tien toan tong yet
     benh chung dich kham tat tham
-    choi duyet xu
+    choi cod duyet momo quay xu
+    banner doanh giay hieu hotline kinh lam lien mau nen nut thuong tom viec
     """.split()
 )
 
@@ -39,6 +40,8 @@ DINH_DANH_CO_BOI_CANH = {
     # Thông tin chép từ đơn thuốc của bác sĩ khi bán thuốc kê đơn.
     ("phieu_ban", "ma_don_thuoc"),
     ("phieu_ban", "ten_nguoi_ke_don"),
+    # Tên chuỗi nhà thuốc trong bảng cấu hình một hàng.
+    ("thong_tin_cua_hang", "ten_thuong_hieu"),
 }
 
 TEN_CAM = {"du_lieu", "thong_tin", "gia_tri", "noi_dung", "cot_moi"}

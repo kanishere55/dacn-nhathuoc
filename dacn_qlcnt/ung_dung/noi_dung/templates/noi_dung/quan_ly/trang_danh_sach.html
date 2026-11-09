@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block tieu_de %}Trang thông tin · Khu quản lý{% endblock %}
+{% block vi_tri %}Trang thông tin{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan">NỘI DUNG WEBSITE</p>
+      <h1>Trang thông tin</h1>
+      <p>Giới thiệu, chính sách và hướng dẫn hiển thị ở chân trang website.</p>
+    </div>
+    <a class="nut" href="{% url 'noi_dung:trang_tao' %}"><i data-lucide="plus" aria-hidden="true"></i>Thêm trang</a>
+  </header>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Thứ tự</th><th>Tiêu đề</th><th>Đường dẫn</th><th>Cập nhật</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        {% for t in cac_trang %}
+          <tr>
+            <td>{{ t.thu_tu }}</td>
+            <td><a class="duong-dan-noi-dung" href="{% url 'noi_dung:trang_sua' t.pk %}">{{ t.tieu_de }}</a></td>
+            <td><a href="{% url 'noi_dung:trang' t.duong_dan_trang %}" target="_blank" rel="noopener">/trang/{{ t.duong_dan_trang }}/</a></td>
+            <td>{{ t.thoi_diem_cap_nhat|date:"d/m/Y" }}</td>
+            <td>{% if t.dang_hien_thi %}Đang hiển thị{% else %}Đang ẩn{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">Chưa có trang nào.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

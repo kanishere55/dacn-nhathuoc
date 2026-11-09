@@ -9,7 +9,7 @@
       <div class="be-rong-khach thanh-khach">
         <a class="thuong-hieu" href="{% url 'chung:trang_chu' %}">
           <span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span>
-          <span>Nhà thuốc<small>Chuỗi nhà thuốc TP.HCM</small></span>
+          <span>{{ cua_hang.ten_thuong_hieu }}{% if cua_hang.khau_hieu %}<small>{{ cua_hang.khau_hieu }}</small>{% endif %}</span>
         </a>
         <nav class="menu-khach" aria-label="Điều hướng website khách">
           {% for muc in menu_khach %}
@@ -23,9 +23,9 @@
           {% if noi_bo %}
             <a class="nut nut-phu" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Khu quản lý</a>
           {% elif user.is_authenticated %}
-            <a class="nut nut-phu" href="{% url 'tai_khoan:cua_toi' %}"><i data-lucide="user-round" aria-hidden="true"></i>Tài khoản</a>
+            <a class="nut nut-phu nut-tai-khoan" href="{% url 'tai_khoan:cua_toi' %}" aria-label="Tài khoản"><i data-lucide="user-round" aria-hidden="true"></i><span>Tài khoản</span></a>
           {% else %}
-            <a class="nut nut-phu" href="{% url 'tai_khoan:dang_nhap' %}"><i data-lucide="user-round" aria-hidden="true"></i>Đăng nhập</a>
+            <a class="nut nut-phu nut-tai-khoan" href="{% url 'tai_khoan:dang_nhap' %}" aria-label="Đăng nhập"><i data-lucide="user-round" aria-hidden="true"></i><span>Đăng nhập</span></a>
           {% endif %}
         </div>
       </div>
@@ -37,13 +37,33 @@
       {% block noi_dung %}{% endblock %}
     </main>
     <footer class="chan-trang-khach">
-      <div class="be-rong-khach">
-        <div><strong>Nhà thuốc</strong><p>Tra cứu thuốc, đặt giao tận nơi hoặc nhận tại chi nhánh gần bạn.</p></div>
-        <div class="lien-ket-khach">
-          <a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Danh mục thuốc</a>
-          <a href="{% url 'webgis:ban_do' %}">Bản đồ nhà thuốc</a>
-          {% if not noi_bo %}<a href="{% url 'tro_chuyen:khach_danh_sach' %}">Trò chuyện với chi nhánh</a>{% endif %}
+      <div class="be-rong-khach luoi-chan-trang">
+        <div class="cot-chan-trang thong-tin-chan-trang">
+          <strong class="ten-chan-trang">{{ cua_hang.ten_thuong_hieu }}</strong>
+          {% if cua_hang.khau_hieu %}<p>{{ cua_hang.khau_hieu }}</p>{% endif %}
+          <ul>
+            {% if cua_hang.hotline %}<li><i data-lucide="phone" aria-hidden="true"></i><a href="tel:{{ cua_hang.hotline }}">{{ cua_hang.hotline }}</a>{% if cua_hang.gio_lam_viec %} · {{ cua_hang.gio_lam_viec }}{% endif %}</li>{% endif %}
+            {% if cua_hang.email_lien_he %}<li><i data-lucide="mail" aria-hidden="true"></i><a href="mailto:{{ cua_hang.email_lien_he }}">{{ cua_hang.email_lien_he }}</a></li>{% endif %}
+            {% if cua_hang.dia_chi_tru_so %}<li><i data-lucide="building-2" aria-hidden="true"></i><span>{{ cua_hang.dia_chi_tru_so }}</span></li>{% endif %}
+          </ul>
         </div>
+        <nav class="cot-chan-trang" aria-label="Mua sắm">
+          <strong>Mua sắm</strong>
+          <a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Danh mục thuốc</a>
+          <a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}?dang_giam=1">Đang giảm giá</a>
+          <a href="{% url 'webgis:ban_do' %}">Tìm nhà thuốc gần bạn</a>
+          {% if not noi_bo %}<a href="{% url 'tro_chuyen:khach_danh_sach' %}">Hỏi dược sĩ</a>{% endif %}
+        </nav>
+        {% if trang_chan %}
+          <nav class="cot-chan-trang" aria-label="Chính sách">
+            <strong>Thông tin và chính sách</strong>
+            {% for t in trang_chan %}<a href="{% url 'noi_dung:trang' t.duong_dan_trang %}">{{ t.tieu_de }}</a>{% endfor %}
+          </nav>
+        {% endif %}
+      </div>
+      <div class="be-rong-khach day-chan-trang">
+        <span>© {% now "Y" %} {{ cua_hang.ten_thuong_hieu }}{% if cua_hang.giay_phep_kinh_doanh %} · Giấy chứng nhận đủ điều kiện kinh doanh dược số {{ cua_hang.giay_phep_kinh_doanh }}{% endif %}</span>
+        <span>Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ.</span>
       </div>
     </footer>
   </div>

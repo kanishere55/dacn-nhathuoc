@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "ung_dung.bao_cao.apps.BaoCaoConfig",
     "ung_dung.thong_bao.apps.ThongBaoConfig",
     "ung_dung.thanh_toan.apps.ThanhToanConfig",
+    "ung_dung.noi_dung.apps.NoiDungConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -63,6 +64,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "ung_dung.chung.nhan_dien_trang.nhan_dien_trang",
                 "ung_dung.chung.dieu_huong.dieu_huong",
+                "ung_dung.noi_dung.context_processors.website",
             ],
             "builtins": ["ung_dung.chung.templatetags.dinh_dang"],
         },

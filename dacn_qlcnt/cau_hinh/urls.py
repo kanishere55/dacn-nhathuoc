@@ -9,6 +9,7 @@ urlpatterns = [
     path("", include("ung_dung.tro_chuyen.urls")),
     path("", include("ung_dung.thong_bao.urls")),
     path("", include("ung_dung.thanh_toan.urls")),
+    path("", include("ung_dung.noi_dung.urls")),
     path("quan-ly/kho/", include("ung_dung.kho.urls")),
     path("quan-ly/du-bao/", include("ung_dung.du_bao.urls")),
     path("quan-ly/bao-cao/", include("ung_dung.bao_cao.urls")),

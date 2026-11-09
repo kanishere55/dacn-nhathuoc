@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from ung_dung.thong_bao.services import gui_email
+from ung_dung.thong_bao.services import gui_email, ten_thuong_hieu
 
 from ..models import PhienXacThuc, tao_ma_uuid
 
@@ -48,7 +48,7 @@ def _gui_ma(phien, ma_otp, ho_ten=""):
         loai_email="ma_xac_thuc",
         email_nhan=phien.email,
         tai_khoan=phien.tai_khoan,
-        tieu_de=f"Mã xác thực {settings.TEN_THUONG_HIEU}",
+        tieu_de=f"Mã xác thực {ten_thuong_hieu()}",
         mau="ma_xac_thuc",
         ngu_canh={
             "ho_ten": ho_ten,
@@ -223,7 +223,7 @@ def hoan_tat_dang_ky(ma_phien, ma_otp):
             loai_email="chao_mung",
             email_nhan=tai_khoan.email,
             tai_khoan=tai_khoan,
-            tieu_de=f"Chào mừng bạn đến với {settings.TEN_THUONG_HIEU}",
+            tieu_de=f"Chào mừng bạn đến với {ten_thuong_hieu()}",
             mau="chao_mung",
             ngu_canh={"ho_ten": tai_khoan.ho_ten, "ten_dang_nhap": tai_khoan.ten_dang_nhap},
         )

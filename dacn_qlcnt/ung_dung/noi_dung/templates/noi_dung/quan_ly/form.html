@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block dau_trang %}{{ form.media.css }}{% endblock %}
+{% block cuoi_trang %}{{ form.media.js }}{% endblock %}
+{% block tieu_de %}{{ tieu_de }} · Khu quản lý{% endblock %}
+{% block vi_tri %}Nội dung website{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan">NỘI DUNG WEBSITE</p>
+      <h1>{{ tieu_de }}</h1>
+    </div>
+    {% if url_xem %}<a class="nut nut-phu" href="{{ url_xem }}" target="_blank" rel="noopener"><i data-lucide="external-link" aria-hidden="true"></i>Xem trên website</a>{% endif %}
+  </header>
+  <form method="post" class="form-chinh form-danh-muc khoi-trang"{% if co_tep %} enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="thong-bao thong-bao-loi" role="alert">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+    {% if banner %}
+      <figure class="xem-truoc-banner" style="--mau-banner: {{ banner.mau_nen }}">
+        <img src="{% url 'noi_dung:anh_banner' banner.pk %}" alt="Ảnh hiện tại của banner">
+        <figcaption>Ảnh hiện tại · {{ banner.chieu_rong }}×{{ banner.chieu_cao }} px</figcaption>
+      </figure>
+    {% endif %}
+    <div class="luoi-form">
+      {% for truong in form %}
+        <div class="{% if truong.field.widget.input_type == 'checkbox' %}{% elif truong.name in 'noi_dung_trang tieu_de mo_ta duong_dan anh nguon_anh tom_tat dia_chi_tru_so' %}o-rong{% endif %}">
+          {% include "components/_o_nhap.html" with truong=truong %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="hanh-dong-form">
+      <button class="nut" type="submit">Lưu</button>
+      {% if url_quay_lai %}<a class="nut nut-phu" href="{% url url_quay_lai %}">Quay lại</a>{% endif %}
+    </div>
+  </form>
+{% endblock %}

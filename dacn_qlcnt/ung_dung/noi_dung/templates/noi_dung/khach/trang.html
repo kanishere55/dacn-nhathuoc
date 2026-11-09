@@ -1,0 +1,18 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}{{ trang_nd.tieu_de }} · {{ cua_hang.ten_thuong_hieu }}{% endblock %}
+{% block dau_trang %}{% if trang_nd.tom_tat %}<meta name="description" content="{{ trang_nd.tom_tat }}">{% endif %}{% endblock %}
+{% block noi_dung %}
+  <div class="khung-trang-thong-tin">
+    <nav class="menu-trang-thong-tin" aria-label="Trang thông tin">
+      {% for t in trang_chan %}<a href="{% url 'noi_dung:trang' t.duong_dan_trang %}"{% if t.pk == trang_nd.pk %} aria-current="page"{% endif %}>{{ t.tieu_de }}</a>{% endfor %}
+    </nav>
+    <article class="the-khach bai-trang-thong-tin">
+      <header class="tieu-de-khach">
+        <h1>{{ trang_nd.tieu_de }}</h1>
+        {% if trang_nd.tom_tat %}<p>{{ trang_nd.tom_tat }}</p>{% endif %}
+      </header>
+      <div class="noi-dung-phong-phu">{{ trang_nd.noi_dung_trang|phong_phu }}</div>
+      <p class="ghi-chu-khach cap-nhat-trang">Cập nhật {{ trang_nd.thoi_diem_cap_nhat|date:"d/m/Y" }}</p>
+    </article>
+  </div>
+{% endblock %}

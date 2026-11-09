@@ -13,6 +13,8 @@ from .selectors import lay_bang_dieu_khien
 
 @require_GET
 def trang_chu(request):
+    from ung_dung.noi_dung.selectors import banner_dang_hien
+
     return render(
         request,
         "chung/khach/trang_chu.html",
@@ -21,6 +23,7 @@ def trang_chu(request):
             "thuoc_giam_gia": lay_thuoc_cong_khai(dang_giam=True, sap_xep="giam_nhieu")[:4],
             "cac_thuoc": lay_thuoc_cong_khai()[:8],
             "cac_chi_nhanh": lay_chi_nhanh_cong_khai()[:3],
+            "cac_banner": list(banner_dang_hien()[:6]),
         },
     )
 

@@ -16,9 +16,15 @@ from .models import NhatKyEmail
 nhat_ky = logging.getLogger(__name__)
 
 
+def ten_thuong_hieu():
+    from ung_dung.noi_dung.selectors import thong_tin_cua_hang
+
+    return thong_tin_cua_hang().ten_thuong_hieu
+
+
 def ngu_canh_chung():
     return {
-        "ten_thuong_hieu": settings.TEN_THUONG_HIEU,
+        "ten_thuong_hieu": ten_thuong_hieu(),
         "url_website": settings.URL_WEBSITE,
     }
 

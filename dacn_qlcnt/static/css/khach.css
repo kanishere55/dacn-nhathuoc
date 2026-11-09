@@ -79,21 +79,79 @@
     padding: 34px 0 50px;
   }
   .chan-trang-khach {
-    padding-block: 26px;
-    background: #eaf2e9;
-    border-top: 1px solid var(--vien);
+    padding-block: 36px 0;
+    background: #10392d;
+    color: #c9ded4;
+    font-size: 13.5px;
   }
-  .chan-trang-khach .be-rong-khach {
+  .luoi-chan-trang {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+    gap: 24px 40px;
+    padding-bottom: 28px;
+  }
+  .cot-chan-trang {
+    display: grid;
+    align-content: start;
+    gap: 9px;
+  }
+  .cot-chan-trang > strong {
+    margin-bottom: 4px;
+    color: #fff;
+    font-size: 14px;
+  }
+  .cot-chan-trang a {
+    width: fit-content;
+    color: #c9ded4;
+    transition: color 0.15s;
+  }
+  .cot-chan-trang a:hover {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ten-chan-trang {
+    font-size: 18px !important;
+  }
+  .thong-tin-chan-trang p {
+    max-width: 42ch;
+    color: #a8c4b8;
+    line-height: 1.6;
+  }
+  .thong-tin-chan-trang ul {
+    display: grid;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .thong-tin-chan-trang li {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 14px 24px;
+    align-items: flex-start;
+    gap: 9px;
   }
-  .chan-trang-khach p {
-    font-size: 13px;
-    margin-top: 5px;
-    color: var(--chu-phu);
+  .thong-tin-chan-trang svg.lucide {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: #7fc2a5;
+  }
+  .day-chan-trang {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 20px;
+    padding-block: 14px;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+    color: #8fb0a3;
+    font-size: 12.5px;
+  }
+  @media (max-width: 760px) {
+    .luoi-chan-trang {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .thong-tin-chan-trang {
+      grid-column: 1 / -1;
+    }
   }
   .lien-ket-khach {
     display: flex;
@@ -598,6 +656,43 @@
     .menu-khach a {
       font-size: 12px;
       padding-inline: 8px;
+    }
+    .thanh-nhan-thuoc .be-rong-khach > span + span {
+      display: none;
+    }
+    /* Đầu trang điện thoại: thương hiệu và nút trên một hàng, menu ở hàng dưới */
+    .thanh-khach {
+      flex-wrap: wrap;
+    }
+    .thanh-khach .thuong-hieu {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .thanh-khach .thuong-hieu small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tac-vu-khach {
+      margin-left: auto;
+    }
+    .nut-tai-khoan span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .nut-tai-khoan {
+      width: 44px;
+      padding: 0 !important;
+      justify-content: center;
+    }
+    .menu-khach {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
     .gioi-thieu-khach,
     .thong-tin-thuoc-khach,

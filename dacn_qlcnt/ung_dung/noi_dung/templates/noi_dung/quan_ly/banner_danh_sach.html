@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block tieu_de %}Banner trang chủ · Khu quản lý{% endblock %}
+{% block vi_tri %}Banner trang chủ{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan">NỘI DUNG WEBSITE</p>
+      <h1>Banner trang chủ</h1>
+      <p>Băng chuyền đầu trang chủ tự chuyển sau 5 giây; nền khối đổi theo màu của từng banner.</p>
+    </div>
+    <a class="nut" href="{% url 'noi_dung:banner_tao' %}"><i data-lucide="plus" aria-hidden="true"></i>Thêm banner</a>
+  </header>
+  <ul class="luoi-banner-quan-ly">
+    {% for b in cac_banner %}
+      <li class="khoi-trang{% if not b.dang_hien_thi %} da-an{% endif %}">
+        <div class="anh-banner-quan-ly" style="background: {{ b.mau_nen }}"><img src="{% url 'noi_dung:anh_banner' b.pk %}" alt="" loading="lazy"></div>
+        <div>
+          <strong>{{ b.thu_tu }}. {{ b.tieu_de }}</strong>
+          <small>{{ b.duong_dan }}{% if b.ngay_bat_dau or b.ngay_ket_thuc %} · {{ b.ngay_bat_dau|date:"d/m/Y"|default:"…" }} – {{ b.ngay_ket_thuc|date:"d/m/Y"|default:"…" }}{% endif %}{% if not b.dang_hien_thi %} · Đang ẩn{% endif %}</small>
+          {% if b.nguon_anh %}<small>Ảnh: {{ b.nguon_anh }}</small>{% endif %}
+        </div>
+        <div class="tac-vu-banner">
+          <a class="nut nut-phu" href="{% url 'noi_dung:banner_sua' b.pk %}">Sửa</a>
+          <form method="post" action="{% url 'noi_dung:banner_xoa' b.pk %}" onsubmit="return confirm('Xóa banner này?')">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
+        </div>
+      </li>
+    {% empty %}
+      <li class="khoi-trang">Chưa có banner. Trang chủ đang dùng khối giới thiệu mặc định.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

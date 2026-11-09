@@ -1,23 +1,46 @@
 {% extends "khach/base.html" %}
 {% load static %}
-{% block tieu_de %}Trang chủ · Nhà thuốc{% endblock %}
+{% block tieu_de %}{{ cua_hang.ten_thuong_hieu }} · Mua thuốc trực tuyến, nhận tại nhà thuốc gần bạn{% endblock %}
+{% block cuoi_trang %}<script defer src="{% static 'chung/js/bang_chuyen.js' %}"></script>{% endblock %}
 {% block noi_dung %}
-  <section class="gioi-thieu-khach" aria-labelledby="tieu-de-trang-chu">
-    <div class="noi-dung-gioi-thieu">
-      <p class="chu-dan">CHUỖI NHÀ THUỐC · TP.HCM</p>
-      <h1 id="tieu-de-trang-chu">Tìm thuốc, chọn nhà thuốc gần bạn</h1>
-      <p>Tra cứu thuốc, xem chi nhánh còn đủ hàng và đặt giữ để đến nhận tại quầy.</p>
-      <form class="tim-nhanh" method="get" action="{% url 'danh_muc:khach_thuoc_danh_sach' %}">
-        <label for="tim-trang-chu" class="sr-only">Tên hoặc mã thuốc</label>
-        <input type="search" id="tim-trang-chu" name="q" maxlength="150" placeholder="Nhập tên hoặc mã thuốc">
-        <button class="nut" type="submit"><i data-lucide="search" aria-hidden="true"></i>Tra cứu</button>
-      </form>
-      <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}">
-        <i data-lucide="map-pin" aria-hidden="true"></i>Tìm nhà thuốc gần bạn
-        <i data-lucide="arrow-right" aria-hidden="true"></i>
-      </a>
-    </div>
-    <img class="minh-hoa-nha-thuoc" src="{% static 'chung/hinh/nha_thuoc.svg' %}" width="400" height="260" alt="">
+  <h1 class="sr-only">{{ cua_hang.ten_thuong_hieu }} – mua thuốc trực tuyến, nhận tại nhà thuốc gần bạn</h1>
+  {% if cac_banner %}
+    <section class="hero-trang-chu" data-bang-chuyen style="--mau-hero: {{ cac_banner.0.mau_nen }}" aria-roledescription="băng chuyền" aria-label="Chương trình nổi bật">
+      <div class="cac-slide" aria-live="off">
+        {% for b in cac_banner %}
+          <article class="slide-hero{% if forloop.first %} dang-hien{% endif %}" data-mau="{{ b.mau_nen }}" aria-roledescription="trang chiếu" aria-label="{{ forloop.counter }} trên {{ cac_banner|length }}"{% if not forloop.first %} aria-hidden="true" inert{% endif %}>
+            <div class="chu-slide">
+              <h2>{{ b.tieu_de }}</h2>
+              {% if b.mo_ta %}<p>{{ b.mo_ta }}</p>{% endif %}
+              <a class="nut nut-hero" href="{{ b.duong_dan }}">{{ b.nhan_nut }}<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="anh-slide"><img src="{% url 'noi_dung:anh_banner' b.pk %}" width="{{ b.chieu_rong }}" height="{{ b.chieu_cao }}" alt=""{% if not forloop.first %} loading="lazy"{% else %} fetchpriority="high"{% endif %}></div>
+          </article>
+        {% endfor %}
+      </div>
+      {% if cac_banner|length > 1 %}
+        <button class="nut-slide nut-slide-truoc" type="button" data-truoc aria-label="Banner trước"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+        <button class="nut-slide nut-slide-sau" type="button" data-sau aria-label="Banner sau"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <div class="cham-slide">
+          {% for b in cac_banner %}<button type="button" data-den="{{ forloop.counter0 }}" aria-label="Xem banner {{ forloop.counter }}: {{ b.tieu_de }}"{% if forloop.first %} aria-current="true"{% endif %}></button>{% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="tim-nhanh-trang-chu" aria-label="Tìm thuốc">
+    <form class="tim-nhanh" method="get" action="{% url 'danh_muc:khach_thuoc_danh_sach' %}" role="search">
+      <label for="tim-trang-chu" class="sr-only">Tên thuốc hoặc hoạt chất</label>
+      <i data-lucide="search" aria-hidden="true"></i>
+      <input type="search" id="tim-trang-chu" name="q" maxlength="150" placeholder="Tìm tên thuốc, hoạt chất, ví dụ paracetamol">
+      <button class="nut" type="submit">Tìm thuốc</button>
+    </form>
+    <ul class="cam-ket-trang-chu">
+      <li><i data-lucide="truck" aria-hidden="true"></i><span><strong>Giao trong 15 km</strong><small>Từ chi nhánh gần nhất</small></span></li>
+      <li><i data-lucide="store" aria-hidden="true"></i><span><strong>Đặt giữ 24 giờ</strong><small>Nhận và trả tiền tại quầy</small></span></li>
+      <li><i data-lucide="badge-check" aria-hidden="true"></i><span><strong>Dược sĩ tư vấn</strong><small>Nhắn tin với chi nhánh</small></span></li>
+      <li><i data-lucide="qr-code" aria-hidden="true"></i><span><strong>VietQR, MoMo, COD</strong><small>Thanh toán linh hoạt</small></span></li>
+    </ul>
   </section>
 
   <section class="muc-khach" aria-labelledby="danh-muc-khach">

@@ -14,6 +14,7 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from ung_dung.thanh_toan.models import GiaoDichThanhToan
+from ung_dung.thong_bao.services import ten_thuong_hieu
 
 from .models import ChiTietPhieuBan, PhanBoPhieuBan, PhieuBan, PhieuHoanKho
 
@@ -150,7 +151,7 @@ def du_lieu_hoa_don(phieu):
         "phieu": phieu,
         "don": don,
         "chi_nhanh": phieu.chi_nhanh,
-        "ten_thuong_hieu": settings.TEN_THUONG_HIEU,
+        "ten_thuong_hieu": ten_thuong_hieu(),
         "url_website": settings.URL_WEBSITE,
         "thoi_diem": timezone.localtime(phieu.thoi_diem_tao),
         "nguoi_ban": phieu.nguoi_lap.ho_ten or phieu.nguoi_lap.ten_dang_nhap,

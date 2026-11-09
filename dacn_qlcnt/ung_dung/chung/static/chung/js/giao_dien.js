@@ -45,3 +45,13 @@ if (document.querySelector('[data-dem-nguoc]')) {
   demNguoc();
   setInterval(demNguoc, 1000);
 }
+
+// Menu cuộn ngang trên điện thoại: đưa mục đang chọn vào giữa tầm nhìn.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.menu-trang-thong-tin [aria-current], .menu-tai-khoan nav [aria-current], .menu-khach [aria-current]').forEach((muc) => {
+    const khung = muc.parentElement;
+    if (khung.scrollWidth > khung.clientWidth) {
+      khung.scrollLeft = muc.offsetLeft - (khung.clientWidth - muc.offsetWidth) / 2;
+    }
+  });
+});
