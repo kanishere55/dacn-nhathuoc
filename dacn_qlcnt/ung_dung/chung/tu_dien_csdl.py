@@ -20,6 +20,7 @@ TU_VUNG = frozenset(
     benh chung dich kham tat tham
     choi cod duyet momo quay sao xu
     banner doanh giay hieu hotline kinh lam lien mau nen nut thuong tom viec
+    hong hu
     """.split()
 )
 

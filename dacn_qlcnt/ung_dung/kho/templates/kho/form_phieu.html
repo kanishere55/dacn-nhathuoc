@@ -2,6 +2,9 @@
 {% load static %}
 {% block noi_dung %}
   <h1>{{ tieu_de }}</h1>
+  {% if url_lap_san %}
+    <p class="thanh-cong-cu"><a class="nut nut-phu" href="{% url url_lap_san %}?loai=het_han"><i data-lucide="calendar-x" aria-hidden="true"></i>Lập sẵn mọi lô đã hết hạn còn tồn</a></p>
+  {% endif %}
   {% if cac_chi_nhanh %}
     <form method="get" class="thanh-cong-cu">
       <label for="chon-chi-nhanh-kiem-ke">Kho cần kiểm kê</label>

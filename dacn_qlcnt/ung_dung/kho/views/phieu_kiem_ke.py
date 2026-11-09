@@ -5,9 +5,10 @@ from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from ..forms import DongKiemKeFormSet, PhieuKiemKeForm
-from ..models import ChiTietPhieuKiemKe, PhieuKiemKe
+from ..models import PhieuKiemKe
 from ..selectors import lay_phieu, lay_so_du
 from ..services.phieu_kiem_ke import kiem_ke
+from . import chung_tu
 
 
 @yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
@@ -72,16 +73,15 @@ def tao(request):
     )
 
 
+def _phieu(request, ma):
+    return get_object_or_404(lay_phieu(request.user, PhieuKiemKe), pk=ma)
+
+
 @yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
 def chi_tiet(request, ma):
-    phieu = get_object_or_404(lay_phieu(request.user, PhieuKiemKe), pk=ma)
-    return render(
-        request,
-        "kho/chi_tiet_kiem_ke.html",
-        {
-            "phieu": phieu,
-            "cac_dong": ChiTietPhieuKiemKe.objects.filter(phieu_kiem_ke=phieu).select_related(
-                "lo_thuoc__thuoc"
-            ),
-        },
-    )
+    return chung_tu.hien_thi(request, _phieu(request, ma))
+
+
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+def pdf(request, ma):
+    return chung_tu.tra_pdf(request, _phieu(request, ma))

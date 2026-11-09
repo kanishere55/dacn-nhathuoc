@@ -4,9 +4,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
 
 from ..forms import DongTraFormSet, PhieuTraForm
-from ..models import ChiTietPhieuTraNhaCungCap, PhieuTraNhaCungCap
+from ..models import PhieuTraNhaCungCap
 from ..selectors import lay_phieu
 from ..services.phieu_tra_nha_cung_cap import tra_nha_cung_cap
+from . import chung_tu
 
 
 @yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
@@ -48,19 +49,17 @@ def tao(request):
     )
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
-def chi_tiet(request, ma):
-    phieu = get_object_or_404(
+def _phieu(request, ma):
+    return get_object_or_404(
         lay_phieu(request.user, PhieuTraNhaCungCap, "phieu_nhap__chi_nhanh"), pk=ma
     )
-    return render(
-        request,
-        "kho/chi_tiet_phieu.html",
-        {
-            "phieu": phieu,
-            "tieu_de": phieu.ma_phieu_tra_nha_cung_cap,
-            "cac_dong": ChiTietPhieuTraNhaCungCap.objects.filter(
-                phieu_tra_nha_cung_cap=phieu
-            ).select_related("lo_thuoc__thuoc"),
-        },
-    )
+
+
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+def chi_tiet(request, ma):
+    return chung_tu.hien_thi(request, _phieu(request, ma))
+
+
+@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+def pdf(request, ma):
+    return chung_tu.tra_pdf(request, _phieu(request, ma))

@@ -10,7 +10,8 @@ import ung_dung.chung.van_ban
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = []
+    # CHECK dùng ba hàm kiểm văn bản của app chung, nên phải đảo bảng này trước khi xóa hàm.
+    dependencies = [("chung", "0001_tao_ham_kiem_van_ban")]
 
     operations = [
         migrations.CreateModel(

@@ -1,12 +1,13 @@
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from ung_dung.chung.permissions import NHAN_SU_CHI_NHANH, NHAN_SU_CHUOI, co_vai_tro, yeu_cau_vai_tro
 
 from ..forms import DongNhapFormSet, PhieuNhapForm
-from ..models import ChiTietPhieuNhap, PhieuNhap
+from ..models import PhieuNhap
 from ..selectors import lay_phieu
 from ..services.phieu_nhap import nhap_hang
+from . import chung_tu
 
 
 @yeu_cau_vai_tro(*NHAN_SU_CHUOI)
@@ -49,12 +50,9 @@ def tao(request):
 
 @yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 def chi_tiet(request, ma):
-    from django.shortcuts import get_object_or_404
+    return chung_tu.hien_thi(request, get_object_or_404(lay_phieu(request.user, PhieuNhap), pk=ma))
 
-    phieu = get_object_or_404(lay_phieu(request.user, PhieuNhap), pk=ma)
-    cac_dong = ChiTietPhieuNhap.objects.filter(phieu_nhap=phieu).select_related("lo_thuoc__thuoc")
-    return render(
-        request,
-        "kho/chi_tiet_phieu.html",
-        {"phieu": phieu, "tieu_de": phieu.ma_phieu_nhap, "cac_dong": cac_dong},
-    )
+
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+def pdf(request, ma):
+    return chung_tu.tra_pdf(request, get_object_or_404(lay_phieu(request.user, PhieuNhap), pk=ma))

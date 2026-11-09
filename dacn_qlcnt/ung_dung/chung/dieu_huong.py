@@ -24,6 +24,7 @@ KHO_QUAN_LY = (
     ("kho:phieu_tra_danh_sach", "Trả nhà cung cấp", "package-minus"),
     ("kho:phieu_dieu_chuyen_danh_sach", "Điều chuyển", "repeat"),
     ("kho:phieu_kiem_ke_danh_sach", "Kiểm kê", "clipboard-check"),
+    ("kho:phieu_xuat_huy_danh_sach", "Xuất hủy", "trash-2"),
 )
 MENU_KHACH = (
     ("chung:trang_chu", "Trang chủ", ("chung:trang_chu",)),

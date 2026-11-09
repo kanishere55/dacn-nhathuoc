@@ -7,12 +7,12 @@ Nghị định 123/2020/NĐ-CP (sửa đổi bởi Nghị định 70/2025/NĐ-CP
 from collections import OrderedDict
 from decimal import Decimal
 from io import BytesIO
-from pathlib import Path
 
 from django.conf import settings
 from django.db.models import Prefetch
 from django.utils import timezone
 
+from ung_dung.chung.phong_pdf import dang_ky_phong_pdf
 from ung_dung.thanh_toan.models import GiaoDichThanhToan
 from ung_dung.thong_bao.services import ten_thuong_hieu
 
@@ -173,28 +173,6 @@ def ten_tep_pdf(phieu):
 
 # ---------------------------------------------------------------- PDF (ReportLab)
 
-THU_MUC_PHONG = Path(settings.BASE_DIR) / "static" / "vendor" / "be_vietnam_pro"
-_DA_DANG_KY_PHONG = False
-
-
-def _dang_ky_phong():
-    global _DA_DANG_KY_PHONG
-    if _DA_DANG_KY_PHONG:
-        return
-    from reportlab.lib.fonts import addMapping
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-
-    for ten, tep in (
-        ("BeVietnamPro", "BeVietnamPro-Regular.ttf"),
-        ("BeVietnamPro-Dam", "BeVietnamPro-Bold.ttf"),
-        ("BeVietnamPro-Vua", "BeVietnamPro-SemiBold.ttf"),
-    ):
-        pdfmetrics.registerFont(TTFont(ten, str(THU_MUC_PHONG / tep)))
-    addMapping("BeVietnamPro", 0, 0, "BeVietnamPro")
-    addMapping("BeVietnamPro", 1, 0, "BeVietnamPro-Dam")
-    _DA_DANG_KY_PHONG = True
-
 
 def _tien(so):
     return f"{Decimal(so):,.0f} đ".replace(",", ".")
@@ -211,7 +189,7 @@ def ve_pdf(du_lieu):
     from reportlab.lib.units import mm
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-    _dang_ky_phong()
+    dang_ky_phong_pdf()
     xanh = colors.HexColor("#116b54")
     xam = colors.HexColor("#5b6d64")
     vien = colors.HexColor("#d9e3dc")

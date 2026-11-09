@@ -4,7 +4,7 @@ from django.forms import formset_factory
 from ung_dung.danh_muc.models import ChiNhanh, NhaCungCap, QuyDoiBaoGoi, Thuoc
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
-from .models import LoThuoc, PhieuNhap, TonKho
+from .models import LOAI_XUAT_HUY, LoThuoc, PhieuNhap, TonKho
 from .selectors import lay_phieu
 
 
@@ -70,6 +70,41 @@ class DongTraForm(forms.Form):
         ).distinct()
 
 
+class PhieuXuatHuyForm(forms.Form):
+    chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
+    loai_xuat_huy = forms.ChoiceField(choices=LOAI_XUAT_HUY, label="Lý do hủy")
+    ghi_chu = forms.CharField(
+        label="Tình trạng hàng, số biên bản",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
+    def __init__(self, *args, nguoi, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
+
+
+class ChonLoTheoTon(forms.ModelChoiceField):
+    def label_from_instance(self, lo):
+        return f"{lo.thuoc.ten_thuoc} · lô {lo.ma_lo_thuoc} · HSD {lo.ngay_het_han:%d/%m/%Y}"
+
+
+class DongXuatHuyForm(forms.Form):
+    lo_thuoc = ChonLoTheoTon(LoThuoc.objects.none(), label="Lô cần hủy")
+    so_luong = forms.IntegerField(label="Lượng cơ sở hủy", min_value=1, max_value=2147483647)
+
+    def __init__(self, *args, nguoi, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["lo_thuoc"].queryset = (
+            LoThuoc.objects.filter(
+                tonkho__chi_nhanh__in=lay_chi_nhanh(nguoi), tonkho__so_luong__gt=0
+            )
+            .select_related("thuoc")
+            .order_by("ngay_het_han", "ma_lo_thuoc")
+            .distinct()
+        )
+
+
 class PhieuKiemKeForm(forms.Form):
     chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
     ghi_chu = forms.CharField(label="Ghi chú", required=False)
@@ -131,6 +166,16 @@ DongKiemKeFormSet = formset_factory(
     validate_min=True,
     max_num=200,
     absolute_max=200,
+    validate_max=True,
+    can_delete=True,
+)
+DongXuatHuyFormSet = formset_factory(
+    DongXuatHuyForm,
+    extra=0,
+    min_num=1,
+    validate_min=True,
+    max_num=50,
+    absolute_max=50,
     validate_max=True,
     can_delete=True,
 )

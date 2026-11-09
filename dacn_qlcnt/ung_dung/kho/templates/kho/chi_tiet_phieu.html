@@ -1,29 +1,39 @@
 {% extends "base.html" %}
+{% block tieu_de %}{{ chung_tu.tieu_de }} {{ chung_tu.ma }} · Khu quản lý{% endblock %}
+{% block vi_tri %}{{ chung_tu.tieu_de }}{% endblock %}
 {% block noi_dung %}
-  <h1>{{ tieu_de }}</h1>
-  <p>{{ phieu.nguoi_lap }} · {{ phieu.thoi_diem_tao|date:"d/m/Y H:i" }}</p>
-  <div class="khoi-trang">
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan"><a class="duong-dan-noi-dung" href="{% url url_danh_sach %}">{{ chung_tu.tieu_de|upper }}</a></p>
+      <h1>{{ chung_tu.ma }}</h1>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a class="nut nut-phu" href="{% url url_pdf chung_tu.phieu.pk %}" target="_blank" rel="noopener"><i data-lucide="printer" aria-hidden="true"></i>Xem PDF</a>
+      <a class="nut" href="{% url url_pdf chung_tu.phieu.pk %}?tai=1"><i data-lucide="download" aria-hidden="true"></i>Tải PDF</a>
+    </div>
+  </header>
+  <section class="khoi-trang">
+    <dl class="bang-tien-don">
+      {% for nhan, gia_tri in chung_tu.thong_tin %}<div><dt>{{ nhan }}</dt><dd>{{ gia_tri }}</dd></div>{% endfor %}
+    </dl>
+    {% if chung_tu.ghi_chu %}<p class="mo-ta-tra-hang">{{ chung_tu.ghi_chu|linebreaksbr }}</p>{% endif %}
+  </section>
+  <section class="khoi-trang khung-bang">
     <table>
       <thead>
-        <tr>
-          <th>Thuốc</th>
-          <th>Lô</th>
-          <th>Hạn</th>
-          <th>Lượng cơ sở</th>
-          <th>Đơn giá (VND)</th>
-        </tr>
+        <tr><th>STT</th>{% for nhan, la_so in chung_tu.cot %}<th{% if la_so %} class="o-tien"{% endif %}>{{ nhan }}</th>{% endfor %}</tr>
       </thead>
       <tbody>
-        {% for dong in cac_dong %}
+        {% for dong in chung_tu.hang %}
           <tr>
-            <td>{{ dong.lo_thuoc.thuoc }}</td>
-            <td>{{ dong.lo_thuoc.ma_lo_thuoc }}</td>
-            <td>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}</td>
-            <td>{{ dong.so_luong }}</td>
-            <td>{{ dong.don_gia|default:"—" }}</td>
+            <td>{{ forloop.counter }}</td>
+            {% for o in dong %}<td{% if forloop.counter > 3 %} class="o-tien"{% endif %}>{{ o }}</td>{% endfor %}
           </tr>
         {% endfor %}
       </tbody>
     </table>
-  </div>
+    {% if chung_tu.tong %}
+      <dl class="bang-tien-don">{% for nhan, gia_tri in chung_tu.tong %}<div class="tong-cong"><dt>{{ nhan }}</dt><dd>{{ gia_tri }}</dd></div>{% endfor %}</dl>
+    {% endif %}
+  </section>
 {% endblock %}

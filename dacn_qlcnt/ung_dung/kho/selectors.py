@@ -145,3 +145,12 @@ def lay_cac_lo(nguoi):
     if not la_quan_tri(nguoi):
         cac_lo = cac_lo.filter(tonkho__chi_nhanh_id=nguoi.chi_nhanh_id).distinct()
     return cac_lo
+
+
+def lay_lo_het_han_con_ton(chi_nhanh):
+    """Lô đã qua ngày hết hạn còn tồn khả dụng, để lập sẵn phiếu xuất hủy."""
+    return (
+        lay_so_du(chi_nhanh=chi_nhanh)
+        .filter(lo_thuoc__ngay_het_han__lt=timezone.localdate(), kha_dung__gt=0)
+        .order_by("lo_thuoc__ngay_het_han", "lo_thuoc__ma_lo_thuoc")
+    )
