@@ -7,10 +7,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from ung_dung.ban_hang.forms import ThemThuocVaoGioForm
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
 from ung_dung.chung.van_ban import cat_khoang_trang
 
-from ..models import AnhChiNhanh, AnhThuoc, DanhGiaThuoc
+from ..models import AnhChiNhanh, AnhThuoc, DanhGiaChiNhanh, DanhGiaThuoc
 from ..selectors import (
     SAP_XEP_THUOC,
     lay_chi_nhanh_cong_khai,
@@ -18,7 +18,19 @@ from ..selectors import (
     lay_nhom_thuoc_cong_khai,
     lay_thuoc_cong_khai,
 )
-from ..services.danh_gia import da_mua, luu_danh_gia, tom_tat_danh_gia
+from ..services.danh_gia import (
+    da_mua,
+    da_mua_tai_chi_nhanh,
+    luu_danh_gia,
+    luu_danh_gia_chi_nhanh,
+    tom_tat_danh_gia,
+    tom_tat_danh_gia_chi_nhanh,
+)
+
+
+def la_khach(nguoi):
+    return co_vai_tro(nguoi, "khach_hang")
+
 
 TEN_SAP_XEP = {
     "ten": "Tên A–Z",
@@ -98,9 +110,7 @@ def chi_tiet_thuoc(request, ma):
             "cac_muc_noi_dung": cac_muc_noi_dung,
             "cung_danh_muc": cung_danh_muc,
             "danh_gia": tom_tat_danh_gia(thuoc),
-            "duoc_danh_gia": request.user.is_authenticated
-            and getattr(request.user, "vai_tro", "") == "khach_hang"
-            and da_mua(request.user, thuoc),
+            "duoc_danh_gia": la_khach(request.user) and da_mua(request.user, thuoc),
             "danh_gia_cua_toi": DanhGiaThuoc.objects.filter(
                 thuoc=thuoc, khach_hang_id=getattr(request.user, "pk", None)
             ).first(),
@@ -120,6 +130,12 @@ def chi_tiet_chi_nhanh(request, ma):
             "chi_nhanh": chi_nhanh,
             "cac_anh": AnhChiNhanh.objects.filter(chi_nhanh=chi_nhanh).defer("noi_dung_anh"),
             "dang_mo_cua": chi_nhanh.gio_mo_cua <= bay_gio < chi_nhanh.gio_dong_cua,
+            "danh_gia": tom_tat_danh_gia_chi_nhanh(chi_nhanh),
+            "duoc_danh_gia": la_khach(request.user)
+            and da_mua_tai_chi_nhanh(request.user, chi_nhanh),
+            "danh_gia_cua_toi": DanhGiaChiNhanh.objects.filter(
+                chi_nhanh=chi_nhanh, khach_hang_id=getattr(request.user, "pk", None)
+            ).first(),
         },
     )
 
@@ -137,3 +153,18 @@ def danh_gia_thuoc(request, ma):
     else:
         messages.success(request, "Cảm ơn bạn đã đánh giá.")
     return redirect(reverse("danh_muc:khach_thuoc_chi_tiet", args=[ma]) + "#danh-gia")
+
+
+@require_POST
+@yeu_cau_vai_tro("khach_hang")
+def danh_gia_chi_nhanh(request, ma):
+    chi_nhanh = get_object_or_404(lay_chi_nhanh_cong_khai(), ma_chi_nhanh=ma)
+    try:
+        luu_danh_gia_chi_nhanh(
+            request.user, chi_nhanh, request.POST.get("so_sao", 0), request.POST.get("noi_dung", "")
+        )
+    except (ValidationError, ValueError) as loi:
+        messages.error(request, " ".join(getattr(loi, "messages", [str(loi)])))
+    else:
+        messages.success(request, "Cảm ơn bạn đã đánh giá chi nhánh.")
+    return redirect(reverse("danh_muc:khach_chi_nhanh_chi_tiet", args=[ma]) + "#danh-gia")

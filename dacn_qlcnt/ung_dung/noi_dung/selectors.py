@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import BannerTrangChu, ThongTinCuaHang, TrangNoiDung
+from .models import BannerTrangChu, ThongTinCuaHang, TinTuc, TrangNoiDung
 
 
 def thong_tin_cua_hang():
@@ -35,3 +35,8 @@ def banner_dang_hien(ngay=None):
 
 def trang_cong_khai():
     return TrangNoiDung.objects.filter(dang_hien_thi=True).defer("noi_dung_trang")
+
+
+def tin_tuc_cong_khai():
+    """Bài đang hiển thị và đã đến giờ đăng, mới nhất trước."""
+    return TinTuc.objects.filter(dang_hien_thi=True, thoi_diem_dang__lte=timezone.now())

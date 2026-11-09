@@ -1,0 +1,29 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}Tin tức · {{ cua_hang.ten_thuong_hieu }}{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-khach">
+    <h1>Tin tức sức khỏe</h1>
+    <p>Khuyến cáo dùng thuốc, phòng bệnh theo mùa và thông báo từ hệ thống nhà thuốc.</p>
+  </header>
+  <ol class="danh-sach-tin">
+    {% for tin in trang_tin %}
+      <li class="the-khach">
+        <time datetime="{{ tin.thoi_diem_dang|date:'c' }}">{{ tin.thoi_diem_dang|date:"d/m/Y" }}</time>
+        <h2><a href="{% url 'noi_dung:khach_tin_tuc_chi_tiet' tin.duong_dan_tin_tuc %}">{{ tin.tieu_de }}</a></h2>
+        <p>{{ tin.tom_tat }}</p>
+      </li>
+    {% empty %}
+      <li class="the-khach khoang-trong-khach">
+        <i data-lucide="newspaper" aria-hidden="true"></i>
+        <h2>Chưa có bài viết</h2>
+      </li>
+    {% endfor %}
+  </ol>
+  {% if trang_tin.has_other_pages %}
+    <nav class="phan-trang-khach" aria-label="Phân trang tin tức">
+      {% if trang_tin.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang_tin.previous_page_number %}">Trang trước</a>{% endif %}
+      <span>Trang {{ trang_tin.number }} / {{ trang_tin.paginator.num_pages }}</span>
+      {% if trang_tin.has_next %}<a class="nut nut-phu" href="{% querystring page=trang_tin.next_page_number %}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

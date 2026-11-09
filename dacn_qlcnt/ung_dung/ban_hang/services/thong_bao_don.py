@@ -97,3 +97,16 @@ def bao_tra_hang(yeu_cau):
             "loi_nhan": LOI_NHAN_TRA_HANG[yeu_cau.trang_thai],
         },
     )
+
+
+def bao_xuat_hoa_don(yeu_cau):
+    don = yeu_cau.don_hang
+    gui_email(
+        loai_email="xuat_hoa_don",
+        email_nhan=yeu_cau.email_nhan_hoa_don,
+        tai_khoan=don.khach_hang,
+        tieu_de=f"Hóa đơn công ty cho đơn {don.ma_don_hang}: "
+        f"{yeu_cau.get_trang_thai_display().lower()}",
+        mau="xuat_hoa_don",
+        ngu_canh={**_ngu_canh(don), "yeu_cau": yeu_cau},
+    )

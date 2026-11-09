@@ -28,6 +28,7 @@ TEN_RUT_GON = {
     "giao_dich_thanh_toan": "giao_dich",
     "chi_tiet_tra_hang": "ct_tra",
     "yeu_cau_tra_hang": "tra_hang",
+    "yeu_cau_xuat_hoa_don": "xuat_hoa_don",
     "thong_tin_cua_hang": "cua_hang",
     "banner_trang_chu": "banner",
     "trang_noi_dung": "trang",

@@ -1,0 +1,10 @@
+{% autoescape off %}Xin chào {{ ho_ten }},
+
+Yêu cầu hóa đơn đứng tên {{ yeu_cau.ten_cong_ty }} (MST {{ yeu_cau.ma_so_thue }}) cho đơn {{ don.ma_don_hang }}: {{ yeu_cau.get_trang_thai_display }}.
+{% if yeu_cau.trang_thai == "da_xuat" %}Thông tin hóa đơn{% else %}Lý do{% endif %}: {{ yeu_cau.ghi_chu_xu_ly }}
+{% if yeu_cau.trang_thai == "da_xuat" %}Hóa đơn điện tử được gửi từ hệ thống hóa đơn của nhà thuốc tới {{ yeu_cau.email_nhan_hoa_don }}.
+{% endif %}
+Xem đơn: {{ url_don }}
+
+{{ ten_thuong_hieu }}
+{% endautoescape %}

@@ -54,6 +54,7 @@
         {% endif %}
         {% if don.ghi_chu_khach %}<p><em>Lời nhắn: {{ don.ghi_chu_khach }}</em></p>{% endif %}
         {% if phieu_ban %}<p>Phiếu bán: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_chi_tiet' phieu_ban.pk %}">{{ phieu_ban.ma_phieu_ban }}</a> · <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_in' phieu_ban.pk %}">In hóa đơn</a></p>{% endif %}
+        {% if yeu_cau_hoa_don %}<p>Hóa đơn công ty: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:xuat_hoa_don_danh_sach' %}">{{ yeu_cau_hoa_don.ten_cong_ty }}</a> · {{ yeu_cau_hoa_don.get_trang_thai_display }}</p>{% endif %}
       </section>
       {% if cac_giao_dich %}
         <section class="khoi-trang" aria-labelledby="thanh-toan-don">

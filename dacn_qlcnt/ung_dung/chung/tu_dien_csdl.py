@@ -21,6 +21,8 @@ TU_VUNG = frozenset(
     choi cod duyet momo quay sao xu
     banner doanh giay hieu hotline kinh lam lien mau nen nut thuong tom viec
     hong hu
+    tuc viet
+    hoa thue ty
     """.split()
 )
 
@@ -43,6 +45,9 @@ DINH_DANH_CO_BOI_CANH = {
     ("phieu_ban", "ten_nguoi_ke_don"),
     # Tên chuỗi nhà thuốc trong bảng cấu hình một hàng.
     ("thong_tin_cua_hang", "ten_thuong_hieu"),
+    # Thông tin doanh nghiệp người mua ghi trên hóa đơn điện tử.
+    ("yeu_cau_xuat_hoa_don", "ten_cong_ty"),
+    ("yeu_cau_xuat_hoa_don", "ma_so_thue"),
 }
 
 TEN_CAM = {"du_lieu", "thong_tin", "gia_tri", "noi_dung", "cot_moi"}

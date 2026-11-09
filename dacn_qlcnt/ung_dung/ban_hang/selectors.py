@@ -1,4 +1,4 @@
-from django.db.models import Count, DecimalField, F, Q, Sum
+from django.db.models import Case, Count, DecimalField, F, IntegerField, Q, Sum, When
 from django.db.models.functions import Now
 
 from ung_dung.chung.permissions import la_quan_tri
@@ -6,7 +6,7 @@ from ung_dung.danh_muc.models import Thuoc
 from ung_dung.danh_muc.selectors import them_gia_va_anh
 
 from .gio_hang import KHOA_GIO
-from .models import TRANG_THAI_GIU, ChiTietPhieuBan, DonHang, PhieuBan
+from .models import TRANG_THAI_GIU, ChiTietPhieuBan, DonHang, PhieuBan, YeuCauXuatHoaDon
 
 
 def lay_gio(phien):
@@ -115,3 +115,19 @@ def tong_tien_ban(phieu):
         chi_tiet_ban(phieu).aggregate(tong=Sum("thanh_tien", output_field=DecimalField()))["tong"]
         or 0
     )
+
+
+def lay_yeu_cau_xuat_hoa_don(nguoi, *, trang_thai=""):
+    """Yêu cầu hóa đơn công ty trong phạm vi chi nhánh; chờ xử lý lên đầu."""
+    tap_hop = YeuCauXuatHoaDon.objects.select_related(
+        "don_hang__chi_nhanh", "don_hang__khach_hang", "nguoi_xu_ly"
+    ).order_by(
+        # Yêu cầu chờ xử lý đứng đầu, rồi mới nhất trước.
+        Case(When(trang_thai="cho_xu_ly", then=0), default=1, output_field=IntegerField()),
+        "-thoi_diem_tao",
+    )
+    if not la_quan_tri(nguoi):
+        tap_hop = tap_hop.filter(don_hang__chi_nhanh_id=nguoi.chi_nhanh_id)
+    if trang_thai:
+        tap_hop = tap_hop.filter(trang_thai=trang_thai)
+    return tap_hop

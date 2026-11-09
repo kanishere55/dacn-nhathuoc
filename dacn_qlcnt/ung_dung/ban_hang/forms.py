@@ -3,13 +3,14 @@ from uuid import uuid4
 
 from django import forms
 
+from ung_dung.chung.ten_csdl import EMAIL
 from ung_dung.chung.truong_form import TruongMotDong
 from ung_dung.danh_muc.forms import NhieuTepInput, TruongNhieuTep
 from ung_dung.danh_muc.models import ChiNhanh
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from .gio_hang import SO_LUONG_TOI_DA
-from .models import HINH_THUC_NHAN, LY_DO_TRA_HANG, PHUONG_THUC_THANH_TOAN
+from .models import HINH_THUC_NHAN, LY_DO_TRA_HANG, MA_SO_THUE, PHUONG_THUC_THANH_TOAN
 
 PHUONG_THUC_TAI_QUAY = [("tien_mat", "Tiền mặt"), ("chuyen_khoan", "Chuyển khoản")]
 
@@ -130,3 +131,35 @@ class XuLyTraHangForm(forms.Form):
         if ma and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,58}", ma):
             raise forms.ValidationError("Mã giao dịch chỉ gồm chữ, số và . _ : / -")
         return ma
+
+
+class YeuCauXuatHoaDonForm(forms.Form):
+    ten_cong_ty = TruongMotDong(label="Tên công ty", max_length=300)
+    ma_so_thue = TruongMotDong(
+        label="Mã số thuế", max_length=14, help_text="10 chữ số; chi nhánh doanh nghiệp thêm -XXX."
+    )
+    dia_chi_cong_ty = TruongMotDong(label="Địa chỉ theo đăng ký thuế", max_length=300)
+    email_nhan_hoa_don = forms.EmailField(label="Email nhận hóa đơn", max_length=254)
+
+    def clean_ma_so_thue(self):
+        ma = re.sub(r"\s+", "", self.cleaned_data["ma_so_thue"])
+        if not re.fullmatch(MA_SO_THUE, ma):
+            raise forms.ValidationError("Mã số thuế gồm 10 chữ số, hoặc 10 chữ số kèm -XXX.")
+        return ma
+
+    def clean_email_nhan_hoa_don(self):
+        email = self.cleaned_data["email_nhan_hoa_don"].strip().lower()
+        if not re.fullmatch(EMAIL, email):
+            raise forms.ValidationError("Email cần có tên miền đầy đủ, ví dụ ketoan@congty.vn.")
+        return email
+
+
+class XuLyXuatHoaDonForm(forms.Form):
+    trang_thai = forms.ChoiceField(
+        label="Kết quả", choices=[("da_xuat", "Đã xuất hóa đơn"), ("tu_choi", "Từ chối")]
+    )
+    ghi_chu_xu_ly = TruongMotDong(
+        label="Ký hiệu, số hóa đơn hoặc lý do từ chối",
+        max_length=500,
+        widget=forms.TextInput(attrs={"placeholder": "Ví dụ: Ký hiệu 1C26TAA, số 0000123"}),
+    )

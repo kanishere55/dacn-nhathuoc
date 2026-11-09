@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block tieu_de %}Hóa đơn công ty · Khu quản lý{% endblock %}
+{% block vi_tri %}Hóa đơn công ty{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">BÁN HÀNG</p>
+    <h1>Yêu cầu hóa đơn công ty</h1>
+    <p>Phát hành hóa đơn điện tử trên phần mềm hóa đơn của nhà thuốc, rồi ghi ký hiệu và số hóa đơn vào đây. Khách nhận email báo kết quả.</p>
+  </header>
+  <nav class="thanh-cong-cu" aria-label="Lọc trạng thái">
+    <a class="nut{% if trang_thai %} nut-phu{% endif %}" href="?">Tất cả</a>
+    {% for ma, nhan in cac_trang_thai %}<a class="nut{% if trang_thai != ma %} nut-phu{% endif %}" href="?trang_thai={{ ma }}">{{ nhan }}</a>{% endfor %}
+  </nav>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Đơn</th><th>Doanh nghiệp</th><th>Gửi lúc</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+      <tbody>
+        {% for yc in trang %}
+          <tr>
+            <td><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' yc.don_hang.pk %}">{{ yc.don_hang.ma_don_hang }}</a><br><small>{{ yc.don_hang.chi_nhanh.ten_chi_nhanh }}</small></td>
+            <td><strong>{{ yc.ten_cong_ty }}</strong><br><small>MST {{ yc.ma_so_thue }} · {{ yc.dia_chi_cong_ty }}<br>{{ yc.email_nhan_hoa_don }}</small></td>
+            <td>{{ yc.thoi_diem_tao|date:"H:i d/m/Y" }}</td>
+            <td><span class="nhan-tra-hang nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span></td>
+            <td>
+              {% if yc.trang_thai == "cho_xu_ly" and duoc_xu_ly %}
+                <form method="post" action="{% url 'ban_hang:xuat_hoa_don_xu_ly' yc.pk %}" class="form-chinh">
+                  {% csrf_token %}
+                  {% for truong in form_xu_ly %}{% include "components/_o_nhap.html" %}{% endfor %}
+                  <button class="nut" type="submit">Lưu kết quả</button>
+                </form>
+              {% elif yc.trang_thai != "cho_xu_ly" %}
+                {{ yc.ghi_chu_xu_ly }}<br><small>{{ yc.nguoi_xu_ly.ho_ten|default:yc.nguoi_xu_ly.ten_dang_nhap }} · {{ yc.thoi_diem_xu_ly|date:"H:i d/m/Y" }}</small>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">Chưa có yêu cầu nào.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if trang.has_other_pages %}
+    <nav class="thanh-cong-cu" aria-label="Phân trang">
+      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+      <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}</span>
+      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

@@ -50,6 +50,25 @@
           {% endfor %}
         </ul>
       {% endif %}
+      {% if yeu_cau_hoa_don or form_hoa_don_cong_ty %}
+        <h2 id="hoa-don-cong-ty">Hóa đơn công ty</h2>
+        {% if yeu_cau_hoa_don %}
+          <ul class="danh-sach-tra-hang">
+            <li><span><strong>{{ yeu_cau_hoa_don.ten_cong_ty }}</strong><small>MST {{ yeu_cau_hoa_don.ma_so_thue }} · gửi {{ yeu_cau_hoa_don.thoi_diem_tao|date:"d/m/Y" }}{% if yeu_cau_hoa_don.ghi_chu_xu_ly %} · {{ yeu_cau_hoa_don.ghi_chu_xu_ly }}{% endif %}</small></span><span class="nhan-tra-hang nhan-{{ yeu_cau_hoa_don.trang_thai }}">{{ yeu_cau_hoa_don.get_trang_thai_display }}</span></li>
+          </ul>
+        {% else %}
+          <details{% if form_hoa_don_cong_ty.errors %} open{% endif %}>
+            <summary class="duong-dan-noi-dung">Cần hóa đơn đứng tên doanh nghiệp?</summary>
+            <form method="post" action="{% url 'ban_hang:khach_hoa_don_cong_ty' don.pk %}" class="form-chinh">
+              {% csrf_token %}
+              {% if form_hoa_don_cong_ty.non_field_errors %}<p class="thong-bao thong-bao-loi" role="alert">{{ form_hoa_don_cong_ty.non_field_errors|join:" " }}</p>{% endif %}
+              {% for truong in form_hoa_don_cong_ty %}{% include "components/_o_nhap.html" %}{% endfor %}
+              <p class="ghi-chu-khach">Nhà thuốc phát hành hóa đơn điện tử theo thông tin này và gửi tới email trên. Mỗi đơn gửi một lần.</p>
+              <button class="nut" type="submit">Gửi yêu cầu</button>
+            </form>
+          </details>
+        {% endif %}
+      {% endif %}
       <h2>Lịch sử</h2>
       {% include "ban_hang/_lich_su.html" %}
       <div class="hanh-dong-khach">

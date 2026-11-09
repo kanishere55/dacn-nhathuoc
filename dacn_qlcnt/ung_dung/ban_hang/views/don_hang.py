@@ -16,7 +16,7 @@ from ung_dung.thanh_toan.selectors import giao_dich_cua_don
 from ung_dung.thanh_toan.services.cong import hoan_tien, xac_nhan_tay
 
 from ..forms import PHUONG_THUC_TAI_QUAY, XuLyDonForm
-from ..models import HINH_THUC_NHAN, TRANG_THAI_DON, PhieuBan
+from ..models import HINH_THUC_NHAN, TRANG_THAI_DON, PhieuBan, YeuCauXuatHoaDon
 from ..selectors import dem_don_theo_trang_thai, lay_chi_tiet_don, lay_don, lay_lich_su
 from ..services import don_hang as dich_vu
 from ..services.phieu_ban import ban_tai_quay
@@ -90,6 +90,7 @@ def chi_tiet(request, ma):
             "cac_lich_su": lay_lich_su(don),
             "tien_trinh": tien_trinh(don),
             "phieu_ban": PhieuBan.objects.filter(don_hang=don).first(),
+            "yeu_cau_hoa_don": YeuCauXuatHoaDon.objects.filter(don_hang=don).first(),
             "cac_hanh_dong": (
                 cac_hanh_dong(don, request.user)
                 if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH)

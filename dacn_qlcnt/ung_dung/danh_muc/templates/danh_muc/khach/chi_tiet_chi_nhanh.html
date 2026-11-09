@@ -8,6 +8,7 @@
     <p class="chu-dan">CHI NHÁNH</p>
     <h1>{{ chi_nhanh.ten_chi_nhanh }}</h1>
     <p>{{ chi_nhanh.dia_chi }}</p>
+    {% if danh_gia.so_luong %}<a class="tom-tat-sao" href="#danh-gia"><i data-lucide="star" aria-hidden="true"></i>{{ danh_gia.trung_binh|floatformat:1 }} <span>· {{ danh_gia.so_luong }} đánh giá</span></a>{% endif %}
   </header>
   <div class="thong-tin-chi-nhanh">
     {% if cac_anh %}
@@ -29,6 +30,8 @@
   </div>
   <div class="ban-do" data-vi-tri-chi-nhanh data-vi-do="{{ chi_nhanh.vi_tri.y|unlocalize }}"
        data-kinh-do="{{ chi_nhanh.vi_tri.x|unlocalize }}" aria-label="Vị trí chi nhánh trên bản đồ"></div>
+  {% url 'danh_muc:khach_danh_gia_chi_nhanh' chi_nhanh.ma_chi_nhanh as url_gui %}
+  {% include "danh_muc/khach/_danh_gia.html" with tieu_de_danh_gia="Đánh giá của khách đã mua tại chi nhánh" loi_moi="Bạn đã mua hàng tại đây, hãy đánh giá phục vụ của chi nhánh" goi_y="Dược sĩ tư vấn, thời gian chờ, đóng gói, giao nhận thế nào? Không ghi thông tin cá nhân." chua_co="Chưa có đánh giá. Khách có đơn hoàn thành tại chi nhánh có thể đánh giá tại đây." %}
 {% endblock %}
 {% block cuoi_trang %}
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>

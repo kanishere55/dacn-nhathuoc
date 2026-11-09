@@ -1,0 +1,8 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+  <p style="margin:0 0 12px;">Xin chào {{ ho_ten }},</p>
+  <p style="margin:0 0 12px;">Yêu cầu hóa đơn đứng tên <strong>{{ yeu_cau.ten_cong_ty }}</strong> (MST {{ yeu_cau.ma_so_thue }}) cho đơn {{ don.ma_don_hang }}: <strong style="color:#116b54;">{{ yeu_cau.get_trang_thai_display }}</strong>.</p>
+  <p style="margin:0 0 12px;padding:10px 12px;background:#f4f6f3;border-radius:7px;">{% if yeu_cau.trang_thai == "da_xuat" %}Thông tin hóa đơn: {% else %}Lý do: {% endif %}{{ yeu_cau.ghi_chu_xu_ly }}</p>
+  {% if yeu_cau.trang_thai == "da_xuat" %}<p style="margin:0 0 12px;">Hóa đơn điện tử được gửi từ hệ thống hóa đơn của nhà thuốc tới địa chỉ {{ yeu_cau.email_nhan_hoa_don }}.</p>{% endif %}
+  <p style="margin:18px 0;"><a href="{{ url_don }}" style="display:inline-block;padding:11px 18px;border-radius:7px;background:#116b54;color:#ffffff;text-decoration:none;font-weight:bold;">Xem đơn</a></p>
+{% endblock %}

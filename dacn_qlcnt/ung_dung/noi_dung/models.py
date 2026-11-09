@@ -1,4 +1,4 @@
-"""Nội dung website do quản trị chuỗi soạn: banner trang chủ, thông tin cửa hàng, trang tĩnh."""
+"""Nội dung website do quản trị chuỗi soạn: banner, thông tin cửa hàng, trang tĩnh, tin tức."""
 
 from django.db import models
 from django.db.models import F, Q
@@ -210,6 +210,66 @@ class TrangNoiDung(models.Model):
                 condition=Q(thu_tu__gte=0),
                 name=ten_rang_buoc("kiem_tra", "trang_noi_dung", "thu_tu_khong_am"),
             ),
+        ]
+
+    def __str__(self):
+        return self.tieu_de
+
+
+class TinTuc(models.Model):
+    id_tin_tuc = models.BigAutoField(
+        primary_key=True,
+        db_column="id_tin_tuc",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    duong_dan_tin_tuc = models.TextField(
+        db_column="duong_dan_tin_tuc",
+        db_comment="Phần cuối đường dẫn /tin-tuc/<...>/, chữ thường không dấu nối bằng gạch ngang.",
+    )
+    tieu_de = models.TextField(db_column="tieu_de", db_comment="Tiêu đề bài viết; một dòng.")
+    tom_tat = models.TextField(
+        db_column="tom_tat",
+        db_comment="Đoạn giới thiệu trong danh sách tin và thẻ mô tả trang; một dòng.",
+    )
+    noi_dung_tin_tuc = models.TextField(
+        db_column="noi_dung_tin_tuc",
+        db_comment="Nội dung bài viết; HTML định dạng đã làm sạch bằng nh3.",
+    )
+    nguoi_viet = models.ForeignKey(
+        "tai_khoan.TaiKhoan",
+        on_delete=models.PROTECT,
+        db_column="id_tai_khoan_viet",
+        db_comment="Quản trị chuỗi đăng bài lần đầu.",
+    )
+    dang_hien_thi = models.BooleanField(
+        default=True,
+        db_default=True,
+        db_column="dang_hien_thi",
+        db_comment="Tắt để gỡ bài khỏi website mà không xóa.",
+    )
+    thoi_diem_dang = models.DateTimeField(
+        db_default=Now(),
+        db_column="thoi_diem_dang",
+        db_comment="Thời điểm bài xuất hiện trên website; đặt trong tương lai để hẹn giờ đăng.",
+    )
+    thoi_diem_cap_nhat = models.DateTimeField(
+        db_default=Now(), db_column="thoi_diem_cap_nhat", db_comment="Lần lưu gần nhất."
+    )
+
+    class Meta:
+        db_table = "tin_tuc"
+        db_table_comment = "Mỗi hàng là một bài tin tức, khuyến cáo sức khỏe của chuỗi nhà thuốc."
+        verbose_name = "tin tức"
+        ordering = ["-thoi_diem_dang", "-id_tin_tuc"]
+        constraints = [
+            *rang_buoc_van_ban("tin_tuc", "duong_dan_tin_tuc", dinh_dang=DUONG_DAN_TRANG),
+            models.UniqueConstraint(
+                fields=["duong_dan_tin_tuc"],
+                name=ten_rang_buoc("duy_nhat", "tin_tuc", "duong_dan_tin_tuc"),
+            ),
+            *rang_buoc_van_ban("tin_tuc", "tieu_de"),
+            *rang_buoc_van_ban("tin_tuc", "tom_tat"),
+            *rang_buoc_van_ban("tin_tuc", "noi_dung_tin_tuc", nhieu_dong=True),
         ]
 
     def __str__(self):

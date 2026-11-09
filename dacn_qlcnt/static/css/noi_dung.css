@@ -537,4 +537,59 @@
       grid-template-columns: minmax(0, 1fr);
     }
   }
+
+  /* Tin tức: danh sách dạng dòng thời gian, không ảnh bìa. */
+  .danh-sach-tin {
+    display: grid;
+    gap: 12px;
+    max-width: 820px;
+  }
+  .danh-sach-tin > li {
+    padding: 18px 22px;
+  }
+  .danh-sach-tin time,
+  .tin-khac time {
+    display: block;
+    color: #5b6d64;
+    font-size: 13px;
+  }
+  .danh-sach-tin h2 {
+    margin: 4px 0 6px;
+    font-size: 18px;
+    line-height: 1.35;
+  }
+  .danh-sach-tin h2 a:hover {
+    color: var(--color-chinh);
+  }
+  .khung-tin-tuc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    align-items: start;
+    gap: 20px;
+  }
+  .tin-khac {
+    display: grid;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid var(--vien);
+    border-radius: var(--radius-the);
+    background: #fff;
+  }
+  .tin-khac h2 {
+    margin-bottom: 4px;
+    font-size: 15px;
+  }
+  .tin-khac a {
+    padding: 8px;
+    border-radius: 8px;
+    line-height: 1.4;
+  }
+  .tin-khac a:hover {
+    background: #f1f6f2;
+  }
+  @media (max-width: 860px) {
+    .khung-tin-tuc {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
 }

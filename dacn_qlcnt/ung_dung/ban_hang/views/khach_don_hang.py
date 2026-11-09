@@ -7,13 +7,14 @@ from django.views.decorators.http import require_GET, require_POST
 
 from ung_dung.chung.permissions import yeu_cau_vai_tro
 
-from ..forms import XuLyDonForm
+from ..forms import XuLyDonForm, YeuCauXuatHoaDonForm
 from ..hoa_don import du_lieu_hoa_don
-from ..models import TRANG_THAI_DON, PhieuBan
+from ..models import TRANG_THAI_DON, PhieuBan, YeuCauXuatHoaDon
 from ..selectors import lay_chi_tiet_don, lay_don, lay_lich_su
 from ..services.don_hang import huy_don
 from ..services.tra_hang import han_tra_hang, ly_do_khong_tra_duoc
 from ..services.trang_thai import CHUYEN_HOP_LE, KHACH
+from ..services.xuat_hoa_don import gui_yeu_cau_xuat_hoa_don
 from .phieu_ban import tra_pdf
 
 NHOM_TRANG_THAI = {
@@ -67,11 +68,22 @@ def tien_trinh(don):
 @require_GET
 def chi_tiet(request, ma):
     don = get_object_or_404(lay_don(request.user), pk=ma)
+    return _trang_chi_tiet(request, don)
+
+
+def _trang_chi_tiet(request, don, form_hoa_don_cong_ty=None):
     cac_dong = lay_chi_tiet_don(don)
+    yeu_cau_hoa_don = YeuCauXuatHoaDon.objects.filter(don_hang=don).first()
+    if form_hoa_don_cong_ty is None and not yeu_cau_hoa_don and don.trang_thai == "hoan_thanh":
+        form_hoa_don_cong_ty = YeuCauXuatHoaDonForm(
+            initial={"email_nhan_hoa_don": request.user.email}
+        )
     return render(
         request,
         "ban_hang/khach/don_hang_chi_tiet.html",
         {
+            "yeu_cau_hoa_don": yeu_cau_hoa_don,
+            "form_hoa_don_cong_ty": form_hoa_don_cong_ty,
             "don": don,
             "cac_dong": cac_dong,
             "co_ke_don": any(dong.thuoc.la_thuoc_ke_don for dong in cac_dong),
@@ -129,3 +141,21 @@ def hoa_don_in(request, ma):
 @require_GET
 def hoa_don_pdf(request, ma):
     return tra_pdf(_phieu_cua_don_xong(request, ma), tai_ve="tai" in request.GET)
+
+
+@yeu_cau_vai_tro("khach_hang")
+@require_POST
+def yeu_cau_hoa_don_cong_ty(request, ma):
+    don = get_object_or_404(lay_don(request.user), pk=ma)
+    form = YeuCauXuatHoaDonForm(request.POST)
+    if form.is_valid():
+        try:
+            gui_yeu_cau_xuat_hoa_don(request.user, don, form.cleaned_data)
+        except ValidationError as loi:
+            form.add_error(None, loi)
+        else:
+            messages.success(request, "Đã gửi yêu cầu hóa đơn công ty. Nhà thuốc sẽ báo qua email.")
+            return redirect(
+                reverse("ban_hang:khach_don_hang_chi_tiet", args=[ma]) + "#hoa-don-cong-ty"
+            )
+    return _trang_chi_tiet(request, don, form)

@@ -1,0 +1,38 @@
+  <section class="the-khach khoi-danh-gia" id="danh-gia" aria-labelledby="tieu-de-danh-gia">
+    <h2 id="tieu-de-danh-gia">{{ tieu_de_danh_gia }}</h2>
+    <div class="luoi-danh-gia">
+      <div class="diem-danh-gia">
+        <strong>{% if danh_gia.so_luong %}{{ danh_gia.trung_binh|floatformat:1 }}{% else %}–{% endif %}</strong>
+        <span class="cac-sao" aria-hidden="true">{% for _ in "12345" %}<i data-lucide="star" class="{% if forloop.counter <= danh_gia.sao_tron %}sao-day{% endif %}"></i>{% endfor %}</span>
+        <small>{{ danh_gia.so_luong }} đánh giá</small>
+      </div>
+      <ul class="phan-bo-sao">
+        {% for sao, so, phan_tram in danh_gia.phan_bo %}
+          <li><span>{{ sao }} sao</span><span class="thanh-sao"><span style="width: {{ phan_tram }}%"></span></span><small>{{ so }}</small></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% if duoc_danh_gia %}
+      <form method="post" action="{{ url_gui }}" class="form-danh-gia" x-data="{ sao: {{ danh_gia_cua_toi.so_sao|default:0 }} }">
+        {% csrf_token %}
+        <p>{% if danh_gia_cua_toi %}Sửa đánh giá của bạn{% else %}{{ loi_moi }}{% endif %}</p>
+        <div class="chon-sao" role="radiogroup" aria-label="Số sao">
+          {% for so in "12345" %}
+            <label :class="{ 'sao-day': sao >= {{ so }} }"><input type="radio" name="so_sao" value="{{ so }}" x-model.number="sao" required{% if danh_gia_cua_toi.so_sao|stringformat:"s" == so %} checked{% endif %}><i data-lucide="star" aria-hidden="true"></i><span class="sr-only">{{ so }} sao</span></label>
+          {% endfor %}
+        </div>
+        <textarea name="noi_dung" rows="3" maxlength="1000" placeholder="{{ goi_y }}">{{ danh_gia_cua_toi.noi_dung_danh_gia }}</textarea>
+        <button class="nut" type="submit">Gửi đánh giá</button>
+      </form>
+    {% endif %}
+    <ul class="cac-danh-gia">
+      {% for dg in danh_gia.moi_nhat %}
+        <li>
+          <div><strong>{{ dg.khach_hang.ho_ten|default:dg.khach_hang.ten_dang_nhap|slice:":1" }}***</strong><span class="cac-sao nho" aria-label="{{ dg.so_sao }} sao">{% for _ in "12345" %}<i data-lucide="star" class="{% if forloop.counter <= dg.so_sao %}sao-day{% endif %}" aria-hidden="true"></i>{% endfor %}</span><small>{{ dg.thoi_diem_tao|date:"d/m/Y" }} · Đã mua hàng</small></div>
+          {% if dg.noi_dung_danh_gia %}<p>{{ dg.noi_dung_danh_gia|linebreaksbr }}</p>{% endif %}
+        </li>
+      {% empty %}
+        <li class="chua-co-danh-gia">{{ chua_co }}</li>
+      {% endfor %}
+    </ul>
+  </section>

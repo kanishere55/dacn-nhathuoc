@@ -59,6 +59,11 @@ quan_ly = [
     path("khuyen-mai/", khuyen_mai.danh_sach, name="khuyen_mai_danh_sach"),
     path("danh-gia/", danh_gia.danh_sach, name="danh_gia_danh_sach"),
     path("danh-gia/<int:ma>/doi-hien-thi/", danh_gia.doi_hien_thi, name="danh_gia_doi_hien_thi"),
+    path(
+        "danh-gia/chi-nhanh/<int:ma>/doi-hien-thi/",
+        danh_gia.doi_hien_thi_chi_nhanh,
+        name="danh_gia_chi_nhanh_doi_hien_thi",
+    ),
     path("khuyen-mai/tao/", khuyen_mai.tao, name="khuyen_mai_tao"),
     path("khuyen-mai/<int:ma>/sua/", khuyen_mai.sua, name="khuyen_mai_sua"),
     path("<loai_anh:loai>/<int:ma>/anh/", anh.tai_len, name="anh_tai_len"),
@@ -76,5 +81,6 @@ urlpatterns = [
     path("thuoc/<str:ma>/danh-gia/", khach.danh_gia_thuoc, name="khach_danh_gia_thuoc"),
     path("thuoc/<str:ma>/", khach.chi_tiet_thuoc, name="khach_thuoc_chi_tiet"),
     path("chi-nhanh/<str:ma>/", khach.chi_tiet_chi_nhanh, name="khach_chi_nhanh_chi_tiet"),
+    path("chi-nhanh/<str:ma>/danh-gia/", khach.danh_gia_chi_nhanh, name="khach_danh_gia_chi_nhanh"),
     path("quan-ly/danh-muc/", include(quan_ly)),
 ]

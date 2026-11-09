@@ -1,0 +1,25 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}{{ tin.tieu_de }} · {{ cua_hang.ten_thuong_hieu }}{% endblock %}
+{% block dau_trang %}<meta name="description" content="{{ tin.tom_tat }}">{% endblock %}
+{% block noi_dung %}
+  <div class="khung-tin-tuc">
+    <article class="the-khach bai-trang-thong-tin">
+      <p class="chu-dan"><a class="duong-dan-noi-dung" href="{% url 'noi_dung:khach_tin_tuc_danh_sach' %}">TIN TỨC</a></p>
+      <header class="tieu-de-khach">
+        <h1>{{ tin.tieu_de }}</h1>
+        <p>{{ tin.tom_tat }}</p>
+      </header>
+      <p class="ghi-chu-khach">Đăng {{ tin.thoi_diem_dang|date:"d/m/Y" }}{% if tin.thoi_diem_cap_nhat|date:"Ymd" != tin.thoi_diem_dang|date:"Ymd" %} · cập nhật {{ tin.thoi_diem_cap_nhat|date:"d/m/Y" }}{% endif %}</p>
+      <div class="noi-dung-phong-phu">{{ tin.noi_dung_tin_tuc|phong_phu }}</div>
+      <p class="ghi-chu-khach cap-nhat-trang">Thông tin mang tính tham khảo, không thay thế chỉ định của bác sĩ hoặc dược sĩ.</p>
+    </article>
+    {% if tin_khac %}
+      <aside class="tin-khac" aria-labelledby="tieu-de-tin-khac">
+        <h2 id="tieu-de-tin-khac">Bài khác</h2>
+        {% for t in tin_khac %}
+          <a href="{% url 'noi_dung:khach_tin_tuc_chi_tiet' t.duong_dan_tin_tuc %}"><time datetime="{{ t.thoi_diem_dang|date:'c' }}">{{ t.thoi_diem_dang|date:"d/m/Y" }}</time>{{ t.tieu_de }}</a>
+        {% endfor %}
+      </aside>
+    {% endif %}
+  </div>
+{% endblock %}

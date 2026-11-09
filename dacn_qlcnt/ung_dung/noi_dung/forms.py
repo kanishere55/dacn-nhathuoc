@@ -2,14 +2,14 @@ from django import forms
 
 from ung_dung.chung.truong_form import TruongPhongPhu
 
-from .models import BannerTrangChu, ThongTinCuaHang, TrangNoiDung
+from .models import BannerTrangChu, ThongTinCuaHang, TinTuc, TrangNoiDung
 
 
 class _CatKhoangTrang:
     def clean(self):
         du_lieu = super().clean()
         for ten, gia_tri in du_lieu.items():
-            if isinstance(gia_tri, str) and ten != "noi_dung_trang":
+            if isinstance(gia_tri, str) and ten not in ("noi_dung_trang", "noi_dung_tin_tuc"):
                 du_lieu[ten] = gia_tri.strip()
         return du_lieu
 
@@ -131,3 +131,41 @@ class TrangNoiDungForm(_CatKhoangTrang, forms.ModelForm):
             "duong_dan_trang": forms.TextInput(),
             "tom_tat": forms.TextInput(),
         }
+
+
+class TinTucForm(_CatKhoangTrang, forms.ModelForm):
+    noi_dung_tin_tuc = TruongPhongPhu(label="Nội dung")
+
+    class Meta:
+        model = TinTuc
+        fields = [
+            "tieu_de",
+            "duong_dan_tin_tuc",
+            "tom_tat",
+            "noi_dung_tin_tuc",
+            "thoi_diem_dang",
+            "dang_hien_thi",
+        ]
+        labels = {
+            "tieu_de": "Tiêu đề",
+            "duong_dan_tin_tuc": "Đường dẫn",
+            "tom_tat": "Tóm tắt",
+            "thoi_diem_dang": "Thời điểm đăng",
+            "dang_hien_thi": "Đang hiển thị",
+        }
+        help_texts = {
+            "duong_dan_tin_tuc": "Chữ thường không dấu, nối bằng gạch ngang: phong-cum-mua-mua",
+            "thoi_diem_dang": "Để trống là đăng ngay; chọn thời điểm sau này để hẹn giờ.",
+        }
+        widgets = {
+            "tieu_de": forms.TextInput(attrs={"maxlength": 120}),
+            "duong_dan_tin_tuc": forms.TextInput(),
+            "tom_tat": forms.TextInput(attrs={"maxlength": 240}),
+            "thoi_diem_dang": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["thoi_diem_dang"].required = False

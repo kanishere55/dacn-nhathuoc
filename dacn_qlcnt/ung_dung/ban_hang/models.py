@@ -5,6 +5,7 @@ from django.db.models.functions import Now
 
 from ung_dung.chung.anh import AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
+    EMAIL,
     SO_DIEN_THOAI,
     rang_buoc_so,
     rang_buoc_van_ban,
@@ -943,3 +944,116 @@ class AnhTraHang(AnhCSDL):
             )
         ]
         constraints = rang_buoc_anh("anh_tra_hang")
+
+
+TRANG_THAI_XUAT_HOA_DON = [
+    ("cho_xu_ly", "Chờ xử lý"),
+    ("da_xuat", "Đã xuất hóa đơn"),
+    ("tu_choi", "Từ chối"),
+]
+# Mã số thuế doanh nghiệp 10 chữ số; đơn vị phụ thuộc thêm "-" và 3 chữ số.
+MA_SO_THUE = r"^[0-9]{10}(-[0-9]{3})?$"
+
+
+class YeuCauXuatHoaDon(models.Model):
+    id_yeu_cau_xuat_hoa_don = models.BigAutoField(
+        primary_key=True,
+        db_column="id_yeu_cau_xuat_hoa_don",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    don_hang = models.ForeignKey(
+        "ban_hang.DonHang",
+        on_delete=models.PROTECT,
+        db_index=False,
+        db_column="id_don_hang",
+        db_comment="Đơn đã hoàn thành cần hóa đơn đứng tên doanh nghiệp; mỗi đơn một yêu cầu.",
+    )
+    ten_cong_ty = models.TextField(
+        db_column="ten_cong_ty", db_comment="Tên doanh nghiệp theo đăng ký thuế; một dòng."
+    )
+    ma_so_thue = models.TextField(
+        db_column="ma_so_thue",
+        db_comment="Mã số thuế 10 chữ số, đơn vị phụ thuộc thêm -XXX.",
+    )
+    dia_chi_cong_ty = models.TextField(
+        db_column="dia_chi_cong_ty", db_comment="Địa chỉ trụ sở theo đăng ký thuế; một dòng."
+    )
+    email_nhan_hoa_don = models.TextField(
+        db_column="email_nhan_hoa_don",
+        db_comment="Email nhận hóa đơn điện tử; chữ thường.",
+    )
+    trang_thai = models.TextField(
+        choices=TRANG_THAI_XUAT_HOA_DON,
+        default="cho_xu_ly",
+        db_default="cho_xu_ly",
+        db_column="trang_thai",
+        db_comment="cho_xu_ly: chờ nhân viên; da_xuat: đã phát hành ngoài hệ thống; tu_choi.",
+    )
+    ghi_chu_xu_ly = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="ghi_chu_xu_ly",
+        db_comment="Ký hiệu, số hóa đơn đã phát hành hoặc lý do từ chối; rỗng khi chờ xử lý.",
+    )
+    nguoi_xu_ly = models.ForeignKey(
+        "tai_khoan.TaiKhoan",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column="id_tai_khoan_xu_ly",
+        db_comment="Nhân sự chi nhánh của đơn đã xử lý; NULL khi chờ xử lý.",
+    )
+    thoi_diem_tao = models.DateTimeField(
+        db_default=Now(), db_column="thoi_diem_tao", db_comment="Thời điểm khách gửi yêu cầu."
+    )
+    thoi_diem_xu_ly = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column="thoi_diem_xu_ly",
+        db_comment="Thời điểm xuất hoặc từ chối; NULL khi chờ xử lý.",
+    )
+
+    class Meta:
+        db_table = "yeu_cau_xuat_hoa_don"
+        db_table_comment = (
+            "Mỗi hàng là yêu cầu hóa đơn doanh nghiệp cho một đơn; hóa đơn điện tử phát hành "
+            "ngoài hệ thống."
+        )
+        verbose_name = "yêu cầu xuất hóa đơn"
+        ordering = ["-thoi_diem_tao", "-id_yeu_cau_xuat_hoa_don"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["don_hang"],
+                name=ten_rang_buoc("duy_nhat", "yeu_cau_xuat_hoa_don", "id_don_hang"),
+            ),
+            *rang_buoc_van_ban("yeu_cau_xuat_hoa_don", "ten_cong_ty", nhan="ten_cong_ty"),
+            *rang_buoc_van_ban(
+                "yeu_cau_xuat_hoa_don", "ma_so_thue", dinh_dang=MA_SO_THUE, nhan="ma_so_thue"
+            ),
+            *rang_buoc_van_ban("yeu_cau_xuat_hoa_don", "dia_chi_cong_ty"),
+            *rang_buoc_van_ban("yeu_cau_xuat_hoa_don", "email_nhan_hoa_don", dinh_dang=EMAIL),
+            models.CheckConstraint(
+                condition=Q(trang_thai__in=_ma(TRANG_THAI_XUAT_HOA_DON)),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_xuat_hoa_don", "trang_thai_hop_le"),
+            ),
+            *rang_buoc_van_ban("yeu_cau_xuat_hoa_don", "ghi_chu_xu_ly", rong=True, nhieu_dong=True),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        trang_thai="cho_xu_ly",
+                        nguoi_xu_ly__isnull=True,
+                        thoi_diem_xu_ly__isnull=True,
+                    )
+                    | (
+                        ~Q(trang_thai="cho_xu_ly")
+                        & Q(nguoi_xu_ly__isnull=False, thoi_diem_xu_ly__isnull=False)
+                        & ~Q(ghi_chu_xu_ly="")
+                    )
+                ),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_xuat_hoa_don", "xu_ly_dung_trang_thai"),
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.don_hang.ma_don_hang} · {self.ten_cong_ty}"

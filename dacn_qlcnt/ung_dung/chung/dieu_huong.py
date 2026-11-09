@@ -34,6 +34,11 @@ MENU_KHACH = (
         ("danh_muc:khach_thuoc_danh_sach", "danh_muc:khach_thuoc_chi_tiet"),
     ),
     ("webgis:ban_do", "Tìm nhà thuốc", ("webgis:ban_do", "danh_muc:khach_chi_nhanh_chi_tiet")),
+    (
+        "noi_dung:khach_tin_tuc_danh_sach",
+        "Tin tức",
+        ("noi_dung:khach_tin_tuc_danh_sach", "noi_dung:khach_tin_tuc_chi_tiet"),
+    ),
 )
 
 
@@ -45,6 +50,7 @@ NHOM_MENU = (
         (
             "ban_hang:don_hang_danh_sach",
             "ban_hang:tra_hang_danh_sach",
+            "ban_hang:xuat_hoa_don_danh_sach",
             "ban_hang:phieu_ban_danh_sach",
             "tro_chuyen:danh_sach",
         ),
@@ -60,6 +66,7 @@ NHOM_MENU = (
         (
             "noi_dung:banner_danh_sach",
             "noi_dung:trang_danh_sach",
+            "noi_dung:tin_tuc_danh_sach",
             "noi_dung:thong_tin",
             "thong_bao:nhat_ky_email",
         ),
@@ -99,13 +106,14 @@ def dieu_huong(request):
         cac_muc.extend(KHO)
         cac_muc.append(("ban_hang:phieu_ban_danh_sach", "Bán tại quầy", "receipt"))
     if quan_tri:
-        cac_muc.append(("danh_muc:danh_gia_danh_sach", "Đánh giá thuốc", "star"))
+        cac_muc.append(("danh_muc:danh_gia_danh_sach", "Đánh giá", "star"))
     if quan_tri or quan_ly:
         cac_muc.extend(KHO_QUAN_LY)
         cac_muc.append(("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"))
     if noi_bo:
         cac_muc.append(("ban_hang:don_hang_danh_sach", "Đơn hàng", "shopping-basket"))
         cac_muc.append(("ban_hang:tra_hang_danh_sach", "Trả hàng", "undo-2"))
+        cac_muc.append(("ban_hang:xuat_hoa_don_danh_sach", "Hóa đơn công ty", "building-2"))
     if nhan_su:
         cac_muc.append(("tro_chuyen:danh_sach", "Trò chuyện", "messages-square"))
     if quan_tri:
@@ -116,6 +124,7 @@ def dieu_huong(request):
                 ("thong_bao:nhat_ky_email", "Email hệ thống", "mail"),
                 ("noi_dung:banner_danh_sach", "Banner trang chủ", "gallery-horizontal"),
                 ("noi_dung:trang_danh_sach", "Trang thông tin", "file-text"),
+                ("noi_dung:tin_tuc_danh_sach", "Tin tức", "newspaper"),
                 ("noi_dung:thong_tin", "Thông tin cửa hàng", "store"),
             )
         )

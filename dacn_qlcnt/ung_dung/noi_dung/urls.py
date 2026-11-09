@@ -12,9 +12,14 @@ quan_tri = [
     path("trang/", quan_ly.trang_danh_sach, name="trang_danh_sach"),
     path("trang/tao/", quan_ly.trang_sua, name="trang_tao"),
     path("trang/<int:ma>/sua/", quan_ly.trang_sua, name="trang_sua"),
+    path("tin-tuc/", quan_ly.tin_tuc_danh_sach, name="tin_tuc_danh_sach"),
+    path("tin-tuc/tao/", quan_ly.tin_tuc_sua, name="tin_tuc_tao"),
+    path("tin-tuc/<int:ma>/sua/", quan_ly.tin_tuc_sua, name="tin_tuc_sua"),
 ]
 urlpatterns = [
     path("trang/<slug:duong_dan>/", khach.trang, name="trang"),
+    path("tin-tuc/", khach.tin_tuc_danh_sach, name="khach_tin_tuc_danh_sach"),
+    path("tin-tuc/<slug:duong_dan>/", khach.tin_tuc_chi_tiet, name="khach_tin_tuc_chi_tiet"),
     path("anh/banner/<int:ma>/", khach.anh_banner, name="anh_banner"),
     path("quan-ly/noi-dung/", include(quan_tri)),
 ]
