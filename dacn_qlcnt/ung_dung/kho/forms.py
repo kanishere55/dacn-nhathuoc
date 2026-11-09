@@ -20,6 +20,31 @@ class PhieuNhapForm(forms.Form):
         self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
 
 
+class TepNhapExcelForm(forms.Form):
+    tep_excel = forms.FileField(
+        label="Tệp Excel (.xlsx)",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+        ),
+    )
+
+    def clean_tep_excel(self):
+        from .nhap_excel import LoiTepExcel, doc_tep_nhap
+
+        tep = self.cleaned_data["tep_excel"]
+        if not tep.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError("Chỉ nhận tệp .xlsx.")
+        try:
+            cac_dong, cac_loi = doc_tep_nhap(tep)
+        except LoiTepExcel as loi:
+            raise forms.ValidationError(str(loi)) from None
+        if cac_loi:
+            raise forms.ValidationError(cac_loi)
+        return cac_dong
+
+
 class DongThuocForm(forms.Form):
     thuoc = forms.ModelChoiceField(Thuoc.objects.filter(dang_hoat_dong=True), label="Thuốc")
     so_luong = forms.IntegerField(label="Số lượng", min_value=1, max_value=2147483647)

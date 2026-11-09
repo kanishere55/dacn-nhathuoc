@@ -18,6 +18,7 @@ urlpatterns = [
     ),
     path("ton-kho/", ton_kho.danh_sach, name="ton_kho_danh_sach"),
     path("canh-bao/", ton_kho.canh_bao, name="canh_bao"),
+    path("phieu-nhap/mau-excel/", phieu_nhap.mau_excel, name="phieu_nhap_mau_excel"),
 ]
 for ten, duong_dan, module in [
     ("phieu_nhap", "phieu-nhap", phieu_nhap),
