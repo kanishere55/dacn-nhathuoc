@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.gis.geos import Point
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from ung_dung.chung.permissions import kiem_tra_vai_tro
@@ -64,7 +65,10 @@ NHAN_SU_MO_PHONG = (
 @transaction.atomic
 def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
     kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
-    if ChiNhanh.objects.filter(ma_chi_nhanh__startswith="MP-CN-").exists():
+    # Sau lệnh nap_thuoc_thuc_te, chi nhánh mô phỏng đổi mã sang CN-...; vẫn coi là đã tạo.
+    if ChiNhanh.objects.filter(
+        Q(ma_chi_nhanh__startswith="MP-CN-") | Q(ma_chi_nhanh="CN-BEN-THANH")
+    ).exists():
         raise ValueError("Đã có chi nhánh mô phỏng. Lệnh không ghi lặp hoặc ghi đè.")
     cac_hau_to = ["" if so == 1 else f"_{so:02d}" for so in range(1, len(CHI_NHANH_MO_PHONG) + 1)]
     cac_ten_dang_nhap = [

@@ -43,7 +43,7 @@
         <div><dt>Hàm lượng</dt><dd>{{ thuoc.ham_luong|default:"—" }}</dd></div>
         <div><dt>Dạng bào chế</dt><dd>{{ thuoc.dang_bao_che|default:"—" }}</dd></div>
         <div><dt>Quy cách</dt><dd>{{ thuoc.quy_cach_dong_goi|default:"—" }}</dd></div>
-        <div><dt>Xuất xứ</dt><dd>{{ thuoc.nuoc_san_xuat|default:"—" }}</dd></div>
+        {% if thuoc.nuoc_san_xuat %}<div><dt>Xuất xứ</dt><dd>{{ thuoc.nuoc_san_xuat }}</dd></div>{% endif %}
         <div><dt>Nhóm điều trị</dt><dd>{{ thuoc.nhom_atc.ma_nhom_atc }} · {{ thuoc.nhom_atc.ten_nhom_atc }}</dd></div>
         <div><dt>Đơn vị bán</dt><dd>{{ thuoc.don_vi_tinh.ten_don_vi_tinh }}</dd></div>
       </dl>

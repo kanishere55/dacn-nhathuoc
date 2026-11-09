@@ -1,3 +1,5 @@
+from io import StringIO
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -53,3 +55,32 @@ class DanhMucKhachTests(TestCase):
             self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=["TRA-13"])).status_code,
             404,
         )
+
+
+class NapThuocThucTeTests(TestCase):
+    def test_lenh_nap_thay_mo_phong_va_ve_anh(self):
+        from django.core.management import call_command
+
+        from ung_dung.kho.models import TonKho
+        from ung_dung.kho.services.mo_phong import tao_du_lieu_mo_phong
+        from ung_dung.kho.tests.du_lieu import tao_du_lieu
+
+        from ..models import AnhThuoc, KhuyenMai, Thuoc
+
+        d = tao_du_lieu()
+        tao_du_lieu_mo_phong(d.admin, mat_khau="Mat-khau-thu-2026!")
+        call_command("nap_thuoc_thuc_te", stdout=StringIO())
+        self.assertFalse(Thuoc.objects.filter(ma_thuoc__startswith="MP-T-").exists())
+        panadol = Thuoc.objects.get(ma_thuoc="TA-PANADOL-500")
+        self.assertEqual((panadol.nhom_atc.ma_nhom_atc, panadol.la_thuoc_ke_don), ("N02BE", False))
+        self.assertEqual(AnhThuoc.objects.filter(thuoc=panadol).count(), 1)
+        self.assertTrue(Thuoc.objects.get(ma_thuoc="TA-STILNOX-10").la_thuoc_ke_don)
+        self.assertFalse(
+            KhuyenMai.objects.filter(thuoc__la_thuoc_ke_don=True, dang_hoat_dong=True).exists()
+        )
+        self.assertTrue(TonKho.objects.filter(lo_thuoc__thuoc__ma_thuoc="TA-SMECTA-30").exists())
+        so_lo = TonKho.objects.count()
+        call_command("nap_thuoc_thuc_te", stdout=StringIO())
+        self.assertEqual(TonKho.objects.count(), so_lo)
+        trang = self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=["TA-PANADOL-500"]))
+        self.assertContains(trang, "Paracetamol 500 mg")
