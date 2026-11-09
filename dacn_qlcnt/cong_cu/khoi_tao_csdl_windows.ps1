@@ -196,9 +196,10 @@ Buoc 'Migrate'
 if ($LASTEXITCODE -ne 0) { Dung 'migrate thất bại.' }
 
 Buoc 'Dữ liệu chạy thử'
+# PowerShell 5.1 làm rơi dấu nháy kép khi truyền tham số cho chương trình ngoài, nên mã Python chỉ dùng nháy đơn.
 $kiemTra = 'from ung_dung.danh_muc.models import NhaCungCap as N; from ung_dung.tai_khoan.models import TaiKhoan as T; ' +
-    'q = T.objects.filter(la_quan_tri_he_thong=True, dang_hoat_dong=True).order_by("pk").first(); ' +
-    'print(int(N.objects.exists()), q.ten_dang_nhap if q else "")'
+    'q = T.objects.filter(la_quan_tri_he_thong=True, dang_hoat_dong=True).order_by(''pk'').first(); ' +
+    'print(int(N.objects.exists()), q.ten_dang_nhap if q else ''-'')'
 function Trang-Thai {
     $dong = & $python manage.py shell -c $kiemTra | Select-Object -Last 1
     if ($LASTEXITCODE -ne 0 -or -not $dong) { Dung 'Không đọc được dữ liệu sau migrate.' }
@@ -206,13 +207,13 @@ function Trang-Thai {
 }
 $trangThai = Trang-Thai
 if ($trangThai[0] -ne '1') {
-    $quanTri = if ($trangThai.Count -gt 1) { $trangThai[1] } else { '' }
+    $quanTri = if ($trangThai.Count -gt 1 -and $trangThai[1] -ne '-') { $trangThai[1] } else { '' }
     if (-not $quanTri) {
         Write-Host 'Tạo tài khoản quản trị chuỗi để đăng nhập khu quản lý:'
         & $python manage.py createsuperuser
         if ($LASTEXITCODE -ne 0) { Dung 'createsuperuser thất bại.' }
         $sau = Trang-Thai
-        $quanTri = if ($sau.Count -gt 1) { $sau[1] } else { '' }
+        $quanTri = if ($sau.Count -gt 1 -and $sau[1] -ne '-') { $sau[1] } else { '' }
         if (-not $quanTri) { Dung 'Chưa có tài khoản quản trị.' }
     }
     Write-Host "Sinh chi nhánh, nhà cung cấp và tài khoản mẫu (quản trị: $quanTri)."
