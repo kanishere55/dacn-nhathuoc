@@ -929,3 +929,10 @@
     cursor: pointer;
   }
 }
+
+@layer components {
+  .dong-uu-dai dd {
+    color: #c2410c;
+    font-weight: 600;
+  }
+}

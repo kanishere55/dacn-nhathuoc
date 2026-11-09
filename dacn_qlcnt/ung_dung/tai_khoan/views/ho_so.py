@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 
+from ung_dung.ban_hang.thanh_vien import CAC_HANG, hang_cua
 from ung_dung.chung.duong_dan import quay_lai
 from ung_dung.chung.permissions import MOI_VAI_TRO, co_vai_tro, yeu_cau_vai_tro
 
@@ -34,6 +35,8 @@ def cua_toi(request):
         {
             "dia_chi_mac_dinh": request.user.dia_chi_giao_hang_mac_dinh,
             "so_dia_chi": cac_dia_chi_cua(request.user).count(),
+            "hang": hang_cua(request.user) if request.user.vai_tro == "khach_hang" else None,
+            "cac_hang": CAC_HANG,
         },
     )
 

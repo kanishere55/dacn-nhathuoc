@@ -12,6 +12,24 @@
       <p>Tài khoản chưa có email nên chưa nhận được thông báo đơn hàng và không thể tự lấy lại mật khẩu. <a href="{% url 'tai_khoan:doi_email' %}">Thêm email ngay</a></p>
     </div>
   {% endif %}
+  {% if hang %}
+    <section class="the-hang-thanh-vien" aria-labelledby="hang-thanh-vien">
+      <div>
+        <p class="chu-dan">HẠNG THÀNH VIÊN</p>
+        <h2 id="hang-thanh-vien"><i data-lucide="gem" aria-hidden="true"></i>{{ hang.ten }}{% if hang.phan_tram %} · giảm {{ hang.phan_tram }}% thuốc không kê đơn{% endif %}</h2>
+        <p>Chi tiêu 12 tháng gần nhất: <strong>{{ hang.chi_tieu|tien }}</strong></p>
+      </div>
+      {% if hang.hang_sau %}
+        <div class="tien-do-hang">
+          <div class="thanh-tien-do" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ hang.tien_do }}" aria-label="Tiến độ lên hạng {{ hang.hang_sau }}"><span style="width: {{ hang.tien_do }}%"></span></div>
+          <small>Mua thêm {{ hang.con_thieu|tien }} để lên hạng {{ hang.hang_sau }} (giảm {{ hang.phan_tram_sau }}%).</small>
+        </div>
+      {% endif %}
+      <ul class="cac-hang">
+        {% for ten, nguong, phan_tram in cac_hang %}<li{% if ten == hang.ten %} aria-current="true"{% endif %}><strong>{{ ten }}</strong><small>{% if nguong %}từ {{ nguong|tien }}{% else %}mặc định{% endif %} · {{ phan_tram }}%</small></li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
   <div class="luoi-khach-hai">
     <a class="the-khach the-thong-ke-tai-khoan" href="{% url 'ban_hang:khach_don_hang_danh_sach' %}">
       <span class="bieu-tuong-the"><i data-lucide="package" aria-hidden="true"></i></span>

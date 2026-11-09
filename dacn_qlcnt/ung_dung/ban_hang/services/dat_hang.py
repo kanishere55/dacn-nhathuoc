@@ -14,6 +14,7 @@ from ung_dung.kho.services.giao_dich import khoa_kho, phan_bo_fefo
 from ung_dung.thanh_toan.services.ghi import tao_cho
 
 from ..models import ChiTietDonHang, DonHang, PhanBoDonHang
+from ..thanh_vien import giam_thanh_vien, hang_cua
 from .giao_hang import BAN_KINH_GIAO_MET, tinh_phi_giao
 from .thong_bao_don import bao_don_moi
 from .trang_thai import ghi_lich_su
@@ -132,8 +133,12 @@ def dat_hang(
         for ton, lay in phan_bo_fefo(chi_nhanh, thuoc, luong):
             PhanBoDonHang.objects.create(chi_tiet_don_hang=dong, ton_kho=ton, so_luong=lay)
     don.tien_hang = tien_hang
+    don.giam_gia_thanh_vien = giam_thanh_vien(
+        hang_cua(nguoi)["phan_tram"],
+        [(cac_thuoc[ma], luong, cac_thuoc[ma].don_gia) for ma, luong in yeu_cau.items()],
+    )
     don.tong_thanh_toan = tien_hang - don.giam_gia_thanh_vien + don.phi_giao_hang
-    don.save(update_fields=["tien_hang", "tong_thanh_toan"])
+    don.save(update_fields=["tien_hang", "giam_gia_thanh_vien", "tong_thanh_toan"])
     if trang_thai == "cho_thanh_toan":
         tao_cho(don, phuong_thuc_thanh_toan)
     ghi_lich_su(don, None, trang_thai, nguoi)

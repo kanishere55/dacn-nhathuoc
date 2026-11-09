@@ -254,3 +254,33 @@ class HoaDonTests(TestCase):
         self.assertEqual(
             self.client.get(reverse("ban_hang:phieu_ban_pdf", args=[phieu.pk])).status_code, 404
         )
+
+
+class HangThanhVienTests(TestCase):
+    def test_hang_theo_chi_tieu_va_uu_dai_chi_cho_thuoc_khong_ke_don(self):
+        from django.utils import timezone
+
+        from ..models import DonHang, LichSuDonHang
+        from ..services.dat_hang import dat_giu
+        from ..thanh_vien import hang_cua
+
+        d = tao_du_lieu()
+        tao_ton(d, luong=500)
+        self.assertEqual(hang_cua(d.khach)["ten"], "Thành viên")
+        cu = dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 1}])
+        DonHang.objects.filter(pk=cu.pk).update(
+            trang_thai="hoan_thanh", tien_hang=3_200_000, tong_thanh_toan=3_200_000
+        )
+        hang = hang_cua(d.khach)
+        self.assertEqual((hang["ten"], hang["phan_tram"], hang["hang_sau"]), ("Bạc", 3, "Vàng"))
+        don = dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 100}])
+        self.assertEqual(
+            (don.tien_hang, don.giam_gia_thanh_vien, don.tong_thanh_toan), (200000, 6000, 194000)
+        )
+        d.thuoc.la_thuoc_ke_don = True
+        d.thuoc.save()
+        don_ke_don = dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 10}])
+        self.assertEqual(don_ke_don.giam_gia_thanh_vien, 0)
+        self.client.force_login(d.khach)
+        self.assertContains(self.client.get(reverse("tai_khoan:cua_toi")), "Bạc")
+        self.assertTrue(LichSuDonHang.objects.exists() and timezone.now())

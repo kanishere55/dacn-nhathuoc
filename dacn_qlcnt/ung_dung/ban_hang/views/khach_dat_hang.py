@@ -18,6 +18,7 @@ from ..selectors import lay_dong_gio, lay_gio, tom_tat_gio
 from ..services.dat_hang import dat_hang as tao_don
 from ..services.giao_hang import BAN_KINH_GIAO_MET, phuong_an_giao
 from ..services.gio_hang import sua_gio
+from ..thanh_vien import giam_thanh_vien, hang_cua
 
 PHUONG_THUC_GIAO = [muc for muc in PHUONG_THUC_THANH_TOAN if muc[0] != "tai_quay"]
 
@@ -76,6 +77,11 @@ def dat_hang(request):
         phuong_thuc = lua_chon.get("phuong_thuc_thanh_toan")
         phuong_thuc = phuong_thuc if phuong_thuc in kha_dung else "cod"
     phi = phuong_an["phi_giao_hang"] if hinh_thuc == "giao_hang" and phuong_an else 0
+    hang = hang_cua(request.user)
+    giam = giam_thanh_vien(
+        hang["phan_tram"],
+        [(d["thuoc"], d["so_luong"], d["thuoc"].don_gia) for d in cac_dong if d["thuoc"]],
+    )
 
     if request.method == "POST" and form.is_valid() and phuong_an:
         giao = None
@@ -131,7 +137,9 @@ def dat_hang(request):
             "cac_phuong_thuc_giao": PHUONG_THUC_GIAO,
             "phuong_thuc_kha_dung": kha_dung,
             "phi_giao_hang": phi,
-            "tong_thanh_toan": tom_tat["tien_hang"] + phi,
+            "tong_thanh_toan": tom_tat["tien_hang"] - giam + phi,
+            "hang": hang,
+            "giam_thanh_vien": giam,
             "ban_kinh_km": BAN_KINH_GIAO_MET // 1000,
         },
     )

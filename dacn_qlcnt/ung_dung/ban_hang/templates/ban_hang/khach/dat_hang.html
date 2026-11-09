@@ -103,6 +103,7 @@
       </ul>
       <dl>
         <div><dt>Tạm tính</dt><dd>{{ tom_tat.tien_hang|tien }}</dd></div>
+        {% if giam_thanh_vien %}<div class="dong-uu-dai"><dt>Ưu đãi hạng {{ hang.ten }} (-{{ hang.phan_tram }}%)</dt><dd>-{{ giam_thanh_vien|tien }}</dd></div>{% endif %}
         {% if hinh_thuc == "giao_hang" %}<div><dt>Phí giao hàng</dt><dd>{% if phuong_an %}{{ phi_giao_hang|tien }}{% else %}—{% endif %}</dd></div>{% endif %}
         <div class="tong-cong"><dt>Tổng thanh toán</dt><dd>{{ tong_thanh_toan|tien }}</dd></div>
       </dl>
