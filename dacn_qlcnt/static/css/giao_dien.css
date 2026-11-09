@@ -131,21 +131,26 @@
     min-height: 100vh;
   }
   .thanh-ben {
+    position: sticky;
+    top: 0;
     width: 250px;
+    height: 100vh;
     flex-shrink: 0;
     background: #fff;
     border-right: 1px solid var(--vien);
     display: flex;
     flex-direction: column;
-    padding: 34px 22px 24px;
+    padding: 22px 16px 18px;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
   .thuong-hieu {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 16px;
-    letter-spacing: .04em;
+    letter-spacing: -.01em;
   }
   .thuong-hieu small {
     display: block;
@@ -169,23 +174,134 @@
     height: 25px;
   }
   .nhan-menu {
-    margin: 48px 10px 16px;
-    color: var(--chu-phu);
-    font-size: 10px;
-    font-weight: 600;
+    margin: 18px 12px 6px;
+    color: #8a9a92;
+    font-size: 10.5px;
+    font-weight: 700;
     letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .menu-phan-he {
+    margin-top: 18px;
   }
   .muc-menu {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 13px 15px;
-    border-radius: 7px;
+    gap: 11px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: #33463d;
+    font-size: 13.5px;
+    transition: background-color .15s, color .15s;
+  }
+  .muc-menu svg.lucide {
+    width: 18px;
+    height: 18px;
+    color: #6f8178;
+  }
+  .muc-menu:hover {
+    background: #f1f6f2;
   }
   .dang-chon {
-    background: #eaf3ed;
+    background: #e6f2ea;
     color: var(--color-chinh);
     font-weight: 600;
+  }
+  .dang-chon svg.lucide {
+    color: var(--color-chinh);
+  }
+  .dang-chon::before {
+    content: "";
+    position: absolute;
+    left: -16px;
+    top: 7px;
+    bottom: 7px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-chinh);
+  }
+  /* Đầu trang khu quản lý: liên kết website và tài khoản */
+  .tac-vu-dau-trang {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lien-ket-website {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: var(--color-chinh);
+    font-weight: 600;
+  }
+  .lien-ket-website:hover {
+    background: #eef6f1;
+  }
+  .lien-ket-website svg.lucide {
+    width: 16px;
+    height: 16px;
+  }
+  .the-nguoi-dung {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--vien);
+    border-radius: 999px;
+    transition: border-color .15s;
+  }
+  .the-nguoi-dung:hover {
+    border-color: #b9d3c3;
+  }
+  .the-nguoi-dung .anh-dai-dien {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+  .ten-nguoi-dung {
+    display: grid;
+    line-height: 1.25;
+  }
+  .ten-nguoi-dung strong {
+    font-size: 13px;
+  }
+  .ten-nguoi-dung small {
+    max-width: 220px;
+    overflow: hidden;
+    color: var(--chu-phu);
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .nut-dang-xuat {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f5f2;
+    color: #5b6d64;
+    cursor: pointer;
+  }
+  .nut-dang-xuat:hover {
+    background: #fbeaea;
+    color: #a2382d;
+  }
+  .nut-dang-xuat svg.lucide {
+    width: 18px;
+    height: 18px;
+  }
+  @media (max-width: 700px) {
+    .ten-nguoi-dung,
+    .lien-ket-website span {
+      display: none;
+    }
+    .the-nguoi-dung {
+      padding: 4px;
+    }
   }
   .chan-menu {
     display: flex;
@@ -414,7 +530,8 @@
       position: fixed;
       z-index: 20;
       inset: 68px auto 0 0;
-      width: 245px;
+      width: 260px;
+      height: auto;
       box-shadow: 10px 0 30px #173a2520;
       overflow-y: auto;
     }

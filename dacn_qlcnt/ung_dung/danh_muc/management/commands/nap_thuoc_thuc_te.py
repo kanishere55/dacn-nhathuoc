@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.models import ProtectedError
 from django.utils import timezone
 
-from ung_dung.kho.models import TonKho
+from ung_dung.kho.models import LoThuoc, TonKho
 from ung_dung.kho.services.phieu_nhap import nhap_hang
 from ung_dung.tai_khoan.models import TaiKhoan
 
@@ -49,6 +49,7 @@ class Command(BaseCommand):
             cac_danh_muc = self._danh_muc()
             cac_thuoc = self._thuoc(cac_danh_muc, options["ve_lai_anh"])
             self._khuyen_mai()
+            self._ma_lo()
         self._ton_kho(cac_thuoc, nha_cung_cap)
         self.stdout.write(self.style.SUCCESS(f"Đã nạp {len(cac_thuoc)} thuốc."))
 
@@ -149,6 +150,13 @@ class Command(BaseCommand):
             cac_thuoc.append(thuoc)
         return cac_thuoc
 
+    def _ma_lo(self):
+        """Lô của dữ liệu mô phỏng mang mã MP-...: đổi sang dạng số lô in trên bao bì."""
+        for lo in LoThuoc.objects.filter(ma_lo_thuoc__startswith="MP-").order_by("pk"):
+            nam_sx = lo.ngay_het_han.replace(year=lo.ngay_het_han.year - 2)
+            lo.ma_lo_thuoc = f"{nam_sx:%y%m}{lo.pk % 1000:03d}"
+            lo.save(update_fields=["ma_lo_thuoc"])
+
     def _khuyen_mai(self):
         KhuyenMai.objects.filter(thuoc__la_thuoc_ke_don=True, dang_hoat_dong=True).update(
             dang_hoat_dong=False
@@ -192,7 +200,7 @@ class Command(BaseCommand):
                     cac_dong.append(
                         {
                             "thuoc": thuoc,
-                            "ma_lo_thuoc": f"{thuoc.ma_thuoc[3:]}-{chi_nhanh.pk}{so_lo}{hom_nay:%y%m}",
+                            "ma_lo_thuoc": f"{hom_nay:%y%m}{chi_nhanh.pk}{so_lo}{thuoc.pk % 100:02d}",
                             "ngay_het_han": hom_nay + timedelta(days=30 * thang),
                             "so_luong": ngau_nhien.randint(40, 160)
                             if lon

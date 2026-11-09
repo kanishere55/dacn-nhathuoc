@@ -96,7 +96,7 @@ class QuyenQuanTriKhoTests(TestCase):
         self.assertContains(ton, d.cn.ten_chi_nhanh)
         self.assertContains(ton, d.cn2.ten_chi_nhanh)
         self.client.force_login(d.ql2)
-        self.assertContains(self.client.get(reverse("kho:phieu_kiem_ke_danh_sach")), "Tạo chứng từ")
+        self.assertContains(self.client.get(reverse("kho:phieu_kiem_ke_danh_sach")), "Lập phiếu mới")
 
     def test_quan_tri_van_doi_duoc_trang_thai_lo(self):
         lo = self.ton.lo_thuoc

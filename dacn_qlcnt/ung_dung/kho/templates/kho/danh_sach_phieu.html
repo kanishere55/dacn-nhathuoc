@@ -1,35 +1,28 @@
 {% extends "base.html" %}
+{% block tieu_de %}{{ tieu_de }} · Khu quản lý{% endblock %}
+{% block vi_tri %}{{ tieu_de }}{% endblock %}
 {% block noi_dung %}
-  <h1>{{ tieu_de }}</h1>
-  {% if url_tao %}
-    <a class="nut" href="{% url url_tao %}">Tạo chứng từ</a>
-  {% endif %}
-  <div class="khoi-trang">
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan">CHỨNG TỪ</p>
+      <h1>{{ tieu_de }}</h1>
+      <p>{{ cac_phieu|length }} chứng từ, mới nhất ở trên.</p>
+    </div>
+    {% if url_tao %}<a class="nut" href="{% url url_tao %}"><i data-lucide="plus" aria-hidden="true"></i>Lập phiếu mới</a>{% endif %}
+  </header>
+  <div class="khoi-trang khung-bang">
     <table>
-      <thead>
-        <tr>
-          <th>Chứng từ</th>
-          <th>Người lập</th>
-          <th>Thời điểm</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Mã chứng từ</th><th>Chi nhánh</th><th>Người lập</th><th>Thời điểm</th></tr></thead>
       <tbody>
         {% for phieu in cac_phieu %}
           <tr>
-            <td>
-            {% if url_chi_tiet %}
-              <a href="{% url url_chi_tiet phieu.pk %}">{{ phieu }}</a>
-            {% else %}
-              {{ phieu }}
-            {% endif %}
-            </td>
-            <td>{{ phieu.nguoi_lap }}</td>
-            <td>{{ phieu.thoi_diem_tao|date:"d/m/Y H:i" }}</td>
+            <td>{% if url_chi_tiet %}<a class="duong-dan-noi-dung" href="{% url url_chi_tiet phieu.pk %}">{{ phieu }}</a>{% else %}{{ phieu }}{% endif %}</td>
+            <td>{{ phieu.chi_nhanh.ten_chi_nhanh|default:"—" }}</td>
+            <td>{{ phieu.nguoi_lap.ho_ten|default:phieu.nguoi_lap.ten_dang_nhap }}</td>
+            <td>{{ phieu.thoi_diem_tao|date:"H:i d/m/Y" }}</td>
           </tr>
         {% empty %}
-          <tr>
-            <td>Chưa có chứng từ.</td>
-          </tr>
+          <tr><td colspan="4">Chưa có chứng từ nào.{% if url_tao %} Bấm “Lập phiếu mới” để bắt đầu.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

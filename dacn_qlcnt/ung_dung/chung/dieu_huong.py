@@ -36,6 +36,47 @@ MENU_KHACH = (
 )
 
 
+# Nhóm menu quản lý theo nghiệp vụ; mục không thuộc nhóm nào xếp vào "Khác".
+NHOM_MENU = (
+    ("", ("chung:bang_dieu_khien",)),
+    (
+        "Bán hàng",
+        (
+            "ban_hang:don_hang_danh_sach",
+            "ban_hang:tra_hang_danh_sach",
+            "ban_hang:phieu_ban_danh_sach",
+            "tro_chuyen:danh_sach",
+        ),
+    ),
+    ("Kho", tuple(ten for ten, _, _ in (*KHO, *KHO_QUAN_LY))),
+    ("Danh mục", (*(ten for ten, _, _ in DANH_MUC), "tai_khoan:danh_sach")),
+    ("Phân tích", ("bao_cao:tong_hop", "webgis:ban_do_nhiet", "du_bao:ket_qua")),
+    (
+        "Website",
+        (
+            "noi_dung:banner_danh_sach",
+            "noi_dung:trang_danh_sach",
+            "noi_dung:thong_tin",
+            "thong_bao:nhat_ky_email",
+        ),
+    ),
+)
+
+
+def nhom_menu(cac_muc):
+    theo_ten = {muc["ten"]: muc for muc in cac_muc}
+    ket_qua, da_xep = [], set()
+    for nhan, cac_ten in NHOM_MENU:
+        muc = [theo_ten[ten] for ten in cac_ten if ten in theo_ten]
+        da_xep.update(m["ten"] for m in muc)
+        if muc:
+            ket_qua.append({"nhan": nhan, "cac_muc": muc, "dang_mo": any(m["dang_chon"] for m in muc)})
+    con_lai = [m for m in cac_muc if m["ten"] not in da_xep]
+    if con_lai:
+        ket_qua.append({"nhan": "Khác", "cac_muc": con_lai, "dang_mo": False})
+    return ket_qua
+
+
 def dieu_huong(request):
     nguoi = getattr(request, "user", None) or AnonymousUser()
     ket_qua = getattr(request, "resolver_match", None)
@@ -78,8 +119,18 @@ def dieu_huong(request):
             {"duong_dan": reverse(ten), "nhan": nhan, "dang_chon": trang in cac_trang}
             for ten, nhan, cac_trang in MENU_KHACH
         ],
-        "menu_ung_dung": [
-            {"duong_dan": reverse(ten), "nhan": nhan, "bieu_tuong": icon, "dang_chon": ten == trang}
-            for ten, nhan, icon in cac_muc
-        ],
+        "menu_ung_dung": (
+            menu := [
+                {
+                    "ten": ten,
+                    "duong_dan": reverse(ten),
+                    "nhan": nhan,
+                    "bieu_tuong": icon,
+                    "dang_chon": ten == trang
+                    or (ten.endswith("_danh_sach") and trang.startswith(ten[:-9])),
+                }
+                for ten, nhan, icon in cac_muc
+            ]
+        ),
+        "menu_nhom": nhom_menu(menu),
     }
