@@ -45,6 +45,7 @@
       <h2>Lịch sử</h2>
       {% include "ban_hang/_lich_su.html" %}
       <div class="hanh-dong-khach">
+        {% if co_hoa_don %}<a class="nut" href="{% url 'ban_hang:khach_hoa_don_in' don.pk %}"><i data-lucide="receipt-text" aria-hidden="true"></i>Xem hóa đơn</a>{% endif %}
         <a class="nut nut-phu" href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn nhà thuốc</a>
         {% if duoc_huy %}
           <form method="post" action="{% url 'ban_hang:khach_don_hang_huy' don.pk %}" onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')">

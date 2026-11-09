@@ -1,11 +1,14 @@
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from ung_dung.chung.permissions import NHAN_SU_CHI_NHANH, NHAN_SU_CHUOI, co_vai_tro, yeu_cau_vai_tro
 from ung_dung.kho.forms import DongThuocFormSet
 
 from ..forms import PhieuBanForm
-from ..selectors import chi_tiet_ban, lay_phieu_ban, tong_tien_ban
+from ..hoa_don import du_lieu_hoa_don, ten_tep_pdf, ve_pdf
+from ..selectors import lay_phieu_ban
 from ..services.phieu_ban import ban_tai_quay
 
 
@@ -57,8 +60,32 @@ def tao(request):
 @yeu_cau_vai_tro(*NHAN_SU_CHUOI)
 def chi_tiet(request, ma):
     phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
+    return render(request, "ban_hang/phieu_ban.html", {"hd": du_lieu_hoa_don(phieu)})
+
+
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+def hoa_don_in(request, ma):
+    phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
     return render(
         request,
-        "ban_hang/phieu_ban.html",
-        {"phieu": phieu, "cac_dong": chi_tiet_ban(phieu), "tong_tien": tong_tien_ban(phieu)},
+        "ban_hang/hoa_don/in.html",
+        {
+            "hd": du_lieu_hoa_don(phieu),
+            "url_quay_lai": reverse("ban_hang:phieu_ban_chi_tiet", args=[phieu.pk]),
+            "url_pdf": reverse("ban_hang:phieu_ban_pdf", args=[phieu.pk]),
+        },
     )
+
+
+@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+def hoa_don_pdf(request, ma):
+    phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
+    return tra_pdf(phieu, tai_ve="tai" in request.GET)
+
+
+def tra_pdf(phieu, *, tai_ve):
+    phan_hoi = HttpResponse(ve_pdf(du_lieu_hoa_don(phieu)), content_type="application/pdf")
+    kieu = "attachment" if tai_ve else "inline"
+    phan_hoi["Content-Disposition"] = f'{kieu}; filename="{ten_tep_pdf(phieu)}"'
+    phan_hoi["Cache-Control"] = "private, no-store"
+    return phan_hoi

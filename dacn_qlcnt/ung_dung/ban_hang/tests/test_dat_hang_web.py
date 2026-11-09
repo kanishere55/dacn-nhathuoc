@@ -181,3 +181,76 @@ class DatHangWebTests(TestCase):
         self.assertEqual(
             self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk])).status_code, 404
         )
+
+
+class HoaDonTests(TestCase):
+    def setUp(self):
+        self.d = tao_du_lieu()
+        self.d.khach.email = "khach@example.com"
+        self.d.khach.save()
+        tao_ton(self.d, "L01", ngay=40, luong=3)
+        tao_ton(self.d, "L02", ngay=200, luong=30)
+
+    @mock.patch(DUONG_DI, side_effect=quang_duong(1500))
+    def test_hoa_don_don_giao_hang_cod(self, _):
+        from django.core import mail
+
+        from ..hoa_don import du_lieu_hoa_don, ve_pdf
+        from ..services.dat_hang import dat_hang
+        from ..services.don_hang import giao_cho_van_chuyen, xac_nhan_da_giao, xac_nhan_don
+
+        don = dat_hang(
+            self.d.khach,
+            self.d.cn,
+            [{"thuoc": self.d.thuoc, "so_luong": 5}],
+            hinh_thuc_nhan="giao_hang",
+            phuong_thuc_thanh_toan="cod",
+            giao={
+                "ten_nguoi_nhan": "Lê Hoa",
+                "so_dien_thoai": "0907654321",
+                "dia_chi": "9 Pasteur, Quận 1",
+                "vi_tri": Point(106.70, 10.775, srid=4326),
+                "khoang_cach_met": 1500,
+            },
+        )
+        phieu = xac_nhan_don(self.d.nv, don)
+        hd = du_lieu_hoa_don(phieu)
+        self.assertEqual(
+            [(lo["ma"], lo["so_luong"]) for lo in hd["cac_dong"][0]["cac_lo"]],
+            [("L01", 3), ("L02", 2)],
+        )
+        self.assertEqual(hd["tong"]["tong"], 25000)
+        self.assertEqual(hd["bang_chu"], "Hai mươi lăm nghìn đồng")
+        self.assertEqual(hd["con_phai_thu"], 25000)
+        self.assertTrue(ve_pdf(hd).startswith(b"%PDF"))
+
+        self.client.force_login(self.d.khach)
+        url = reverse("ban_hang:khach_hoa_don_in", args=[don.pk])
+        self.assertEqual(self.client.get(url).status_code, 404)  # chưa hoàn thành
+        giao_cho_van_chuyen(self.d.nv, don)
+        mail.outbox.clear()
+        with self.captureOnCommitCallbacks(execute=True):
+            xac_nhan_da_giao(self.d.nv, don)
+        self.assertEqual(mail.outbox[-1].attachments[0][2], "application/pdf")
+        phan_hoi = self.client.get(url)
+        self.assertContains(phan_hoi, "Hai mươi lăm nghìn đồng")
+        self.assertContains(phan_hoi, "Lô L01")
+        pdf = self.client.get(reverse("ban_hang:khach_hoa_don_pdf", args=[don.pk]) + "?tai=1")
+        self.assertEqual(pdf["Content-Type"], "application/pdf")
+        self.assertIn("attachment", pdf["Content-Disposition"])
+        self.client.force_login(self.d.khac)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_hoa_don_ban_tai_quay_cho_nhan_vien(self):
+        from ..services.phieu_ban import ban_tai_quay
+
+        phieu = ban_tai_quay(self.d.nv, self.d.cn, [{"thuoc": self.d.thuoc, "so_luong": 2}])
+        self.client.force_login(self.d.nv)
+        for ten in ("ban_hang:phieu_ban_chi_tiet", "ban_hang:phieu_ban_in"):
+            phan_hoi = self.client.get(reverse(ten, args=[phieu.pk]))
+            self.assertContains(phan_hoi, "Khách mua tại quầy")
+            self.assertContains(phan_hoi, "Bốn nghìn đồng")
+        self.client.force_login(self.d.ql2)
+        self.assertEqual(
+            self.client.get(reverse("ban_hang:phieu_ban_pdf", args=[phieu.pk])).status_code, 404
+        )

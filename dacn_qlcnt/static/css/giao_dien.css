@@ -4,6 +4,7 @@
 @import "./tai_khoan.css";
 @import "./danh_muc.css";
 @import "./don_hang.css";
+@import "./hoa_don.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {

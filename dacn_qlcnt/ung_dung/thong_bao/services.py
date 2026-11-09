@@ -28,11 +28,14 @@ def mot_dong(van_ban, gioi_han=500):
     return cat_khoang_trang(" ".join(str(van_ban).split()))[:gioi_han] or "Lỗi không rõ"
 
 
-def gui_email(*, loai_email, email_nhan, tieu_de, mau, ngu_canh=None, tai_khoan=None):
+def gui_email(
+    *, loai_email, email_nhan, tieu_de, mau, ngu_canh=None, tai_khoan=None, tep_dinh_kem=()
+):
     """Tạo nhật ký và hẹn gửi khi transaction hiện tại commit.
 
     `mau` là tên mẫu trong thong_bao/email/ (không đuôi). Mẫu văn bản nhận biến
     `an_bi_mat`: bản lưu vào CSDL được dựng với an_bi_mat=True để che OTP.
+    `tep_dinh_kem`: các bộ (tên tệp, bytes, kiểu MIME); chỉ gửi đi, không lưu CSDL.
     """
     ngu_canh = {**ngu_canh_chung(), **(ngu_canh or {}), "tieu_de": tieu_de}
     van_ban = render_to_string(f"thong_bao/email/{mau}.txt", ngu_canh)
@@ -51,6 +54,7 @@ def gui_email(*, loai_email, email_nhan, tieu_de, mau, ngu_canh=None, tai_khoan=
         "tieu_de": tieu_de,
         "van_ban": van_ban,
         "html": html,
+        "tep_dinh_kem": list(tep_dinh_kem),
     }
     transaction.on_commit(lambda: _bat_dau_gui(goi))
     return ban_ghi
@@ -79,6 +83,8 @@ def _gui(goi):
         to=[goi["email_nhan"]],
     )
     thu.attach_alternative(goi["html"], "text/html")
+    for ten, du_lieu, kieu in goi.get("tep_dinh_kem", ()):
+        thu.attach(ten, du_lieu, kieu)
     try:
         thu.send(fail_silently=False)
     except Exception as loi:  # SMTP có thể lỗi mạng, xác thực hoặc từ chối người nhận.

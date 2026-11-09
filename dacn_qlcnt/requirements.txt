@@ -6,6 +6,7 @@ cbor2==6.2.0.post2
 cffi==2.1.1
 channels==4.3.2
 channels_redis==4.3.0
+charset-normalizer==3.5.2
 cloudpickle==3.1.2
 constantly==23.10.4
 cryptography==50.0.2
@@ -32,9 +33,11 @@ pyOpenSSL==26.4.0
 python-dateutil==4.0.0
 python-dotenv==1.2.4
 redis==8.1.0
+reportlab==5.1.0
 ruff==0.17.4
 scikit-learn==1.9.1
 scipy==1.18.1
+segno==1.6.6
 service-identity==26.1.0
 sqlparse==0.6.1
 statsmodels==0.15.0

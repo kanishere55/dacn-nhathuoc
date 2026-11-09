@@ -10,7 +10,7 @@ LOI_NHAN = {
     "cho_xac_nhan": "Nhà thuốc đã nhận đơn và sẽ xác nhận trong thời gian sớm nhất.",
     "dang_chuan_bi": "Dược sĩ đang soạn thuốc cho đơn của bạn.",
     "dang_giao": "Đơn đã được giao cho người vận chuyển, vui lòng để ý điện thoại.",
-    "hoan_thanh": "Đơn đã hoàn tất. Cảm ơn bạn đã tin dùng.",
+    "hoan_thanh": "Đơn đã hoàn tất, hóa đơn bán lẻ được gửi kèm email này. Cảm ơn bạn đã tin dùng.",
     "da_huy": "Đơn đã được hủy.",
     "het_han": "Đơn đặt giữ đã quá hạn nhận tại quầy nên hàng được nhả lại.",
     "giao_that_bai": "Người giao không giao được đơn. Nhà thuốc sẽ liên hệ với bạn.",
@@ -39,10 +39,22 @@ def bao_don_moi(don):
     )
 
 
+def _hoa_don_dinh_kem(don):
+    """Đơn hoàn thành gửi kèm hóa đơn PDF."""
+    from ..hoa_don import du_lieu_hoa_don, ten_tep_pdf, ve_pdf
+    from ..models import PhieuBan
+
+    phieu = PhieuBan.objects.filter(don_hang=don).first()
+    if don.trang_thai != "hoan_thanh" or phieu is None:
+        return ()
+    return ((ten_tep_pdf(phieu), ve_pdf(du_lieu_hoa_don(phieu)), "application/pdf"),)
+
+
 def bao_doi_trang_thai(don, ghi_chu=""):
     if not don.khach_hang.email:
         return
     gui_email(
+        tep_dinh_kem=_hoa_don_dinh_kem(don),
         loai_email="don_hang_cap_nhat",
         email_nhan=don.khach_hang.email,
         tai_khoan=don.khach_hang,

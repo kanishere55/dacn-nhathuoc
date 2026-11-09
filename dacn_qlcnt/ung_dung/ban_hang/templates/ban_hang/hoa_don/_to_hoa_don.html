@@ -1,0 +1,57 @@
+<article class="to-hoa-don{% if hd.da_hoan_kho %} da-hoan-kho{% endif %}" aria-label="Hóa đơn {{ hd.phieu.ma_phieu_ban }}">
+  <header class="dau-hoa-don">
+    <div>
+      <p class="thuong-hieu-hoa-don"><span aria-hidden="true">✚</span>{{ hd.ten_thuong_hieu }}</p>
+      <p class="ten-chi-nhanh-hd">{{ hd.chi_nhanh.ten_chi_nhanh }}</p>
+      <p>{{ hd.chi_nhanh.dia_chi }}{% if hd.chi_nhanh.so_dien_thoai %}<br>Điện thoại: {{ hd.chi_nhanh.so_dien_thoai }}{% endif %}</p>
+    </div>
+    <div class="so-hoa-don">
+      <h2>Hóa đơn bán lẻ</h2>
+      <p>Số <strong>{{ hd.phieu.ma_phieu_ban }}</strong></p>
+      <p>{{ hd.thoi_diem|date:"H:i, d/m/Y" }}</p>
+    </div>
+  </header>
+  <dl class="khach-hoa-don">
+    <div><dt>Khách hàng</dt><dd>{{ hd.khach.ten }}{% if hd.khach.so_dien_thoai %} · {{ hd.khach.so_dien_thoai }}{% endif %}</dd></div>
+    {% if hd.khach.dia_chi %}<div><dt>Giao đến</dt><dd>{{ hd.khach.dia_chi }}</dd></div>{% endif %}
+    {% if hd.don %}<div><dt>Đơn hàng</dt><dd>{{ hd.don.ma_don_hang }}</dd></div>{% endif %}
+    <div><dt>Người bán</dt><dd>{{ hd.nguoi_ban }}</dd></div>
+  </dl>
+  <table class="bang-hoa-don">
+    <thead><tr><th scope="col">#</th><th scope="col">Tên thuốc</th><th scope="col">ĐVT</th><th scope="col" class="so">SL</th><th scope="col" class="so">Đơn giá</th><th scope="col" class="so">Thành tiền</th></tr></thead>
+    <tbody>
+      {% for dong in hd.cac_dong %}
+        <tr>
+          <td>{{ dong.stt }}</td>
+          <td>{{ dong.ten }}{% if dong.ke_don %} <span class="nhan-ke-don-hd">Kê đơn</span>{% endif %}
+            {% if dong.cac_lo %}<small>{% for lo in dong.cac_lo %}Lô {{ lo.ma }} · HSD {{ lo.han_dung|date:"d/m/Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}</small>{% endif %}</td>
+          <td>{{ dong.don_vi }}</td>
+          <td class="so">{{ dong.so_luong|so_nguyen }}</td>
+          <td class="so">{{ dong.don_gia|tien }}</td>
+          <td class="so">{{ dong.thanh_tien|tien }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="cuoi-hoa-don">
+    <div class="thanh-toan-hd">
+      <p class="bang-chu">Bằng chữ: <strong>{{ hd.bang_chu }}</strong></p>
+      {% for khoan in hd.cac_khoan %}
+        <p>{% if khoan.loai_giao_dich == "hoan" %}Đã hoàn{% else %}Đã thu{% endif %} {{ khoan.so_tien|tien }} · {{ khoan.get_phuong_thuc_display }} · {{ khoan.thoi_diem_hoan_tat|date:"H:i d/m/Y" }}</p>
+      {% endfor %}
+      {% if hd.con_phai_thu %}<p class="con-phai-thu">Còn phải thu: <strong>{{ hd.con_phai_thu|tien }}</strong>{% if hd.don.phuong_thuc_thanh_toan == "cod" %} (thu khi giao hàng){% endif %}</p>{% endif %}
+      {% if hd.phieu.da_kiem_tra_don_thuoc %}<p>Bán theo đơn của {{ hd.phieu.ten_nguoi_ke_don }}, {{ hd.phieu.noi_kham_benh }}{% if hd.phieu.ma_don_thuoc %}, mã đơn {{ hd.phieu.ma_don_thuoc }}{% endif %}.</p>{% endif %}
+    </div>
+    <dl class="tong-hoa-don">
+      <div><dt>Tiền hàng</dt><dd>{{ hd.tong.tien_hang|tien }}</dd></div>
+      {% if hd.tong.giam_gia %}<div><dt>Ưu đãi thành viên</dt><dd>-{{ hd.tong.giam_gia|tien }}</dd></div>{% endif %}
+      {% if hd.don.la_giao_hang %}<div><dt>Phí giao hàng</dt><dd>{{ hd.tong.phi_giao|tien }}</dd></div>{% endif %}
+      <div class="tong"><dt>Tổng thanh toán</dt><dd>{{ hd.tong.tong|tien }}</dd></div>
+    </dl>
+  </div>
+  {% if hd.da_hoan_kho %}<p class="dau-hoan-kho" role="note">Phiếu bán đã hoàn kho do đơn bị hủy</p>{% endif %}
+  <footer class="chan-hoa-don">
+    <p>Cảm ơn quý khách. Vui lòng đọc kỹ hướng dẫn sử dụng trước khi dùng thuốc.</p>
+    <p>{{ hd.ghi_chu_phap_ly }}</p>
+  </footer>
+</article>

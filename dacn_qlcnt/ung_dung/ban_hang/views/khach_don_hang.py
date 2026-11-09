@@ -2,15 +2,18 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from ung_dung.chung.permissions import yeu_cau_vai_tro
 
 from ..forms import XuLyDonForm
-from ..models import TRANG_THAI_DON
+from ..hoa_don import du_lieu_hoa_don
+from ..models import TRANG_THAI_DON, PhieuBan
 from ..selectors import lay_chi_tiet_don, lay_don, lay_lich_su
 from ..services.don_hang import huy_don
 from ..services.trang_thai import CHUYEN_HOP_LE, KHACH
+from .phieu_ban import tra_pdf
 
 NHOM_TRANG_THAI = {
     "": ("Tất cả", None),
@@ -76,6 +79,8 @@ def chi_tiet(request, ma):
             "duoc_huy": not don.qua_han_giu
             and KHACH in CHUYEN_HOP_LE.get((don.trang_thai, "da_huy"), set()),
             "form_huy": XuLyDonForm(),
+            "co_hoa_don": don.trang_thai == "hoan_thanh"
+            and PhieuBan.objects.filter(don_hang=don).exists(),
         },
     )
 
@@ -93,3 +98,30 @@ def huy(request, ma):
     else:
         messages.success(request, f"Đã hủy đơn {don.ma_don_hang}.")
     return redirect("ban_hang:khach_don_hang_chi_tiet", ma=don.pk)
+
+
+def _phieu_cua_don_xong(request, ma):
+    """Khách chỉ xem hóa đơn khi đơn đã hoàn thành (đã nhận hàng và trả tiền)."""
+    don = get_object_or_404(lay_don(request.user), pk=ma, trang_thai="hoan_thanh")
+    return get_object_or_404(PhieuBan, don_hang=don)
+
+
+@yeu_cau_vai_tro("khach_hang")
+@require_GET
+def hoa_don_in(request, ma):
+    phieu = _phieu_cua_don_xong(request, ma)
+    return render(
+        request,
+        "ban_hang/hoa_don/in.html",
+        {
+            "hd": du_lieu_hoa_don(phieu),
+            "url_quay_lai": reverse("ban_hang:khach_don_hang_chi_tiet", args=[ma]),
+            "url_pdf": reverse("ban_hang:khach_hoa_don_pdf", args=[ma]),
+        },
+    )
+
+
+@yeu_cau_vai_tro("khach_hang")
+@require_GET
+def hoa_don_pdf(request, ma):
+    return tra_pdf(_phieu_cua_don_xong(request, ma), tai_ve="tai" in request.GET)
