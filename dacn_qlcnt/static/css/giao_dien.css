@@ -440,6 +440,14 @@
   .khung-bang {
     overflow-x: auto;
   }
+  /* Chứng từ kho: tên thuốc đủ rộng để đọc, cột ngày và cột số không ngắt dòng. */
+  .bang-chung-tu td:nth-child(2) {
+    min-width: 180px;
+  }
+  .bang-chung-tu td:nth-child(4),
+  .bang-chung-tu .o-tien {
+    white-space: nowrap;
+  }
   .menu-phan-he {
     display: grid;
     gap: 2px;

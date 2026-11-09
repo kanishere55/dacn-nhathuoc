@@ -22,7 +22,7 @@
     {% endif %}
     <div class="luoi-form">
       {% for truong in form %}
-        <div class="{% if truong.field.widget.input_type == 'checkbox' %}{% elif truong.name in 'noi_dung_trang tieu_de mo_ta duong_dan anh nguon_anh tom_tat dia_chi_tru_so' %}o-rong{% endif %}">
+        <div class="{% if truong.field.widget.input_type == 'checkbox' %}{% elif truong.name in 'noi_dung_trang noi_dung_tin_tuc tieu_de mo_ta duong_dan anh nguon_anh tom_tat dia_chi_tru_so' %}o-rong{% endif %}">
           {% include "components/_o_nhap.html" with truong=truong %}
         </div>
       {% endfor %}

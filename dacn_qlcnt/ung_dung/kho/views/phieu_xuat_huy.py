@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -36,6 +37,8 @@ def tao(request):
         cac_ton = lay_lo_het_han_con_ton(request.user.chi_nhanh)
         ban_dau = {"chi_nhanh": request.user.chi_nhanh, "loai_xuat_huy": "het_han"}
         ban_dau_dong = [{"lo_thuoc": t.lo_thuoc, "so_luong": t.kha_dung} for t in cac_ton[:50]]
+        if not ban_dau_dong:
+            messages.info(request, "Chi nhánh không có lô nào đã hết hạn còn tồn khả dụng.")
     form = PhieuXuatHuyForm(request.POST or None, initial=ban_dau, nguoi=request.user)
     cac_dong = DongXuatHuyFormSet(
         request.POST or None, initial=ban_dau_dong, form_kwargs={"nguoi": request.user}

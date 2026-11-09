@@ -227,11 +227,12 @@ def ve_pdf(du_lieu, ten_thuong_hieu):
             ]
         )
     )
-    so_cot = len(du_lieu["cot"])
-    # Cột thuốc rộng nhất; các cột số chia đều phần còn lại.
-    rong_cot = [0.06, 0.3, 0.15, 0.12]
-    con_lai = (1 - sum(rong_cot)) / (so_cot - 3)
-    rong_cot += [con_lai] * (so_cot - 3)
+    # Độ rộng theo điểm in: STT, lô, hạn dùng và cột số cố định để không ngắt dòng;
+    # cột tên thuốc nhận phần còn lại.
+    so_cot_so = len(du_lieu["cot"]) - 3
+    rong_so = 70 if so_cot_so == 1 else 64
+    rong_cot = [26, None, 60, 72, *([rong_so] * so_cot_so)]
+    rong_cot[1] = rong - sum(w for w in rong_cot if w)
     hang = [[p("STT", dam), *(p(nhan, phai_dam if so else dam) for nhan, so in du_lieu["cot"])]]
     for stt, dong in enumerate(du_lieu["hang"], start=1):
         hang.append(
@@ -243,7 +244,7 @@ def ve_pdf(du_lieu, ten_thuong_hieu):
                 ),
             ]
         )
-    bang = Table(hang, colWidths=[rong * w for w in rong_cot], repeatRows=1)
+    bang = Table(hang, colWidths=rong_cot, repeatRows=1)
     bang.setStyle(
         TableStyle(
             [
@@ -252,6 +253,8 @@ def ve_pdf(du_lieu, ten_thuong_hieu):
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("TOPPADDING", (0, 0), (-1, -1), 4),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
             ]
         )
     )

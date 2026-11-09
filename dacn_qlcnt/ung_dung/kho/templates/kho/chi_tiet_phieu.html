@@ -19,7 +19,7 @@
     {% if chung_tu.ghi_chu %}<p class="mo-ta-tra-hang">{{ chung_tu.ghi_chu|linebreaksbr }}</p>{% endif %}
   </section>
   <section class="khoi-trang khung-bang">
-    <table>
+    <table class="bang-chung-tu">
       <thead>
         <tr><th>STT</th>{% for nhan, la_so in chung_tu.cot %}<th{% if la_so %} class="o-tien"{% endif %}>{{ nhan }}</th>{% endfor %}</tr>
       </thead>
