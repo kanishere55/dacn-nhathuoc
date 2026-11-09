@@ -21,9 +21,7 @@
     gap: 28px;
     padding: clamp(26px, 4vw, 44px);
     color: #e9f5ef;
-    background:
-      radial-gradient(120% 90% at 100% 0%, rgb(255 255 255 / .12), transparent 55%),
-      linear-gradient(160deg, #0f5c48 0%, #116b54 55%, #1a7d63 100%);
+    background: #116b54;
   }
   .gioi-thieu-xac-thuc h2 {
     max-width: 17ch;
@@ -255,7 +253,8 @@
     padding-top: 8px;
   }
   .noi-dung-tai-khoan > .the-khach + .the-khach,
-  .noi-dung-tai-khoan > .the-khach + .luoi-khach-hai {
+  .noi-dung-tai-khoan > .the-khach + .luoi-khach-hai,
+  .noi-dung-tai-khoan > .luoi-khach-hai + .the-khach {
     margin-top: 14px;
   }
   .noi-dung-tai-khoan .tieu-de-khach h1 {
@@ -497,7 +496,7 @@
     margin-bottom: 14px;
     padding: 18px 20px;
     border-radius: var(--radius-the);
-    background: linear-gradient(135deg, #0f5c48 0%, #1a7d63 100%);
+    background: #0f5c48;
     color: #e6f4ee;
   }
   .the-hang-thanh-vien .chu-dan {

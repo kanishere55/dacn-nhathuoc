@@ -178,8 +178,12 @@
   .hero-trang-chu::before {
     content: "";
     position: absolute;
-    inset: 0;
-    background: radial-gradient(60% 90% at 85% 100%, rgb(255 255 255 / 0.45), transparent 70%);
+    right: -6%;
+    bottom: -45%;
+    width: 52%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.35);
     z-index: -1;
   }
   .cac-slide {
