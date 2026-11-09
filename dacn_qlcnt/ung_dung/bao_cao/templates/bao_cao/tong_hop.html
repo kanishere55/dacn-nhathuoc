@@ -1,36 +1,75 @@
 {% extends "base.html" %}
+{% block tieu_de %}Báo cáo · Khu quản lý{% endblock %}
+{% block vi_tri %}Báo cáo{% endblock %}
 {% block noi_dung %}
-  <h1>Báo cáo vận hành</h1>
-  <form method="get" class="khoi-trang form-chinh" hx-get="{% url 'bao_cao:tong_hop' %}" hx-target="#ket-qua-bao-cao" hx-swap="outerHTML" hx-push-url="true">
-    {{ form.as_p }}
-    <button class="nut">Áp dụng bộ lọc</button>
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan">PHÂN TÍCH</p>
+      <h1>Báo cáo vận hành</h1>
+      <p>Doanh thu đã trừ phiếu hoàn kho và tiền hoàn cho khách; biến động kho theo đơn vị cơ sở.</p>
+    </div>
+  </header>
+  <form method="get" class="khoi-trang form-chinh loc-bao-cao" hx-get="{% url 'bao_cao:tong_hop' %}" hx-target="#ket-qua-bao-cao" hx-swap="outerHTML" hx-push-url="true">
+    {% for truong in form %}{% include "components/_o_nhap.html" with truong=truong %}{% endfor %}
+    <div class="nut-loc-bao-cao">
+      <button class="nut" type="submit"><i data-lucide="filter" aria-hidden="true"></i>Xem báo cáo</button>
+    </div>
   </form>
   {% partialdef ket_qua inline %}
-    <section id="ket-qua-bao-cao" class="khoi-trang" aria-live="polite">
+    <section id="ket-qua-bao-cao" aria-live="polite">
       {% if bao_cao %}
-        <h2>Chứng từ trong kỳ</h2>
-        <dl class="luoi-phan-he mt-4">
-          <div><dt>Phiếu nhập</dt><dd>{{ bao_cao.so_phieu_nhap }}</dd></div>
-          <div><dt>Phiếu bán</dt><dd>{{ bao_cao.so_phieu_ban }}</dd></div>
-          <div><dt>Đơn đặt giữ</dt><dd>{{ bao_cao.so_don_giu }}</dd></div>
-          <div><dt>Trả nhà cung cấp</dt><dd>{{ bao_cao.so_phieu_tra }}</dd></div>
-          <div><dt>Điều chuyển</dt><dd>{{ bao_cao.so_phieu_chuyen }}</dd></div>
-          <div><dt>Kiểm kê</dt><dd>{{ bao_cao.so_phieu_kiem_ke }}</dd></div>
-          <div><dt>Tiền bán tại quầy</dt><dd>{{ bao_cao.tong_tien_ban|tien }}</dd></div>
+        <p class="xuat-bao-cao"><a class="nut nut-phu" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}xuat=xlsx"><i data-lucide="file-spreadsheet" aria-hidden="true"></i>Xuất Excel</a></p>
+        <dl class="chi-so-bang-dieu-khien">
+          <div><dt><i data-lucide="banknote" aria-hidden="true"></i>Doanh thu bán hàng</dt><dd>{{ bao_cao.doanh_thu_gop|tien }}</dd></div>
+          <div><dt><i data-lucide="rotate-ccw" aria-hidden="true"></i>Hoàn tiền cho khách</dt><dd>{{ bao_cao.tien_hoan_khach|tien }}</dd></div>
+          <div><dt><i data-lucide="trending-up" aria-hidden="true"></i>Doanh thu thuần</dt><dd>{{ bao_cao.doanh_thu_thuan|tien }}</dd></div>
+          <div><dt><i data-lucide="receipt" aria-hidden="true"></i>Phiếu bán / đơn hàng</dt><dd>{{ bao_cao.so_phieu_ban }} / {{ bao_cao.so_don_giu }}</dd></div>
         </dl>
-        <div class="khung-bang">
+        <div class="luoi-bang-dieu-khien">
+          <section class="khoi-trang khung-bang" aria-labelledby="ban-chay">
+            <h2 id="ban-chay">Thuốc bán chạy</h2>
+            <table>
+              <thead><tr><th>Thuốc</th><th class="o-tien">Số lượng</th><th class="o-tien">Doanh thu</th></tr></thead>
+              <tbody>
+                {% for d in bao_cao.ban_chay %}
+                  <tr><td>{{ d.thuoc__ten_thuoc }}<small class="chu-phu-bang">{{ d.thuoc__ma_thuoc }}</small></td><td class="o-tien">{{ d.tong_so_luong|so_nguyen }} {{ d.thuoc__don_vi_tinh__ten_don_vi_tinh|lower }}</td><td class="o-tien">{{ d.doanh_thu|tien }}</td></tr>
+                {% empty %}<tr><td colspan="3">Chưa có phiếu bán trong kỳ.</td></tr>{% endfor %}
+              </tbody>
+            </table>
+          </section>
+          <div>
+            <section class="khoi-trang" aria-labelledby="phuong-thuc">
+              <h2 id="phuong-thuc">Đã thu theo phương thức</h2>
+              <dl class="bang-tien-don">
+                {% for ten, so_tien in bao_cao.theo_phuong_thuc %}<div><dt>{{ ten }}</dt><dd>{{ so_tien|tien }}</dd></div>{% empty %}<p>Chưa có khoản thu trong kỳ.</p>{% endfor %}
+                {% if bao_cao.tien_hoan_kho %}<div><dt>Phiếu đã hoàn kho</dt><dd>{{ bao_cao.tien_hoan_kho|tien }}</dd></div>{% endif %}
+              </dl>
+            </section>
+            <section class="khoi-trang" aria-labelledby="chung-tu">
+              <h2 id="chung-tu">Chứng từ trong kỳ</h2>
+              <dl class="bang-tien-don">
+                <div><dt>Phiếu nhập</dt><dd>{{ bao_cao.so_phieu_nhap }}</dd></div>
+                <div><dt>Trả nhà cung cấp</dt><dd>{{ bao_cao.so_phieu_tra }}</dd></div>
+                <div><dt>Điều chuyển</dt><dd>{{ bao_cao.so_phieu_chuyen }}</dd></div>
+                <div><dt>Kiểm kê</dt><dd>{{ bao_cao.so_phieu_kiem_ke }}</dd></div>
+                <div><dt>Tiền bán tại quầy và đơn</dt><dd>{{ bao_cao.tong_tien_ban|tien }}</dd></div>
+              </dl>
+            </section>
+          </div>
+        </div>
+        <section class="khoi-trang khung-bang" aria-labelledby="bien-dong">
+          <h2 id="bien-dong">Biến động kho trong kỳ và tồn khả dụng hiện tại</h2>
           <table>
-            <caption>Biến động trong kỳ và tồn khả dụng hiện tại theo đơn vị</caption>
-            <thead><tr><th scope="col">Đơn vị</th><th scope="col">Nhập</th><th scope="col">Bán</th><th scope="col">Trả NCC</th><th scope="col">Chuyển đi</th><th scope="col">Chuyển đến</th><th scope="col">Điều chỉnh</th><th scope="col">Khả dụng hiện tại</th></tr></thead>
+            <thead><tr><th scope="col">Đơn vị</th><th scope="col">Nhập</th><th scope="col">Bán</th><th scope="col">Trả NCC</th><th scope="col">Chuyển đi</th><th scope="col">Chuyển đến</th><th scope="col">Điều chỉnh</th><th scope="col">Khả dụng</th></tr></thead>
             <tbody>
               {% for don_vi, dong in bao_cao.cac_luong %}
-                <tr><td>{{ don_vi }}</td><td>{{ dong.nhap|default:0 }}</td><td>{{ dong.ban|default:0 }}</td><td>{{ dong.tra|default:0 }}</td><td>{{ dong.chuyen_di|default:0 }}</td><td>{{ dong.chuyen_den|default:0 }}</td><td>{{ dong.dieu_chinh|default:0 }}</td><td>{{ dong.kha_dung|default:0 }}</td></tr>
+                <tr><td>{{ don_vi }}</td><td>{{ dong.nhap|default:0|so_nguyen }}</td><td>{{ dong.ban|default:0|so_nguyen }}</td><td>{{ dong.tra|default:0|so_nguyen }}</td><td>{{ dong.chuyen_di|default:0|so_nguyen }}</td><td>{{ dong.chuyen_den|default:0|so_nguyen }}</td><td>{{ dong.dieu_chinh|default:0|so_nguyen }}</td><td>{{ dong.kha_dung|default:0|so_nguyen }}</td></tr>
               {% empty %}<tr><td colspan="8">Chưa có dữ liệu trong phạm vi.</td></tr>{% endfor %}
             </tbody>
           </table>
-        </div>
+        </section>
       {% else %}
-        <p role="alert">Bộ lọc chưa hợp lệ.</p>{{ form.errors }}
+        <p class="thong-bao thong-bao-loi" role="alert">Bộ lọc chưa hợp lệ, hãy kiểm tra ngày bắt đầu và kết thúc.</p>
       {% endif %}
     </section>
   {% endpartialdef %}

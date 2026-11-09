@@ -22,7 +22,7 @@ class BaoCaoTests(TestCase):
         ngay = timezone.localdate()
         pham_vi = lay_bao_cao(d.ql, ngay, ngay)
         self.assertEqual((pham_vi["so_phieu_ban"], pham_vi["tong_tien_ban"]), (1, 6000))
-        self.assertEqual(dict(pham_vi["cac_luong"])["VIEN"]["kha_dung"], 17)
+        self.assertEqual(dict(pham_vi["cac_luong"])["Viên"]["kha_dung"], 17)
         self.assertEqual(lay_bao_cao(d.admin, ngay, ngay)["tong_tien_ban"], 20000)
         self.client.force_login(d.ql)
         self.assertContains(self.client.get(reverse("bao_cao:tong_hop")), "Chứng từ trong kỳ")
@@ -31,7 +31,7 @@ class BaoCaoTests(TestCase):
             {"tu_ngay": ngay.isoformat(), "den_ngay": ngay.isoformat(), "chi_nhanh": d.cn2.pk},
             headers={"HX-Request": "true"},
         )
-        self.assertContains(tra_ve, "Bộ lọc chưa hợp lệ.")
+        self.assertContains(tra_ve, "Bộ lọc chưa hợp lệ")
         self.assertNotContains(tra_ve, "<html")
 
         d.cn2.dang_hoat_dong = False
@@ -42,5 +42,48 @@ class BaoCaoTests(TestCase):
             {"tu_ngay": ngay.isoformat(), "den_ngay": ngay.isoformat(), "chi_nhanh": d.cn2.pk},
         )
         self.assertContains(tra_ve, "Chứng từ trong kỳ")
-        self.assertNotContains(tra_ve, "Bộ lọc chưa hợp lệ.")
+        self.assertNotContains(tra_ve, "Bộ lọc chưa hợp lệ")
         self.assertEqual(lay_bao_cao(d.admin, ngay, ngay, d.cn2)["tong_tien_ban"], 14000)
+
+
+class DoanhThuVaExcelTests(TestCase):
+    def test_tru_hoan_kho_hoan_tien_va_xuat_excel(self):
+        from io import BytesIO
+
+        from django.contrib.gis.geos import Point
+        from openpyxl import load_workbook
+
+        from ung_dung.ban_hang.services.dat_hang import dat_hang
+        from ung_dung.ban_hang.services.don_hang import huy_don, xac_nhan_don
+        from ung_dung.ban_hang.services.phieu_ban import ban_tai_quay
+        from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
+
+        d = tao_du_lieu()
+        tao_ton(d, luong=50)
+        ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
+        don = dat_hang(
+            d.khach,
+            d.cn,
+            [{"thuoc": d.thuoc, "so_luong": 5}],
+            hinh_thuc_nhan="giao_hang",
+            phuong_thuc_thanh_toan="cod",
+            giao={
+                "ten_nguoi_nhan": "A",
+                "so_dien_thoai": "0901234567",
+                "dia_chi": "Q1",
+                "vi_tri": Point(106.7, 10.77, srid=4326),
+                "khoang_cach_met": 900,
+            },
+        )
+        xac_nhan_don(d.nv, don)
+        huy_don(d.nv, don, "Khách đổi ý")
+        hom_nay = timezone.localdate()
+        bao_cao = lay_bao_cao(d.ql, hom_nay, hom_nay)
+        self.assertEqual((bao_cao["doanh_thu_gop"], bao_cao["tien_hoan_kho"]), (6000, 10000))
+        self.assertEqual(bao_cao["ban_chay"][0]["tong_so_luong"], 3)
+        self.client.force_login(d.ql)
+        phan_hoi = self.client.get(reverse("bao_cao:tong_hop") + "?xuat=xlsx")
+        self.assertIn("spreadsheetml", phan_hoi["Content-Type"])
+        so = load_workbook(BytesIO(phan_hoi.content))
+        self.assertEqual(so.sheetnames, ["Tổng hợp", "Thuốc bán chạy", "Biến động kho"])
+        self.assertEqual(so["Tổng hợp"]["B6"].value, 6000)

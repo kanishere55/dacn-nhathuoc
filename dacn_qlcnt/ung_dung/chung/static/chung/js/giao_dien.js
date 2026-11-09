@@ -55,3 +55,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// Hiện dần các khối khi cuộn tới (trang khách); tắt khi người dùng chọn giảm chuyển động.
+(() => {
+  if (!('IntersectionObserver' in window)) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cacKhoi = document.querySelectorAll('.noi-dung-khach .muc-khach, .noi-dung-khach .luoi-thuoc-khach > *');
+  if (!cacKhoi.length) return;
+  document.documentElement.classList.add('hieu-ung-cuon');
+  const quanSat = new IntersectionObserver((cacMuc) => {
+    cacMuc.forEach((muc) => {
+      if (!muc.isIntersecting) return;
+      muc.target.classList.add('da-hien');
+      quanSat.unobserve(muc.target);
+    });
+  }, { rootMargin: '0px 0px -40px 0px', threshold: 0.05 });
+  cacKhoi.forEach((khoi, i) => {
+    khoi.style.setProperty('--tre', `${(i % 4) * 60}ms`);
+    quanSat.observe(khoi);
+  });
+})();

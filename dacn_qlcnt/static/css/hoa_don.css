@@ -274,3 +274,60 @@
     }
   }
 }
+
+@layer components {
+  .loc-bao-cao {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: end;
+    gap: 12px 16px;
+  }
+  .loc-bao-cao .nhom-truong {
+    margin: 0;
+  }
+  .nut-loc-bao-cao {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .nut-loc-bao-cao .nut {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nut-loc-bao-cao svg.lucide {
+    width: 16px;
+    height: 16px;
+  }
+  .xuat-bao-cao {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 -6px;
+  }
+  .xuat-bao-cao .nut {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .xuat-bao-cao svg.lucide {
+    width: 16px;
+    height: 16px;
+  }
+  .chu-phu-bang {
+    display: block;
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+  #ket-qua-bao-cao .khoi-trang + .khoi-trang,
+  #ket-qua-bao-cao .luoi-bang-dieu-khien {
+    margin-top: 16px;
+  }
+}
+
+@layer components {
+  #ket-qua-bao-cao h2 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+}

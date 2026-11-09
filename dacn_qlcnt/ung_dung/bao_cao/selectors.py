@@ -3,7 +3,7 @@ from datetime import datetime, time, timedelta
 from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.utils import timezone
 
-from ung_dung.ban_hang.models import ChiTietPhieuBan, DonHang, PhieuBan
+from ung_dung.ban_hang.models import ChiTietPhieuBan, DonHang, PhieuBan, PhieuHoanKho
 from ung_dung.chung.permissions import kiem_tra_vai_tro
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 from ung_dung.kho.models import (
@@ -17,6 +17,7 @@ from ung_dung.kho.models import (
     PhieuTraNhaCungCap,
 )
 from ung_dung.kho.selectors import lay_ton_kha_dung
+from ung_dung.thanh_toan.models import PHUONG_THUC, GiaoDichThanhToan
 
 
 def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
@@ -83,10 +84,48 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
         ),
     ]
     for ten, tap, duong_dan, bieu_thuc in cac_nhom:
-        cot = f"{duong_dan}__don_vi_tinh__ma_don_vi_tinh"
+        cot = f"{duong_dan}__don_vi_tinh__ten_don_vi_tinh"
         for dong in tap.order_by().values(cot).annotate(tong=Sum(bieu_thuc)):
             cac_luong.setdefault(dong[cot], {})[ten] = dong["tong"]
+    # Doanh thu: phiếu bán trong kỳ trừ phiếu đã hoàn kho (đơn hủy sau khi xuất) và tiền
+    # đã hoàn cho khách trong kỳ (hủy đơn trả trước, trả hàng).
+    hoan_kho = PhieuHoanKho.objects.filter(phieu_ban__in=phieu_ban).values("phieu_ban")
+    dong_hop_le = dong_ban.exclude(phieu_ban__in=hoan_kho)
+    doanh_thu_gop = dong_hop_le.aggregate(tong=Sum(tien, default=0))["tong"]
+    tien_hoan_kho = dong_ban.filter(phieu_ban__in=hoan_kho).aggregate(tong=Sum(tien, default=0))[
+        "tong"
+    ]
+    giao_dich = GiaoDichThanhToan.objects.filter(
+        Q(don_hang__chi_nhanh__in=cac_chi_nhanh) | Q(phieu_ban__chi_nhanh__in=cac_chi_nhanh),
+        trang_thai="thanh_cong",
+        thoi_diem_hoan_tat__gte=tu_luc,
+        thoi_diem_hoan_tat__lt=den_luc,
+    )
+    tien_hoan_khach = giao_dich.filter(loai_giao_dich="hoan").aggregate(
+        tong=Sum("so_tien", default=0)
+    )["tong"]
+    ten_phuong_thuc = dict(PHUONG_THUC)
+    theo_phuong_thuc = [
+        (ten_phuong_thuc.get(d["phuong_thuc"], d["phuong_thuc"]), d["tong"])
+        for d in giao_dich.filter(loai_giao_dich="thu")
+        .values("phuong_thuc")
+        .annotate(tong=Sum("so_tien"))
+        .order_by("-tong")
+    ]
+    ban_chay = list(
+        dong_hop_le.values(
+            "thuoc__ma_thuoc", "thuoc__ten_thuoc", "thuoc__don_vi_tinh__ten_don_vi_tinh"
+        )
+        .annotate(doanh_thu=Sum(tien), tong_so_luong=Sum("so_luong"))
+        .order_by("-doanh_thu")[:10]
+    )
     return {
+        "doanh_thu_gop": doanh_thu_gop,
+        "tien_hoan_kho": tien_hoan_kho,
+        "tien_hoan_khach": tien_hoan_khach,
+        "doanh_thu_thuan": doanh_thu_gop - tien_hoan_khach,
+        "theo_phuong_thuc": theo_phuong_thuc,
+        "ban_chay": ban_chay,
         "so_phieu_nhap": phieu_nhap.count(),
         "so_phieu_ban": phieu_ban.count(),
         "so_phieu_tra": phieu_tra.count(),
