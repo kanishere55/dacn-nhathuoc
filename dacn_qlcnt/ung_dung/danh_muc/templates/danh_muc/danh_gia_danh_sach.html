@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block tieu_de %}Đánh giá thuốc · Khu quản lý{% endblock %}
+{% block vi_tri %}Đánh giá thuốc{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">DANH MỤC</p>
+    <h1>Đánh giá thuốc</h1>
+    <p>Chỉ khách đã nhận thuốc mới đánh giá được. Ẩn nhận xét quảng cáo, lộ thông tin cá nhân hoặc khuyên dùng thuốc sai.</p>
+  </header>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Thuốc</th><th>Khách</th><th>Sao</th><th>Nhận xét</th><th>Ngày</th><th></th></tr></thead>
+      <tbody>
+        {% for dg in trang %}
+          <tr{% if not dg.dang_hien_thi %} class="dong-da-an"{% endif %}>
+            <td>{{ dg.thuoc.ten_thuoc }}</td>
+            <td>{{ dg.khach_hang.ho_ten|default:dg.khach_hang.ten_dang_nhap }}</td>
+            <td>{{ dg.so_sao }}★</td>
+            <td>{{ dg.noi_dung_danh_gia|default:"—"|truncatechars:140 }}</td>
+            <td>{{ dg.thoi_diem_tao|date:"d/m/Y" }}</td>
+            <td><form method="post" action="{% url 'danh_muc:danh_gia_doi_hien_thi' dg.pk %}">{% csrf_token %}<button class="nut nut-phu" type="submit">{% if dg.dang_hien_thi %}Ẩn{% else %}Hiện lại{% endif %}</button></form></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">Chưa có đánh giá nào.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

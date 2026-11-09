@@ -49,7 +49,10 @@ NHOM_MENU = (
         ),
     ),
     ("Kho", tuple(ten for ten, _, _ in (*KHO, *KHO_QUAN_LY))),
-    ("Danh mục", (*(ten for ten, _, _ in DANH_MUC), "tai_khoan:danh_sach")),
+    (
+        "Danh mục",
+        (*(ten for ten, _, _ in DANH_MUC), "danh_muc:danh_gia_danh_sach", "tai_khoan:danh_sach"),
+    ),
     ("Phân tích", ("bao_cao:tong_hop", "webgis:ban_do_nhiet", "du_bao:ket_qua")),
     (
         "Website",
@@ -70,7 +73,9 @@ def nhom_menu(cac_muc):
         muc = [theo_ten[ten] for ten in cac_ten if ten in theo_ten]
         da_xep.update(m["ten"] for m in muc)
         if muc:
-            ket_qua.append({"nhan": nhan, "cac_muc": muc, "dang_mo": any(m["dang_chon"] for m in muc)})
+            ket_qua.append(
+                {"nhan": nhan, "cac_muc": muc, "dang_mo": any(m["dang_chon"] for m in muc)}
+            )
     con_lai = [m for m in cac_muc if m["ten"] not in da_xep]
     if con_lai:
         ket_qua.append({"nhan": "Khác", "cac_muc": con_lai, "dang_mo": False})
@@ -92,6 +97,8 @@ def dieu_huong(request):
         cac_muc.extend(DANH_MUC)
         cac_muc.extend(KHO)
         cac_muc.append(("ban_hang:phieu_ban_danh_sach", "Bán tại quầy", "receipt"))
+    if quan_tri:
+        cac_muc.append(("danh_muc:danh_gia_danh_sach", "Đánh giá thuốc", "star"))
     if quan_tri or quan_ly:
         cac_muc.extend(KHO_QUAN_LY)
         cac_muc.append(("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"))

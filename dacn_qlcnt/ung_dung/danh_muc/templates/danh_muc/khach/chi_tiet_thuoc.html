@@ -30,6 +30,7 @@
         {% if thuoc.la_thuoc_ke_don %}<span class="nhan-ke-don"><i data-lucide="file-text" aria-hidden="true"></i>Thuốc kê đơn</span>{% else %}<span class="nhan-khong-ke-don">Không kê đơn</span>{% endif %}
       </div>
       <h1 id="ten-thuoc">{{ thuoc.ten_thuoc }}</h1>
+      {% if danh_gia.so_luong %}<a class="tom-tat-sao" href="#danh-gia"><i data-lucide="star" aria-hidden="true"></i>{{ danh_gia.trung_binh|floatformat:1 }} <span>· {{ danh_gia.so_luong }} đánh giá</span></a>{% endif %}
       <p class="ma-thuoc-khach">Mã {{ thuoc.ma_thuoc }}{% if thuoc.so_dang_ky %} · SĐK {{ thuoc.so_dang_ky }}{% endif %} · {{ thuoc.nha_san_xuat }}</p>
       <div class="khoi-gia-thuoc">
         <p class="gia-thuoc-khach">{{ thuoc.don_gia|tien }} <span>/ {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span></p>
@@ -72,6 +73,45 @@
       <p class="ghi-chu-khach">Thông tin chỉ để tham khảo, không thay thế tư vấn của bác sĩ hoặc dược sĩ. Đọc kỹ hướng dẫn sử dụng trước khi dùng.</p>
     </section>
   {% endif %}
+  <section class="the-khach khoi-danh-gia" id="danh-gia" aria-labelledby="tieu-de-danh-gia">
+    <h2 id="tieu-de-danh-gia">Đánh giá của khách đã mua</h2>
+    <div class="luoi-danh-gia">
+      <div class="diem-danh-gia">
+        <strong>{% if danh_gia.so_luong %}{{ danh_gia.trung_binh|floatformat:1 }}{% else %}–{% endif %}</strong>
+        <span class="cac-sao" aria-hidden="true">{% for _ in "12345" %}<i data-lucide="star" class="{% if forloop.counter <= danh_gia.sao_tron %}sao-day{% endif %}"></i>{% endfor %}</span>
+        <small>{{ danh_gia.so_luong }} đánh giá</small>
+      </div>
+      <ul class="phan-bo-sao">
+        {% for sao, so, phan_tram in danh_gia.phan_bo %}
+          <li><span>{{ sao }} sao</span><span class="thanh-sao"><span style="width: {{ phan_tram }}%"></span></span><small>{{ so }}</small></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% if duoc_danh_gia %}
+      <form method="post" action="{% url 'danh_muc:khach_danh_gia_thuoc' thuoc.ma_thuoc %}" class="form-danh-gia" x-data="{ sao: {{ danh_gia_cua_toi.so_sao|default:0 }} }">
+        {% csrf_token %}
+        <p>{% if danh_gia_cua_toi %}Sửa đánh giá của bạn{% else %}Bạn đã mua thuốc này, hãy chia sẻ trải nghiệm{% endif %}</p>
+        <div class="chon-sao" role="radiogroup" aria-label="Số sao">
+          {% for so in "12345" %}
+            <label :class="{ 'sao-day': sao >= {{ so }} }"><input type="radio" name="so_sao" value="{{ so }}" x-model.number="sao" required{% if danh_gia_cua_toi.so_sao|stringformat:"s" == so %} checked{% endif %}><i data-lucide="star" aria-hidden="true"></i><span class="sr-only">{{ so }} sao</span></label>
+          {% endfor %}
+        </div>
+        <textarea name="noi_dung" rows="3" maxlength="1000" placeholder="Thuốc có hiệu quả không, đóng gói và giao hàng thế nào? Không ghi thông tin cá nhân.">{{ danh_gia_cua_toi.noi_dung_danh_gia }}</textarea>
+        <button class="nut" type="submit">Gửi đánh giá</button>
+      </form>
+    {% endif %}
+    <ul class="cac-danh-gia">
+      {% for dg in danh_gia.moi_nhat %}
+        <li>
+          <div><strong>{{ dg.khach_hang.ho_ten|default:dg.khach_hang.ten_dang_nhap|slice:":1" }}***</strong><span class="cac-sao nho" aria-label="{{ dg.so_sao }} sao">{% for _ in "12345" %}<i data-lucide="star" class="{% if forloop.counter <= dg.so_sao %}sao-day{% endif %}" aria-hidden="true"></i>{% endfor %}</span><small>{{ dg.thoi_diem_tao|date:"d/m/Y" }} · Đã mua hàng</small></div>
+          {% if dg.noi_dung_danh_gia %}<p>{{ dg.noi_dung_danh_gia|linebreaksbr }}</p>{% endif %}
+        </li>
+      {% empty %}
+        <li class="chua-co-danh-gia">Chưa có đánh giá. Khách đã nhận thuốc qua đơn hàng có thể đánh giá tại đây.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
   {% if cung_danh_muc %}
     <section class="muc-khach" aria-labelledby="cung-danh-muc">
       <div class="dau-muc-khach"><h2 id="cung-danh-muc">Cùng danh mục</h2></div>

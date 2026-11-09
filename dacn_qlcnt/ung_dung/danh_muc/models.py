@@ -652,3 +652,61 @@ class KhuyenMai(models.Model):
 
     def __str__(self):
         return f"{self.ten_khuyen_mai} (-{self.phan_tram_giam}%)"
+
+
+class DanhGiaThuoc(models.Model):
+    id_danh_gia_thuoc = models.BigAutoField(
+        primary_key=True,
+        db_column="id_danh_gia_thuoc",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    thuoc = models.ForeignKey(
+        "danh_muc.Thuoc",
+        on_delete=models.PROTECT,
+        related_name="cac_danh_gia",
+        db_index=False,
+        db_column="id_thuoc",
+        db_comment="Thuốc được đánh giá.",
+    )
+    khach_hang = models.ForeignKey(
+        "tai_khoan.TaiKhoan",
+        on_delete=models.PROTECT,
+        db_column="id_tai_khoan_khach",
+        db_comment="Khách đã nhận thuốc qua đơn hoàn thành; mỗi khách một đánh giá cho một thuốc.",
+    )
+    so_sao = models.SmallIntegerField(
+        db_column="so_sao", db_comment="Điểm từ 1 đến 5 sao do khách chọn."
+    )
+    noi_dung_danh_gia = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="noi_dung_danh_gia",
+        db_comment="Nhận xét của khách; văn bản nhiều dòng, rỗng khi chỉ chấm sao.",
+    )
+    dang_hien_thi = models.BooleanField(
+        default=True,
+        db_default=True,
+        db_column="dang_hien_thi",
+        db_comment="Quản trị ẩn nhận xét vi phạm (quảng cáo, thông tin cá nhân) mà không xóa.",
+    )
+    thoi_diem_tao = models.DateTimeField(
+        db_default=Now(), db_column="thoi_diem_tao", db_comment="Lần khách gửi hoặc sửa đánh giá."
+    )
+
+    class Meta:
+        db_table = "danh_gia_thuoc"
+        db_table_comment = "Mỗi hàng là đánh giá của một khách cho một thuốc đã mua."
+        verbose_name = "đánh giá thuốc"
+        ordering = ["-thoi_diem_tao", "-id_danh_gia_thuoc"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["thuoc", "khach_hang"],
+                name=ten_rang_buoc("duy_nhat", "danh_gia_thuoc", "id_thuoc", "id_tai_khoan_khach"),
+            ),
+            models.CheckConstraint(
+                condition=Q(so_sao__gte=1, so_sao__lte=5),
+                name=ten_rang_buoc("kiem_tra", "danh_gia_thuoc", "so_sao_hop_le"),
+            ),
+            *rang_buoc_van_ban("danh_gia_thuoc", "noi_dung_danh_gia", rong=True, nhieu_dong=True),
+        ]

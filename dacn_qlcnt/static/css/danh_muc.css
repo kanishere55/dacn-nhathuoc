@@ -459,3 +459,181 @@
     }
   }
 }
+
+@layer components {
+  /* Đánh giá thuốc */
+  .khoi-danh-gia {
+    margin-top: 16px;
+    padding: clamp(16px, 2.6vw, 26px);
+  }
+  .khoi-danh-gia h2 {
+    margin-bottom: 14px;
+  }
+  .luoi-danh-gia {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 420px);
+    align-items: center;
+    gap: 16px 32px;
+  }
+  .diem-danh-gia {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #f6f9f7;
+  }
+  .diem-danh-gia > strong {
+    font-size: 38px;
+    line-height: 1;
+  }
+  .cac-sao {
+    display: inline-flex;
+    gap: 2px;
+    color: #d0d7d3;
+  }
+  .cac-sao svg.lucide {
+    width: 18px;
+    height: 18px;
+  }
+  .cac-sao.nho svg.lucide {
+    width: 14px;
+    height: 14px;
+  }
+  .sao-day,
+  .cac-sao .sao-day {
+    color: #f2a516;
+    fill: #f2a516;
+  }
+  .diem-danh-gia small {
+    color: var(--chu-phu);
+  }
+  .phan-bo-sao {
+    display: grid;
+    gap: 6px;
+  }
+  .phan-bo-sao li {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .thanh-sao {
+    height: 8px;
+    border-radius: 99px;
+    background: #edf1ee;
+    overflow: hidden;
+  }
+  .thanh-sao span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #f2a516;
+  }
+  .form-danh-gia {
+    display: grid;
+    gap: 10px;
+    max-width: 640px;
+    margin-top: 18px;
+    padding: 14px;
+    border: 1px dashed #c9d8ce;
+    border-radius: 12px;
+  }
+  .form-danh-gia textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #c9d8ce;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .form-danh-gia .nut {
+    justify-self: start;
+  }
+  .chon-sao {
+    display: flex;
+    gap: 4px;
+  }
+  .chon-sao label {
+    color: #cfd8d3;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .chon-sao label:hover {
+    transform: scale(1.12);
+  }
+  .chon-sao input {
+    position: absolute;
+    opacity: 0;
+  }
+  .chon-sao svg.lucide {
+    width: 30px;
+    height: 30px;
+  }
+  .chon-sao label.sao-day {
+    color: #f2a516;
+  }
+  .chon-sao label.sao-day svg {
+    fill: #f2a516;
+  }
+  .chon-sao input:focus-visible + svg {
+    outline: 3px solid #c48230;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .cac-danh-gia {
+    display: grid;
+    margin-top: 16px;
+  }
+  .cac-danh-gia li {
+    padding: 12px 0;
+    border-top: 1px solid var(--vien);
+  }
+  .cac-danh-gia li > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+  }
+  .cac-danh-gia small {
+    color: var(--chu-phu);
+  }
+  .cac-danh-gia p {
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+  .chua-co-danh-gia {
+    color: var(--chu-phu);
+  }
+  @media (max-width: 560px) {
+    .luoi-danh-gia {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+@layer components {
+  .dong-da-an td {
+    color: #9aa9a1;
+  }
+}
+
+@layer components {
+  .tom-tat-sao {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+  .tom-tat-sao svg.lucide {
+    width: 16px;
+    height: 16px;
+    color: #f2a516;
+    fill: #f2a516;
+  }
+  .tom-tat-sao span {
+    color: var(--chu-phu);
+    font-weight: 400;
+  }
+}

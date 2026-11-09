@@ -18,7 +18,7 @@ TU_VUNG = frozenset(
     ngan nuoc pham phu ta tac thi tram y
     bai bi chua chuan den do hoan lich met moi niem phi phuong thanh that tien toan tong yet
     benh chung dich kham tat tham
-    choi cod duyet momo quay xu
+    choi cod duyet momo quay sao xu
     banner doanh giay hieu hotline kinh lam lien mau nen nut thuong tom viec
     """.split()
 )

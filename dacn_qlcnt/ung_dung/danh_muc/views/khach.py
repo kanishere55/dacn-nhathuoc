@@ -1,12 +1,16 @@
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from ung_dung.ban_hang.forms import ThemThuocVaoGioForm
+from ung_dung.chung.permissions import yeu_cau_vai_tro
 from ung_dung.chung.van_ban import cat_khoang_trang
 
-from ..models import AnhChiNhanh, AnhThuoc
+from ..models import AnhChiNhanh, AnhThuoc, DanhGiaThuoc
 from ..selectors import (
     SAP_XEP_THUOC,
     lay_chi_nhanh_cong_khai,
@@ -14,6 +18,7 @@ from ..selectors import (
     lay_nhom_thuoc_cong_khai,
     lay_thuoc_cong_khai,
 )
+from ..services.danh_gia import da_mua, luu_danh_gia, tom_tat_danh_gia
 
 TEN_SAP_XEP = {
     "ten": "Tên A–Z",
@@ -92,6 +97,13 @@ def chi_tiet_thuoc(request, ma):
             "cac_anh": cac_anh,
             "cac_muc_noi_dung": cac_muc_noi_dung,
             "cung_danh_muc": cung_danh_muc,
+            "danh_gia": tom_tat_danh_gia(thuoc),
+            "duoc_danh_gia": request.user.is_authenticated
+            and getattr(request.user, "vai_tro", "") == "khach_hang"
+            and da_mua(request.user, thuoc),
+            "danh_gia_cua_toi": DanhGiaThuoc.objects.filter(
+                thuoc=thuoc, khach_hang_id=getattr(request.user, "pk", None)
+            ).first(),
             "form_them": ThemThuocVaoGioForm(initial={"so_luong": 1}),
         },
     )
@@ -110,3 +122,18 @@ def chi_tiet_chi_nhanh(request, ma):
             "dang_mo_cua": chi_nhanh.gio_mo_cua <= bay_gio < chi_nhanh.gio_dong_cua,
         },
     )
+
+
+@require_POST
+@yeu_cau_vai_tro("khach_hang")
+def danh_gia_thuoc(request, ma):
+    thuoc = get_object_or_404(lay_thuoc_cong_khai(), ma_thuoc=ma)
+    try:
+        luu_danh_gia(
+            request.user, thuoc, request.POST.get("so_sao", 0), request.POST.get("noi_dung", "")
+        )
+    except (ValidationError, ValueError) as loi:
+        messages.error(request, " ".join(getattr(loi, "messages", [str(loi)])))
+    else:
+        messages.success(request, "Cảm ơn bạn đã đánh giá.")
+    return redirect(reverse("danh_muc:khach_thuoc_chi_tiet", args=[ma]) + "#danh-gia")
