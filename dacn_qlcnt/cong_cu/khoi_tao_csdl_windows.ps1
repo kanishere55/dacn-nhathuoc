@@ -70,15 +70,55 @@ if ($dichVu.Status -ne 'Running') { Start-Service $dichVu.Name; $dichVu.WaitForS
 Set-Service $dichVu.Name -StartupType Automatic
 Write-Host 'Dịch vụ đang chạy ở cổng 5432 và tự bật cùng Windows.'
 
+function Ra-Chu($an) {
+    [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($an))
+}
+function Cho-San-Sang {
+    for ($i = 0; $i -lt 20; $i++) {
+        $null = Sql 'postgres' 'SELECT 1;'
+        if ($maThoat -eq 0) { return }
+        Start-Sleep -Seconds 1
+    }
+}
+function Dat-Lai-Mat-Khau-Postgres {
+    # Tạm cho tài khoản postgres đăng nhập không mật khẩu từ chính máy này, đặt mật khẩu mới,
+    # rồi khôi phục nguyên trạng pg_hba.conf.
+    $hba = Join-Path $pg 'data\pg_hba.conf'
+    if (-not (Test-Path $hba)) { Dung "Không thấy $hba." }
+    do {
+        $mk1 = Ra-Chu (Read-Host 'Đặt mật khẩu MỚI cho tài khoản postgres' -AsSecureString)
+        $mk2 = Ra-Chu (Read-Host 'Nhập lại mật khẩu mới' -AsSecureString)
+        if (-not $mk1 -or $mk1 -ne $mk2) { Write-Host 'Hai lần nhập không khớp hoặc để trống.' -ForegroundColor Yellow }
+    } while (-not $mk1 -or $mk1 -ne $mk2)
+    $saoLuu = "$hba.truoc_dat_lai"
+    Copy-Item $hba $saoLuu -Force
+    try {
+        $tam = "host all postgres 127.0.0.1/32 trust`r`nhost all postgres ::1/128 trust`r`n" +
+            [IO.File]::ReadAllText($hba)
+        [IO.File]::WriteAllText($hba, $tam, (New-Object Text.UTF8Encoding $false))
+        Restart-Service 'postgresql-x64-18'
+        Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
+        Cho-San-Sang
+        $ra = Sql 'postgres' "ALTER ROLE postgres WITH PASSWORD $(Chuoi-Sql $mk1);"
+        if ($maThoat -ne 0) { throw $ra }
+    } finally {
+        Copy-Item $saoLuu $hba -Force
+        Remove-Item $saoLuu -Force
+        Restart-Service 'postgresql-x64-18'
+    }
+    $env:PGPASSWORD = $mk1
+    Cho-San-Sang
+    Write-Host 'Đã đặt mật khẩu mới cho postgres. Hãy ghi nhớ mật khẩu này.' -ForegroundColor Green
+}
+
 Buoc 'Đăng nhập PostgreSQL bằng tài khoản postgres'
-for ($lan = 1; $lan -le 3; $lan++) {
-    $an = Read-Host 'Mật khẩu tài khoản postgres (đặt lúc cài PostgreSQL)' -AsSecureString
-    $env:PGPASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR(
-        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($an))
+for ($lan = 1; $lan -le 4; $lan++) {
+    $mk = Ra-Chu (Read-Host 'Mật khẩu tài khoản postgres (quên thì để trống và bấm Enter)' -AsSecureString)
+    if (-not $mk) { Dat-Lai-Mat-Khau-Postgres } else { $env:PGPASSWORD = $mk }
     $thu = Sql 'postgres' 'SELECT 1;'
     if ($maThoat -eq 0) { break }
     Write-Host 'Sai mật khẩu hoặc không kết nối được.' -ForegroundColor Yellow
-    if ($lan -eq 3) { Dung $thu }
+    if ($lan -eq 4) { Dung $thu }
 }
 
 $cauHinh = Doc-Env
