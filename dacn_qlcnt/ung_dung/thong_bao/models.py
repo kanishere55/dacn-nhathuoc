@@ -15,6 +15,7 @@ LOAI_EMAIL = [
     ("ho_so_da_doi", "Hồ sơ đã cập nhật"),
     ("don_hang_moi", "Xác nhận đặt đơn"),
     ("don_hang_cap_nhat", "Cập nhật trạng thái đơn"),
+    ("tra_hang", "Yêu cầu trả hàng"),
 ]
 TRANG_THAI = [("cho_gui", "Chờ gửi"), ("da_gui", "Đã gửi"), ("loi", "Gửi lỗi")]
 

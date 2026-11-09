@@ -12,6 +12,7 @@ from ..hoa_don import du_lieu_hoa_don
 from ..models import TRANG_THAI_DON, PhieuBan
 from ..selectors import lay_chi_tiet_don, lay_don, lay_lich_su
 from ..services.don_hang import huy_don
+from ..services.tra_hang import han_tra_hang, ly_do_khong_tra_duoc
 from ..services.trang_thai import CHUYEN_HOP_LE, KHACH
 from .phieu_ban import tra_pdf
 
@@ -79,6 +80,9 @@ def chi_tiet(request, ma):
             "duoc_huy": not don.qua_han_giu
             and KHACH in CHUYEN_HOP_LE.get((don.trang_thai, "da_huy"), set()),
             "form_huy": XuLyDonForm(),
+            "cac_yeu_cau_tra": don.cac_yeu_cau_tra_hang.all(),
+            "duoc_tra_hang": ly_do_khong_tra_duoc(don) is None,
+            "han_tra_hang": han_tra_hang(don),
             "co_hoa_don": don.trang_thai == "hoan_thanh"
             and PhieuBan.objects.filter(don_hang=don).exists(),
         },

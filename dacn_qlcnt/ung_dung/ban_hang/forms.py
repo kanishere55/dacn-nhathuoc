@@ -4,11 +4,12 @@ from uuid import uuid4
 from django import forms
 
 from ung_dung.chung.truong_form import TruongMotDong
+from ung_dung.danh_muc.forms import NhieuTepInput, TruongNhieuTep
 from ung_dung.danh_muc.models import ChiNhanh
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from .gio_hang import SO_LUONG_TOI_DA
-from .models import HINH_THUC_NHAN, PHUONG_THUC_THANH_TOAN
+from .models import HINH_THUC_NHAN, LY_DO_TRA_HANG, PHUONG_THUC_THANH_TOAN
 
 PHUONG_THUC_TAI_QUAY = [("tien_mat", "Tiền mặt"), ("chuyen_khoan", "Chuyển khoản")]
 
@@ -74,6 +75,55 @@ class XuLyDonForm(DonThuocForm):
     phuong_thuc_hoan = forms.ChoiceField(
         choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
     )
+
+    def clean_ma_tham_chieu(self):
+        ma = self.cleaned_data["ma_tham_chieu"]
+        if ma and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,58}", ma):
+            raise forms.ValidationError("Mã giao dịch chỉ gồm chữ, số và . _ : / -")
+        return ma
+
+
+class TraHangForm(forms.Form):
+    """Khách chọn số lượng trả cho từng dòng đơn, lý do, mô tả và ảnh minh chứng."""
+
+    ly_do = forms.ChoiceField(label="Lý do", choices=LY_DO_TRA_HANG, widget=forms.RadioSelect)
+    mo_ta = forms.CharField(
+        label="Mô tả tình trạng",
+        max_length=1000,
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Ví dụ: hộp bị móp, vỉ thuốc rách"}),
+    )
+    cac_anh = TruongNhieuTep(
+        label="Ảnh chụp thuốc và bao bì",
+        widget=NhieuTepInput(attrs={"accept": "image/jpeg,image/png,image/webp"}),
+        error_messages={"required": "Cần ít nhất một ảnh chụp tình trạng thuốc."},
+    )
+
+    def __init__(self, *args, cac_dong, con_lai, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cac_dong_don = []
+        for dong in cac_dong:
+            toi_da = con_lai.get(dong.pk, 0)
+            if toi_da <= 0:
+                continue
+            ten = f"so_luong_{dong.pk}"
+            self.fields[ten] = forms.IntegerField(
+                label=dong.thuoc.ten_thuoc, min_value=0, max_value=toi_da, initial=0
+            )
+            self.cac_dong_don.append({"dong": dong, "o": self[ten], "toi_da": toi_da})
+
+    def cac_dong_tra(self):
+        return {
+            muc["dong"].pk: self.cleaned_data.get(f"so_luong_{muc['dong'].pk}") or 0
+            for muc in self.cac_dong_don
+        }
+
+
+class XuLyTraHangForm(forms.Form):
+    ghi_chu = TruongMotDong(label="Ghi chú", max_length=500, required=False)
+    phuong_thuc = forms.ChoiceField(
+        choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
+    )
+    ma_tham_chieu = TruongMotDong(label="Mã giao dịch", max_length=58, required=False)
 
     def clean_ma_tham_chieu(self):
         ma = self.cleaned_data["ma_tham_chieu"]

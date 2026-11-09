@@ -42,10 +42,19 @@
         <p class="ghi-chu-khach">Mở cửa {{ don.chi_nhanh.gio_mo_cua|time:"H:i" }}–{{ don.chi_nhanh.gio_dong_cua|time:"H:i" }}{% if don.chi_nhanh.so_dien_thoai %} · {{ don.chi_nhanh.so_dien_thoai }}{% endif %}</p>
       {% endif %}
       {% if don.ghi_chu_khach %}<p class="ghi-chu-khach">Lời nhắn: {{ don.ghi_chu_khach }}</p>{% endif %}
+      {% if cac_yeu_cau_tra %}
+        <h2>Trả hàng</h2>
+        <ul class="danh-sach-tra-hang">
+          {% for yc in cac_yeu_cau_tra %}
+            <li><span><strong>{{ yc.ma_yeu_cau_tra_hang }}</strong><small>{{ yc.get_ly_do_display }} · {{ yc.thoi_diem_tao|date:"d/m/Y" }}{% if yc.ghi_chu_xu_ly %} · {{ yc.ghi_chu_xu_ly }}{% endif %}</small></span><span class="nhan-tra-hang nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
       <h2>Lịch sử</h2>
       {% include "ban_hang/_lich_su.html" %}
       <div class="hanh-dong-khach">
         {% if co_hoa_don %}<a class="nut" href="{% url 'ban_hang:khach_hoa_don_in' don.pk %}"><i data-lucide="receipt-text" aria-hidden="true"></i>Xem hóa đơn</a>{% endif %}
+        {% if duoc_tra_hang %}<a class="nut nut-phu" href="{% url 'ban_hang:khach_tra_hang' don.pk %}"><i data-lucide="undo-2" aria-hidden="true"></i>Yêu cầu trả hàng</a>{% endif %}
         <a class="nut nut-phu" href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn nhà thuốc</a>
         {% if duoc_huy %}
           <form method="post" action="{% url 'ban_hang:khach_don_hang_huy' don.pk %}" onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')">

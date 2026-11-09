@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Now
 
+from ung_dung.chung.anh import AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
     SO_DIEN_THOAI,
     rang_buoc_so,
@@ -745,3 +746,200 @@ class ChiTietPhieuHoanKho(models.Model):
                 name=ten_rang_buoc("duy_nhat", "chi_tiet_phieu_hoan_kho", "id_phan_bo_phieu_ban"),
             ),
         ]
+
+
+# ------------------------------------------------------------------ Trả hàng
+LY_DO_TRA_HANG = [
+    ("sai_san_pham", "Giao sai thuốc"),
+    ("hu_hong", "Hàng hư hỏng, móp méo"),
+    ("het_han", "Hết hạn hoặc cận hạn"),
+    ("khac", "Lỗi khác từ nhà thuốc"),
+]
+TRANG_THAI_TRA_HANG = [
+    ("cho_duyet", "Chờ duyệt"),
+    ("da_duyet", "Đã duyệt, chờ hoàn tiền"),
+    ("tu_choi", "Từ chối"),
+    ("da_hoan_tien", "Đã hoàn tiền"),
+]
+
+
+class YeuCauTraHang(models.Model):
+    BANG = "yeu_cau_tra_hang"
+
+    id_yeu_cau_tra_hang = models.BigAutoField(
+        primary_key=True,
+        db_column="id_yeu_cau_tra_hang",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    ma_yeu_cau_tra_hang = models.TextField(
+        db_column="ma_yeu_cau_tra_hang",
+        db_comment="Mã hiển thị TH + yymmdd + 5 ký tự, khách dùng khi liên hệ.",
+    )
+    don_hang = models.ForeignKey(
+        "ban_hang.DonHang",
+        on_delete=models.PROTECT,
+        related_name="cac_yeu_cau_tra_hang",
+        db_column="id_don_hang",
+        db_comment="Đơn đã hoàn thành có hàng bị trả.",
+    )
+    ly_do = models.TextField(
+        choices=LY_DO_TRA_HANG,
+        db_column="ly_do",
+        db_comment="Nhóm lỗi do nhà thuốc; thuốc đã bán chỉ nhận trả khi lỗi thuộc nhà thuốc.",
+    )
+    mo_ta = models.TextField(
+        db_column="mo_ta", db_comment="Khách mô tả tình trạng hàng; văn bản nhiều dòng."
+    )
+    trang_thai = models.TextField(
+        choices=TRANG_THAI_TRA_HANG,
+        default="cho_duyet",
+        db_default="cho_duyet",
+        db_column="trang_thai",
+        db_comment="Bước xử lý hiện tại của yêu cầu.",
+    )
+    so_tien_hoan = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        db_column="so_tien_hoan",
+        db_comment="Tiền hoàn theo giá đã mua của các dòng trả; VND nguyên, tối đa 14 chữ số.",
+    )
+    ghi_chu_xu_ly = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="ghi_chu_xu_ly",
+        db_comment="Lý do từ chối hoặc ghi chú của quản lý khi duyệt; rỗng khi chờ duyệt.",
+    )
+    nguoi_xu_ly = models.ForeignKey(
+        "tai_khoan.TaiKhoan",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column="id_tai_khoan_xu_ly",
+        db_comment="Quản lý chi nhánh duyệt hoặc từ chối; NULL khi chờ duyệt.",
+    )
+    thoi_diem_tao = models.DateTimeField(
+        db_default=Now(), db_column="thoi_diem_tao", db_comment="Thời điểm khách gửi yêu cầu."
+    )
+    thoi_diem_xu_ly = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column="thoi_diem_xu_ly",
+        db_comment="Thời điểm duyệt hoặc từ chối; NULL khi chờ duyệt.",
+    )
+
+    class Meta:
+        db_table = "yeu_cau_tra_hang"
+        db_table_comment = "Mỗi hàng là một yêu cầu trả hàng của khách cho một đơn đã hoàn thành."
+        verbose_name = "yêu cầu trả hàng"
+        ordering = ["-thoi_diem_tao", "-id_yeu_cau_tra_hang"]
+        constraints = [
+            *rang_buoc_van_ban("yeu_cau_tra_hang", "ma_yeu_cau_tra_hang"),
+            models.UniqueConstraint(
+                fields=["ma_yeu_cau_tra_hang"],
+                name=ten_rang_buoc("duy_nhat", "yeu_cau_tra_hang", "ma_yeu_cau_tra_hang"),
+            ),
+            models.CheckConstraint(
+                condition=Q(ly_do__in=_ma(LY_DO_TRA_HANG)),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "ly_do_hop_le"),
+            ),
+            models.CheckConstraint(
+                condition=Q(trang_thai__in=_ma(TRANG_THAI_TRA_HANG)),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "trang_thai_hop_le"),
+            ),
+            *rang_buoc_van_ban("yeu_cau_tra_hang", "mo_ta", nhieu_dong=True),
+            *rang_buoc_van_ban("yeu_cau_tra_hang", "ghi_chu_xu_ly", rong=True, nhieu_dong=True),
+            *rang_buoc_so("yeu_cau_tra_hang", "so_tien_hoan", tien=True),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        trang_thai="cho_duyet",
+                        nguoi_xu_ly__isnull=True,
+                        thoi_diem_xu_ly__isnull=True,
+                    )
+                    | (
+                        ~Q(trang_thai="cho_duyet")
+                        & Q(nguoi_xu_ly__isnull=False, thoi_diem_xu_ly__isnull=False)
+                    )
+                ),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "xu_ly_dung_trang_thai"),
+            ),
+            models.CheckConstraint(
+                condition=~Q(trang_thai="tu_choi") | ~Q(ghi_chu_xu_ly=""),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "tu_choi_co_ly_do"),
+            ),
+        ]
+
+    def __str__(self):
+        return str(self.ma_yeu_cau_tra_hang)
+
+
+class ChiTietTraHang(models.Model):
+    id_chi_tiet_tra_hang = models.BigAutoField(
+        primary_key=True,
+        db_column="id_chi_tiet_tra_hang",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    yeu_cau_tra_hang = models.ForeignKey(
+        "ban_hang.YeuCauTraHang",
+        on_delete=models.PROTECT,
+        related_name="cac_dong",
+        db_index=False,
+        db_column="id_yeu_cau_tra_hang",
+        db_comment="Yêu cầu chứa dòng trả.",
+    )
+    chi_tiet_don_hang = models.ForeignKey(
+        "ban_hang.ChiTietDonHang",
+        on_delete=models.PROTECT,
+        db_column="id_chi_tiet_don_hang",
+        db_comment="Dòng đơn có hàng bị trả; giá hoàn lấy theo đơn giá của dòng này.",
+    )
+    so_luong = models.IntegerField(
+        db_column="so_luong", db_comment="Số lượng trả theo đơn vị bán, không vượt số đã mua."
+    )
+
+    class Meta:
+        db_table = "chi_tiet_tra_hang"
+        db_table_comment = "Mỗi hàng là một thuốc và số lượng trong yêu cầu trả hàng."
+        verbose_name = "dòng trả hàng"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["yeu_cau_tra_hang", "chi_tiet_don_hang"],
+                name=ten_rang_buoc(
+                    "duy_nhat", "chi_tiet_tra_hang", "id_yeu_cau_tra_hang", "id_chi_tiet_don_hang"
+                ),
+            ),
+            models.CheckConstraint(
+                condition=Q(so_luong__gt=0),
+                name=ten_rang_buoc("kiem_tra", "chi_tiet_tra_hang", "so_luong_duong"),
+            ),
+        ]
+
+
+class AnhTraHang(AnhCSDL):
+    id_anh_tra_hang = models.BigAutoField(
+        primary_key=True,
+        db_column="id_anh_tra_hang",
+        db_comment="Định danh nội bộ PostgreSQL cấp, dùng trên đường dẫn ảnh riêng tư.",
+    )
+    yeu_cau_tra_hang = models.ForeignKey(
+        "ban_hang.YeuCauTraHang",
+        on_delete=models.PROTECT,
+        related_name="cac_anh",
+        db_index=False,
+        db_column="id_yeu_cau_tra_hang",
+        db_comment="Yêu cầu sở hữu ảnh minh chứng; chỉ chủ đơn và nhân sự chi nhánh xem được.",
+    )
+
+    class Meta:
+        db_table = "anh_tra_hang"
+        db_table_comment = "Mỗi hàng là một ảnh minh chứng tình trạng hàng trả, lưu bytea."
+        verbose_name = "ảnh trả hàng"
+        ordering = ["thu_tu", "id_anh_tra_hang"]
+        indexes = [
+            models.Index(
+                fields=["yeu_cau_tra_hang", "thu_tu"],
+                name=ten_rang_buoc("chi_muc", "anh_tra_hang", "id_yeu_cau_tra_hang", "thu_tu"),
+            )
+        ]
+        constraints = rang_buoc_anh("anh_tra_hang")

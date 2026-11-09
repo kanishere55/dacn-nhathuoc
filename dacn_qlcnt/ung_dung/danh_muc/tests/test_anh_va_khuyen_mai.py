@@ -104,6 +104,16 @@ class GiaVaKhuyenMaiTests(TestCase):
         self.tao("KM4", hom_nay, hom_nay, dang_hoat_dong=False)
         self.assertEqual(KhuyenMai.objects.count(), 3)
 
+    def test_thuoc_ke_don_khong_co_khuyen_mai(self):
+        hom_nay = timezone.localdate()
+        self.tao("KM1", hom_nay, hom_nay + timedelta(days=3), phan_tram=20)
+        self.d.thuoc.la_thuoc_ke_don = True
+        self.d.thuoc.save()
+        thuoc = lay_thuoc_cong_khai().get()
+        self.assertEqual((thuoc.phan_tram_giam, thuoc.don_gia), (0, Decimal("2000")))
+        with self.assertRaisesMessage(ValidationError, "thuốc kê đơn"):
+            self.tao("KM2", hom_nay + timedelta(days=5), hom_nay + timedelta(days=9))
+
     def test_gia_khach_thay_va_loc(self):
         hom_nay = timezone.localdate()
         self.tao("KM1", hom_nay - timedelta(days=1), hom_nay + timedelta(days=1), phan_tram=15)

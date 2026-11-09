@@ -130,8 +130,11 @@ def them_gia_va_anh(cac_thuoc, ngay=None):
     Đơn giá tính trong SQL bằng cùng quy tắc làm tròn của gia.tinh_don_gia để sắp
     xếp theo giá đúng với giá khách thấy.
     """
+    # Luật Dược cấm quảng cáo thuốc kê đơn tới công chúng: không áp giảm giá cho thuốc kê đơn.
     khuyen_mai = (
-        khuyen_mai_dang_ap_dung(ngay).filter(thuoc=OuterRef("pk")).order_by("-phan_tram_giam")
+        khuyen_mai_dang_ap_dung(ngay)
+        .filter(thuoc=OuterRef("pk"), thuoc__la_thuoc_ke_don=False)
+        .order_by("-phan_tram_giam")
     )
     anh_dau = AnhThuoc.objects.filter(thuoc=OuterRef("pk")).order_by("thu_tu", "pk")
     return cac_thuoc.annotate(

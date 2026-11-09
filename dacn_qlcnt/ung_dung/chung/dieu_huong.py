@@ -56,6 +56,7 @@ def dieu_huong(request):
         cac_muc.append(("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"))
     if noi_bo:
         cac_muc.append(("ban_hang:don_hang_danh_sach", "Đơn hàng", "shopping-basket"))
+        cac_muc.append(("ban_hang:tra_hang_danh_sach", "Trả hàng", "undo-2"))
     if nhan_su:
         cac_muc.append(("tro_chuyen:danh_sach", "Trò chuyện", "messages-square"))
     if quan_tri:

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block tieu_de %}Trả hàng · Khu quản lý{% endblock %}
+{% block vi_tri %}Trả hàng{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">BÁN HÀNG</p>
+    <h1>Yêu cầu trả hàng</h1>
+    <p>Khách gửi trong 7 ngày sau khi nhận hàng. Chỉ nhận trả khi lỗi thuộc nhà thuốc; hàng nhận về không bán lại.</p>
+  </header>
+  <nav class="tab-quan-ly" aria-label="Lọc theo trạng thái">
+    {% for ma, nhan in cac_trang_thai %}<a href="?trang_thai={{ ma }}"{% if trang_thai == ma %} aria-current="page"{% endif %}>{{ nhan }}</a>{% endfor %}
+    <a href="?trang_thai=tat_ca"{% if not trang_thai %} aria-current="page"{% endif %}>Tất cả</a>
+  </nav>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Mã yêu cầu</th><th>Gửi lúc</th><th>Đơn</th><th>Khách</th><th>Lý do</th><th class="o-tien">Tiền hoàn</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+        {% for yc in trang %}
+          <tr>
+            <td><a class="duong-dan-noi-dung" href="{% url 'ban_hang:tra_hang_chi_tiet' yc.pk %}">{{ yc.ma_yeu_cau_tra_hang }}</a></td>
+            <td>{{ yc.thoi_diem_tao|date:"H:i d/m" }}</td>
+            <td>{{ yc.don_hang.ma_don_hang }}</td>
+            <td>{{ yc.don_hang.khach_hang.ho_ten|default:yc.don_hang.khach_hang.ten_dang_nhap }}</td>
+            <td>{{ yc.get_ly_do_display }}</td>
+            <td class="o-tien">{{ yc.so_tien_hoan|tien }}</td>
+            <td><span class="nhan-tra-hang nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">Không có yêu cầu nào ở trạng thái này.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if trang.has_other_pages %}
+    <nav class="thanh-cong-cu" aria-label="Phân trang">
+      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+      <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
+      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

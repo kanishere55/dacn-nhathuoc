@@ -55,9 +55,14 @@ def kiem_khuyen_mai_trung(khuyen_mai):
 
     Khóa dòng thuốc để hai quản trị lưu cùng lúc không tạo được hai đợt trùng.
     """
+    thuoc = Thuoc.objects.select_for_update().get(pk=khuyen_mai.thuoc_id)
+    if thuoc.la_thuoc_ke_don:
+        raise ValidationError(
+            "Không tạo khuyến mãi cho thuốc kê đơn: Luật Dược không cho quảng cáo thuốc kê đơn "
+            "tới công chúng."
+        )
     if not khuyen_mai.dang_hoat_dong:
         return
-    Thuoc.objects.select_for_update().get(pk=khuyen_mai.thuoc_id)
     trung = (
         KhuyenMai.objects.filter(
             thuoc_id=khuyen_mai.thuoc_id,

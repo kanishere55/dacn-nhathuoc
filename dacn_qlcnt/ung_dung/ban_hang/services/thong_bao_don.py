@@ -67,3 +67,33 @@ def bao_doi_trang_thai(don, ghi_chu=""):
             "ghi_chu": ghi_chu,
         },
     )
+
+
+LOI_NHAN_TRA_HANG = {
+    "cho_duyet": "Nhà thuốc đã nhận yêu cầu và sẽ liên hệ hẹn nhận lại hàng để kiểm tra.",
+    "da_duyet": "Yêu cầu đã được chấp nhận. Nhà thuốc sẽ hoàn tiền cho bạn trong thời gian sớm nhất.",
+    "tu_choi": "Rất tiếc, yêu cầu chưa được chấp nhận.",
+    "da_hoan_tien": "Nhà thuốc đã hoàn tiền cho yêu cầu này.",
+}
+
+
+def bao_tra_hang(yeu_cau):
+    don = yeu_cau.don_hang
+    if not don.khach_hang.email:
+        return
+    gui_email(
+        loai_email="tra_hang",
+        email_nhan=don.khach_hang.email,
+        tai_khoan=don.khach_hang,
+        tieu_de=f"Yêu cầu trả hàng {yeu_cau.ma_yeu_cau_tra_hang}: "
+        f"{yeu_cau.get_trang_thai_display().lower()}",
+        mau="tra_hang",
+        ngu_canh={
+            **_ngu_canh(don),
+            "yeu_cau": yeu_cau,
+            "cac_dong_tra": list(
+                yeu_cau.cac_dong.select_related("chi_tiet_don_hang__thuoc__don_vi_tinh")
+            ),
+            "loi_nhan": LOI_NHAN_TRA_HANG[yeu_cau.trang_thai],
+        },
+    )
