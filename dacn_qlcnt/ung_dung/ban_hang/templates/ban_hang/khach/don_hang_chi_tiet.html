@@ -3,17 +3,21 @@
 {% block noi_dung_tai_khoan %}
   <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}">Đơn của tôi</a><span aria-hidden="true">/</span><span>{{ don.ma_don_hang }}</span></nav>
   <header class="tieu-de-khach dau-chi-tiet-don">
-    <div><h1>Đơn {{ don.ma_don_hang }}</h1><p>Đặt lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</p></div>
+    <div><h1>Chi tiết đơn hàng</h1><p>Mã đơn <strong class="ma-don-dai">{{ don.ma_don_hang }}</strong> · Đặt lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</p></div>
     {% include "ban_hang/_nhan_don.html" %}
   </header>
   <section class="the-khach">
-    {% include "ban_hang/_tien_trinh.html" %}
-    {% if don.con_hieu_luc and don.trang_thai == "dang_giu" %}
+    {% if tien_trinh %}{% include "ban_hang/_tien_trinh.html" %}{% else %}{% include "ban_hang/_ket_thuc_don.html" %}{% endif %}
+    {% if don.trang_thai == "cho_thanh_toan" and not don.qua_han_giu %}
+      <div class="thong-diep-don thong-diep-hanh-dong"><i data-lucide="wallet" aria-hidden="true"></i><span>Đơn đang chờ thanh toán qua {{ don.get_phuong_thuc_thanh_toan_display }}, hàng được giữ đến <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong>.</span><a class="nut" href="{% url 'thanh_toan:trang_thanh_toan' don.pk %}">Thanh toán ngay</a></div>
+    {% elif don.con_hieu_luc and don.trang_thai == "dang_giu" %}
       <p class="thong-diep-don"><i data-lucide="clock" aria-hidden="true"></i>Hàng được giữ tại <strong>{{ don.chi_nhanh.ten_chi_nhanh }}</strong> đến <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong>. Đọc mã đơn cho nhân viên và thanh toán tại quầy.{% if co_ke_don %} Mang theo đơn thuốc của bác sĩ.{% endif %}</p>
     {% elif don.trang_thai == "cho_xac_nhan" %}
       <p class="thong-diep-don"><i data-lucide="hourglass" aria-hidden="true"></i>Nhà thuốc sẽ xác nhận đơn trước {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}.</p>
     {% elif don.trang_thai_thanh_toan == "cho_hoan_tien" %}
-      <p class="thong-diep-don"><i data-lucide="rotate-ccw" aria-hidden="true"></i>Đơn đã thanh toán trước và đang chờ nhà thuốc hoàn tiền.</p>
+      <p class="thong-diep-don"><i data-lucide="rotate-ccw" aria-hidden="true"></i>Nhà thuốc sẽ hoàn lại số tiền bạn đã thanh toán và báo qua email khi hoàn xong.</p>
+    {% elif don.trang_thai_thanh_toan == "da_hoan_tien" %}
+      <p class="thong-diep-don"><i data-lucide="circle-check" aria-hidden="true"></i>Đã hoàn tiền cho đơn này.</p>
     {% endif %}
   </section>
   <div class="luoi-chi-tiet-don">

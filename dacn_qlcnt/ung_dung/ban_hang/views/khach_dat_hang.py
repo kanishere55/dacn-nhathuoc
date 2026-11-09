@@ -10,6 +10,7 @@ from ung_dung.chung.permissions import yeu_cau_vai_tro
 from ung_dung.danh_muc.selectors import lay_chi_nhanh_cong_khai
 from ung_dung.kho.selectors import loc_chi_nhanh_du_thuoc
 from ung_dung.tai_khoan.selectors import cac_dia_chi_cua
+from ung_dung.thanh_toan.selectors import phuong_thuc_kha_dung
 
 from ..forms import DatHangForm
 from ..models import PHUONG_THUC_THANH_TOAN
@@ -19,11 +20,6 @@ from ..services.giao_hang import BAN_KINH_GIAO_MET, phuong_an_giao
 from ..services.gio_hang import sua_gio
 
 PHUONG_THUC_GIAO = [muc for muc in PHUONG_THUC_THANH_TOAN if muc[0] != "tai_quay"]
-
-
-def phuong_thuc_kha_dung():
-    """Phương thức trả trước chỉ bật khi cấu hình cổng thanh toán (giai đoạn thanh toán)."""
-    return {"cod"}
 
 
 def _phuong_an_tai_quay(cac_dong, dia_chi):
@@ -115,6 +111,8 @@ def dat_hang(request):
             if not lay_gio(request.session):
                 return redirect("ban_hang:khach_don_hang_danh_sach")
         else:
+            if don.trang_thai == "cho_thanh_toan":
+                return redirect("thanh_toan:trang_thanh_toan", ma=don.pk)
             messages.success(request, f"Đặt đơn {don.ma_don_hang} thành công.")
             return redirect("ban_hang:khach_don_hang_chi_tiet", ma=don.pk)
     return render(

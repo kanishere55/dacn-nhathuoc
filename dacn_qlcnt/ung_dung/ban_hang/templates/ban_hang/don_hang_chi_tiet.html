@@ -10,22 +10,26 @@
     </div>
     {% include "ban_hang/_nhan_don.html" %}
   </header>
-  <section class="khoi-trang">{% include "ban_hang/_tien_trinh.html" %}
-    {% if don.con_hieu_luc %}<p>Hạn {% if don.trang_thai == "dang_giu" %}giữ hàng{% elif don.trang_thai == "cho_thanh_toan" %}thanh toán{% else %}xác nhận{% endif %}: <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong></p>{% endif %}
-  </section>
+  {% if tien_trinh %}
+    <section class="khoi-trang">{% include "ban_hang/_tien_trinh.html" %}
+      {% if don.con_hieu_luc %}<p class="han-xu-ly">Hạn {% if don.trang_thai == "dang_giu" %}giữ hàng{% elif don.trang_thai == "cho_thanh_toan" %}thanh toán{% else %}xác nhận{% endif %}: <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong></p>{% endif %}
+    </section>
+  {% else %}
+    {% include "ban_hang/_ket_thuc_don.html" %}
+  {% endif %}
   <div class="luoi-chi-tiet-quan-ly">
     <div>
       <section class="khoi-trang khung-bang" aria-labelledby="dong-don">
         <h2 id="dong-don">Sản phẩm</h2>
         <table>
-          <thead><tr><th>Thuốc</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+          <thead><tr><th>Thuốc</th><th>SL</th><th class="o-tien">Đơn giá</th><th class="o-tien">Thành tiền</th></tr></thead>
           <tbody>
             {% for dong in cac_dong %}
               <tr>
                 <td>{{ dong.thuoc.ma_thuoc }} · {{ dong.thuoc.ten_thuoc }}{% if dong.thuoc.la_thuoc_ke_don %} <span class="nhan-trang-thai">Kê đơn</span>{% endif %}</td>
                 <td>{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</td>
-                <td>{{ dong.don_gia|tien }}{% if dong.phan_tram_giam %}<br><small>-{{ dong.phan_tram_giam }}% từ {{ dong.gia_niem_yet|tien }}</small>{% endif %}</td>
-                <td>{{ dong.thanh_tien|tien }}</td>
+                <td class="o-tien">{{ dong.don_gia|tien }}{% if dong.phan_tram_giam %}<small>-{{ dong.phan_tram_giam }}% từ {{ dong.gia_niem_yet|tien }}</small>{% endif %}</td>
+                <td class="o-tien">{{ dong.thanh_tien|tien }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -51,15 +55,44 @@
         {% if don.ghi_chu_khach %}<p><em>Lời nhắn: {{ don.ghi_chu_khach }}</em></p>{% endif %}
         {% if phieu_ban %}<p>Phiếu bán: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_chi_tiet' phieu_ban.pk %}">{{ phieu_ban.ma_phieu_ban }}</a></p>{% endif %}
       </section>
+      {% if cac_giao_dich %}
+        <section class="khoi-trang" aria-labelledby="thanh-toan-don">
+          <h2 id="thanh-toan-don">Giao dịch thanh toán</h2>
+          <ul class="danh-sach-giao-dich">
+            {% for gd in cac_giao_dich %}
+              <li>
+                <span><strong>{% if gd.loai_giao_dich == "hoan" %}Hoàn {% endif %}{{ gd.so_tien|tien }}</strong> · {{ gd.get_phuong_thuc_display }}<small>{{ gd.ma_giao_dich_thanh_toan }}{% if gd.ma_tham_chieu %} · {{ gd.ma_tham_chieu }}{% endif %}{% if gd.ghi_chu %} · {{ gd.ghi_chu }}{% endif %}</small></span>
+                <span class="nhan-giao-dich nhan-{{ gd.trang_thai }}">{{ gd.get_trang_thai_display }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
       {% if cac_hanh_dong %}
         <section class="khoi-trang" aria-labelledby="xu-ly-don">
           <h2 id="xu-ly-don">Xử lý</h2>
           {% for hd in cac_hanh_dong %}
-            <form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')"{% endif %}>
+            <form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')"{% elif hd.ma == "hoan_tien" %} onsubmit="return confirm('Xác nhận đã hoàn tiền cho khách?')"{% endif %}>
               {% csrf_token %}
               {% if hd.can_ly_do %}<label>Lý do<input name="ly_do" required maxlength="300"></label>{% endif %}
-              {% if hd.ma == "nhan_tai_quay" and co_ke_don %}
-                <label class="lua-chon-mot-dong"><input type="checkbox" name="da_kiem_tra_don_thuoc" value="on" required> Đã kiểm tra đơn thuốc của bác sĩ</label>
+              {% if hd.ma == "xac_nhan_thanh_toan" %}
+                <label>Mã giao dịch trên sao kê <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
+              {% elif hd.ma == "hoan_tien" %}
+                <label>Hoàn qua<select name="phuong_thuc_hoan"><option value="chuyen_khoan">Chuyển khoản</option><option value="tien_mat">Tiền mặt</option>{% if don.phuong_thuc_thanh_toan == "momo" %}<option value="momo" selected>Ví MoMo</option>{% endif %}</select></label>
+                <label>Mã giao dịch hoàn <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
+              {% elif hd.ma == "nhan_tai_quay" %}
+                {% if don.trang_thai_thanh_toan != "da_thanh_toan" %}
+                  <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
+                {% endif %}
+                {% if co_ke_don %}
+                  <fieldset class="nhom-don-thuoc">
+                    <legend>Đơn thuốc của bác sĩ</legend>
+                    <label>Bác sĩ kê đơn<input name="ten_nguoi_ke_don" required maxlength="120" autocomplete="off"></label>
+                    <label>Cơ sở khám bệnh<input name="noi_kham_benh" required maxlength="200" autocomplete="off"></label>
+                    <label>Mã đơn thuốc điện tử <small>(nếu có)</small><input name="ma_don_thuoc" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9\-]{5,29}" autocomplete="off"></label>
+                    <label class="lua-chon-mot-dong"><input type="checkbox" name="da_kiem_tra_don_thuoc" value="on" required> Đã đối chiếu đơn: đúng người bệnh, còn hạn, thuốc và liều khớp</label>
+                  </fieldset>
+                {% endif %}
               {% endif %}
               <button class="nut{% if hd.ma == 'huy' or hd.ma == 'giao_that_bai' %} nut-phu{% endif %}" type="submit">{{ hd.nhan }}</button>
             </form>

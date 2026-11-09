@@ -1,5 +1,6 @@
 """Khách đặt đơn: giữ hàng theo FEFO, chụp giá, ghi lịch sử và gửi email xác nhận."""
 
+import secrets
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -9,7 +10,8 @@ from django.utils import timezone
 from ung_dung.chung.permissions import kiem_tra_vai_tro
 from ung_dung.danh_muc.models import Thuoc
 from ung_dung.danh_muc.selectors import them_gia_va_anh
-from ung_dung.kho.services.giao_dich import khoa_kho, ma_chung_tu, phan_bo_fefo
+from ung_dung.kho.services.giao_dich import khoa_kho, phan_bo_fefo
+from ung_dung.thanh_toan.services.ghi import tao_cho
 
 from ..models import ChiTietDonHang, DonHang, PhanBoDonHang
 from .giao_hang import BAN_KINH_GIAO_MET, tinh_phi_giao
@@ -20,6 +22,20 @@ GIO_GIU_TAI_QUAY = 24
 GIO_CHO_XAC_NHAN = 24
 PHUT_CHO_THANH_TOAN = 30
 PHUONG_THUC_GIAO = ("cod", "chuyen_khoan", "momo")
+
+
+# Bỏ 0, 1, I, L, O để khách đọc mã tại quầy hay gõ vào nội dung chuyển khoản không nhầm.
+KY_TU_MA_DON = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+
+
+def tao_ma_don(thoi_diem):
+    """Mã đơn ngắn dạng DH + yymmdd + 5 ký tự, ví dụ DH261109K7M4Q."""
+    ngay = timezone.localtime(thoi_diem).strftime("%y%m%d")
+    for _ in range(8):
+        ma = "DH" + ngay + "".join(secrets.choice(KY_TU_MA_DON) for _ in range(5))
+        if not DonHang.objects.filter(ma_don_hang=ma).exists():
+            return ma
+    raise ValidationError("Chưa cấp được mã đơn, vui lòng thử lại.")
 
 
 def gop_dong(cac_dong):
@@ -80,7 +96,7 @@ def dat_hang(
     else:
         trang_thai, han_giu = "cho_thanh_toan", timedelta(minutes=PHUT_CHO_THANH_TOAN)
     don = DonHang(
-        ma_don_hang=ma_chung_tu("DH"),
+        ma_don_hang=tao_ma_don(bay_gio),
         khach_hang=nguoi,
         chi_nhanh=chi_nhanh,
         hinh_thuc_nhan=hinh_thuc_nhan,
@@ -97,6 +113,8 @@ def dat_hang(
         don.vi_tri_giao = giao["vi_tri"]
         don.khoang_cach_met = giao["khoang_cach_met"]
         don.phi_giao_hang = tinh_phi_giao(giao["khoang_cach_met"])
+    # Ràng buộc tổng = tiền hàng - giảm + phí đúng ngay từ lần lưu đầu (tiền hàng còn 0).
+    don.tong_thanh_toan = don.phi_giao_hang
     don.save()
 
     tien_hang = 0
@@ -116,6 +134,8 @@ def dat_hang(
     don.tien_hang = tien_hang
     don.tong_thanh_toan = tien_hang - don.giam_gia_thanh_vien + don.phi_giao_hang
     don.save(update_fields=["tien_hang", "tong_thanh_toan"])
+    if trang_thai == "cho_thanh_toan":
+        tao_cho(don, phuong_thuc_thanh_toan)
     ghi_lich_su(don, None, trang_thai, nguoi)
     bao_don_moi(don)
     return don

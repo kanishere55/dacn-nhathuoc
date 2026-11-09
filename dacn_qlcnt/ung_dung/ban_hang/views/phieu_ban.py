@@ -36,7 +36,8 @@ def tao(request):
                 form.cleaned_data["chi_nhanh"],
                 [d for d in cac_dong.cleaned_data if d and not d.get("DELETE")],
                 khoa_yeu_cau=form.cleaned_data["khoa_yeu_cau"],
-                da_kiem_tra_don_thuoc=form.cleaned_data["da_kiem_tra_don_thuoc"],
+                don_thuoc=form.don_thuoc(),
+                phuong_thuc_thanh_toan=form.cleaned_data["phuong_thuc_thanh_toan"],
             )
         except ValidationError as loi:
             form.add_error(None, loi)

@@ -1,3 +1,4 @@
+import re
 from uuid import uuid4
 
 from django import forms
@@ -9,13 +10,35 @@ from ung_dung.danh_muc.selectors import lay_chi_nhanh
 from .gio_hang import SO_LUONG_TOI_DA
 from .models import HINH_THUC_NHAN, PHUONG_THUC_THANH_TOAN
 
+PHUONG_THUC_TAI_QUAY = [("tien_mat", "Tiền mặt"), ("chuyen_khoan", "Chuyển khoản")]
 
-class PhieuBanForm(forms.Form):
+
+class DonThuocForm(forms.Form):
+    """Thông tin đơn thuốc dược sĩ ghi khi bán thuốc kê đơn; service kiểm bắt buộc."""
+
+    da_kiem_tra_don_thuoc = forms.BooleanField(
+        label="Đã kiểm tra đơn thuốc của bác sĩ", required=False
+    )
+    ten_nguoi_ke_don = TruongMotDong(label="Bác sĩ kê đơn", max_length=120, required=False)
+    noi_kham_benh = TruongMotDong(label="Cơ sở khám bệnh", max_length=200, required=False)
+    ma_don_thuoc = TruongMotDong(
+        label="Mã đơn thuốc điện tử",
+        max_length=30,
+        required=False,
+        help_text="Ghi khi đơn có mã liên thông; đơn giấy không mã thì để trống.",
+    )
+
+    def don_thuoc(self):
+        return {ten: self.cleaned_data.get(ten) for ten in DonThuocForm.base_fields}
+
+
+class PhieuBanForm(DonThuocForm):
     chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
     khoa_yeu_cau = forms.UUIDField(widget=forms.HiddenInput, initial=uuid4)
-    da_kiem_tra_don_thuoc = forms.BooleanField(
-        label="Đã kiểm tra đơn thuốc của bác sĩ (bắt buộc nếu có thuốc kê đơn)", required=False
+    phuong_thuc_thanh_toan = forms.ChoiceField(
+        label="Khách trả bằng", choices=PHUONG_THUC_TAI_QUAY, initial="tien_mat"
     )
+    field_order = ["chi_nhanh", "phuong_thuc_thanh_toan"]
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,6 +65,18 @@ class DatHangForm(forms.Form):
     ghi_chu_khach = TruongMotDong(label="Lời nhắn cho nhà thuốc", max_length=300, required=False)
 
 
-class XuLyDonForm(forms.Form):
+class XuLyDonForm(DonThuocForm):
     ly_do = TruongMotDong(label="Lý do", max_length=300, required=False)
-    da_kiem_tra_don_thuoc = forms.BooleanField(required=False)
+    phuong_thuc_thanh_toan = forms.ChoiceField(
+        choices=PHUONG_THUC_TAI_QUAY, required=False, initial="tien_mat"
+    )
+    ma_tham_chieu = TruongMotDong(label="Mã giao dịch", max_length=64, required=False)
+    phuong_thuc_hoan = forms.ChoiceField(
+        choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
+    )
+
+    def clean_ma_tham_chieu(self):
+        ma = self.cleaned_data["ma_tham_chieu"]
+        if ma and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,58}", ma):
+            raise forms.ValidationError("Mã giao dịch chỉ gồm chữ, số và . _ : / -")
+        return ma

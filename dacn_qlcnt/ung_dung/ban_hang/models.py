@@ -438,6 +438,10 @@ class LichSuDonHang(models.Model):
         ]
 
 
+# Mã đơn điện tử dạng <mã cơ sở><số đơn>-<loại đơn>; cho phép cả mã nội bộ của bệnh viện.
+MA_DON_THUOC = r"^[A-Za-z0-9][A-Za-z0-9-]{5,29}$"
+
+
 class PhieuBan(models.Model):
     id_phieu_ban = models.BigAutoField(
         db_column="id_phieu_ban",
@@ -481,6 +485,29 @@ class PhieuBan(models.Model):
             "thuốc kê đơn, service kiểm trước khi lập phiếu."
         ),
     )
+    ma_don_thuoc = models.TextField(
+        db_column="ma_don_thuoc",
+        db_comment=(
+            "Mã đơn thuốc điện tử in trên đơn (liên thông đơn thuốc quốc gia); NULL khi đơn "
+            "giấy không có mã hoặc phiếu không có thuốc kê đơn."
+        ),
+        null=True,
+        blank=True,
+    )
+    ten_nguoi_ke_don = models.TextField(
+        db_column="ten_nguoi_ke_don",
+        db_comment="Họ tên bác sĩ kê đơn; rỗng khi phiếu không có thuốc kê đơn.",
+        default="",
+        db_default="",
+        blank=True,
+    )
+    noi_kham_benh = models.TextField(
+        db_column="noi_kham_benh",
+        db_comment="Cơ sở khám bệnh, chữa bệnh phát hành đơn; rỗng khi không có thuốc kê đơn.",
+        default="",
+        db_default="",
+        blank=True,
+    )
     thoi_diem_tao = models.DateTimeField(
         db_column="thoi_diem_tao",
         db_comment="Thời điểm hệ thống ghi nhận nghiệp vụ.",
@@ -508,6 +535,24 @@ class PhieuBan(models.Model):
             models.UniqueConstraint(
                 fields=["don_hang"],
                 name=ten_rang_buoc("duy_nhat", "phieu_ban", "id_don_hang"),
+            ),
+            *rang_buoc_van_ban(
+                "phieu_ban", "ma_don_thuoc", dinh_dang=MA_DON_THUOC, nhan="ma_don_thuoc"
+            ),
+            *rang_buoc_van_ban("phieu_ban", "ten_nguoi_ke_don", rong=True, nhan="nguoi_ke_don"),
+            *rang_buoc_van_ban("phieu_ban", "noi_kham_benh", rong=True),
+            # Đã kiểm tra đơn thì phải ghi người kê và nơi kê; chưa kiểm tra thì để trống cả ba.
+            models.CheckConstraint(
+                condition=(
+                    Q(da_kiem_tra_don_thuoc=True) & ~Q(ten_nguoi_ke_don="") & ~Q(noi_kham_benh="")
+                )
+                | Q(
+                    da_kiem_tra_don_thuoc=False,
+                    ten_nguoi_ke_don="",
+                    noi_kham_benh="",
+                    ma_don_thuoc__isnull=True,
+                ),
+                name=ten_rang_buoc("kiem_tra", "phieu_ban", "don_thuoc_du_thong_tin"),
             ),
         ]
 

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "ung_dung.du_bao.apps.DuBaoConfig",
     "ung_dung.bao_cao.apps.BaoCaoConfig",
     "ung_dung.thong_bao.apps.ThongBaoConfig",
+    "ung_dung.thanh_toan.apps.ThanhToanConfig",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -159,6 +160,17 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 )
 # Gửi SMTP ở luồng nền sau commit để trang không chờ máy chủ thư.
 EMAIL_GUI_NEN = os.environ.get("EMAIL_GUI_NEN", "True").lower() == "true"
+
+# Thanh toán. Thiếu cấu hình thì phương thức tương ứng tự ẩn ở trang đặt hàng.
+NGAN_HANG_BIN = os.environ.get("NGAN_HANG_BIN", "")
+TEN_NGAN_HANG = os.environ.get("TEN_NGAN_HANG", "")
+SO_TAI_KHOAN = os.environ.get("SO_TAI_KHOAN", "")
+TEN_TAI_KHOAN = os.environ.get("TEN_TAI_KHOAN", "")
+SEPAY_API_KEY = os.environ.get("SEPAY_API_KEY", "")
+MOMO_PARTNER_CODE = os.environ.get("MOMO_PARTNER_CODE", "")
+MOMO_ACCESS_KEY = os.environ.get("MOMO_ACCESS_KEY", "")
+MOMO_SECRET_KEY = os.environ.get("MOMO_SECRET_KEY", "")
+MOMO_ENDPOINT = os.environ.get("MOMO_ENDPOINT", "https://test-payment.momo.vn").rstrip("/")
 
 LOGGING = {
     "version": 1,

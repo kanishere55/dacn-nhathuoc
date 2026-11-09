@@ -75,11 +75,13 @@
         {% if hinh_thuc == "giao_hang" %}
           <div class="cac-lua-chon-the cot-don">
             {% for ma, nhan in cac_phuong_thuc_giao %}
-              <label class="lua-chon-the{% if ma not in phuong_thuc_kha_dung %} bi-khoa{% endif %}">
-                <input type="radio" name="phuong_thuc_thanh_toan" value="{{ ma }}"{% if ma == phuong_thuc %} checked{% endif %}{% if ma not in phuong_thuc_kha_dung %} disabled{% endif %}>
-                <i data-lucide="{% if ma == 'cod' %}banknote{% elif ma == 'momo' %}wallet{% else %}qr-code{% endif %}" aria-hidden="true"></i>
-                <span><strong>{{ nhan }}</strong>{% if ma not in phuong_thuc_kha_dung %}<small>Chưa bật trên hệ thống</small>{% endif %}</span>
-              </label>
+              {% if ma in phuong_thuc_kha_dung %}
+                <label class="lua-chon-the">
+                  <input type="radio" name="phuong_thuc_thanh_toan" value="{{ ma }}"{% if ma == phuong_thuc %} checked{% endif %}>
+                  <i data-lucide="{% if ma == 'cod' %}banknote{% elif ma == 'momo' %}wallet{% else %}qr-code{% endif %}" aria-hidden="true"></i>
+                  <span><strong>{{ nhan }}</strong><small>{% if ma == "cod" %}Trả tiền mặt cho người giao{% elif ma == "momo" %}Thanh toán trong 30 phút qua ứng dụng MoMo{% else %}Quét mã bằng ứng dụng ngân hàng, xác nhận tự động{% endif %}</small></span>
+                </label>
+              {% endif %}
             {% endfor %}
           </div>
         {% else %}

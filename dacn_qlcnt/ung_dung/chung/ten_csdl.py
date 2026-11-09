@@ -25,6 +25,7 @@ TEN_RUT_GON = {
     "phan_bo_phieu_ban": "pb_ban",
     "phan_bo_don_hang": "pb_don_hang",
     "chi_tiet_phieu_hoan_kho": "ct_hoan_kho",
+    "giao_dich_thanh_toan": "giao_dich",
     "ket_qua_mo_hinh": "ket_qua",
     "du_bao_bay_ngay": "du_bao",
     "quan_sat_ban_hang": "quan_sat",

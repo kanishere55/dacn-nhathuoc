@@ -10,6 +10,7 @@ from ung_dung.chung.permissions import (
     kiem_tra_vai_tro,
 )
 from ung_dung.kho.services.giao_dich import khoa_kho
+from ung_dung.thanh_toan.services.ghi import ghi_ngay, ket_thuc_cho
 
 from ..models import DonHang, PhieuBan
 from .hoan_kho import hoan_kho
@@ -33,6 +34,7 @@ def _khoa_don(don, nguoi):
 
 def _sau_huy(don):
     """Đơn đã thu tiền trực tuyến mà bị hủy thì chuyển sang chờ hoàn tiền."""
+    ket_thuc_cho(don, "het_han")
     if don.trang_thai_thanh_toan == "da_thanh_toan":
         don.trang_thai_thanh_toan = "cho_hoan_tien"
         don.save(update_fields=["trang_thai_thanh_toan"])
@@ -75,6 +77,15 @@ def xac_nhan_da_giao(nguoi, don):
     if don.phuong_thuc_thanh_toan == "cod":
         don.trang_thai_thanh_toan = "da_thanh_toan"
         them_cot = ("trang_thai_thanh_toan",)
+        ghi_ngay(
+            loai="thu",
+            phuong_thuc="cod",
+            so_tien=don.tong_thanh_toan,
+            don_hang=don,
+            phieu_ban=PhieuBan.objects.filter(don_hang=don).first(),
+            nguoi=nguoi,
+            ghi_chu="Người giao thu tiền khi giao",
+        )
     doi_trang_thai(don, "hoan_thanh", nguoi, "Khách đã nhận hàng", them_cot=them_cot)
     bao_doi_trang_thai(don)
     return don

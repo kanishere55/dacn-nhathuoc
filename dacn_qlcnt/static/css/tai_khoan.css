@@ -260,6 +260,7 @@
   }
   .noi-dung-tai-khoan .tieu-de-khach h1 {
     font-size: 26px;
+    overflow-wrap: anywhere;
   }
   .the-form-tai-khoan {
     max-width: 640px;
@@ -465,10 +466,11 @@
       display: none;
     }
     .khung-tai-khoan {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .menu-tai-khoan {
       position: static;
+      min-width: 0;
     }
     .menu-tai-khoan nav {
       grid-auto-flow: column;

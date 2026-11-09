@@ -1,3 +1,4 @@
+import re
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
@@ -13,14 +14,48 @@ from ung_dung.kho.services.giao_dich import (
     phan_bo_fefo,
     thay_doi_ton,
 )
+from ung_dung.thanh_toan.services.ghi import ghi_ngay
 
-from ..models import ChiTietPhieuBan, DonHang, PhanBoPhieuBan, PhieuBan
+from ..models import MA_DON_THUOC, ChiTietPhieuBan, DonHang, PhanBoPhieuBan, PhieuBan
+from ..selectors import tong_tien_ban
 from .thong_bao_don import bao_doi_trang_thai
 from .trang_thai import doi_trang_thai, kiem_tra_chuyen
 
 THONG_BAO_KE_DON = (
-    "Phiếu có thuốc kê đơn: dược sĩ phải kiểm tra đơn thuốc của bác sĩ và đánh dấu đã kiểm tra."
+    "Phiếu có thuốc kê đơn: dược sĩ phải kiểm tra đơn thuốc, ghi họ tên bác sĩ kê đơn "
+    "và cơ sở khám bệnh."
 )
+PHUONG_THUC_TAI_QUAY = ("tien_mat", "chuyen_khoan")
+
+
+def _thong_tin_don_thuoc(co_ke_don, don_thuoc):
+    """Chuẩn hóa thông tin đơn thuốc; phiếu không có thuốc kê đơn thì bỏ trống."""
+    if not co_ke_don:
+        return {
+            "da_kiem_tra_don_thuoc": False,
+            "ma_don_thuoc": None,
+            "ten_nguoi_ke_don": "",
+            "noi_kham_benh": "",
+        }
+    don_thuoc = don_thuoc or {}
+    thong_tin = {
+        "da_kiem_tra_don_thuoc": bool(don_thuoc.get("da_kiem_tra_don_thuoc")),
+        "ma_don_thuoc": " ".join(str(don_thuoc.get("ma_don_thuoc") or "").split()) or None,
+        "ten_nguoi_ke_don": " ".join(str(don_thuoc.get("ten_nguoi_ke_don") or "").split()),
+        "noi_kham_benh": " ".join(str(don_thuoc.get("noi_kham_benh") or "").split()),
+    }
+    if not (
+        thong_tin["da_kiem_tra_don_thuoc"]
+        and thong_tin["ten_nguoi_ke_don"]
+        and thong_tin["noi_kham_benh"]
+    ):
+        raise ValidationError(THONG_BAO_KE_DON)
+    ma = thong_tin["ma_don_thuoc"]
+    if ma and not re.fullmatch(MA_DON_THUOC, ma):
+        raise ValidationError("Mã đơn thuốc gồm 6–30 chữ, số hoặc dấu gạch ngang.")
+    if len(thong_tin["ten_nguoi_ke_don"]) > 120 or len(thong_tin["noi_kham_benh"]) > 200:
+        raise ValidationError("Tên bác sĩ hoặc cơ sở khám bệnh quá dài.")
+    return thong_tin
 
 
 @transaction.atomic
@@ -31,14 +66,19 @@ def ban_tai_quay(
     *,
     khoa_yeu_cau=None,
     don_hang=None,
-    da_kiem_tra_don_thuoc=False,
+    don_thuoc=None,
+    phuong_thuc_thanh_toan="tien_mat",
 ):
     """Lập phiếu bán và xuất kho FEFO.
 
     Có `don_hang`: xuất đúng các dòng của đơn với giá đã chụp lúc đặt. Đơn nhận tại
     quầy chuyển hoàn thành (khách nhận và trả tiền), đơn giao hàng chuyển đang chuẩn bị.
-    Không có đơn: bán trực tiếp theo giá đang áp dụng.
+    Không có đơn: bán trực tiếp theo giá đang áp dụng. `don_thuoc` gồm
+    da_kiem_tra_don_thuoc, ma_don_thuoc, ten_nguoi_ke_don, noi_kham_benh và chỉ bắt
+    buộc khi phiếu có thuốc kê đơn.
     """
+    if phuong_thuc_thanh_toan not in PHUONG_THUC_TAI_QUAY:
+        raise ValidationError("Tại quầy chỉ nhận tiền mặt hoặc chuyển khoản.")
     khoa_chi_nhanh(nguoi, chi_nhanh)
     khoa_yeu_cau = str(khoa_yeu_cau or uuid4())
     da_co = PhieuBan.objects.filter(
@@ -66,16 +106,18 @@ def ban_tai_quay(
     cac_thuoc = them_gia_va_anh(
         Thuoc.objects.filter(pk__in=[dong["thuoc"].pk for dong in cac_dong])
     ).in_bulk()
-    if any(t.la_thuoc_ke_don for t in cac_thuoc.values()) and not da_kiem_tra_don_thuoc:
-        raise ValidationError(THONG_BAO_KE_DON)
-    phieu = PhieuBan.objects.create(
+    thong_tin_don = _thong_tin_don_thuoc(
+        any(t.la_thuoc_ke_don for t in cac_thuoc.values()), don_thuoc
+    )
+    phieu = PhieuBan(
         ma_phieu_ban=ma_chung_tu("BH"),
         khoa_yeu_cau=khoa_yeu_cau,
         chi_nhanh=chi_nhanh,
         nguoi_lap=nguoi,
         don_hang=don_hang,
-        da_kiem_tra_don_thuoc=da_kiem_tra_don_thuoc,
+        **thong_tin_don,
     )
+    phieu.save()
     for dong in cac_dong:
         thuoc = cac_thuoc[dong["thuoc"].pk]
         luong = doi_ve_co_so(thuoc, dong["so_luong"], dong.get("quy_doi_bao_goi"))
@@ -92,6 +134,16 @@ def ban_tai_quay(
         for ton, lay in phan_bo_fefo(chi_nhanh, thuoc, luong, bo_qua_don=don_hang):
             thay_doi_ton(ton, -lay)
             PhanBoPhieuBan.objects.create(chi_tiet_phieu_ban=chi_tiet, ton_kho=ton, so_luong=lay)
+    if not don_hang or den == "hoan_thanh":
+        ghi_ngay(
+            loai="thu",
+            phuong_thuc=phuong_thuc_thanh_toan,
+            so_tien=don_hang.tong_thanh_toan if don_hang else tong_tien_ban(phieu),
+            don_hang=don_hang,
+            phieu_ban=phieu,
+            nguoi=nguoi,
+            ghi_chu="Thu tại quầy",
+        )
     if don_hang:
         them_cot = ()
         if den == "hoan_thanh":

@@ -17,6 +17,7 @@ TU_VUNG = frozenset(
     anh bat bieu byte cach cao chat chieu chong cong cua dau giam gio hien khop khuyen luu mai
     ngan nuoc pham phu ta tac thi tram y
     bai bi chua chuan den do hoan lich met moi niem phi phuong thanh that tien toan tong yet
+    benh chung dich kham tat tham
     """.split()
 )
 
@@ -32,6 +33,11 @@ DINH_DANH_CO_BOI_CANH = {
     ("dia_chi_giao_hang", "ten_nguoi_nhan"),
     ("don_hang", "ten_nguoi_nhan"),
     ("phien_xac_thuc", "ten_dang_nhap_dang_ky"),
+    # Mã do ngân hàng/cổng thanh toán cấp, chỉ duy nhất trong từng phương thức.
+    ("giao_dich_thanh_toan", "ma_tham_chieu"),
+    # Thông tin chép từ đơn thuốc của bác sĩ khi bán thuốc kê đơn.
+    ("phieu_ban", "ma_don_thuoc"),
+    ("phieu_ban", "ten_nguoi_ke_don"),
 }
 
 TEN_CAM = {"du_lieu", "thong_tin", "gia_tri", "noi_dung", "cot_moi"}

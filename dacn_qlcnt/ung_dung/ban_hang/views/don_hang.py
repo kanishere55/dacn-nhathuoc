@@ -12,8 +12,10 @@ from ung_dung.chung.permissions import (
     co_vai_tro,
     yeu_cau_vai_tro,
 )
+from ung_dung.thanh_toan.selectors import giao_dich_cua_don
+from ung_dung.thanh_toan.services.cong import hoan_tien, xac_nhan_tay
 
-from ..forms import XuLyDonForm
+from ..forms import PHUONG_THUC_TAI_QUAY, XuLyDonForm
 from ..models import HINH_THUC_NHAN, TRANG_THAI_DON, PhieuBan
 from ..selectors import dem_don_theo_trang_thai, lay_chi_tiet_don, lay_don, lay_lich_su
 from ..services import don_hang as dich_vu
@@ -23,6 +25,7 @@ from .khach_don_hang import tien_trinh
 
 # hành động -> (trạng thái đích, nhãn nút, cần lý do)
 HANH_DONG = {
+    "xac_nhan_thanh_toan": ("cho_xac_nhan", "Đã nhận đủ tiền khách chuyển", False),
     "nhan_tai_quay": ("hoan_thanh", "Khách đã nhận và thanh toán tại quầy", False),
     "xac_nhan": ("dang_chuan_bi", "Xác nhận đơn và xuất kho", False),
     "giao_van_chuyen": ("dang_giao", "Đã giao cho người vận chuyển", False),
@@ -32,7 +35,7 @@ HANH_DONG = {
 }
 
 
-def cac_hanh_dong(don):
+def cac_hanh_dong(don, nguoi):
     ket_qua = []
     for ma, (den, nhan, can_ly_do) in HANH_DONG.items():
         if NHAN_SU not in CHUYEN_HOP_LE.get((don.trang_thai, den), set()):
@@ -42,6 +45,8 @@ def cac_hanh_dong(don):
         if ma == "da_giao" and don.hinh_thuc_nhan != "giao_hang":
             continue
         ket_qua.append({"ma": ma, "nhan": nhan, "can_ly_do": can_ly_do})
+    if don.trang_thai_thanh_toan == "cho_hoan_tien" and nguoi.vai_tro == "quan_ly_chi_nhanh":
+        ket_qua.append({"ma": "hoan_tien", "nhan": "Đã hoàn tiền cho khách", "can_ly_do": False})
     return ket_qua
 
 
@@ -86,9 +91,13 @@ def chi_tiet(request, ma):
             "tien_trinh": tien_trinh(don),
             "phieu_ban": PhieuBan.objects.filter(don_hang=don).first(),
             "cac_hanh_dong": (
-                cac_hanh_dong(don) if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH) else []
+                cac_hanh_dong(don, request.user)
+                if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH)
+                else []
             ),
             "co_ke_don": any(dong.thuoc.la_thuoc_ke_don for dong in cac_dong),
+            "cac_giao_dich": giao_dich_cua_don(don),
+            "phuong_thuc_tai_quay": PHUONG_THUC_TAI_QUAY,
         },
     )
 
@@ -98,16 +107,32 @@ def chi_tiet(request, ma):
 def xu_ly(request, ma, hanh_dong):
     don = get_object_or_404(lay_don(request.user), pk=ma)
     form = XuLyDonForm(request.POST)
-    form.is_valid()
+    if not form.is_valid():
+        for loi in form.errors.values():
+            messages.error(request, " ".join(loi))
+        return redirect("ban_hang:don_hang_chi_tiet", ma=ma)
     ly_do = form.cleaned_data.get("ly_do", "")
     try:
-        if hanh_dong == "nhan_tai_quay":
+        if hanh_dong == "xac_nhan_thanh_toan":
+            xac_nhan_tay(request.user, don, form.cleaned_data.get("ma_tham_chieu", ""))
+            messages.success(request, "Đã ghi nhận thanh toán, đơn chuyển chờ xác nhận.")
+        elif hanh_dong == "hoan_tien":
+            hoan_tien(
+                request.user,
+                don,
+                phuong_thuc=form.cleaned_data.get("phuong_thuc_hoan") or "chuyen_khoan",
+                ma_tham_chieu=form.cleaned_data.get("ma_tham_chieu", ""),
+            )
+            messages.success(request, "Đã ghi nhận hoàn tiền.")
+        elif hanh_dong == "nhan_tai_quay":
             phieu = ban_tai_quay(
                 request.user,
                 don.chi_nhanh,
                 [],
                 don_hang=don,
-                da_kiem_tra_don_thuoc=form.cleaned_data.get("da_kiem_tra_don_thuoc", False),
+                don_thuoc=form.don_thuoc(),
+                phuong_thuc_thanh_toan=form.cleaned_data.get("phuong_thuc_thanh_toan")
+                or "tien_mat",
             )
             messages.success(request, f"Đã lập phiếu bán {phieu.ma_phieu_ban}.")
         elif hanh_dong == "xac_nhan":
