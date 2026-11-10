@@ -1,9 +1,0 @@
-{% extends "khach/base.html" %}
-{% load static %}
-{% block tieu_de %}Trò chuyện với {{ phong.chi_nhanh }} · Nhà thuốc{% endblock %}
-{% block noi_dung %}
-  <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'tro_chuyen:khach_danh_sach' %}">Trò chuyện</a><span aria-hidden="true">/</span><span>{{ phong.chi_nhanh }}</span></nav>
-  <header class="tieu-de-khach"><h1>{{ phong.chi_nhanh.ten_chi_nhanh }}</h1><p>Trao đổi trực tiếp với nhân viên chi nhánh.</p></header>
-  {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong cac_tin=cac_tin only %}
-{% endblock %}
-{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}

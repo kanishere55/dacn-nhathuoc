@@ -1,9 +1,68 @@
 {% extends "base.html" %}
 {% block vi_tri %}Trò chuyện{% endblock %}
-{% block tieu_de %}Trò chuyện · {{ phong.chi_nhanh }} · Khu quản lý{% endblock %}
-{% load static %}
+{% block tieu_de %}{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }} · Trò chuyện · Khu quản lý{% endblock %}
 {% block noi_dung %}
-  <h1>Trò chuyện với {{ phong.chi_nhanh }}</h1>
-  {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong cac_tin=cac_tin only %}
+  <div class="phong-chat-nha-thuoc">
+    <section class="cot-chat">
+      <header class="dau-hoi-thoai">
+        <a class="nut-quay-lai" href="{% url 'tro_chuyen:danh_sach' %}" aria-label="Về hộp thư"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
+        <span class="anh-dai-dien" aria-hidden="true">{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap|slice:":1" }}</span>
+        <div>
+          <h1>{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}</h1>
+          <p>{% if phong.la_don_hang %}Về đơn {{ phong.don_hang.ma_don_hang }}{% else %}Tư vấn{% endif %} · {{ phong.chi_nhanh.ten_chi_nhanh }}</p>
+        </div>
+      </header>
+      {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="nha_thuoc" la_khach=False goi_y_trong="Chưa có tin nhắn trong cuộc này." only %}
+    </section>
+
+    <aside class="cot-thong-tin-chat">
+      <section class="khoi-trang">
+        <h2>Khách hàng</h2>
+        <p><strong>{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}</strong></p>
+        {% if phong.khach_hang.so_dien_thoai %}<p><i data-lucide="phone" aria-hidden="true"></i> <a href="tel:{{ phong.khach_hang.so_dien_thoai }}">{{ phong.khach_hang.so_dien_thoai }}</a></p>{% endif %}
+        {% if phong.khach_hang.email %}<p><i data-lucide="mail" aria-hidden="true"></i> {{ phong.khach_hang.email }}</p>{% endif %}
+      </section>
+
+      {% if phong.la_don_hang %}
+        {% with don=phong.don_hang %}
+          <section class="khoi-trang the-don-chat">
+            <h2>Đơn đang trao đổi</h2>
+            <p class="ma-don-chat"><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a></p>
+            <dl>
+              <div><dt>Trạng thái</dt><dd>{{ don.get_trang_thai_display }}</dd></div>
+              <div><dt>Hình thức</dt><dd>{{ don.get_hinh_thuc_nhan_display }}</dd></div>
+              <div><dt>Tổng tiền</dt><dd>{{ don.tong_thanh_toan|tien }}</dd></div>
+              <div><dt>Đặt lúc</dt><dd>{{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</dd></div>
+            </dl>
+            <a class="nut nut-phu nut-nho" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}"><i data-lucide="external-link" aria-hidden="true"></i>Mở trang xử lý đơn</a>
+          </section>
+        {% endwith %}
+      {% else %}
+        <section class="khoi-trang">
+          <h2>Đơn gần đây của khách</h2>
+          {% if don_gan_day %}
+            <ul class="ds-don-gan-day">
+              {% for don in don_gan_day %}
+                <li><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a><small>{{ don.get_trang_thai_display }} · {{ don.tong_thanh_toan|tien }} · {{ don.thoi_diem_tao|date:"d/m/Y" }}</small></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="chu-mo-ta">Khách chưa có đơn nào ở phạm vi bạn phụ trách. Đây là khách hỏi tư vấn trước khi mua.</p>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if cac_phong_cung_khach %}
+        <section class="khoi-trang">
+          <h2>Cuộc trò chuyện khác của khách</h2>
+          <ul class="ds-don-gan-day">
+            {% for p in cac_phong_cung_khach %}
+              <li><a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' p.pk %}">{% if p.la_don_hang %}Về đơn {{ p.don_hang.ma_don_hang }}{% else %}Tư vấn{% endif %}</a><small>{{ p.chi_nhanh.ten_chi_nhanh }}</small></li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+    </aside>
+  </div>
 {% endblock %}
 {% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}

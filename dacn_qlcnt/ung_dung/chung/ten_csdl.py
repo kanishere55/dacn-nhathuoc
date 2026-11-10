@@ -37,6 +37,7 @@ TEN_RUT_GON = {
     "du_bao_bay_ngay": "du_bao",
     "quan_sat_ban_hang": "quan_sat",
     "phien_xac_thuc": "xac_thuc",
+    "cuoc_tro_chuyen": "phong",
 }
 
 

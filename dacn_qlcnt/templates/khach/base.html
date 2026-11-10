@@ -66,5 +66,30 @@
         <span>Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ.</span>
       </div>
     </footer>
+    {% if not noi_bo and request.resolver_match.app_name != "tro_chuyen" %}
+      <div class="tu-van-noi" data-tu-van-noi>
+        {% if user.is_authenticated %}
+          <div class="khung-tu-van" data-khung-tu-van role="dialog" aria-modal="false" aria-labelledby="tieu-de-khung-tu-van" hidden>
+            <div class="dau-khung-tu-van">
+              <strong id="tieu-de-khung-tu-van"><i data-lucide="stethoscope" aria-hidden="true"></i>Hỏi dược sĩ</strong>
+              <a href="{% url 'tro_chuyen:khach_danh_sach' %}" title="Mở trang tin nhắn đầy đủ" aria-label="Mở trang tin nhắn đầy đủ"><i data-lucide="maximize-2" aria-hidden="true"></i></a>
+              <button type="button" data-dong-tu-van aria-label="Đóng khung trò chuyện"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
+            <iframe title="Trò chuyện với nhà thuốc" data-src="{% url 'tro_chuyen:khach_danh_sach' %}?nhung=1"></iframe>
+          </div>
+          <button type="button" class="nut-tu-van-noi" data-mo-tu-van aria-expanded="false" aria-label="Tư vấn với dược sĩ{% if so_tin_chua_doc %}, {{ so_tin_chua_doc }} tin chưa đọc{% endif %}">
+            <i data-lucide="headset" aria-hidden="true"></i><span>Tư vấn</span>
+            <span class="huy-hieu-chat" data-dem-chat{% if not so_tin_chua_doc %} hidden{% endif %}>{{ so_tin_chua_doc }}</span>
+          </button>
+        {% else %}
+          <a class="nut-tu-van-noi" href="{% url 'tai_khoan:dang_nhap' %}?next={{ request.get_full_path|urlencode }}%23tu-van&amp;ly_do=tu_van" aria-label="Tư vấn với dược sĩ: đăng nhập để nhắn tin">
+            <i data-lucide="headset" aria-hidden="true"></i><span>Tư vấn</span>
+          </a>
+          <span class="goi-y-dang-nhap" role="tooltip">Đăng nhập để nhắn tin với dược sĩ</span>
+        {% endif %}
+        <script defer src="{% tep_tinh 'tro_chuyen/js/tu_van_noi.js' %}"></script>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}
+

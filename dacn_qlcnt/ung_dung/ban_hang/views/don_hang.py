@@ -10,6 +10,7 @@ from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
 from ung_dung.kho.loc import o_chi_nhanh
 from ung_dung.thanh_toan.selectors import giao_dich_cua_don
 from ung_dung.thanh_toan.services.cong import hoan_tien, xac_nhan_tay
+from ung_dung.tro_chuyen.selectors import lay_hop_thu
 
 from ..forms import PHUONG_THUC_TAI_QUAY, XuLyDonForm
 from ..models import (
@@ -107,6 +108,12 @@ def chi_tiet(request, ma):
             "phieu_ban": PhieuBan.objects.filter(don_hang=don).first(),
             "yeu_cau_hoa_don": YeuCauXuatHoaDon.objects.filter(don_hang=don).first(),
             "cac_hanh_dong": hanh_dong,
+            "duoc_chat": co_quyen(request.user, "tro_chuyen.dung"),
+            "phong_chat": (
+                lay_hop_thu(request.user).filter(don_hang=don).first()
+                if co_quyen(request.user, "tro_chuyen.dung")
+                else None
+            ),
             "co_hanh_dong_phu": any(hd.get("phu") for hd in hanh_dong),
             "co_ke_don": any(dong.thuoc.la_thuoc_ke_don for dong in cac_dong),
             "cac_giao_dich": giao_dich_cua_don(don),

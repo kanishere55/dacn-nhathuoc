@@ -13,6 +13,7 @@
 @import "./nghiep_vu.css";
 @import "./quay_ban.css";
 @import "./form_phieu.css";
+@import "./tro_chuyen.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {

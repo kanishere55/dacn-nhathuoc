@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="htmx-config" content='{"historyCacheSize":0,"allowEval":false,"includeIndicatorStyles":false}'>
-  <title>{% block tieu_de %}Nhà thuốc{% endblock %}</title>
+  <title>{% if so_tin_chua_doc and not nhung %}({{ so_tin_chua_doc }}) {% endif %}{% block tieu_de %}Nhà thuốc{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'bieu_tuong.svg' %}">
   {% block css_tuong_tac %}<link rel="stylesheet" href="{% static 'vendor/choices/choices.min.css' %}">{% endblock %}
   <link rel="stylesheet" href="{% url_css_giao_dien %}">
@@ -18,12 +18,13 @@
   <script defer src="{% tep_tinh 'chung/js/giao_dien.js' %}"></script>
   {% block dau_trang %}{% endblock %}
 </head>
-<body hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'>
+<body hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'{% if bat_thong_bao and not nhung %} data-thong-bao="{% if user.vai_tro == 'khach_hang' %}khach{% else %}nha_thuoc{% endif %}" data-url-chua-doc="{% url 'tro_chuyen:so_chua_doc' %}"{% endif %}>
   <a href="#noi-dung" class="bo-qua">Đến nội dung chính</a>
   {% block giao_dien %}{% endblock %}
   {% if nhan_dien %}
     <div class="nhan-dien-trang" role="note">{{ nhan_dien.url }} · {{ nhan_dien.view }} · {% ten_template %}</div>
   {% endif %}
   {% block cuoi_trang %}{% endblock %}
+  {% if bat_thong_bao and not nhung %}<script defer src="{% tep_tinh 'chung/js/thong_bao.js' %}"></script>{% endif %}
 </body>
 </html>

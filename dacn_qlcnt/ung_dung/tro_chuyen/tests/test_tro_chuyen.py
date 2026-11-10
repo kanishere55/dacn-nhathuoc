@@ -111,7 +111,10 @@ class TroChuyenTests(TransactionTestCase):
         khach = self.ket_noi(self.d.khach)
         self.assertTrue((await khach.connect())[0])
         try:
-            self.assertEqual(await khach.receive_json_from(), {"loai": "lich_su", "cac_tin": []})
+            self.assertEqual(
+                await khach.receive_json_from(),
+                {"loai": "lich_su", "cac_tin": [], "khach_da_doc": None, "nha_thuoc_da_doc": None},
+            )
             await khach.send_json_to({"loai": "kiem_tra_ket_noi"})
             self.assertEqual(await khach.receive_json_from(), {"loai": "ket_noi_con_song"})
             self.assertEqual(await TinNhan.objects.acount(), 0)

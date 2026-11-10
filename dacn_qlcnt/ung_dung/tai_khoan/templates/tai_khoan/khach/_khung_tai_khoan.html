@@ -14,7 +14,7 @@
         <a href="{% url 'tai_khoan:so_dia_chi' %}"{% if ten_trang == 'so_dia_chi' or ten_trang == 'them_dia_chi' or ten_trang == 'sua_dia_chi' %} aria-current="page"{% endif %}><i data-lucide="map-pin" aria-hidden="true"></i>Sổ địa chỉ</a>
         <a href="{% url 'tai_khoan:doi_mat_khau' %}"{% if ten_trang == 'doi_mat_khau' %} aria-current="page"{% endif %}><i data-lucide="key-round" aria-hidden="true"></i>Mật khẩu</a>
         <a href="{% url 'tai_khoan:doi_email' %}"{% if ten_trang == 'doi_email' %} aria-current="page"{% endif %}><i data-lucide="mail" aria-hidden="true"></i>Email</a>
-        <a href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện</a>
+        <a href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện<span class="huy-hieu-menu" data-dem-chat{% if not so_tin_chua_doc %} hidden{% endif %}>{{ so_tin_chua_doc }}</span></a>
       </nav>
       <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">
         {% csrf_token %}

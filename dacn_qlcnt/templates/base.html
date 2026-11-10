@@ -11,12 +11,12 @@
               <details class="nhom-menu"{% if nhom.mo_san %} open{% endif %}>
                 <summary class="nhan-menu">{{ nhom.nhan }}<i data-lucide="chevron-down" aria-hidden="true"></i></summary>
                 {% for muc in nhom.cac_muc %}
-                  {% include "components/_muc_menu.html" with duong_dan=muc.duong_dan nhan=muc.nhan bieu_tuong=muc.bieu_tuong dang_chon=muc.dang_chon only %}
+                  {% include "components/_muc_menu.html" with duong_dan=muc.duong_dan nhan=muc.nhan bieu_tuong=muc.bieu_tuong dang_chon=muc.dang_chon so=muc.so co_dem=muc.co_dem only %}
                 {% endfor %}
               </details>
             {% else %}
               {% for muc in nhom.cac_muc %}
-                {% include "components/_muc_menu.html" with duong_dan=muc.duong_dan nhan=muc.nhan bieu_tuong=muc.bieu_tuong dang_chon=muc.dang_chon only %}
+                {% include "components/_muc_menu.html" with duong_dan=muc.duong_dan nhan=muc.nhan bieu_tuong=muc.bieu_tuong dang_chon=muc.dang_chon so=muc.so co_dem=muc.co_dem only %}
               {% endfor %}
             {% endif %}
           {% endfor %}

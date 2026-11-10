@@ -1,13 +1,27 @@
-<section class="khoi-trang" data-tro-chuyen data-ma-phong="{{ phong.pk }}">
-  <p role="status" aria-live="polite" data-trang-thai>Đang kết nối…</p>
-  <ol class="cac-tin-nhan" data-cac-tin aria-live="polite">
-    {% for tin in cac_tin %}
-      <li data-id-tin="{{ tin.id_tin_nhan }}"><strong>{{ tin.nguoi_gui }}</strong><p>{{ tin.noi_dung }}</p></li>
+{% comment %}
+  Khung chat dùng chung cho khách và nhân sự. `ben` là phía người đang xem (khach / nha_thuoc).
+  Tin được vẽ sẵn từ server; JS nối WebSocket rồi vẽ lại kèm trạng thái đã xem, vạch Tin mới.
+{% endcomment %}
+<section class="khung-chat" data-tro-chuyen data-ma-phong="{{ phong.pk }}" data-ben="{{ ben }}"
+         data-khach-da-doc="{{ lich_su.khach_da_doc|default_if_none:'' }}" data-nha-thuoc-da-doc="{{ lich_su.nha_thuoc_da_doc|default_if_none:'' }}">
+  <ol class="cac-tin-chat" data-cac-tin aria-live="polite" aria-label="Tin nhắn">
+    {% for tin in lich_su.cac_tin %}
+      <li class="tin-chat {% if tin.la_khach == la_khach %}cua-toi{% else %}cua-ho{% endif %}" data-id-tin="{{ tin.id_tin_nhan }}">
+        <div class="bong-tin">{{ tin.noi_dung|linebreaksbr }}</div>
+      </li>
+    {% empty %}
+      <li class="chat-trong" data-chat-trong>{{ goi_y_trong|default:"Chưa có tin nhắn. Hãy gửi tin đầu tiên." }}</li>
     {% endfor %}
   </ol>
-  <form class="form-chinh form-nhan-tin">
-    <label for="noi-dung-tin">Tin nhắn</label>
-    <textarea id="noi-dung-tin" name="noi_dung" rows="3" maxlength="2000" required></textarea>
-    <button class="nut" disabled>Gửi</button>
+  <p class="trang-thai-chat" data-trang-thai role="status" aria-live="polite">Đang kết nối…</p>
+  {% if cac_goi_y %}
+    <div class="goi-y-nhanh" data-goi-y-nhanh aria-label="Câu hỏi gợi ý">
+      {% for cau in cac_goi_y %}<button type="button" data-cau="{{ cau }}">{{ cau }}</button>{% endfor %}
+    </div>
+  {% endif %}
+  <form class="o-soan-tin" data-form-tin>
+    <label class="sr-only" for="noi-dung-tin-{{ phong.pk }}">Nội dung tin nhắn</label>
+    <textarea id="noi-dung-tin-{{ phong.pk }}" name="noi_dung" rows="1" maxlength="2000" placeholder="Nhập tin nhắn… (Enter để gửi)" title="Enter để gửi, Shift + Enter để xuống dòng" required></textarea>
+    <button class="nut-gui-tin" type="submit" disabled aria-label="Gửi tin"><i data-lucide="send-horizontal" aria-hidden="true"></i></button>
   </form>
 </section>

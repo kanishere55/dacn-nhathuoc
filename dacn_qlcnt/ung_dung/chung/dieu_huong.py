@@ -225,4 +225,20 @@ def dieu_huong(request):
             ]
         ),
         "menu_nhom": nhom_menu(menu),
+        **_thong_bao_tro_chuyen(nguoi, noi_bo, menu),
     }
+
+
+def _thong_bao_tro_chuyen(nguoi, noi_bo, menu):
+    """Huy hiệu tin chưa đọc lấy từ CSDL mỗi lần tải trang; WebSocket chỉ cập nhật tức thời."""
+    from ung_dung.tro_chuyen.selectors import dem_chua_doc
+
+    bat = getattr(nguoi, "is_authenticated", False) and (
+        nguoi.vai_tro == "khach_hang" or (noi_bo and co_quyen(nguoi, "tro_chuyen.dung"))
+    )
+    so = dem_chua_doc(nguoi) if bat else 0
+    # Mục Trò chuyện trên menu nhân sự hiện số tin khách gửi mà nhà thuốc chưa xem.
+    for muc in menu:
+        if muc["ten"] == "tro_chuyen:danh_sach":
+            muc["co_dem"], muc["so"] = True, so
+    return {"bat_thong_bao": bat, "so_tin_chua_doc": so}

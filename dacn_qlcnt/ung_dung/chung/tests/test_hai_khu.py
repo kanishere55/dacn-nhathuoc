@@ -75,7 +75,7 @@ class HaiKhuTests(TestCase):
             self.client.get(url, {"chi_nhanh": chi_nhanh.ma_chi_nhanh})
             .context["form"]
             .initial["chi_nhanh"],
-            chi_nhanh,
+            chi_nhanh.pk,
         )
         phan_hoi = self.client.post(url, {"chi_nhanh": chi_nhanh.pk}, follow=True)
         self.assertContains(phan_hoi, "Tin nhắn")

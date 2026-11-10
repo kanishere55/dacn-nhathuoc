@@ -1,0 +1,7 @@
+{% extends "khung_trang.html" %}
+{% comment %}Khung rút gọn để hiện một trang khách bên trong khung chat nổi (iframe cùng nguồn).{% endcomment %}
+{% block giao_dien %}
+  <main class="khung-nhung" id="noi-dung" tabindex="-1">
+    {% block noi_dung %}{% endblock %}
+  </main>
+{% endblock %}

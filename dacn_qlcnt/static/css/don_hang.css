@@ -424,12 +424,13 @@
     color: var(--chu-phu);
     font-size: 12px;
   }
-  .nut-nguy-hiem {
+  /* Ghép với .nut để thắng quy tắc .nut khai báo sau trong giao_dien.css. */
+  .nut.nut-nguy-hiem {
     background: #fff;
     color: #a2382d;
     border: 1px solid #e7b9b3;
   }
-  .nut-nguy-hiem:hover {
+  .nut.nut-nguy-hiem:hover {
     background: #fdecec;
   }
 

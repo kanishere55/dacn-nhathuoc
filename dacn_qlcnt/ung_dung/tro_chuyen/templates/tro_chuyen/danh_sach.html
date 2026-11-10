@@ -5,30 +5,40 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">BÁN HÀNG</p>
     <h1>Trò chuyện với khách</h1>
-    <p>Khách nhắn hỏi thuốc, hỏi đơn từ website. Cuộc có nhãn "Chờ trả lời" là khách đang đợi nhà thuốc phản hồi.</p>
+    <p>Khách nhắn hỏi thuốc (tư vấn) hoặc hỏi về đơn đã đặt. Trả lời các cuộc "Chờ trả lời" trước; số màu đỏ là tin khách gửi mà nhà thuốc chưa xem.</p>
   </header>
+
+  <nav class="the-loc-hop-thu" aria-label="Lọc cuộc trò chuyện">
+    <a href="?"{% if not loc %} aria-current="page"{% endif %}>Tất cả <span>{{ dem.tat_ca }}</span></a>
+    {% for ma, nhan in cac_loc %}
+      <a href="?loc={{ ma }}"{% if loc == ma %} aria-current="page"{% endif %} class="loc-{{ ma }}">{{ nhan }} <span>{% if ma == "cho_tra_loi" %}{{ dem.cho_tra_loi }}{% elif ma == "don_hang" %}{{ dem.don_hang }}{% else %}{{ dem.tu_van }}{% endif %}</span></a>
+    {% endfor %}
+  </nav>
+
   <section class="khoi-trang hop-thu" aria-label="Danh sách cuộc trò chuyện">
     <ul class="danh-sach-hop-thu">
       {% for phong in cac_phong %}
-        {% with cho=phong.cho_tra_loi %}
-          <li>
-            <a class="muc-hop-thu{% if cho %} cho-tra-loi{% endif %}" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">
-              <span class="anh-dai-dien" aria-hidden="true">{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap|slice:":1" }}</span>
-              <span class="noi-dung-hop-thu">
-                <strong>{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}{% if nhieu_chi_nhanh %}<small> · {{ phong.chi_nhanh.ten_chi_nhanh }}</small>{% endif %}</strong>
-                <span class="xem-truoc-tin">{% if phong.noi_dung_cuoi %}{% if not cho %}Bạn: {% endif %}{{ phong.noi_dung_cuoi|truncatechars:110 }}{% else %}Chưa có tin nhắn{% endif %}</span>
-              </span>
-              <span class="thoi-gian-hop-thu">
-                {% if phong.luc_gui_cuoi %}<time datetime="{{ phong.luc_gui_cuoi|date:'c' }}">{{ phong.luc_gui_cuoi|date:"H:i d/m" }}</time>{% endif %}
-                {% if cho %}<span class="nhan-cho">Chờ trả lời</span>{% endif %}
-              </span>
-            </a>
-          </li>
-        {% endwith %}
+        <li>
+          <a class="muc-hop-thu{% if phong.cho_tra_loi %} cho-tra-loi{% endif %}{% if phong.so_chua_doc %} chua-doc{% endif %}" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">
+            <span class="anh-dai-dien" aria-hidden="true">{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap|slice:":1" }}</span>
+            <span class="noi-dung-hop-thu">
+              <strong>
+                {{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}
+                {% if phong.la_don_hang %}<span class="nhan-loai don-hang"><i data-lucide="package" aria-hidden="true"></i>Đơn {{ phong.don_hang.ma_don_hang }}</span>{% else %}<span class="nhan-loai tu-van"><i data-lucide="stethoscope" aria-hidden="true"></i>Tư vấn</span>{% endif %}
+                {% if nhieu_chi_nhanh %}<small> · {{ phong.chi_nhanh.ten_chi_nhanh }}</small>{% endif %}
+              </strong>
+              <span class="xem-truoc-tin">{% if phong.noi_dung_cuoi %}{% if not phong.cho_tra_loi %}Nhà thuốc: {% endif %}{{ phong.noi_dung_cuoi|truncatechars:110 }}{% else %}Chưa có tin nhắn{% endif %}</span>
+            </span>
+            <span class="thoi-gian-hop-thu">
+              {% if phong.luc_gui_cuoi %}<time datetime="{{ phong.luc_gui_cuoi|date:'c' }}">{{ phong.luc_gui_cuoi|date:"H:i d/m" }}</time>{% endif %}
+              {% if phong.so_chua_doc %}<span class="so-chua-doc" aria-label="{{ phong.so_chua_doc }} tin chưa xem">{{ phong.so_chua_doc }}</span>{% elif phong.cho_tra_loi %}<span class="nhan-cho">Chờ trả lời</span>{% endif %}
+            </span>
+          </a>
+        </li>
       {% empty %}
         <li class="hop-thu-trong">
           <i data-lucide="messages-square" aria-hidden="true"></i>
-          <p>Chưa có khách nào nhắn tin. Khi khách bấm "Nhắn nhà thuốc" trên website, cuộc trò chuyện sẽ hiện ở đây.</p>
+          <p>{% if loc %}Không có cuộc trò chuyện nào trong mục này.{% else %}Chưa có khách nào nhắn tin. Khách bấm nút "Tư vấn" trên website hoặc "Nhắn nhà thuốc" trong đơn hàng thì cuộc trò chuyện sẽ hiện ở đây.{% endif %}</p>
         </li>
       {% endfor %}
     </ul>

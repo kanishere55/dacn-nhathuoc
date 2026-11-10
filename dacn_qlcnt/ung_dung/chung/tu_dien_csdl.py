@@ -1,11 +1,11 @@
 """Từ vựng đã dùng trong schema, tên viết tắt và ngoại lệ định danh."""
 
 # ATC, MAE, RMSE, SHA-256, SARIMAX, XGBoost và NaN giữ tên chuyên ngành.
-# ct, pb và ncc chỉ được dùng qua các bí danh bảng đăng ký ở ten_csdl.py.
+# ct, pb, ncc và phong (cuộc trò chuyện) chỉ được dùng qua các bí danh bảng đăng ký ở ten_csdl.py.
 TU_VUNG = frozenset(
     """
     2000 am atc bam ban bao bay bo cac canh cap cat cau cay che chi chinh chon chot chu chuoi
-    chuyen ct cung cuoc cuoi da dan dang danh dat dia dich diem dien dieu dinh doi don dong
+    chuyen ct cung cuoc cuoi da dan dang danh dat dia dich diem dien dieu dinh doc doi don dong
     du dung duoc duong duy ghi gia giu goc goi gui ham han hang he het hinh hoat hoi hop huan
     huu huy id ke ket khac khach khau khi kho khoa khoan khoang khong kich kiem ky la lai lan
     lap le lieu lo luc luong luyen ly ma mae mat mo moc mot muc nan ncc ngau ngay nghiem ngoai
@@ -24,6 +24,7 @@ TU_VUNG = frozenset(
     tuc viet
     hoa thue ty
     quyen rieng gioi
+    phong
     """.split()
 )
 

@@ -3,6 +3,7 @@
 {% block noi_dung_xac_thuc %}
   <h1>Đăng nhập</h1>
   <p class="mo-ta-xac-thuc">Dùng tên đăng nhập hoặc email đã xác thực.</p>
+  {% if request.GET.ly_do == "tu_van" %}<p class="thong-bao" role="status">Đăng nhập để nhắn tin với dược sĩ. Sau khi đăng nhập, khung trò chuyện mở ngay tại trang bạn đang xem.</p>{% endif %}
   <form method="post" class="form-chinh" novalidate>
     {% csrf_token %}
     {% if quay_lai %}<input type="hidden" name="next" value="{{ quay_lai }}">{% endif %}
