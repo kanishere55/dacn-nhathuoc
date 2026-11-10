@@ -26,6 +26,7 @@
     <div class="ban-do" data-ban-do-nhiet aria-label="Bản đồ nhiệt tồn khả dụng các chi nhánh"></div>
     <div>
       <h3>Tồn theo chi nhánh</h3>
+      <div class="chu-giai-nhiet" data-chu-giai hidden><span>0</span><span class="dai-mau" aria-hidden="true"></span><span data-max></span></div>
       <p data-trang-thai class="mo-ta-bang-dieu-khien" role="status">{% if not ban_do_nhiet.cac_nhom or not ban_do_nhiet.cac_don_vi %}Cần có nhóm ATC và đơn vị cơ sở để hiển thị tồn khả dụng.{% endif %}</p>
       <ul data-so-lieu class="danh-sach-bang-dieu-khien"></ul>
     </div>

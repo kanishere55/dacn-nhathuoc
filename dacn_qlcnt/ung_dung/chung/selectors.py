@@ -44,7 +44,7 @@ def lay_bang_dieu_khien(nguoi):
             so_chi_nhanh=lay_chi_nhanh(nguoi, ca_chi_nhanh_ngung=True).count(),
             ban_do_nhiet=lay_tuy_chon_ban_do_nhiet(),
             lan_du_bao=du_bao["lan"],
-            cac_du_bao=list(du_bao["cac_du_bao"][:SO_DONG_TOM_TAT]) if du_bao["lan"] else [],
+            cac_nhom_du_bao=du_bao.get("cac_nhom", []),
         )
     else:
         cac_phong = (

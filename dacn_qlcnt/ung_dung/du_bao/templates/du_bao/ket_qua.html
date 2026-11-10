@@ -1,71 +1,246 @@
 {% extends "base.html" %}
+{% load static %}
 {% block tieu_de %}Dự báo lượng bán · Khu quản lý{% endblock %}
+{% block vi_tri %}Dự báo{% endblock %}
 {% block noi_dung %}
-  <h1>Dự báo lượng bán theo ATC</h1>
+  <header class="tieu-de-trang">
+    <p class="chu-dan">PHÂN TÍCH DỰ BÁO</p>
+    <h1>Dự báo lượng bán theo nhóm thuốc ATC</h1>
+    <p>Năm mô hình được thực nghiệm trên cùng một bài toán: dự báo tổng lượng bán trong bảy ngày tiếp theo của từng nhóm thuốc. Mỗi nhóm dùng mô hình có sai số thấp nhất. Kết quả chỉ hỗ trợ xem xét nguy cơ thiếu hàng; hệ thống không tự tạo phiếu nhập hay phiếu điều chuyển.</p>
+  </header>
+
   {% if lan %}
-    <section class="khoi-trang">
-      <h2>Tổng lượng trong bảy ngày sau ngày gốc</h2>
-      <p>Nguồn công khai độc lập · {{ lan.nguon_du_lieu }} · {{ lan.nguon_du_lieu.don_vi_nguon }}</p>
-      <p>Mốc kết thúc train {{ lan.ngay_chot_huan_luyen|date:"d/m/Y" }}, validation {{ lan.ngay_chot_xac_thuc|date:"d/m/Y" }}, test {{ lan.ngay_chot_kiem_thu|date:"d/m/Y" }}.</p>
-      <div class="khung-bang bang-the-di-dong">
-        <table role="table">
-          <caption>Kết quả thực nghiệm</caption>
-          <thead role="rowgroup"><tr role="row"><th scope="col">ATC</th><th scope="col">Mô hình</th><th scope="col">MAE validation</th><th scope="col">RMSE validation</th><th scope="col">MAE test</th><th scope="col">RMSE test</th></tr></thead>
-          <tbody role="rowgroup">
-            {% for dong in cac_mo_hinh %}
-              <tr role="row">
-                <td role="cell" data-nhan="ATC">{{ dong.ma_atc_nguon }}</td>
-                <td role="cell" data-nhan="Mô hình">{{ dong.mo_hinh }}{% if dong.duoc_chon %} · Được chọn{% endif %}</td>
-                <td role="cell" data-nhan="MAE validation">{{ dong.mae_xac_thuc|floatformat:3 }}</td>
-                <td role="cell" data-nhan="RMSE validation">{{ dong.rmse_xac_thuc|floatformat:3 }}</td>
-                <td role="cell" data-nhan="MAE test">{{ dong.mae_kiem_thu|floatformat:3 }}</td>
-                <td role="cell" data-nhan="RMSE test">{{ dong.rmse_kiem_thu|floatformat:3 }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <section class="khoi-trang quy-trinh-du-bao" aria-labelledby="tieu-de-quy-trinh">
+      <h2 id="tieu-de-quy-trinh">Dự báo được tạo ra như thế nào</h2>
+      <ol class="cac-buoc-du-bao">
+        <li>
+          <span class="so-buoc">1</span>
+          <div>
+            <strong>Dữ liệu bán theo ngày</strong>
+            <p>{{ nguon.so_quan_sat|so_nguyen }} quan sát của 8 nhóm ATC, từ {{ nguon.tu_ngay|date:"d/m/Y" }} đến {{ nguon.den_ngay|date:"d/m/Y" }}. Nguồn công khai {{ lan.nguon_du_lieu.ten_nguon_du_lieu }}, độc lập với dữ liệu bán hàng mô phỏng của chuỗi.</p>
+          </div>
+        </li>
+        <li>
+          <span class="so-buoc">2</span>
+          <div>
+            <strong>Huấn luyện và chọn mô hình</strong>
+            <p>Bốn mô hình học máy và SARIMAX học trên đoạn huấn luyện. Mô hình có MAE nhỏ nhất ở đoạn xác thực được chọn cho nhóm đó.</p>
+          </div>
+        </li>
+        <li>
+          <span class="so-buoc">3</span>
+          <div>
+            <strong>Kiểm thử rồi dự báo</strong>
+            <p>Sai số cuối cùng đo trên đoạn kiểm thử mà mô hình chưa từng thấy. Sau đó mô hình được chọn dự báo bảy ngày sau ngày quan sát cuối.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="dai-thoi-gian" role="img" aria-label="Chia dữ liệu theo thời gian: huấn luyện, xác thực, kiểm thử">
+        {% for doan in giai_doan %}
+          <div class="doan-thoi-gian doan-{{ doan.ma }}" style="flex-basis: {{ doan.ty_le|stringformat:'.2f' }}%">
+            <span>{{ doan.ten }}</span>
+            <small>{{ doan.tu|date:"m/Y" }} – {{ doan.den|date:"m/Y" }}</small>
+          </div>
+        {% endfor %}
       </div>
-      <div class="khung-bang bang-the-di-dong">
-        <table role="table">
-          <caption>Dự báo từ cuối chuỗi quan sát</caption>
-          <thead role="rowgroup"><tr role="row"><th scope="col">ATC</th><th scope="col">Ngày gốc</th><th scope="col">Tổng dự báo 7 ngày</th></tr></thead>
-          <tbody role="rowgroup">
-            {% for dong in cac_du_bao %}
-              <tr role="row">
-                <td role="cell" data-nhan="ATC">{{ dong.ket_qua_mo_hinh.ma_atc_nguon }}</td>
-                <td role="cell" data-nhan="Ngày gốc">{{ dong.ngay_goc|date:"d/m/Y" }}</td>
-                <td role="cell" data-nhan="Tổng dự báo 7 ngày">{{ dong.so_luong_du_bao|floatformat:3 }}</td>
+    </section>
+
+    <dl class="chi-so-bang-dieu-khien">
+      <div><dt><i data-lucide="database" aria-hidden="true"></i>Quan sát bán hàng</dt><dd>{{ nguon.so_quan_sat|so_nguyen }}</dd></div>
+      <div><dt><i data-lucide="pill" aria-hidden="true"></i>Nhóm thuốc ATC</dt><dd>{{ cac_nhom|length }}</dd></div>
+      <div><dt><i data-lucide="flask-conical" aria-hidden="true"></i>Mô hình thực nghiệm</dt><dd>{{ so_mo_hinh }}</dd></div>
+      <div><dt><i data-lucide="award" aria-hidden="true"></i>Được chọn nhiều nhất</dt><dd class="chi-so-chu">{% with dem_chon.0 as nhat %}{{ nhat.0 }} <small>{{ nhat.1 }}/{{ cac_nhom|length }} nhóm</small>{% endwith %}</dd></div>
+    </dl>
+
+    <section class="khoi-trang" aria-labelledby="tieu-de-cac-nhom">
+      <div class="dau-khoi">
+        <h2 id="tieu-de-cac-nhom">Kết quả theo nhóm thuốc</h2>
+        <span class="chu-thich-muc"><span class="cham-muc thap"></span>Sai số dưới 20%<span class="cham-muc vua"></span>20–35%<span class="cham-muc cao"></span>Trên 35%</span>
+      </div>
+      <p class="mo-ta-bang-dieu-khien">Mỗi thẻ là một nhóm ATC. Con số lớn là tổng lượng bán dự báo cho bảy ngày tới; sai số là mức lệch trung bình khi kiểm thử. Chọn một thẻ để xem biểu đồ chi tiết.</p>
+      <div class="luoi-nhom-du-bao" role="tablist" aria-label="Chọn nhóm thuốc">
+        {% for nhom in cac_nhom %}
+          <button type="button" class="the-nhom-du-bao" role="tab" data-nhom="{{ nhom.ma }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="chi-tiet-nhom">
+            <span class="dau-the-nhom"><strong>{{ nhom.ma }}</strong><span class="nhan-mo-hinh">{{ nhom.chon.ten }}</span></span>
+            <span class="ten-the-nhom">{{ nhom.ten|default:"Nhóm ATC" }}</span>
+            <span class="gia-tri-du-bao">{{ nhom.du_bao.so_luong_du_bao|floatformat:1 }}<small>dự báo 7 ngày tới</small></span>
+            <span class="sai-so-the muc-{{ nhom.muc_sai_so }}">Sai số ±{{ nhom.chon.mae_kiem_thu|floatformat:1 }}{% if nhom.ty_le_sai_so is not None %} · {{ nhom.ty_le_sai_so|floatformat:0 }}%{% endif %}</span>
+          </button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="chi-tiet-nhom" class="khoi-trang chi-tiet-du-bao" role="tabpanel" aria-labelledby="tieu-de-chi-tiet" data-url-mau="{% url 'du_bao:chi_tiet_nhom' 'MA_ATC' %}">
+      <div class="dau-khoi">
+        <div>
+          <p class="chu-dan" data-ma-nhom></p>
+          <h2 id="tieu-de-chi-tiet" data-ten-nhom>Đang tải…</h2>
+        </div>
+        <p class="trang-thai-tai" data-trang-thai role="status"></p>
+      </div>
+      <div class="tom-tat-du-bao">
+        <div class="the-du-bao-toi" data-du-bao-toi></div>
+        <ul class="nhan-xet-du-bao" data-nhan-xet></ul>
+      </div>
+      <h3 class="tieu-de-phan-bieu-do">Đánh giá mô hình</h3>
+      <div class="luoi-bieu-do">
+        <figure class="khung-bieu-do rong">
+          <figcaption>
+            <h3>Dự báo so với thực tế trên đoạn kiểm thử</h3>
+            <p>Mỗi điểm là tổng lượng bán của một tuần (bảy ngày sau ngày gốc), lấy các tuần nối tiếp không chồng lấp. Đường dự báo càng bám đường thực tế thì mô hình càng chính xác. Bấm tên mô hình để bật hoặc tắt.</p>
+          </figcaption>
+          <div class="cac-cong-tac" data-cong-tac aria-label="Chọn mô hình hiển thị"></div>
+          <div class="vung-bieu-do cao"><canvas data-bieu-do="kiem_thu" aria-label="Biểu đồ dự báo so với thực tế"></canvas></div>
+        </figure>
+        <figure class="khung-bieu-do">
+          <figcaption>
+            <h3>Sai số của từng mô hình</h3>
+            <p>MAE là mức lệch trung bình; RMSE phạt nặng hơn những lần lệch lớn. Thanh ngắn hơn là tốt hơn.</p>
+          </figcaption>
+          <div class="vung-bieu-do"><canvas data-bieu-do="sai_so" aria-label="Biểu đồ sai số các mô hình"></canvas></div>
+        </figure>
+        <figure class="khung-bieu-do">
+          <figcaption>
+            <h3>Bảng sai số</h3>
+            <p>Mô hình được chọn theo MAE xác thực (số in đậm), trước khi tính sai số kiểm thử.</p>
+          </figcaption>
+          <div class="khung-bang"><table class="bang-sai-so" data-bang-sai-so></table></div>
+        </figure>
+      </div>
+      <h3 class="tieu-de-phan-bieu-do">Đặc điểm dữ liệu bán hàng</h3>
+      <div class="luoi-bieu-do">
+        <figure class="khung-bieu-do rong">
+          <figcaption>
+            <h3>Diễn biến lượng bán theo tháng</h3>
+            <p>Trung bình mỗi ngày của từng tháng. Nền màu đánh dấu đoạn huấn luyện, xác thực và kiểm thử.</p>
+          </figcaption>
+          <div class="vung-bieu-do"><canvas data-bieu-do="theo_thang" aria-label="Biểu đồ diễn biến theo tháng"></canvas></div>
+        </figure>
+        <figure class="khung-bieu-do">
+          <figcaption>
+            <h3>Tính mùa vụ trong năm</h3>
+            <p>Trung bình mỗi ngày theo tháng, gộp các năm. Cột xanh đậm là tháng cao nhất, cột đỏ là tháng thấp nhất.</p>
+          </figcaption>
+          <div class="vung-bieu-do"><canvas data-bieu-do="mua_vu" aria-label="Biểu đồ mùa vụ"></canvas></div>
+        </figure>
+        <figure class="khung-bieu-do">
+          <figcaption>
+            <h3>Theo thứ trong tuần</h3>
+            <p>Chu kỳ bảy ngày là lý do SARIMAX được khảo sát với thành phần mùa vụ tuần.</p>
+          </figcaption>
+          <div class="vung-bieu-do"><canvas data-bieu-do="theo_thu" aria-label="Biểu đồ theo thứ trong tuần"></canvas></div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="khoi-trang" aria-labelledby="tieu-de-ma-tran">
+      <h2 id="tieu-de-ma-tran">So sánh năm mô hình trên tám nhóm</h2>
+      <p class="mo-ta-bang-dieu-khien">Giá trị là MAE trên đoạn kiểm thử. Ô có viền là mô hình được chọn; số in đậm là sai số kiểm thử thấp nhất của nhóm. Hai ô này có thể khác nhau vì mô hình được chọn trước khi nhìn đoạn kiểm thử, tránh chọn theo đáp án.</p>
+      <div class="khung-bang">
+        <table class="ma-tran-mo-hinh">
+          <thead>
+            <tr><th scope="col">Nhóm ATC</th>{% for mo_hinh in cac_nhom.0.cac_mo_hinh %}<th scope="col" class="o-so">{{ mo_hinh.ten }}<small>{{ mo_hinh.loai }}</small></th>{% endfor %}</tr>
+          </thead>
+          <tbody>
+            {% for nhom in cac_nhom %}
+              <tr>
+                <th scope="row">{{ nhom.ma }}<small>{{ nhom.ten }}</small></th>
+                {% for mo_hinh in nhom.cac_mo_hinh %}
+                  <td class="o-so{% if mo_hinh.duoc_chon %} duoc-chon{% endif %}{% if mo_hinh.tot_nhat_test %} tot-nhat{% endif %}">{{ mo_hinh.mae_kiem_thu|floatformat:2 }}{% if mo_hinh.duoc_chon %}<span class="sr-only"> (được chọn)</span>{% endif %}</td>
+                {% endfor %}
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </section>
-    <section class="khoi-trang" id="kich-ban">
-      <h2>Minh họa nguy cơ thiếu hàng</h2>
-      <p>Nhập số giả định theo cùng đơn vị và kỳ dự báo. Hệ thống so sánh tồn sau khi trừ giữ và dự trữ với tổng dự báo.</p>
-      <form method="post" class="form-chinh">{% csrf_token %}{{ form.as_p }}<button class="nut">Lưu kịch bản</button></form>
+
+    <section class="khoi-trang" id="kich-ban" aria-labelledby="tieu-de-kich-ban">
+      <h2 id="tieu-de-kich-ban">Minh họa nguy cơ thiếu hàng</h2>
+      <p class="mo-ta-bang-dieu-khien">Dữ liệu dự báo là nguồn công khai, không phải tồn kho của chuỗi. Vì vậy tồn, lượng giữ và mức dự trữ ở đây là số giả định, nhập theo cùng đơn vị và kỳ bảy ngày của nhóm đã chọn.</p>
+      <div class="luoi-kich-ban">
+        <form method="post" class="form-chinh" data-form-kich-ban>
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+          {% for truong in form %}{% include "components/_o_nhap.html" with truong=truong %}{% endfor %}
+          <button class="nut" type="submit"><i data-lucide="save" aria-hidden="true"></i>Lưu kịch bản</button>
+        </form>
+        <div class="xem-truoc-kich-ban" data-xem-truoc aria-live="polite">
+          <h3>Tính thử</h3>
+          <dl>
+            <div><dt>Khả dụng = tồn − giữ</dt><dd data-kq="kha_dung">–</dd></div>
+            <div><dt>Còn bán được sau mức dự trữ</dt><dd data-kq="sau_du_tru">–</dd></div>
+            <div><dt>Dự báo bán 7 ngày tới</dt><dd data-kq="du_bao">–</dd></div>
+          </dl>
+          <div class="thanh-so-sanh" aria-hidden="true">
+            <span>Còn bán được</span><span class="ray"><i data-thanh="co"></i></span>
+            <span>Dự báo bán</span><span class="ray"><i data-thanh="can"></i></span>
+          </div>
+          <p class="ket-luan-kich-ban" data-ket-luan>Nhập số giả định để xem kết luận.</p>
+        </div>
+      </div>
+      {{ du_bao_kich_ban|json_script:"du-lieu-kich-ban" }}
       <div class="khung-bang bang-the-di-dong">
         <table role="table">
           <caption>Kịch bản đã lưu của lần thực nghiệm này</caption>
-          <thead role="rowgroup"><tr role="row"><th scope="col">ATC</th><th scope="col">Tồn</th><th scope="col">Giữ</th><th scope="col">Khả dụng</th><th scope="col">Dự trữ</th><th scope="col">Dự báo</th><th scope="col">Chênh lệch</th></tr></thead>
+          <thead role="rowgroup"><tr role="row"><th scope="col">Nhóm</th><th scope="col" class="o-so">Tồn</th><th scope="col" class="o-so">Giữ</th><th scope="col" class="o-so">Dự trữ</th><th scope="col" class="o-so">Dự báo 7 ngày</th><th scope="col" class="o-so">Chênh lệch</th><th scope="col">Kết luận</th></tr></thead>
           <tbody role="rowgroup">
             {% for dong in cac_kich_ban %}
               <tr role="row">
-                <td role="cell" data-nhan="ATC">{{ dong.du_bao_bay_ngay.ket_qua_mo_hinh.ma_atc_nguon }}</td>
-                <td role="cell" data-nhan="Tồn">{{ dong.so_luong_ton }}</td>
-                <td role="cell" data-nhan="Giữ">{{ dong.so_luong_dang_giu }}</td>
-                <td role="cell" data-nhan="Khả dụng">{{ dong.kha_dung|floatformat:3 }}</td>
-                <td role="cell" data-nhan="Dự trữ">{{ dong.so_luong_du_tru }}</td>
-                <td role="cell" data-nhan="Dự báo">{{ dong.du_bao_bay_ngay.so_luong_du_bao|floatformat:3 }}</td>
-                <td role="cell" data-nhan="Chênh lệch">{{ dong.chenh_lech|floatformat:3 }} · {% if dong.chenh_lech < 0 %}Có nguy cơ thiếu{% else %}Đủ theo kịch bản{% endif %}</td>
+                <td role="cell" data-nhan="Nhóm">{{ dong.du_bao_bay_ngay.ket_qua_mo_hinh.ma_atc_nguon }}</td>
+                <td role="cell" data-nhan="Tồn" class="o-so">{{ dong.so_luong_ton|floatformat:1 }}</td>
+                <td role="cell" data-nhan="Giữ" class="o-so">{{ dong.so_luong_dang_giu|floatformat:1 }}</td>
+                <td role="cell" data-nhan="Dự trữ" class="o-so">{{ dong.so_luong_du_tru|floatformat:1 }}</td>
+                <td role="cell" data-nhan="Dự báo 7 ngày" class="o-so">{{ dong.du_bao_bay_ngay.so_luong_du_bao|floatformat:1 }}</td>
+                <td role="cell" data-nhan="Chênh lệch" class="o-so">{{ dong.chenh_lech|floatformat:1 }}</td>
+                <td role="cell" data-nhan="Kết luận">{% if dong.chenh_lech < 0 %}<span class="nhan-ket-luan thieu">Có nguy cơ thiếu</span>{% else %}<span class="nhan-ket-luan du">Đủ theo kịch bản</span>{% endif %}</td>
               </tr>
-            {% empty %}<tr role="row"><td role="cell" colspan="7">Chưa có kịch bản.</td></tr>{% endfor %}
+            {% empty %}<tr role="row"><td role="cell" colspan="7">Chưa có kịch bản nào được lưu.</td></tr>{% endfor %}
           </tbody>
         </table>
       </div>
     </section>
+
+    <details class="khoi-trang phuong-phap-du-bao">
+      <summary><h2>Phương pháp và cấu hình thực nghiệm</h2></summary>
+      <div class="luoi-phuong-phap">
+        <section>
+          <h3>Đặc trưng của mô hình học máy</h3>
+          <ul>{% for ten in dac_trung %}<li>{{ ten }}</li>{% endfor %}</ul>
+          <p>Nhãn cần dự báo là tổng lượng bán của bảy ngày sau ngày gốc.</p>
+        </section>
+        <section>
+          <h3>Chia dữ liệu theo thời gian</h3>
+          <ul>
+            {% for doan in giai_doan %}<li>{{ doan.ten }}: {{ doan.tu|date:"d/m/Y" }} – {{ doan.den|date:"d/m/Y" }}</li>{% endfor %}
+          </ul>
+          <p>Không xáo trộn ngày, nên mô hình không dùng thông tin của tương lai. Một mẫu chỉ thuộc một đoạn khi cả bảy ngày nhãn nằm trong đoạn đó.</p>
+        </section>
+        <section>
+          <h3>Cấu hình SARIMAX được chọn</h3>
+          <ul>
+            {% for nhom in cac_nhom %}<li>{{ nhom.ma }}: order {{ nhom.sarimax.order|join:", " }} · mùa vụ {{ nhom.sarimax.seasonal_order|join:", " }} · trend {{ nhom.sarimax.trend }}</li>{% endfor %}
+          </ul>
+        </section>
+        <section>
+          <h3>Thư viện</h3>
+          <ul>{% for ten, phien_ban in thu_vien.items %}<li>{{ ten }} {{ phien_ban }}</li>{% endfor %}</ul>
+          <p>Lần chạy #{{ lan.pk }} lúc {{ lan.thoi_diem_tao|date:"H:i d/m/Y" }}. Sai số tính theo đơn vị gốc của nguồn dữ liệu.</p>
+        </section>
+      </div>
+    </details>
   {% else %}
-    <p class="khoi-trang" id="kich-ban">Chưa có thực nghiệm. Dùng lệnh nạp nguồn và chạy dự báo trong README.</p>
+    <section class="khoi-trang trang-trong-du-bao">
+      <i data-lucide="line-chart" aria-hidden="true"></i>
+      <h2>Chưa có kết quả thực nghiệm</h2>
+      <p>Chạy <code>python manage.py nap_pharma_sales &lt;đường dẫn salesdaily.csv&gt;</code> rồi <code>python manage.py chay_du_bao</code> để huấn luyện năm mô hình và lưu kết quả vào cơ sở dữ liệu.</p>
+    </section>
+  {% endif %}
+{% endblock %}
+{% block cuoi_trang %}
+  {% if lan %}
+    <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>
+    <script src="{% tep_tinh 'chung/js/bieu_do.js' %}" defer></script>
+    <script src="{% tep_tinh 'du_bao/js/du_bao.js' %}" defer></script>
   {% endif %}
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block tieu_de %}Báo cáo · Khu quản lý{% endblock %}
 {% block vi_tri %}Báo cáo{% endblock %}
 {% block noi_dung %}
@@ -20,11 +21,42 @@
       {% if bao_cao %}
         <p class="xuat-bao-cao"><a class="nut nut-phu" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}xuat=xlsx"><i data-lucide="file-spreadsheet" aria-hidden="true"></i>Xuất Excel</a></p>
         <dl class="chi-so-bang-dieu-khien">
-          <div><dt><i data-lucide="banknote" aria-hidden="true"></i>Doanh thu bán hàng</dt><dd>{{ bao_cao.doanh_thu_gop|tien }}</dd></div>
+          <div><dt><i data-lucide="banknote" aria-hidden="true"></i>Doanh thu bán hàng</dt><dd>{{ bao_cao.doanh_thu_gop|tien }}{% if bao_cao.thay_doi_doanh_thu is not None %}<span class="so-sanh-ky {% if bao_cao.thay_doi_doanh_thu > 0 %}tang{% elif bao_cao.thay_doi_doanh_thu < 0 %}giam{% else %}bang{% endif %}">{% if bao_cao.thay_doi_doanh_thu > 0 %}+{% endif %}{{ bao_cao.thay_doi_doanh_thu|floatformat:1 }}% so với kỳ trước</span>{% elif bao_cao.doanh_thu_gop %}<span class="so-sanh-ky bang">Kỳ trước chưa có doanh thu</span>{% endif %}</dd></div>
           <div><dt><i data-lucide="rotate-ccw" aria-hidden="true"></i>Hoàn tiền trả hàng</dt><dd>{{ bao_cao.tien_hoan_tra_hang|tien }}</dd></div>
           <div><dt><i data-lucide="trending-up" aria-hidden="true"></i>Doanh thu thuần</dt><dd>{{ bao_cao.doanh_thu_thuan|tien }}</dd></div>
           <div><dt><i data-lucide="receipt" aria-hidden="true"></i>Phiếu bán / đơn hàng</dt><dd>{{ bao_cao.so_phieu_ban }} / {{ bao_cao.so_don_giu }}</dd></div>
         </dl>
+        {{ bao_cao.bieu_do|json_script:"du-lieu-bieu-do-bao-cao" }}
+        <div class="luoi-bieu-do-bao-cao" data-bieu-do-bao-cao>
+          <figure class="khung-bieu-do">
+            <figcaption>
+              <h3>Doanh thu theo {% if bao_cao.bieu_do.don_vi_thoi_gian == "thang" %}tháng{% else %}ngày{% endif %}</h3>
+              <p>Cột là doanh thu hàng (không gồm phiếu đã hoàn kho), đường là số phiếu bán.</p>
+            </figcaption>
+            <div class="vung-bieu-do"><canvas data-bieu-do="thoi_gian" aria-label="Biểu đồ doanh thu theo thời gian"></canvas></div>
+          </figure>
+          <figure class="khung-bieu-do">
+            <figcaption>
+              <h3>Doanh thu theo kênh bán</h3>
+              <p>Bán tại quầy, đặt giữ nhận tại quầy và giao tận nơi.</p>
+            </figcaption>
+            <div class="vung-bieu-do"><canvas data-bieu-do="kenh" aria-label="Biểu đồ doanh thu theo kênh bán"></canvas></div>
+          </figure>
+          <figure class="khung-bieu-do">
+            <figcaption>
+              <h3>Thuốc bán chạy theo doanh thu</h3>
+              <p>Mười thuốc có doanh thu cao nhất trong kỳ.</p>
+            </figcaption>
+            <div class="vung-bieu-do"><canvas data-bieu-do="ban_chay" aria-label="Biểu đồ thuốc bán chạy"></canvas></div>
+          </figure>
+          <figure class="khung-bieu-do">
+            <figcaption>
+              <h3>{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}Doanh thu theo chi nhánh{% else %}Đã thu theo phương thức{% endif %}</h3>
+              <p>{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}So sánh các chi nhánh trong phạm vi đang xem.{% else %}Tiền mặt, chuyển khoản, COD và ví điện tử đã ghi nhận.{% endif %}</p>
+            </figcaption>
+            <div class="vung-bieu-do"><canvas data-bieu-do="{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}chi_nhanh{% else %}phuong_thuc{% endif %}" aria-label="Biểu đồ so sánh"></canvas></div>
+          </figure>
+        </div>
         <div class="luoi-bang-dieu-khien">
           <section class="khoi-trang khung-bang" aria-labelledby="ban-chay">
             <h2 id="ban-chay">Thuốc bán chạy</h2>
@@ -74,4 +106,9 @@
       {% endif %}
     </section>
   {% endpartialdef %}
+{% endblock %}
+{% block cuoi_trang %}
+  <script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>
+  <script src="{% tep_tinh 'chung/js/bieu_do.js' %}" defer></script>
+  <script src="{% tep_tinh 'bao_cao/js/bao_cao.js' %}" defer></script>
 {% endblock %}

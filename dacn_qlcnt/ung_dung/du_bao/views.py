@@ -20,4 +20,12 @@ def ket_qua(request):
             form.add_error(None, loi)
         else:
             return redirect("du_bao:ket_qua")
-    return render(request, "du_bao/ket_qua.html", {"form": form, **lay_ket_qua_moi_nhat()})
+    # Giá trị dự báo của từng lựa chọn để phần "Tính thử" so sánh ngay trên trình duyệt.
+    du_bao_kich_ban = {
+        str(dong.pk): dong.so_luong_du_bao for dong in form.fields["du_bao"].queryset
+    }
+    return render(
+        request,
+        "du_bao/ket_qua.html",
+        {"form": form, "du_bao_kich_ban": du_bao_kich_ban, **lay_ket_qua_moi_nhat()},
+    )

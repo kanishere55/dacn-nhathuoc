@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta
 
-from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
+from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value, When
+from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 
 from ung_dung.ban_hang.models import ChiTietPhieuBan, DonHang, PhieuBan, PhieuHoanKho
@@ -124,7 +125,28 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
         .annotate(doanh_thu=Sum(tien), tong_so_luong=Sum("so_luong"))
         .order_by("-doanh_thu")[:10]
     )
+    # Kỳ liền trước cùng độ dài, để so sánh doanh thu tăng hay giảm.
+    so_ngay = (den_ngay - tu_ngay).days + 1
+    phieu_ky_truoc = PhieuBan.objects.filter(
+        chi_nhanh__in=cac_chi_nhanh,
+        thoi_diem_tao__gte=tu_luc - timedelta(days=so_ngay),
+        thoi_diem_tao__lt=tu_luc,
+    )
+    doanh_thu_ky_truoc = (
+        ChiTietPhieuBan.objects.filter(phieu_ban__in=phieu_ky_truoc)
+        .exclude(phieu_ban__in=PhieuHoanKho.objects.values("phieu_ban"))
+        .aggregate(tong=Sum(tien, default=0))["tong"]
+    )
     return {
+        "bieu_do": _du_lieu_bieu_do(
+            dong_hop_le, tien, tu_ngay, den_ngay, theo_phuong_thuc, ban_chay
+        ),
+        "doanh_thu_ky_truoc": doanh_thu_ky_truoc,
+        "thay_doi_doanh_thu": (
+            (doanh_thu_gop - doanh_thu_ky_truoc) / doanh_thu_ky_truoc * 100
+            if doanh_thu_ky_truoc
+            else None
+        ),
         "doanh_thu_gop": doanh_thu_gop,
         "tien_hoan_kho": tien_hoan_kho,
         "tien_hoan_khach": tien_hoan_khach,
@@ -140,4 +162,70 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
         "so_don_giu": don.count(),
         "tong_tien_ban": dong_ban.aggregate(tong=Sum(tien, default=0))["tong"],
         "cac_luong": sorted(cac_luong.items()),
+    }
+
+
+KENH_BAN = Case(
+    When(phieu_ban__don_hang__isnull=True, then=Value("Bán tại quầy")),
+    When(phieu_ban__don_hang__hinh_thuc_nhan="giao_hang", then=Value("Giao tận nơi")),
+    default=Value("Đặt giữ, nhận tại quầy"),
+)
+
+
+def _du_lieu_bieu_do(dong_hop_le, tien, tu_ngay, den_ngay, theo_phuong_thuc, ban_chay):
+    """Số liệu cho các biểu đồ báo cáo; kỳ dài hơn 92 ngày gộp theo tháng cho dễ đọc."""
+    theo_thang = (den_ngay - tu_ngay).days > 92
+    truc = TruncMonth if theo_thang else TruncDate
+    # TruncMonth trên cột thời điểm trả về datetime; đưa về date để khớp với các mốc đã sinh.
+    theo_moc = {
+        (dong["moc"].date() if isinstance(dong["moc"], datetime) else dong["moc"]): dong
+        for dong in dong_hop_le.annotate(moc=truc("phieu_ban__thoi_diem_tao"))
+        .values("moc")
+        .annotate(tong=Sum(tien), so_phieu=Count("phieu_ban", distinct=True))
+        .order_by()
+    }
+    cac_moc = []
+    ngay = tu_ngay.replace(day=1) if theo_thang else tu_ngay
+    while ngay <= den_ngay:
+        cac_moc.append(ngay)
+        ngay = (
+            (ngay.replace(day=28) + timedelta(days=4)).replace(day=1)
+            if theo_thang
+            else ngay + timedelta(days=1)
+        )
+    return {
+        "don_vi_thoi_gian": "thang" if theo_thang else "ngay",
+        "theo_thoi_gian": [
+            {
+                "moc": m.isoformat(),
+                "doanh_thu": float(theo_moc.get(m, {}).get("tong") or 0),
+                "so_phieu": theo_moc.get(m, {}).get("so_phieu") or 0,
+            }
+            for m in cac_moc
+        ],
+        "theo_chi_nhanh": [
+            {"ten": d["phieu_ban__chi_nhanh__ten_chi_nhanh"], "doanh_thu": float(d["tong"])}
+            for d in dong_hop_le.values("phieu_ban__chi_nhanh__ten_chi_nhanh")
+            .annotate(tong=Sum(tien))
+            .order_by("-tong")
+        ],
+        "theo_kenh": [
+            {"ten": d["kenh"], "doanh_thu": float(d["tong"])}
+            for d in dong_hop_le.annotate(kenh=KENH_BAN)
+            .values("kenh")
+            .annotate(tong=Sum(tien))
+            .order_by("-tong")
+        ],
+        "theo_phuong_thuc": [
+            {"ten": ten, "so_tien": float(tien_)} for ten, tien_ in theo_phuong_thuc
+        ],
+        "ban_chay": [
+            {
+                "ten": d["thuoc__ten_thuoc"],
+                "doanh_thu": float(d["doanh_thu"]),
+                "so_luong": d["tong_so_luong"],
+                "don_vi": d["thuoc__don_vi_tinh__ten_don_vi_tinh"],
+            }
+            for d in ban_chay
+        ],
     }

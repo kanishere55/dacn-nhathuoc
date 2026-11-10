@@ -49,22 +49,24 @@
       </div>
       {% if lan_du_bao %}
         <p class="mo-ta-bang-dieu-khien">{{ lan_du_bao.nguon_du_lieu }} · {{ lan_du_bao.nguon_du_lieu.don_vi_nguon }} · lần chạy {{ lan_du_bao.thoi_diem_tao|date:"d/m/Y" }}</p>
-        {% if cac_du_bao %}
+        {% if cac_nhom_du_bao %}
           <div class="khung-bang">
-            <table>
-              <caption>Tóm tắt dự báo tổng lượng bán trong 7 ngày sau mốc quan sát</caption>
-              <thead><tr><th scope="col">ATC</th><th scope="col">Mô hình</th><th scope="col">Dự báo 7 ngày</th><th scope="col">MAE kiểm thử</th><th scope="col">RMSE kiểm thử</th></tr></thead>
+            <table class="ma-tran-mo-hinh">
+              <caption>Tổng lượng bán dự báo cho bảy ngày sau mốc quan sát cuối</caption>
+              <thead><tr><th scope="col">Nhóm ATC</th><th scope="col">Mô hình được chọn</th><th scope="col" class="o-so">Dự báo 7 ngày</th><th scope="col" class="o-so">Sai số kiểm thử</th></tr></thead>
               <tbody>
-                {% for dong in cac_du_bao %}
+                {% for nhom in cac_nhom_du_bao %}
                   <tr>
-                    <td>{{ dong.ket_qua_mo_hinh.ma_atc_nguon }}</td><td>{{ dong.ket_qua_mo_hinh.mo_hinh }}</td>
-                    <td>{{ dong.so_luong_du_bao|floatformat:2 }}</td><td>{{ dong.ket_qua_mo_hinh.mae_kiem_thu|floatformat:2 }}</td><td>{{ dong.ket_qua_mo_hinh.rmse_kiem_thu|floatformat:2 }}</td>
+                    <th scope="row"><a href="{% url 'du_bao:ket_qua' %}#nhom-{{ nhom.ma }}">{{ nhom.ma }}</a><small>{{ nhom.ten }}</small></th>
+                    <td>{{ nhom.chon.ten }}</td>
+                    <td class="o-so">{{ nhom.du_bao.so_luong_du_bao|floatformat:1 }}</td>
+                    <td class="o-so"><span class="sai-so-the muc-{{ nhom.muc_sai_so }}">±{{ nhom.chon.mae_kiem_thu|floatformat:1 }}{% if nhom.ty_le_sai_so is not None %} · {{ nhom.ty_le_sai_so|floatformat:0 }}%{% endif %}</span></td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
-          <a class="duong-dan-noi-dung" href="{% url 'du_bao:ket_qua' %}">Xem tất cả kết quả dự báo</a>
+          <a class="duong-dan-noi-dung" href="{% url 'du_bao:ket_qua' %}">Xem biểu đồ và so sánh mô hình</a>
         {% else %}
           <p class="mo-ta-bang-dieu-khien">Lần thực nghiệm này chưa có dự báo sau mốc quan sát.</p>
         {% endif %}

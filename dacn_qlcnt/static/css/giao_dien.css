@@ -9,6 +9,7 @@
 @import "./quan_ly.css";
 @import "./ban_do.css";
 @import "./chon_co_tim.css";
+@import "./phan_tich.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {

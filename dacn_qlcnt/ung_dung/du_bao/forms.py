@@ -5,7 +5,9 @@ from .models import DuBaoBayNgay, LanThucNghiem
 
 
 class KichBanForm(forms.Form):
-    du_bao = forms.ModelChoiceField(DuBaoBayNgay.objects.none(), label="Nhóm và kỳ dự báo")
+    du_bao = forms.ModelChoiceField(
+        DuBaoBayNgay.objects.none(), label="Nhóm và kỳ dự báo", empty_label="Chọn nhóm ATC"
+    )
     so_luong_ton = forms.FloatField(min_value=0, label="Tồn giả định")
     so_luong_dang_giu = forms.FloatField(min_value=0, label="Lượng giữ giả định")
     so_luong_du_tru = forms.FloatField(min_value=0, label="Mức dự trữ giả định")

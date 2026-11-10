@@ -137,3 +137,33 @@ class DoanhThuVaExcelTests(TestCase):
         o_ten = [o for dong in so["Thuốc bán chạy"].iter_rows() for o in dong if o.value == "=1+1"]
         self.assertTrue(o_ten)
         self.assertTrue(all(o.data_type == "s" for o in o_ten))
+
+
+class BieuDoBaoCaoTests(TestCase):
+    def test_bieu_do_theo_ngay_kenh_va_so_sanh_ky_truoc(self):
+        from datetime import timedelta
+
+        from ung_dung.ban_hang.models import PhieuBan
+
+        d = tao_du_lieu()
+        tao_ton(d, luong=50)
+        hom_nay = timezone.localdate()
+        cu = ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 2}])
+        PhieuBan.objects.filter(pk=cu.pk).update(thoi_diem_tao=timezone.now() - timedelta(days=7))
+        ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
+        bao_cao = lay_bao_cao(d.ql, hom_nay - timedelta(days=6), hom_nay)
+        bieu_do = bao_cao["bieu_do"]
+        self.assertEqual(bieu_do["don_vi_thoi_gian"], "ngay")
+        self.assertEqual(len(bieu_do["theo_thoi_gian"]), 7)
+        self.assertEqual(bieu_do["theo_thoi_gian"][-1]["doanh_thu"], 6000)
+        self.assertEqual(bieu_do["theo_kenh"], [{"ten": "Bán tại quầy", "doanh_thu": 6000.0}])
+        # Kỳ trước (7 ngày liền trước) có 4.000 đ, kỳ này 6.000 đ: tăng 50%.
+        self.assertEqual(bao_cao["doanh_thu_ky_truoc"], 4000)
+        self.assertEqual(bao_cao["thay_doi_doanh_thu"], 50)
+        thang = lay_bao_cao(d.ql, hom_nay - timedelta(days=120), hom_nay)["bieu_do"]
+        self.assertEqual(thang["don_vi_thoi_gian"], "thang")
+        self.assertEqual(sum(m["doanh_thu"] for m in thang["theo_thoi_gian"]), 10000)
+        self.client.force_login(d.ql)
+        self.assertContains(
+            self.client.get(reverse("bao_cao:tong_hop")), 'id="du-lieu-bieu-do-bao-cao"'
+        )

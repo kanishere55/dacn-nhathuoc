@@ -20,3 +20,5 @@ Tải bằng `python cong_cu/tai_thu_vien.py`. Không gọi CDN từ trình duy�
 | `quill/quill.min.js` | https://unpkg.com/quill@2.0.3/dist/quill.js | `f6157c72ac9b3f51cdead426335688a027b12405d9d6a4daadd38a676b2d7ff2` |
 | `quill/quill.snow.css` | https://unpkg.com/quill@2.0.3/dist/quill.snow.css | `1c7948cd13aa92fac6390319bc1e5e461823da171519d3a768db56164f871636` |
 | `quill/LICENSE` | https://raw.githubusercontent.com/slab/quill/v2.0.3/LICENSE | `395c12b616d6f58238b4be39284d4d9221b58dd6e1f1e34d9ab537e34abbb022` |
+| `chartjs/chart.umd.min.js` | https://unpkg.com/chart.js@4.4.6/dist/chart.umd.js | `3850656abbdc319141e6e8ce8eacde2622fc767c30e20d81704af2bf3159f92d` |
+| `chartjs/LICENSE` | https://raw.githubusercontent.com/chartjs/Chart.js/v4.4.6/LICENSE.md | `41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce` |
