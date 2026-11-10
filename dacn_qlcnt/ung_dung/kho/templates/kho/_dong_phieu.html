@@ -1,0 +1,23 @@
+{% comment %}Một dòng hàng của phiếu kho; dùng cho dòng có sẵn và mẫu dòng mới (__prefix__).{% endcomment %}
+{% with da_bo=dong.DELETE.value %}
+<tr class="dong-hang{% if dong.errors and not da_bo %} co-loi{% endif %}" data-dong{% if da_bo %} hidden{% endif %}>
+  <td class="o-stt" data-stt aria-hidden="true"></td>
+  {% for truong in dong.visible_fields %}
+    {% if truong.name != "DELETE" %}
+      <td data-nhan="{{ truong.label }}">
+        <label class="sr-only" for="{{ truong.id_for_label }}">{{ truong.label }}</label>
+        {{ truong }}
+        {% if truong.errors and not da_bo %}<span class="loi-o">{{ truong.errors|join:" " }}</span>{% endif %}
+      </td>
+    {% endif %}
+  {% endfor %}
+  <td class="o-bo">
+    {% for truong in dong.hidden_fields %}{{ truong }}{% endfor %}
+    {% if dong.DELETE %}<span hidden>{{ dong.DELETE }}</span>{% endif %}
+    <button type="button" class="nut-bo-dong" data-bo-dong aria-label="Bỏ dòng này"><i data-lucide="x" aria-hidden="true"></i></button>
+  </td>
+</tr>
+{% if dong.non_field_errors and not da_bo %}
+  <tr class="dong-loi"><td></td><td colspan="9"><span class="loi-o">{{ dong.non_field_errors|join:" " }}</span></td></tr>
+{% endif %}
+{% endwith %}

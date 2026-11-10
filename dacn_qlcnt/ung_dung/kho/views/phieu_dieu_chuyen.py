@@ -43,7 +43,15 @@ def tao(request):
     return render(
         request,
         "kho/form_phieu.html",
-        {"form": form, "cac_dong": cac_dong, "tieu_de": "Điều chuyển hai chi nhánh"},
+        {
+            "form": form,
+            "cac_dong": cac_dong,
+            "tieu_de": "Điều chuyển hàng",
+            "mo_ta": "Chuyển thuốc sang chi nhánh khác. Hệ thống tự lấy lô gần hết hạn trước ở chi nhánh chuyển đi.",
+            "nhan_dong": "Thuốc cần chuyển",
+            "nhan_xac_nhan": "Chuyển hàng",
+            "url_danh_sach": "kho:phieu_dieu_chuyen_danh_sach",
+        },
     )
 
 

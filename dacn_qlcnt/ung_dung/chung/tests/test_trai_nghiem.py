@@ -108,3 +108,44 @@ class TraiNghiemTests(TestCase):
         self.assertTrue(re.match(r"^BH-\d{6}-", phieu.ma_phieu_ban))
         self.assertContains(trang, "6.000 đ")
         self.assertFalse(trang.context["nhieu_chi_nhanh"])
+
+    def test_don_dang_giu_hien_viec_can_lam_va_gom_thao_tac_phu(self):
+        from ung_dung.ban_hang.services.dat_hang import dat_hang
+
+        tao_ton(self.d, luong=10)
+        don = dat_hang(
+            self.d.khach,
+            self.d.cn,
+            [{"thuoc": self.d.thuoc, "so_luong": 1}],
+            hinh_thuc_nhan="nhan_tai_quay",
+            phuong_thuc_thanh_toan="tai_quay",
+        )
+        self.client.force_login(self.d.nv)
+        trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
+        self.assertContains(trang, "Việc cần làm")
+        self.assertContains(trang, "Hủy đơn hoặc báo sự cố")
+        self.assertTrue(trang.context["co_hanh_dong_phu"])
+
+    def test_form_phieu_nhap_giu_an_dong_da_bo_khi_bao_loi(self):
+        self.client.force_login(self.d.ql)
+        url = reverse("kho:phieu_nhap_tao")
+        trang = self.client.get(url)
+        self.assertContains(trang, "Lưu phiếu nhập")
+        self.assertContains(trang, "Các lô nhận được")
+        loi = self.client.post(
+            url,
+            {
+                "chi_nhanh": self.d.cn.pk,
+                "nha_cung_cap": "",
+                "form-TOTAL_FORMS": "2",
+                "form-INITIAL_FORMS": "0",
+                "form-MIN_NUM_FORMS": "1",
+                "form-MAX_NUM_FORMS": "50",
+                "form-0-thuoc": self.d.thuoc.pk,
+                "form-0-so_luong": "5",
+                "form-1-so_luong": "3",
+                "form-1-DELETE": "on",
+            },
+        )
+        self.assertEqual(loi.status_code, 200)
+        self.assertContains(loi, "data-dong hidden", count=1)

@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import formset_factory
+from django.utils import timezone
 
 from ung_dung.danh_muc.models import ChiNhanh, NhaCungCap, QuyDoiBaoGoi, Thuoc
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
@@ -8,16 +9,37 @@ from .models import LOAI_XUAT_HUY, LoThuoc, PhieuNhap, TonKho
 from .selectors import lay_phieu
 
 
+def chon_san_chi_nhanh(form, ten_truong, nguoi):
+    """Người chỉ thuộc một chi nhánh thì chọn sẵn và ẩn ô; form ghi lại để template hiện tên."""
+    truong = form.fields[ten_truong]
+    truong.queryset = lay_chi_nhanh(nguoi)
+    hai = list(truong.queryset[:2])
+    form.chi_nhanh_mac_dinh = hai[0] if len(hai) == 1 else None
+    if form.chi_nhanh_mac_dinh:
+        form.initial.setdefault(ten_truong, form.chi_nhanh_mac_dinh.pk)
+        truong.widget = forms.HiddenInput()
+
+
 class PhieuNhapForm(forms.Form):
-    chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
-    nha_cung_cap = forms.ModelChoiceField(
-        NhaCungCap.objects.filter(dang_hoat_dong=True), label="Nhà cung cấp"
+    chi_nhanh = forms.ModelChoiceField(
+        ChiNhanh.objects.none(), label="Chi nhánh nhận hàng", empty_label="Chọn chi nhánh"
     )
-    ghi_chu = forms.CharField(label="Ghi chú", required=False, widget=forms.Textarea)
+    nha_cung_cap = forms.ModelChoiceField(
+        NhaCungCap.objects.filter(dang_hoat_dong=True),
+        label="Nhà cung cấp",
+        empty_label="Chọn nhà cung cấp",
+    )
+    ghi_chu = forms.CharField(
+        label="Ghi chú",
+        required=False,
+        widget=forms.Textarea(
+            attrs={"rows": 2, "placeholder": "Ví dụ: số hóa đơn của nhà cung cấp"}
+        ),
+    )
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
+        chon_san_chi_nhanh(self, "chi_nhanh", nguoi)
 
 
 class TepNhapExcelForm(forms.Form):
@@ -52,8 +74,8 @@ class DongThuocForm(forms.Form):
     so_luong = forms.IntegerField(label="Số lượng", min_value=1, max_value=2147483647)
     quy_doi_bao_goi = forms.ModelChoiceField(
         QuyDoiBaoGoi.objects.all(),
-        label="Bao gói",
-        empty_label="Đơn vị cơ sở",
+        label="Tính theo",
+        empty_label="Đơn vị lẻ",
         required=False,
     )
 
@@ -64,54 +86,28 @@ class DongNhapForm(DongThuocForm):
         label="Ngày hết hạn", widget=forms.DateInput(attrs={"type": "date"})
     )
     don_gia = forms.DecimalField(
-        label="Giá nhập / đơn vị cơ sở (VND)", max_digits=14, decimal_places=0, min_value=0
+        label="Giá nhập (đ / đơn vị lẻ)", max_digits=14, decimal_places=0, min_value=0
     )
 
 
 class PhieuDieuChuyenForm(forms.Form):
-    chi_nhanh_nguon = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh xuất")
+    chi_nhanh_nguon = forms.ModelChoiceField(
+        ChiNhanh.objects.none(), label="Chuyển từ chi nhánh", empty_label="Chọn chi nhánh"
+    )
     chi_nhanh_dich = forms.ModelChoiceField(
-        ChiNhanh.objects.filter(dang_hoat_dong=True), label="Chi nhánh nhận"
+        ChiNhanh.objects.filter(dang_hoat_dong=True),
+        label="Chuyển đến chi nhánh",
+        empty_label="Chọn chi nhánh nhận",
     )
     ghi_chu = forms.CharField(label="Ghi chú", required=False)
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chi_nhanh_nguon"].queryset = lay_chi_nhanh(nguoi)
-
-
-class PhieuTraForm(forms.Form):
-    phieu_nhap = forms.ModelChoiceField(PhieuNhap.objects.none(), label="Phiếu nhập gốc")
-    ghi_chu = forms.CharField(label="Ghi chú", required=False)
-
-    def __init__(self, *args, nguoi, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["phieu_nhap"].queryset = lay_phieu(nguoi, PhieuNhap)
-
-
-class DongTraForm(forms.Form):
-    lo_thuoc = forms.ModelChoiceField(LoThuoc.objects.all(), label="Lô đã nhập")
-    so_luong = forms.IntegerField(label="Lượng cơ sở trả", min_value=1, max_value=2147483647)
-
-    def __init__(self, *args, nguoi, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["lo_thuoc"].queryset = LoThuoc.objects.filter(
-            tonkho__chi_nhanh__in=lay_chi_nhanh(nguoi)
-        ).distinct()
-
-
-class PhieuXuatHuyForm(forms.Form):
-    chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
-    loai_xuat_huy = forms.ChoiceField(choices=LOAI_XUAT_HUY, label="Lý do hủy")
-    ghi_chu = forms.CharField(
-        label="Tình trạng hàng, số biên bản",
-        required=False,
-        widget=forms.Textarea(attrs={"rows": 3}),
-    )
-
-    def __init__(self, *args, nguoi, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
+        chon_san_chi_nhanh(self, "chi_nhanh_nguon", nguoi)
+        if self.chi_nhanh_mac_dinh:
+            self.fields["chi_nhanh_dich"].queryset = ChiNhanh.objects.filter(
+                dang_hoat_dong=True
+            ).exclude(pk=self.chi_nhanh_mac_dinh.pk)
 
 
 class ChonLoTheoTon(forms.ModelChoiceField):
@@ -119,9 +115,63 @@ class ChonLoTheoTon(forms.ModelChoiceField):
         return f"{lo.thuoc.ten_thuoc} · lô {lo.ma_lo_thuoc} · HSD {lo.ngay_het_han:%d/%m/%Y}"
 
 
+class ChonPhieuNhap(forms.ModelChoiceField):
+    def label_from_instance(self, phieu):
+        return (
+            f"{phieu.ma_phieu_nhap} · {phieu.nha_cung_cap.ten_nha_cung_cap}"
+            f" · {timezone.localtime(phieu.thoi_diem_tao):%d/%m/%Y}"
+        )
+
+
+class PhieuTraForm(forms.Form):
+    phieu_nhap = ChonPhieuNhap(
+        PhieuNhap.objects.none(), label="Trả theo phiếu nhập", empty_label="Chọn phiếu nhập gốc"
+    )
+    ghi_chu = forms.CharField(label="Lý do trả", required=False)
+
+    def __init__(self, *args, nguoi, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["phieu_nhap"].queryset = lay_phieu(nguoi, PhieuNhap).select_related(
+            "nha_cung_cap"
+        )
+
+
+class DongTraForm(forms.Form):
+    lo_thuoc = ChonLoTheoTon(LoThuoc.objects.all(), label="Lô trả", empty_label="Chọn lô")
+    so_luong = forms.IntegerField(
+        label="Số lượng trả (đơn vị lẻ)", min_value=1, max_value=2147483647
+    )
+
+    def __init__(self, *args, nguoi, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["lo_thuoc"].queryset = (
+            LoThuoc.objects.filter(tonkho__chi_nhanh__in=lay_chi_nhanh(nguoi))
+            .select_related("thuoc")
+            .distinct()
+        )
+
+
+class PhieuXuatHuyForm(forms.Form):
+    chi_nhanh = forms.ModelChoiceField(
+        ChiNhanh.objects.none(), label="Chi nhánh", empty_label="Chọn chi nhánh"
+    )
+    loai_xuat_huy = forms.ChoiceField(choices=LOAI_XUAT_HUY, label="Lý do hủy")
+    ghi_chu = forms.CharField(
+        label="Tình trạng hàng, số biên bản",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2}),
+    )
+
+    def __init__(self, *args, nguoi, **kwargs):
+        super().__init__(*args, **kwargs)
+        chon_san_chi_nhanh(self, "chi_nhanh", nguoi)
+
+
 class DongXuatHuyForm(forms.Form):
-    lo_thuoc = ChonLoTheoTon(LoThuoc.objects.none(), label="Lô cần hủy")
-    so_luong = forms.IntegerField(label="Lượng cơ sở hủy", min_value=1, max_value=2147483647)
+    lo_thuoc = ChonLoTheoTon(LoThuoc.objects.none(), label="Lô cần hủy", empty_label="Chọn lô")
+    so_luong = forms.IntegerField(
+        label="Số lượng hủy (đơn vị lẻ)", min_value=1, max_value=2147483647
+    )
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)

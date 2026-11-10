@@ -43,7 +43,10 @@ def cac_hanh_dong(don, nguoi):
             continue
         if ma == "nhan_tai_quay" and don.hinh_thuc_nhan != "nhan_tai_quay":
             continue
-        ket_qua.append({"ma": ma, "nhan": nhan, "can_ly_do": can_ly_do})
+        # Hủy và báo giao thất bại là thao tác phụ: gom riêng để không bấm nhầm.
+        ket_qua.append(
+            {"ma": ma, "nhan": nhan, "can_ly_do": can_ly_do, "phu": ma in ("huy", "giao_that_bai")}
+        )
     if don.trang_thai_thanh_toan == "cho_hoan_tien" and co_quyen(nguoi, "don_hang.hoan_tien"):
         ket_qua.append({"ma": "hoan_tien", "nhan": "Đã hoàn tiền cho khách", "can_ly_do": False})
     return ket_qua
@@ -88,6 +91,11 @@ def danh_sach(request):
 def chi_tiet(request, ma):
     don = get_object_or_404(lay_don(request.user), pk=ma)
     cac_dong = lay_chi_tiet_don(don)
+    hanh_dong = (
+        cac_hanh_dong(don, request.user)
+        if co_quyen(request.user, "don_hang.xu_ly", "don_hang.hoan_tien")
+        else []
+    )
     return render(
         request,
         "ban_hang/don_hang_chi_tiet.html",
@@ -98,11 +106,8 @@ def chi_tiet(request, ma):
             "tien_trinh": tien_trinh(don),
             "phieu_ban": PhieuBan.objects.filter(don_hang=don).first(),
             "yeu_cau_hoa_don": YeuCauXuatHoaDon.objects.filter(don_hang=don).first(),
-            "cac_hanh_dong": (
-                cac_hanh_dong(don, request.user)
-                if co_quyen(request.user, "don_hang.xu_ly", "don_hang.hoan_tien")
-                else []
-            ),
+            "cac_hanh_dong": hanh_dong,
+            "co_hanh_dong_phu": any(hd.get("phu") for hd in hanh_dong),
             "co_ke_don": any(dong.thuoc.la_thuoc_ke_don for dong in cac_dong),
             "cac_giao_dich": giao_dich_cua_don(don),
             "phuong_thuc_tai_quay": PHUONG_THUC_TAI_QUAY,

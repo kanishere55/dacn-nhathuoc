@@ -72,7 +72,16 @@ def _trang_tao(request, form, cac_dong, form_excel):
     return render(
         request,
         "kho/form_phieu.html",
-        {"form": form, "cac_dong": cac_dong, "tieu_de": "Nhập hàng", "form_excel": form_excel},
+        {
+            "form": form,
+            "cac_dong": cac_dong,
+            "form_excel": form_excel,
+            "tieu_de": "Nhập hàng",
+            "mo_ta": "Ghi nhận hàng nhà cung cấp giao tới. Mỗi dòng là một lô có mã lô và hạn dùng in trên bao bì.",
+            "nhan_dong": "Các lô nhận được",
+            "nhan_xac_nhan": "Lưu phiếu nhập",
+            "url_danh_sach": "kho:phieu_nhap_danh_sach",
+        },
     )
 
 

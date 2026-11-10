@@ -60,7 +60,11 @@ def tao(request):
         {
             "form": form,
             "cac_dong": cac_dong,
-            "tieu_de": "Xuất hủy hàng hết hạn, hư hỏng",
+            "tieu_de": "Xuất hủy hàng",
+            "mo_ta": "Loại khỏi kho thuốc đã hết hạn, hư hỏng hoặc bị thu hồi. Ghi số biên bản để đối chiếu khi kiểm tra.",
+            "nhan_dong": "Lô cần hủy",
+            "nhan_xac_nhan": "Lưu phiếu xuất hủy",
+            "url_danh_sach": "kho:phieu_xuat_huy_danh_sach",
             "url_lap_san": "kho:phieu_xuat_huy_tao",
         },
     )

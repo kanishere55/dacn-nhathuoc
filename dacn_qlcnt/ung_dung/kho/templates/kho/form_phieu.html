@@ -1,55 +1,81 @@
 {% extends "base.html" %}
 {% load static %}
+{% block tieu_de %}{{ tieu_de }} · Khu quản lý{% endblock %}
+{% block vi_tri %}{{ tieu_de }}{% endblock %}
 {% block noi_dung %}
-  <h1>{{ tieu_de }}</h1>
-  {% if url_lap_san %}
-    <p class="thanh-cong-cu"><a class="nut nut-phu" href="{% url url_lap_san %}?loai=het_han"><i data-lucide="calendar-x" aria-hidden="true"></i>Lập sẵn mọi lô đã hết hạn còn tồn</a></p>
-  {% endif %}
-  {% if form_excel %}
-    <form method="post" enctype="multipart/form-data" class="khoi-trang form-chinh">
-      {% csrf_token %}
-      <h2>Điền nhanh từ Excel</h2>
-      <p>Tải <a class="duong-dan-noi-dung" href="{% url 'kho:phieu_nhap_mau_excel' %}">tệp mẫu</a>, điền mỗi lô một dòng (tối đa 50), rồi chọn tệp. Các dòng được đổ vào phiếu bên dưới để xem lại; kho chỉ thay đổi khi bạn xác nhận.</p>
-      {{ form_excel.non_field_errors }}
-      {% for truong in form_excel %}
-        {% include "components/_o_nhap.html" %}
-      {% endfor %}
-      <button class="nut nut-phu" name="doc_excel" value="1"><i data-lucide="file-up" aria-hidden="true"></i>Đọc tệp và xem trước</button>
-    </form>
-  {% endif %}
-  <form method="post" class="khoi-trang form-chinh" data-formset>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    {% block truong_phieu %}
-    {% for truong in form %}
-      {% include "components/_o_nhap.html" %}
-    {% endfor %}
-    {% endblock %}
-    {{ cac_dong.management_form }}{{ cac_dong.non_form_errors }}
-    <div data-cac-dong>
-      {% for dong in cac_dong %}
-        <fieldset class="dong-phieu">
-          <legend>
-            Dòng {{ forloop.counter }}
-          </legend>
-          {{ dong.non_field_errors }}
-          {% for truong in dong %}
-            {% include "components/_o_nhap.html" %}
-          {% endfor %}
-        </fieldset>
-      {% endfor %}
+  <header class="dau-quay-ban">
+    <div>
+      <h1>{{ tieu_de }}</h1>
+      {% if mo_ta %}<p>{{ mo_ta }}</p>{% endif %}
     </div>
-    <template data-dong-rong>
-      <fieldset class="dong-phieu">
-        {{ cac_dong.empty_form.as_p }}
-      </fieldset>
-    </template>
-    <button type="button" class="nut nut-phu" data-them-dong>Thêm dòng</button>
-    {% block sau_cac_dong %}{% endblock %}
-    <button class="nut">Xác nhận chứng từ</button>
+    {% if url_danh_sach %}<a class="nut nut-phu" href="{% url url_danh_sach %}"><i data-lucide="list" aria-hidden="true"></i>Phiếu đã lập</a>{% endif %}
+  </header>
+
+  {% if form_excel %}
+    <details class="khoi-trang nhap-nhanh-excel"{% if form_excel.errors %} open{% endif %}>
+      <summary><i data-lucide="file-spreadsheet" aria-hidden="true"></i>Nhập nhanh nhiều lô từ tệp Excel <span class="chu-tuy-chon">(không bắt buộc)</span></summary>
+      <form method="post" enctype="multipart/form-data" class="form-chinh">
+        {% csrf_token %}
+        <p>Tải <a class="duong-dan-noi-dung" href="{% url 'kho:phieu_nhap_mau_excel' %}">tệp mẫu</a>, điền mỗi lô một dòng (tối đa 50) rồi chọn tệp. Các dòng được điền vào phiếu bên dưới để bạn xem lại; kho chỉ thay đổi khi bạn bấm lưu.</p>
+        {{ form_excel.non_field_errors }}
+        {% for truong in form_excel %}{% include "components/_o_nhap.html" %}{% endfor %}
+        <button class="nut nut-phu" name="doc_excel" value="1"><i data-lucide="file-up" aria-hidden="true"></i>Đọc tệp và điền vào phiếu</button>
+      </form>
+    </details>
+  {% endif %}
+
+  {% if url_lap_san %}
+    <p class="goi-y-lap-san"><i data-lucide="lightbulb" aria-hidden="true"></i>Muốn hủy hàng hết hạn? <a class="duong-dan-noi-dung" href="{% url url_lap_san %}?loai=het_han">Điền sẵn mọi lô đã hết hạn còn trong kho</a>.</p>
+  {% endif %}
+
+  <form method="post" class="form-phieu-kho" data-formset novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="thong-bao thong-bao-loi" role="alert">{% for loi in form.non_field_errors %}<p>{{ loi }}</p>{% endfor %}</div>
+    {% endif %}
+
+    <section class="khoi-trang" aria-labelledby="tieu-de-thong-tin">
+      <h2 id="tieu-de-thong-tin" class="tieu-de-buoc"><span>1</span>Thông tin phiếu</h2>
+      {% if form.chi_nhanh_mac_dinh %}
+        <p class="ban-tai"><i data-lucide="store" aria-hidden="true"></i>Chi nhánh: <strong>{{ form.chi_nhanh_mac_dinh.ten_chi_nhanh }}</strong></p>
+      {% endif %}
+      <div class="luoi-thong-tin-phieu">
+        {% for truong in form.hidden_fields %}{{ truong }}{% endfor %}
+        {% for truong in form.visible_fields %}
+          <div class="{% if truong.widget_type == 'textarea' %}rong {% endif %}">{% include "components/_o_nhap.html" %}</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="khoi-trang" aria-labelledby="tieu-de-dong-hang">
+      <h2 id="tieu-de-dong-hang" class="tieu-de-buoc"><span>2</span>{{ nhan_dong|default:"Các mặt hàng" }}</h2>
+      {{ cac_dong.management_form }}
+      {% if cac_dong.non_form_errors %}<div class="thong-bao thong-bao-loi" role="alert">{{ cac_dong.non_form_errors|join:" " }}</div>{% endif %}
+      <div class="khung-bang">
+        <table class="bang-dong-phieu">
+          <thead>
+            <tr>
+              <th scope="col" class="o-stt">#</th>
+              {% for truong in cac_dong.empty_form.visible_fields %}{% if truong.name != "DELETE" %}<th scope="col">{{ truong.label }}</th>{% endif %}{% endfor %}
+              <th scope="col"><span class="sr-only">Bỏ</span></th>
+            </tr>
+          </thead>
+          <tbody data-cac-dong>
+            {% for dong in cac_dong %}{% include "kho/_dong_phieu.html" %}{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <template data-dong-rong>{% include "kho/_dong_phieu.html" with dong=cac_dong.empty_form %}</template>
+      <button type="button" class="nut nut-phu nut-them-dong" data-them-dong><i data-lucide="plus" aria-hidden="true"></i>Thêm dòng</button>
+    </section>
+
+    <div class="thanh-luu-phieu">
+      <span data-dem-dong></span>
+      {% if url_danh_sach %}<a class="nut nut-phu" href="{% url url_danh_sach %}">Hủy</a>{% endif %}
+      <button class="nut" type="submit"><i data-lucide="check" aria-hidden="true"></i>{{ nhan_xac_nhan|default:"Lưu phiếu" }}</button>
+    </div>
   </form>
 {% endblock %}
 {% block cuoi_trang %}
-  <script src="{% tep_tinh 'kho/js/dong_phieu.js' %}" defer>
-  </script>
+  <script src="{% tep_tinh 'kho/js/dong_phieu.js' %}" defer></script>
 {% endblock %}

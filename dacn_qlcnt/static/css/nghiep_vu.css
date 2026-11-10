@@ -231,4 +231,28 @@
   .chi-so-bam-duoc .can-chu-y dd {
     color: #9a6a06;
   }
+
+  /* Chi tiết đơn: khối việc cần làm nổi lên đầu cột phải, thao tác phụ thu gọn bên dưới. */
+  .khoi-xu-ly-don {
+    border-left: 4px solid var(--color-chinh);
+    background: #fbfdfb;
+  }
+  .khoi-xu-ly-don .nut {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+  }
+  .hanh-dong-phu {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--vien);
+  }
+  .hanh-dong-phu summary {
+    cursor: pointer;
+    color: var(--chu-phu);
+    font-size: 13px;
+  }
+  .hanh-dong-phu[open] summary {
+    margin-bottom: 4px;
+  }
 }

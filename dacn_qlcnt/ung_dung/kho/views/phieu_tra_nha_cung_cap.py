@@ -42,7 +42,15 @@ def tao(request):
     return render(
         request,
         "kho/form_phieu.html",
-        {"form": form, "cac_dong": cac_dong, "tieu_de": "Trả nhà cung cấp"},
+        {
+            "form": form,
+            "cac_dong": cac_dong,
+            "tieu_de": "Trả hàng cho nhà cung cấp",
+            "mo_ta": "Trả lại hàng lỗi hoặc giao sai theo đúng phiếu nhập gốc. Chỉ trả được lô thuộc phiếu đó.",
+            "nhan_dong": "Lô cần trả",
+            "nhan_xac_nhan": "Lưu phiếu trả",
+            "url_danh_sach": "kho:phieu_tra_danh_sach",
+        },
     )
 
 

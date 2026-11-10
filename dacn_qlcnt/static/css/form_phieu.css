@@ -1,0 +1,218 @@
+/* Form phiếu kho dùng chung: nhập hàng, điều chuyển, trả nhà cung cấp, xuất hủy. */
+@layer components {
+  .form-phieu-kho > .khoi-trang {
+    margin-top: 16px;
+  }
+  .tieu-de-buoc {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    font-size: 16px;
+  }
+  .tieu-de-buoc span {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #e3f0ea;
+    color: var(--color-chinh);
+    font-size: 13px;
+  }
+  .luoi-thong-tin-phieu {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 20px;
+  }
+  .luoi-thong-tin-phieu :is(input:not([type="checkbox"], [type="hidden"]), select, textarea) {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--vien);
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+  }
+  .luoi-thong-tin-phieu label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .luoi-thong-tin-phieu > .rong {
+    grid-column: 1 / -1;
+  }
+  .luoi-thong-tin-phieu > div:empty {
+    display: none;
+  }
+  .form-phieu-kho .ban-tai {
+    margin-bottom: 12px;
+  }
+  .nhap-nhanh-excel {
+    margin-top: 16px;
+    padding: 14px 20px;
+  }
+  .nhap-nhanh-excel summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .nhap-nhanh-excel summary svg.lucide {
+    width: 18px;
+    height: 18px;
+    color: var(--color-chinh);
+  }
+  .nhap-nhanh-excel form {
+    margin-top: 12px;
+  }
+  .goi-y-lap-san {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fdf7e2;
+  }
+  .goi-y-lap-san svg.lucide {
+    width: 18px;
+    height: 18px;
+    color: #9a6a06;
+  }
+  .bang-dong-phieu {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bang-dong-phieu th,
+  .bang-dong-phieu td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--vien);
+    text-align: left;
+    vertical-align: top;
+  }
+  .bang-dong-phieu thead th {
+    color: var(--chu-phu);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .bang-dong-phieu td input:not([type="checkbox"]),
+  .bang-dong-phieu td select {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--vien);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .bang-dong-phieu td .choices {
+    min-width: 200px;
+    margin: 0;
+  }
+  .bang-dong-phieu td .choices__inner {
+    min-height: 38px;
+    padding: 4px 8px;
+  }
+  .bang-dong-phieu td:nth-child(2) {
+    min-width: 220px;
+  }
+  .bang-dong-phieu input[type="number"] {
+    min-width: 90px;
+  }
+  .bang-dong-phieu input[type="date"] {
+    min-width: 140px;
+  }
+  .bang-dong-phieu thead .o-stt {
+    padding-top: 8px !important;
+  }
+  .o-stt {
+    width: 28px;
+    padding-top: 17px !important;
+    color: var(--chu-phu);
+    font-variant-numeric: tabular-nums;
+    text-align: center !important;
+  }
+  .bang-dong-phieu .o-bo {
+    width: 40px;
+    padding-top: 11px;
+  }
+  .dong-hang.co-loi td {
+    background: #fff8f6;
+  }
+  .loi-o {
+    display: block;
+    margin-top: 4px;
+    color: #a63a24;
+    font-size: 12px;
+  }
+  .dong-loi td {
+    padding-top: 0;
+  }
+  .nut-them-dong {
+    margin-top: 12px;
+    gap: 6px;
+  }
+  .thanh-luu-phieu {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--vien);
+    border-radius: var(--radius-the);
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 -6px 18px rgba(23, 46, 36, .06);
+  }
+  .thanh-luu-phieu [data-dem-dong] {
+    margin-right: auto;
+    color: var(--chu-phu);
+  }
+  .thanh-luu-phieu .nut {
+    gap: 6px;
+  }
+
+  @media (max-width: 800px) {
+    .luoi-thong-tin-phieu { grid-template-columns: minmax(0, 1fr); }
+    .bang-dong-phieu thead { display: none; }
+    .bang-dong-phieu tr.dong-hang {
+      position: relative;
+      display: grid;
+      gap: 8px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--vien);
+    }
+    .bang-dong-phieu tr.dong-hang[hidden] { display: none; }
+    .bang-dong-phieu td {
+      padding: 0;
+      border: 0;
+    }
+    .bang-dong-phieu td[data-nhan]::before {
+      content: attr(data-nhan);
+      display: block;
+      margin-bottom: 4px;
+      color: var(--chu-phu);
+      font-size: 12px;
+    }
+    .bang-dong-phieu td:nth-child(2) { min-width: 0; }
+    .bang-dong-phieu .o-stt {
+      width: auto;
+      padding: 0 !important;
+      text-align: left !important;
+      font-weight: 700;
+    }
+    .bang-dong-phieu .o-stt::before { content: "Dòng "; }
+    .bang-dong-phieu .o-bo {
+      position: absolute;
+      top: 8px;
+      right: 0;
+      width: auto;
+    }
+  }
+}
