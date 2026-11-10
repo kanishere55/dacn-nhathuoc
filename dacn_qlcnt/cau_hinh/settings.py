@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env", override=False)
@@ -99,14 +99,15 @@ OSRM_DI_BO_BASE_URL = os.environ.get(
 NOMINATIM_BASE_URL = os.environ.get(
     "NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org"
 ).rstrip("/")
+# Quy tắc mật khẩu của Django, lời báo tiếng Việt (ung_dung/tai_khoan/mat_khau.py).
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-        "OPTIONS": {"user_attributes": ["ten_dang_nhap"]},
+        "NAME": "ung_dung.tai_khoan.mat_khau.KhongGiongThongTinCaNhan",
+        "OPTIONS": {"user_attributes": ["ten_dang_nhap", "ho_ten", "email"]},
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "ung_dung.tai_khoan.mat_khau.DoDaiToiThieu"},
+    {"NAME": "ung_dung.tai_khoan.mat_khau.KhongQuaPhoBien"},
+    {"NAME": "ung_dung.tai_khoan.mat_khau.KhongToanChuSo"},
 ]
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_HTTPONLY = True
@@ -151,20 +152,34 @@ URL_WEBSITE = os.environ.get("URL_WEBSITE", "http://127.0.0.1:8000").rstrip("/")
 HTTP_USER_AGENT = f"DACN-QuanLyNhaThuoc/1.0 (+{URL_WEBSITE})"
 
 # Email: thiếu tài khoản SMTP thì in email ra console để chạy thử trên máy cá nhân.
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+# Khóa EMAIL_* trong .env của project được ưu tiên hơn biến môi trường hệ điều hành: máy chạy
+# thử có thể còn biến EMAIL_* của project khác (tài khoản Gmail cũ, mật khẩu ứng dụng đã thu
+# hồi) và khi đó mã xác thực không bao giờ tới hộp thư. Kiểm tra bằng `manage.py kiem_tra_email`.
+_GIA_TRI_ENV = dotenv_values(BASE_DIR / ".env")
+
+
+def _cau_hinh_email(ten, mac_dinh=""):
+    return (_GIA_TRI_ENV.get(ten) or os.environ.get(ten) or mac_dinh).strip()
+
+
+EMAIL_HOST = _cau_hinh_email("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(_cau_hinh_email("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = _cau_hinh_email("EMAIL_HOST_USER")
+# Gmail hiển thị mật khẩu ứng dụng thành 4 nhóm cách nhau; bỏ dấu cách khi dán vào .env.
+EMAIL_HOST_PASSWORD = _cau_hinh_email("EMAIL_HOST_PASSWORD").replace(" ", "")
+EMAIL_USE_SSL = _cau_hinh_email("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_USE_TLS = not EMAIL_USE_SSL and _cau_hinh_email("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_TIMEOUT = 20
 EMAIL_BACKEND = (
-    "django.core.mail.backends.smtp.EmailBackend"
+    "ung_dung.thong_bao.smtp.GuiThuSmtp"
     if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD
     else "django.core.mail.backends.console.EmailBackend"
 )
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL",
-    f"{TEN_THUONG_HIEU} <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "khong-tra-loi@localhost",
+# Tên người gửi theo thương hiệu lưu trong CSDL (thong_bao.services.dia_chi_gui), trừ khi .env đặt
+# DEFAULT_FROM_EMAIL; không lấy biến môi trường hệ điều hành của project khác.
+NGUOI_GUI_CO_DINH = bool((_GIA_TRI_ENV.get("DEFAULT_FROM_EMAIL") or "").strip())
+DEFAULT_FROM_EMAIL = (_GIA_TRI_ENV.get("DEFAULT_FROM_EMAIL") or "").strip() or (
+    f"{TEN_THUONG_HIEU} <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "khong-tra-loi@localhost"
 )
 # Gửi SMTP ở luồng nền sau commit để trang không chờ máy chủ thư.
 EMAIL_GUI_NEN = os.environ.get("EMAIL_GUI_NEN", "True").lower() == "true"

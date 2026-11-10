@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.gis.geos import Point
 
-from ung_dung.chung.truong_form import TruongPhongPhu
+from ung_dung.chung.truong_form import TruongHoTen, TruongPhongPhu, TruongSoDienThoai
 from ung_dung.chung.van_ban import cat_khoang_trang
 
 from .selectors import DANH_MUC
@@ -108,7 +108,17 @@ class FormDanhMuc(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for ten, truong in list(self.fields.items()):
-            if ten in NHIEU_DONG:
+            if ten == "so_dien_thoai":
+                # Số điện thoại Việt Nam thật; nhà cung cấp có thể chỉ có tổng đài 1800/1900.
+                self.fields[ten] = TruongSoDienThoai(
+                    label=truong.label,
+                    required=truong.required,
+                    help_text=truong.help_text,
+                    loai="hotline" if getattr(self, "loai", "") == "nha_cung_cap" else "dien_thoai",
+                )
+            elif ten == "ten_nhan_vien":
+                self.fields[ten] = TruongHoTen(label=truong.label, help_text=truong.help_text)
+            elif ten in NHIEU_DONG:
                 # Nội dung dài soạn như văn bản Word, lưu HTML đã làm sạch.
                 self.fields[ten] = TruongPhongPhu(
                     label=truong.label, required=False, help_text=truong.help_text

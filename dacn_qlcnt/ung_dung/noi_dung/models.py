@@ -5,12 +5,13 @@ from django.db.models import F, Q
 from django.db.models.functions import Now
 
 from ung_dung.chung.anh import AnhCSDL, rang_buoc_anh
-from ung_dung.chung.ten_csdl import EMAIL, rang_buoc_van_ban, ten_rang_buoc
+from ung_dung.chung.ten_csdl import EMAIL, SO_HOTLINE, rang_buoc_van_ban, ten_rang_buoc
 
 MAU_HEX = r"^#[0-9a-f]{6}$"
 DUONG_DAN_NOI_BO = r"^/[A-Za-z0-9/_.?=&%-]*$"
 DUONG_DAN_TRANG = r"^[a-z0-9]+(-[a-z0-9]+)*$"
-HOTLINE = r"^[0-9]{4,11}$"
+# Hotline: số di động/cố định Việt Nam hoặc tổng đài 1800/1900.
+HOTLINE = SO_HOTLINE
 
 
 class BannerTrangChu(AnhCSDL):
@@ -110,7 +111,11 @@ class ThongTinCuaHang(models.Model):
         db_comment="Dòng giới thiệu ngắn dưới tên thương hiệu; rỗng khi không dùng.",
     )
     hotline = models.TextField(
-        db_column="hotline", db_comment="Số điện thoại tư vấn chung, chỉ gồm 4 đến 11 chữ số."
+        db_column="hotline",
+        db_comment=(
+            "Số điện thoại tư vấn chung, chỉ gồm chữ số: di động 10 số, cố định 11 số hoặc tổng đài "
+            "1800/1900 8 hay 10 số."
+        ),
     )
     email_lien_he = models.TextField(
         db_column="email_lien_he", db_comment="Email nhận liên hệ của khách; chữ thường."

@@ -8,8 +8,13 @@ MA_NGHIEP_VU = r"^[A-Z0-9][A-Z0-9_-]{0,31}$"
 MA_UUID = r"^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
 # Email lưu chữ thường sau khi chuẩn hóa ở form; phần tên miền phải có dấu chấm.
 EMAIL = r"^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$"
-# Số điện thoại Việt Nam dạng nội địa: di động 10 chữ số, cố định 11 chữ số.
-SO_DIEN_THOAI = r"^0[0-9]{9,10}$"
+# Số điện thoại Việt Nam dạng nội địa (Thông tư 22/2014/TT-BTTTT, sau chuyển đổi mã vùng 2018):
+# di động 10 chữ số với đầu số 03x, 05x, 07x, 08x, 09x đang cấp; cố định 11 chữ số 02 + mã vùng.
+# Đầu số cũ 01x (11 số), 00x, 04x, 06x không còn tồn tại nên bị từ chối.
+SO_DI_DONG = r"^0(3[2-9]|5[2-9]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$"
+SO_DIEN_THOAI = rf"^({SO_DI_DONG[1:-1]}|02[0-9]{{9}})$"
+# Hotline doanh nghiệp: số thường hoặc tổng đài 1800/1900 gồm 8 hoặc 10 chữ số.
+SO_HOTLINE = rf"^({SO_DIEN_THOAI[1:-1]}|1[89]00([0-9]{{4}}|[0-9]{{6}}))$"
 
 # Chỉ rút gọn tên bảng trong tên ràng buộc khi tên đầy đủ vượt giới hạn PostgreSQL.
 TEN_RUT_GON = {

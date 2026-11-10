@@ -4,7 +4,12 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from ung_dung.chung.truong_form import TruongEmail, TruongMotDong, TruongSoDienThoai
+from ung_dung.chung.truong_form import (
+    TruongEmail,
+    TruongHoTen,
+    TruongMotDong,
+    TruongSoDienThoai,
+)
 from ung_dung.chung.van_ban import cat_khoang_trang
 
 from . import quyen as danh_muc_quyen
@@ -90,16 +95,17 @@ class DangNhapForm(AuthenticationForm):
 
 
 class DangKyForm(KiemHaiMatKhau, forms.Form):
-    ho_ten = TruongMotDong(
-        label="Họ và tên", max_length=100, widget=forms.TextInput(attrs={"autocomplete": "name"})
-    )
+    ho_ten = TruongHoTen(label="Họ và tên")
     email = TruongEmail(label="Email", help_text="Mã xác thực sẽ gửi tới email này.")
     so_dien_thoai = TruongSoDienThoai(label="Số điện thoại", required=False)
     ten_dang_nhap = forms.RegexField(
         label="Tên đăng nhập",
         regex=MAU_TEN_DANG_NHAP,
         help_text="4–30 ký tự: chữ không dấu, số, dấu chấm, gạch dưới hoặc gạch ngang.",
-        error_messages={"invalid": "Tên đăng nhập chỉ gồm chữ không dấu, số và . _ -"},
+        error_messages={
+            "invalid": "Tên đăng nhập dài 4–30 ký tự, chỉ gồm chữ không dấu, số và . _ -",
+            "required": "Vui lòng nhập tên đăng nhập.",
+        },
         widget=forms.TextInput(attrs={"autocomplete": "username"}),
     )
     mat_khau = _o_mat_khau("Mật khẩu", help_text="Ít nhất 8 ký tự, không quá đơn giản.")
@@ -137,9 +143,7 @@ class EmailForm(forms.Form):
 
 
 class HoSoForm(forms.Form):
-    ho_ten = TruongMotDong(
-        label="Họ và tên", max_length=100, widget=forms.TextInput(attrs={"autocomplete": "name"})
-    )
+    ho_ten = TruongHoTen(label="Họ và tên")
     so_dien_thoai = TruongSoDienThoai(label="Số điện thoại", required=False)
 
 
@@ -156,7 +160,7 @@ class DoiEmailForm(forms.Form):
 
 
 class DiaChiGiaoHangForm(forms.Form):
-    ten_nguoi_nhan = TruongMotDong(label="Người nhận", max_length=100)
+    ten_nguoi_nhan = TruongHoTen(label="Người nhận")
     so_dien_thoai = TruongSoDienThoai(label="Số điện thoại người nhận")
     dia_chi = TruongMotDong(
         label="Địa chỉ",
@@ -200,7 +204,7 @@ def _ten_o_quyen(ma):
 
 class TaiKhoanForm(forms.ModelForm):
     ten_dang_nhap = forms.CharField(label="Tên đăng nhập", max_length=150)
-    ho_ten = TruongMotDong(label="Họ và tên", max_length=100, required=False)
+    ho_ten = TruongHoTen(label="Họ và tên", required=False)
     email = TruongEmail(label="Email", required=False)
     so_dien_thoai = TruongSoDienThoai(label="Số điện thoại", required=False)
     mat_khau = forms.CharField(

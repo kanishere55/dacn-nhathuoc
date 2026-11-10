@@ -4,6 +4,11 @@
   <h1>{{ tieu_de }}</h1>
   <p class="mo-ta-xac-thuc">{{ ghi_chu|default:"Nhập mã 6 chữ số vừa gửi tới email của bạn. Mã có hiệu lực trong 10 phút." }}</p>
   <p class="email-nhan-ma"><i data-lucide="mail" aria-hidden="true"></i>{{ email_che }}</p>
+  {% if gui_ma_loi %}
+    <p class="canh-bao-gui-ma" role="alert"><i data-lucide="mail-warning" aria-hidden="true"></i>Chưa gửi được email chứa mã vì hệ thống thư đang gặp sự cố. Vui lòng bấm "Gửi lại mã" sau ít phút; nếu vẫn không nhận được, hãy liên hệ nhà thuốc.</p>
+  {% elif email_in_console %}
+    <p class="canh-bao-gui-ma" role="note"><i data-lucide="terminal" aria-hidden="true"></i>Chế độ chạy thử: máy chủ chưa cấu hình tài khoản Gmail gửi thư nên email (kèm mã) được in ra cửa sổ đang chạy web.</p>
+  {% endif %}
   <form method="post" class="form-chinh" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}

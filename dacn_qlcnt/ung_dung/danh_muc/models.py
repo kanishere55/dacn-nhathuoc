@@ -8,12 +8,15 @@ from django.db.models.functions import Now
 from ung_dung.chung.anh import AnhCoNguon, AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
     SO_DIEN_THOAI,
+    SO_HOTLINE,
     rang_buoc_so,
     rang_buoc_van_ban,
     ten_rang_buoc,
 )
 
 MAU_SO_DIEN_THOAI_HOAC_RONG = f"^({SO_DIEN_THOAI[1:-1]})?$"
+# Nhà cung cấp có thể chỉ có tổng đài 1800/1900.
+MAU_HOTLINE_HOAC_RONG = f"^({SO_HOTLINE[1:-1]})?$"
 
 
 class ChiNhanh(models.Model):
@@ -175,7 +178,10 @@ class NhaCungCap(models.Model):
     )
     so_dien_thoai = models.TextField(
         db_column="so_dien_thoai",
-        db_comment="Số liên hệ do người dùng nhập; văn bản một dòng.",
+        db_comment=(
+            "Số liên hệ của nhà cung cấp, chỉ gồm chữ số: di động, cố định hoặc tổng đài 1800/1900; "
+            "rỗng khi chưa có."
+        ),
         blank=True,
         db_default="",
     )
@@ -193,7 +199,9 @@ class NhaCungCap(models.Model):
             *rang_buoc_van_ban("nha_cung_cap", "ma_nha_cung_cap", rong=False, nhieu_dong=False),
             *rang_buoc_van_ban("nha_cung_cap", "ten_nha_cung_cap", rong=False, nhieu_dong=False),
             *rang_buoc_van_ban("nha_cung_cap", "dia_chi", rong=True, nhieu_dong=False),
-            *rang_buoc_van_ban("nha_cung_cap", "so_dien_thoai", rong=True, nhieu_dong=False),
+            *rang_buoc_van_ban(
+                "nha_cung_cap", "so_dien_thoai", rong=True, dinh_dang=MAU_HOTLINE_HOAC_RONG
+            ),
             models.UniqueConstraint(
                 fields=["ma_nha_cung_cap"],
                 name=ten_rang_buoc("duy_nhat", "nha_cung_cap", *["ma_nha_cung_cap"]),
@@ -406,7 +414,7 @@ class NhanVien(models.Model):
     )
     so_dien_thoai = models.TextField(
         db_column="so_dien_thoai",
-        db_comment="Số liên hệ; văn bản một dòng.",
+        db_comment="Số điện thoại Việt Nam của nhân viên, dạng nội địa chỉ gồm chữ số; rỗng khi chưa có.",
         blank=True,
         db_default="",
     )
@@ -418,7 +426,9 @@ class NhanVien(models.Model):
         constraints = [
             *rang_buoc_van_ban("nhan_vien", "ma_nhan_vien", rong=False, nhieu_dong=False),
             *rang_buoc_van_ban("nhan_vien", "ten_nhan_vien", rong=False, nhieu_dong=False),
-            *rang_buoc_van_ban("nhan_vien", "so_dien_thoai", rong=True, nhieu_dong=False),
+            *rang_buoc_van_ban(
+                "nhan_vien", "so_dien_thoai", rong=True, dinh_dang=MAU_SO_DIEN_THOAI_HOAC_RONG
+            ),
             models.UniqueConstraint(
                 fields=["ma_nhan_vien"],
                 name=ten_rang_buoc("duy_nhat", "nhan_vien", *["ma_nhan_vien"]),

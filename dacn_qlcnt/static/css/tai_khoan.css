@@ -154,6 +154,24 @@
     font-weight: 400;
     cursor: default;
   }
+  .canh-bao-gui-ma {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border: 1px solid #f3c7a8;
+    border-radius: 8px;
+    background: #fff6ef;
+    color: #8a3b12;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .canh-bao-gui-ma svg.lucide {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+  }
   .email-nhan-ma {
     display: inline-flex;
     align-items: center;

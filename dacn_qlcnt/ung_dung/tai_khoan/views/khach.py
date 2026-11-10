@@ -1,5 +1,6 @@
 """Đăng nhập, đăng ký có xác thực email và khôi phục tài khoản cho website khách."""
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.core.exceptions import ValidationError
@@ -42,7 +43,12 @@ def lay_phien_cua_trinh_duyet(request, ma, loai):
 
 def ngu_canh_nhap_ma(phien, form, **them):
     da_qua = (timezone.now() - phien.thoi_diem_gui_cuoi).total_seconds()
+    # Quên mật khẩu không báo lỗi gửi để không lộ email nào đã có tài khoản.
+    ket_qua = None if phien.loai_xac_thuc == "quen_mat_khau" else xac_thuc.ket_qua_gui_ma(phien)
     return {
+        "gui_ma_loi": ket_qua == "loi",
+        # Chạy thử trên máy chưa cấu hình SMTP: thư (kèm mã) được in ra cửa sổ chạy web.
+        "email_in_console": settings.DEBUG and "console" in settings.EMAIL_BACKEND,
         "form": form,
         "phien": phien,
         "email_che": che_email(phien.email),
@@ -139,7 +145,14 @@ def gui_lai_ma(request, ma):
     except ValidationError as loi:
         messages.error(request, " ".join(loi.messages))
     else:
-        messages.success(request, f"Đã gửi mã mới tới {che_email(phien.email)}.")
+        if phien.loai_xac_thuc != "quen_mat_khau" and xac_thuc.ket_qua_gui_ma(phien) == "loi":
+            messages.error(
+                request,
+                f"Chưa gửi được mã tới {che_email(phien.email)} vì hệ thống thư đang gặp sự cố. "
+                "Vui lòng thử lại sau ít phút hoặc liên hệ nhà thuốc.",
+            )
+        else:
+            messages.success(request, f"Đã gửi mã mới tới {che_email(phien.email)}.")
     return redirect(TRANG_NHAP_MA[phien.loai_xac_thuc], ma=phien.ma_phien_xac_thuc)
 
 

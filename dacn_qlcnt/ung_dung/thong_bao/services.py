@@ -2,6 +2,7 @@
 
 import logging
 import threading
+from email.utils import formataddr
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -12,6 +13,7 @@ from django.utils import timezone
 from ung_dung.chung.van_ban import cat_khoang_trang
 
 from .models import NhatKyEmail
+from .smtp import giai_thich_loi
 
 nhat_ky = logging.getLogger(__name__)
 
@@ -34,14 +36,31 @@ def mot_dong(van_ban, gioi_han=500):
     return cat_khoang_trang(" ".join(str(van_ban).split()))[:gioi_han] or "Lỗi không rõ"
 
 
+def dia_chi_gui():
+    """Người gửi: DEFAULT_FROM_EMAIL trong .env, không có thì tên thương hiệu lưu trong CSDL."""
+    if settings.EMAIL_HOST_USER and not getattr(settings, "NGUOI_GUI_CO_DINH", False):
+        return formataddr((ten_thuong_hieu(), settings.EMAIL_HOST_USER))
+    return settings.DEFAULT_FROM_EMAIL
+
+
 def gui_email(
-    *, loai_email, email_nhan, tieu_de, mau, ngu_canh=None, tai_khoan=None, tep_dinh_kem=()
+    *,
+    loai_email,
+    email_nhan,
+    tieu_de,
+    mau,
+    ngu_canh=None,
+    tai_khoan=None,
+    tep_dinh_kem=(),
+    gui_ngay=False,
 ):
     """Tạo nhật ký và hẹn gửi khi transaction hiện tại commit.
 
     `mau` là tên mẫu trong thong_bao/email/ (không đuôi). Mẫu văn bản nhận biến
     `an_bi_mat`: bản lưu vào CSDL được dựng với an_bi_mat=True để che OTP.
     `tep_dinh_kem`: các bộ (tên tệp, bytes, kiểu MIME); chỉ gửi đi, không lưu CSDL.
+    `gui_ngay`: gửi trong luồng của yêu cầu ngay sau commit (mã OTP) để trang báo được cho người
+    dùng khi gửi lỗi, thay vì nói "đã gửi" trong khi thư không đi.
     """
     ngu_canh = {**ngu_canh_chung(), **(ngu_canh or {}), "tieu_de": tieu_de}
     van_ban = render_to_string(f"thong_bao/email/{mau}.txt", ngu_canh)
@@ -61,14 +80,15 @@ def gui_email(
         "van_ban": van_ban,
         "html": html,
         "tep_dinh_kem": list(tep_dinh_kem),
+        "nguoi_gui": dia_chi_gui(),
     }
-    transaction.on_commit(lambda: _bat_dau_gui(goi))
+    transaction.on_commit(lambda: _bat_dau_gui(goi, gui_ngay))
     return ban_ghi
 
 
-def _bat_dau_gui(goi):
+def _bat_dau_gui(goi, gui_ngay=False):
     # Backend locmem chỉ dùng khi chạy test: gửi ngay để test đọc được mail.outbox.
-    if settings.EMAIL_GUI_NEN and "locmem" not in settings.EMAIL_BACKEND:
+    if not gui_ngay and settings.EMAIL_GUI_NEN and "locmem" not in settings.EMAIL_BACKEND:
         threading.Thread(target=_gui_trong_luong_rieng, args=(goi,), daemon=True).start()
     else:
         _gui(goi)
@@ -85,7 +105,7 @@ def _gui(goi):
     thu = EmailMultiAlternatives(
         subject=goi["tieu_de"],
         body=goi["van_ban"],
-        from_email=settings.DEFAULT_FROM_EMAIL,
+        from_email=goi.get("nguoi_gui") or settings.DEFAULT_FROM_EMAIL,
         to=[goi["email_nhan"]],
     )
     thu.attach_alternative(goi["html"], "text/html")
@@ -97,7 +117,7 @@ def _gui(goi):
         nhat_ky.warning("Gửi email %s lỗi: %s", goi["id_nhat_ky"], loi)
         NhatKyEmail.objects.filter(pk=goi["id_nhat_ky"]).update(
             trang_thai="loi",
-            chi_tiet_loi=mot_dong(f"{type(loi).__name__}: {loi}"),
+            chi_tiet_loi=mot_dong(f"{giai_thich_loi(loi)} Chi tiết: {type(loi).__name__}: {loi}"),
         )
     else:
         NhatKyEmail.objects.filter(pk=goi["id_nhat_ky"]).update(

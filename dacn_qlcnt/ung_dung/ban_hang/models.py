@@ -6,6 +6,7 @@ from django.db.models.functions import Now
 from ung_dung.chung.anh import AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
     EMAIL,
+    SO_DI_DONG,
     SO_DIEN_THOAI,
     rang_buoc_so,
     rang_buoc_van_ban,
@@ -849,7 +850,7 @@ class YeuCauTraHang(models.Model):
         default="",
         db_default="",
         db_column="so_dien_thoai_momo",
-        db_comment="Số điện thoại ví MoMo nhận tiền hoàn; chỉ có khi hoàn qua MoMo.",
+        db_comment="Số di động 10 chữ số của ví MoMo nhận tiền hoàn; chỉ có khi hoàn qua MoMo.",
     )
     nguoi_xu_ly = models.ForeignKey(
         "tai_khoan.TaiKhoan",
@@ -930,7 +931,7 @@ class YeuCauTraHang(models.Model):
                 "yeu_cau_tra_hang",
                 "so_dien_thoai_momo",
                 rong=True,
-                dinh_dang=f"^({SO_DIEN_THOAI[1:-1]})?$",
+                dinh_dang=f"^({SO_DI_DONG[1:-1]})?$",
             ),
             # Mỗi hình thức hoàn chỉ mang đúng thông tin của nó, đủ để quản lý chuyển tiền.
             models.CheckConstraint(

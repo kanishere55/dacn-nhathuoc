@@ -3,8 +3,7 @@ from uuid import uuid4
 
 from django import forms
 
-from ung_dung.chung.ten_csdl import EMAIL
-from ung_dung.chung.truong_form import TruongMotDong, TruongSoDienThoai
+from ung_dung.chung.truong_form import TruongEmail, TruongMotDong, TruongSoDienThoai
 from ung_dung.danh_muc.forms import NhieuTepInput, TruongNhieuTep
 from ung_dung.danh_muc.models import ChiNhanh
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
@@ -151,7 +150,9 @@ class TraHangForm(forms.Form):
         required=False,
         help_text="Viết đúng như trên thẻ, hệ thống tự đổi sang chữ in hoa không dấu.",
     )
-    so_dien_thoai_momo = TruongSoDienThoai(label="Số điện thoại ví MoMo", required=False)
+    so_dien_thoai_momo = TruongSoDienThoai(
+        label="Số điện thoại ví MoMo", required=False, loai="di_dong"
+    )
 
     def __init__(self, *args, cac_dong, con_lai, **kwargs):
         super().__init__(*args, **kwargs)
@@ -234,19 +235,13 @@ class YeuCauXuatHoaDonForm(forms.Form):
         label="Mã số thuế", max_length=14, help_text="10 chữ số; chi nhánh doanh nghiệp thêm -XXX."
     )
     dia_chi_cong_ty = TruongMotDong(label="Địa chỉ theo đăng ký thuế", max_length=300)
-    email_nhan_hoa_don = forms.EmailField(label="Email nhận hóa đơn", max_length=254)
+    email_nhan_hoa_don = TruongEmail(label="Email nhận hóa đơn")
 
     def clean_ma_so_thue(self):
         ma = re.sub(r"\s+", "", self.cleaned_data["ma_so_thue"])
         if not re.fullmatch(MA_SO_THUE, ma):
             raise forms.ValidationError("Mã số thuế gồm 10 chữ số, hoặc 10 chữ số kèm -XXX.")
         return ma
-
-    def clean_email_nhan_hoa_don(self):
-        email = self.cleaned_data["email_nhan_hoa_don"].strip().lower()
-        if not re.fullmatch(EMAIL, email):
-            raise forms.ValidationError("Email cần có tên miền đầy đủ, ví dụ ketoan@congty.vn.")
-        return email
 
 
 class XuLyXuatHoaDonForm(forms.Form):

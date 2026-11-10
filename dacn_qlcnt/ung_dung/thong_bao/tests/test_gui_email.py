@@ -39,7 +39,21 @@ class GuiEmailTests(TestCase):
                 nhat_ky = self.gui()
         nhat_ky.refresh_from_db()
         self.assertEqual(nhat_ky.trang_thai, "loi")
-        self.assertEqual(nhat_ky.chi_tiet_loi, "OSError: Máy chủ từ chối")
+        self.assertEqual(
+            nhat_ky.chi_tiet_loi,
+            "Không kết nối được máy chủ thư. Kiểm tra mạng, EMAIL_HOST và EMAIL_PORT. "
+            "Chi tiết: OSError: Máy chủ từ chối",
+        )
+
+    def test_gmail_tu_choi_dang_nhap_bao_dung_nguyen_nhan(self):
+        import smtplib
+
+        loi = smtplib.SMTPAuthenticationError(535, b"5.7.8 Username and Password not accepted")
+        with mock.patch("django.core.mail.EmailMultiAlternatives.send", side_effect=loi):
+            with self.captureOnCommitCallbacks(execute=True):
+                nhat_ky = self.gui()
+        nhat_ky.refresh_from_db()
+        self.assertTrue(nhat_ky.chi_tiet_loi.startswith("Gmail từ chối đăng nhập (mã 535)"))
 
     @override_settings(EMAIL_GUI_NEN=True)
     def test_backend_test_luon_gui_dong_bo(self):

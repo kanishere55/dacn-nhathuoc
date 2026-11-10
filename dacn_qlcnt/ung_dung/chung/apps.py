@@ -10,3 +10,5 @@ class ChungConfig(AppConfig):
 
     def ready(self):
         import_module("ung_dung.chung.kiem_tra_luu_tru")
+        # Lời báo lỗi tiếng Việt cho form, validator, ràng buộc model và API.
+        import_module("ung_dung.chung.thong_bao_loi").ap_dung()

@@ -50,6 +50,8 @@ def _gui_ma(phien, ma_otp, ho_ten=""):
         tai_khoan=phien.tai_khoan,
         tieu_de=f"Mã xác thực {ten_thuong_hieu()}",
         mau="ma_xac_thuc",
+        # Gửi ngay để trang nhập mã báo đúng khi thư không đi được.
+        gui_ngay=True,
         ngu_canh={
             "ho_ten": ho_ten,
             "ma_otp": ma_otp,
@@ -57,6 +59,23 @@ def _gui_ma(phien, ma_otp, ho_ten=""):
             "so_phut": PhienXacThuc.SO_PHUT_HIEU_LUC,
         },
     )
+
+
+def ket_qua_gui_ma(phien):
+    """Trạng thái thư chứa mã của lần gửi gần nhất: 'da_gui', 'loi', 'cho_gui' hoặc None khi
+    không gửi (quên mật khẩu với email không có tài khoản)."""
+    from ung_dung.thong_bao.models import NhatKyEmail
+
+    thu = (
+        NhatKyEmail.objects.filter(
+            loai_email="ma_xac_thuc",
+            email_nhan=phien.email,
+            thoi_diem_tao__gte=phien.thoi_diem_gui_cuoi - timedelta(seconds=30),
+        )
+        .order_by("-pk")
+        .first()
+    )
+    return thu.trang_thai if thu else None
 
 
 def _tao_phien(loai, email, *, tai_khoan=None, gui=True, ho_ten="", **dang_ky):

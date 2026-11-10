@@ -1,6 +1,6 @@
 from django import forms
 
-from ung_dung.chung.truong_form import TruongPhongPhu
+from ung_dung.chung.truong_form import TruongEmail, TruongPhongPhu, TruongSoDienThoai
 
 from .models import BannerTrangChu, ThongTinCuaHang, TinTuc, TrangNoiDung
 
@@ -74,6 +74,9 @@ class BannerForm(_CatKhoangTrang, forms.ModelForm):
 
 
 class ThongTinCuaHangForm(_CatKhoangTrang, forms.ModelForm):
+    hotline = TruongSoDienThoai(label="Hotline", loai="hotline")
+    email_lien_he = TruongEmail(label="Email liên hệ")
+
     class Meta:
         model = ThongTinCuaHang
         fields = [
@@ -95,12 +98,6 @@ class ThongTinCuaHangForm(_CatKhoangTrang, forms.ModelForm):
             "giay_phep_kinh_doanh": "Giấy chứng nhận đủ điều kiện kinh doanh dược",
         }
         widgets = {ten: forms.TextInput() for ten in fields}
-
-    def clean_email_lien_he(self):
-        return self.cleaned_data["email_lien_he"].strip().lower()
-
-    def clean_hotline(self):
-        return "".join(ky_tu for ky_tu in self.cleaned_data["hotline"] if ky_tu.isdigit())
 
 
 class TrangNoiDungForm(_CatKhoangTrang, forms.ModelForm):
