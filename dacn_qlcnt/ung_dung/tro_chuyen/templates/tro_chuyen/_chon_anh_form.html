@@ -1,0 +1,10 @@
+{% comment %}Ô chọn ảnh của form tin đầu: nút chọn, ảnh thu nhỏ để kiểm lại, bấm × để bỏ từng ảnh.{% endcomment %}
+<div class="chon-anh-form">
+  <label class="nut nut-phu nut-nho nut-chon-anh" title="{{ truong.help_text }}">
+    {{ truong }}<i data-lucide="image-plus" aria-hidden="true"></i>Thêm ảnh
+  </label>
+  <small>{{ truong.help_text }} Có thể dán ảnh (Ctrl + V) vào ô tin nhắn.</small>
+  <ul class="xem-truoc-anh" data-xem-truoc-anh aria-label="Ảnh sẽ gửi" hidden></ul>
+  <p class="loi-anh" data-loi-anh role="alert" hidden></p>
+  {{ truong.errors }}
+</div>

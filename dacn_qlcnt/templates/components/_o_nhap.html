@@ -5,7 +5,7 @@
 </div>
 {% else %}
 <div class="nhom-truong">
-  <label for="{{ truong.id_for_label }}">{{ truong.label }}{% if not truong.field.required %} <span class="chu-tuy-chon">(tùy chọn)</span>{% endif %}</label>
+  <label for="{{ truong.id_for_label }}">{{ truong.label }}{% if not truong.field.required and not truong.field.an_tuy_chon %} <span class="chu-tuy-chon">(tùy chọn)</span>{% endif %}</label>
   {{ truong }}{% if truong.help_text %}<small>{{ truong.help_text }}</small>{% endif %}{{ truong.errors }}
 </div>
 {% endif %}

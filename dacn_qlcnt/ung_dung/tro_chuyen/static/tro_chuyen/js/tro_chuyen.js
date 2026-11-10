@@ -1,12 +1,16 @@
-// Phòng chat: WebSocket qua Redis, tự nối lại khi mất mạng, vẽ tin dạng bong bóng,
+// Cuộc trò chuyện: WebSocket qua Redis, tự nối lại khi mất mạng, vẽ tin dạng bong bóng,
 // báo "Đã xem" theo mốc đã đọc lưu trong CSDL và đánh dấu đã đọc khi người xem thực sự nhìn thấy.
 // Cuộc trò chuyện dài chỉ nạp 30 tin gần nhất; "Xem tin cũ hơn" tải tiếp từng trang qua HTTP.
+// Tin chỉ có chữ đi qua WebSocket; tin kèm ảnh gửi multipart qua HTTP rồi máy chủ phát lại qua
+// Redis. Thẻ "Bạn đang hỏi về sản phẩm/đơn này" (nếu có) gắn vào tin kế tiếp rồi tự biến mất.
 (() => {
   const khung = document.querySelector('[data-tro-chuyen]');
   if (!khung) return;
   const form = khung.querySelector('[data-form-tin]');
   const oNhap = form.querySelector('textarea');
-  const nut = form.querySelector('button');
+  const nut = form.querySelector('.nut-gui-tin');
+  const theCho = form.querySelector('[data-the-cho]');
+  const hopXemAnh = khung.querySelector('[data-hop-xem-anh]');
   const lichSu = khung.querySelector('[data-cac-tin]');
   const trangThai = khung.querySelector('[data-trang-thai]');
   const ben = khung.dataset.ben; // "khach" hoặc "nha_thuoc"
@@ -16,6 +20,7 @@
   const HAN_PHAN_HOI = 10000;
   let socket = null;
   let dangGui = null;
+  let dangGuiAnh = false;
   let thuLai = 1000;
   let biChan = false;
   let henThuLai;
@@ -33,6 +38,7 @@
   let dangTaiTinCu = false;
 
   const laCuaToi = tin => tin.la_khach === toiLaKhach;
+  const urlAnh = id => khung.dataset.urlAnh.replace(/0\/$/, `${id}/`);
   const gio = iso =>
     new Date(iso).toLocaleString('vi-VN', {hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit'});
   const tao = (the, lop, chu) => {
@@ -41,6 +47,79 @@
     if (chu != null) phanTu.textContent = chu;
     return phanTu;
   };
+
+  function baoLoiAnh(chu) {
+    if (chu || trangThai.dataset.loiAnh) trangThai.textContent = chu;
+    trangThai.dataset.loiAnh = chu ? '1' : '';
+  }
+
+  const boAnh = window.taoBoChonAnh({
+    oChon: form.querySelector('[data-chon-anh]'),
+    vung: form.querySelector('[data-xem-truoc-anh]'),
+    khiDoi: () => capNhatNut(),
+    baoLoi: baoLoiAnh,
+  });
+
+  // Gửi được khi có chữ hoặc ảnh; tin chữ cần WebSocket đang mở, tin ảnh đi HTTP.
+  function capNhatNut() {
+    const coNoiDung = Boolean(oNhap.value.trim()) || boAnh.soLuong() > 0;
+    const coKenh = boAnh.soLuong() > 0 || socket?.readyState === WebSocket.OPEN;
+    nut.disabled = Boolean(dangGui) || dangGuiAnh || !coNoiDung || !coKenh;
+  }
+
+  // Thẻ sản phẩm / đơn hàng trong tin, bấm để mở trang sản phẩm hoặc đơn.
+  function veThe(the) {
+    const lienKet = tao('a', `the-tin the-tin-${the.loai}`);
+    lienKet.href = toiLaKhach ? the.url_khach : the.url_nha_thuoc;
+    lienKet.target = '_top';
+    if (the.url_anh) {
+      const anh = tao('img');
+      anh.src = the.url_anh;
+      anh.alt = '';
+      anh.loading = 'lazy';
+      lienKet.append(anh);
+    } else {
+      const icon = tao('span', 'icon-the');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.append(tao('i'));
+      icon.firstChild.dataset.lucide = the.loai === 'don' ? 'package' : 'pill';
+      lienKet.append(icon);
+    }
+    const chu = tao('span', 'chu-the');
+    chu.append(
+      tao('small', '', the.tieu_de + (the.ke_don ? ' · Thuốc kê đơn' : '')),
+      tao('strong', '', the.ten),
+      tao('span', '', the.phu),
+    );
+    lienKet.append(chu);
+    return lienKet;
+  }
+
+  function veAnh(cacAnh) {
+    const luoi = tao('div', `luoi-anh-tin so-anh-${cacAnh.length}`);
+    cacAnh.forEach(anh => {
+      const lienKet = tao('a');
+      lienKet.href = urlAnh(anh.id);
+      lienKet.target = '_blank';
+      lienKet.rel = 'noopener';
+      const hinh = tao('img');
+      hinh.src = urlAnh(anh.id);
+      hinh.alt = 'Ảnh đính kèm, bấm để xem lớn';
+      hinh.width = anh.rong;
+      hinh.height = anh.cao;
+      hinh.loading = 'lazy';
+      lienKet.append(hinh);
+      lienKet.addEventListener('click', suKien => {
+        if (!hopXemAnh?.showModal) return;
+        suKien.preventDefault();
+        hopXemAnh.querySelector('img').src = lienKet.href;
+        hopXemAnh.querySelector('[data-mo-anh-goc]').href = lienKet.href;
+        hopXemAnh.showModal();
+      });
+      luoi.append(lienKet);
+    });
+    return luoi;
+  }
 
   function ve() {
     const benHo = toiLaKhach ? 'nha_thuoc' : 'khach';
@@ -67,14 +146,19 @@
       if (!cuaToi && (!truoc || truoc.nguoi_gui_id !== tin.nguoi_gui_id)) {
         dong.append(tao('span', 'ten-gui', tin.la_khach ? tin.ten_nguoi_gui : `${tin.ten_nguoi_gui} · Nhà thuốc`));
       }
-      const bong = tao('div', 'bong-tin');
-      tin.noi_dung.split('\n').forEach((doan, j) => {
-        if (j) bong.append(document.createElement('br'));
-        bong.append(doan);
-      });
+      if (tin.the) dong.append(veThe(tin.the));
+      if (tin.anh?.length) dong.append(veAnh(tin.anh));
+      if (tin.noi_dung) {
+        const bong = tao('div', 'bong-tin');
+        tin.noi_dung.split('\n').forEach((doan, j) => {
+          if (j) bong.append(document.createElement('br'));
+          bong.append(doan);
+        });
+        dong.append(bong);
+      }
       const thoiGian = tao('time', 'gio-tin', gio(tin.thoi_diem));
       thoiGian.dateTime = tin.thoi_diem;
-      dong.append(bong, thoiGian);
+      dong.append(thoiGian);
       if (tinCuoiCuaToi && tin.id_tin_nhan === tinCuoiCuaToi.id_tin_nhan) {
         const daXem = moc[benHo] >= tin.id_tin_nhan;
         dong.append(tao('span', `trang-thai-tin${daXem ? ' da-xem' : ''}`, daXem ? 'Đã xem' : 'Đã gửi'));
@@ -86,6 +170,7 @@
     }
     const oCuoi = lichSu.scrollHeight - lichSu.scrollTop - lichSu.clientHeight < 80;
     lichSu.replaceChildren(...cacDong);
+    window.lucide?.createIcons();
     if (oCuoi || !ve.daCuon) {
       lichSu.scrollTop = lichSu.scrollHeight;
       ve.daCuon = true;
@@ -136,7 +221,7 @@
     clearTimeout(henKiemTra);
     clearTimeout(henPhanHoi);
     clearTimeout(henThuLai);
-    nut.disabled = true;
+    capNhatNut();
     if (cu && cu.readyState <= WebSocket.OPEN) cu.close();
     if (biChan) {
       trangThai.textContent = 'Bạn không còn quyền truy cập cuộc trò chuyện này.';
@@ -192,7 +277,7 @@
         }
         thuLai = 1000;
         trangThai.textContent = '';
-        nut.disabled = Boolean(dangGui) || !oNhap.value.trim();
+        capNhatNut();
         if (dangGui) hienTai.send(JSON.stringify(dangGui));
         henKiemTraKetNoi(hienTai);
         ve();
@@ -213,14 +298,15 @@
           oNhap.value = '';
           coGian();
         }
+        if (dangGui.thuoc || dangGui.don_hang) boThe();
         dangGui = null;
-        nut.disabled = true;
         trangThai.textContent = '';
+        capNhatNut();
       }
       if (ketQua.loai === 'loi') {
         trangThai.textContent = ketQua.thong_bao;
         dangGui = null;
-        nut.disabled = !oNhap.value.trim();
+        capNhatNut();
       }
     });
     hienTai.addEventListener('close', suKien => {
@@ -230,12 +316,86 @@
     });
   }
 
+  // Mã CSRF có sẵn trên thẻ body (hx-headers) của mọi trang.
+  function maCsrf() {
+    try {
+      return JSON.parse(document.body.getAttribute('hx-headers') || '{}')['X-CSRFToken'] || '';
+    } catch {
+      return '';
+    }
+  }
+
+  // Thẻ chờ gửi: {thuoc: id} hoặc {don_hang: id}.
+  function duLieuThe() {
+    if (!theCho || theCho.hidden) return {};
+    const id = Number(theCho.dataset.id);
+    return theCho.dataset.loai === 'thuoc' ? {thuoc: id} : {don_hang: id};
+  }
+
+  function boThe() {
+    if (!theCho || theCho.hidden) return;
+    theCho.hidden = true;
+    oNhap.placeholder = 'Nhập tin nhắn… (Enter để gửi)';
+    // Tải lại trang không gắn lại thẻ đã gửi hoặc đã bỏ.
+    const url = new URL(location.href);
+    url.searchParams.delete('thuoc');
+    url.searchParams.delete('don');
+    history.replaceState(null, '', url);
+  }
+
+  async function guiKemAnh() {
+    dangGuiAnh = true;
+    capNhatNut();
+    trangThai.textContent = 'Đang gửi ảnh…';
+    try {
+      const cacTep = await boAnh.chuanBi();
+      const duLieu = new FormData();
+      duLieu.append('ma_tin_nhan', crypto.randomUUID());
+      duLieu.append('noi_dung', oNhap.value.trim());
+      cacTep.forEach(tep => duLieu.append('cac_anh', tep, tep.name));
+      const the = duLieuThe();
+      Object.entries(the).forEach(([ten, giaTri]) => duLieu.append(ten, giaTri));
+      let phanHoi;
+      try {
+        phanHoi = await fetch(khung.dataset.urlGui, {
+          method: 'POST',
+          body: duLieu,
+          headers: {Accept: 'application/json', 'X-CSRFToken': maCsrf()},
+        });
+      } catch {
+        throw new Error('Mất mạng, chưa gửi được ảnh. Hãy thử lại.');
+      }
+      const ketQua = await phanHoi.json().catch(() => ({}));
+      if (!phanHoi.ok) {
+        throw new Error(
+          ketQua.loi || (phanHoi.status === 413 ? 'Ảnh quá lớn, hãy bỏ bớt ảnh.' : 'Chưa gửi được ảnh, hãy thử lại.'),
+        );
+      }
+      themTin(ketQua.tin);
+      oNhap.value = '';
+      coGian();
+      boAnh.xoaHet();
+      if (Object.keys(the).length) boThe();
+      trangThai.textContent = '';
+      ve();
+    } catch (loi) {
+      trangThai.textContent = loi.message || 'Chưa gửi được ảnh, hãy thử lại.';
+    }
+    dangGuiAnh = false;
+    capNhatNut();
+  }
+
   function guiTin() {
+    if (dangGui || dangGuiAnh) return;
+    if (boAnh.soLuong()) {
+      guiKemAnh();
+      return;
+    }
     const noiDung = oNhap.value.trim();
-    if (dangGui || !noiDung || socket?.readyState !== WebSocket.OPEN) return;
-    dangGui = {ma_tin_nhan: crypto.randomUUID(), noi_dung: noiDung};
-    nut.disabled = true;
+    if (!noiDung || socket?.readyState !== WebSocket.OPEN) return;
+    dangGui = {ma_tin_nhan: crypto.randomUUID(), noi_dung: noiDung, ...duLieuThe()};
     trangThai.textContent = 'Đang gửi…';
+    capNhatNut();
     socket.send(JSON.stringify(dangGui));
   }
 
@@ -257,14 +417,38 @@
   });
   oNhap.addEventListener('input', () => {
     coGian();
-    nut.disabled = Boolean(dangGui) || !oNhap.value.trim() || socket?.readyState !== WebSocket.OPEN;
+    capNhatNut();
+  });
+  // Dán ảnh chụp màn hình (Ctrl + V) hoặc kéo thả ảnh vào khung chat.
+  oNhap.addEventListener('paste', suKien => {
+    const cacTep = [...(suKien.clipboardData?.files || [])];
+    if (cacTep.length) {
+      suKien.preventDefault();
+      boAnh.them(cacTep);
+    }
+  });
+  khung.addEventListener('dragover', suKien => {
+    if ([...suKien.dataTransfer.types].includes('Files')) suKien.preventDefault();
+  });
+  khung.addEventListener('drop', suKien => {
+    if (!suKien.dataTransfer.files.length) return;
+    suKien.preventDefault();
+    boAnh.them([...suKien.dataTransfer.files]);
+  });
+  theCho?.querySelector('[data-bo-the]')?.addEventListener('click', () => {
+    boThe();
+    oNhap.focus();
+  });
+  hopXemAnh?.querySelector('[data-dong-xem-anh]')?.addEventListener('click', () => hopXemAnh.close());
+  hopXemAnh?.addEventListener('click', suKien => {
+    if (suKien.target === hopXemAnh) hopXemAnh.close();
   });
   khung.querySelectorAll('[data-goi-y-nhanh] button').forEach(nutGoiY =>
     nutGoiY.addEventListener('click', () => {
       oNhap.value = nutGoiY.dataset.cau;
       coGian();
       oNhap.focus();
-      nut.disabled = socket?.readyState !== WebSocket.OPEN;
+      capNhatNut();
     }),
   );
   document.addEventListener('visibilitychange', baoDaDoc);

@@ -1,5 +1,8 @@
-"""Trò chuyện phía nhân sự: hộp thư dạng hàng chờ (tìm, lọc, phân trang), phòng chat kèm thông
-tin khách và đơn, đánh dấu đã xong / mở lại, soạn tin đầu về một đơn."""
+"""Trò chuyện phía nhân sự: hộp thư dạng hàng chờ (tìm, lọc, phân trang), cuộc trò chuyện kèm
+thông tin khách và các đơn khách đã hỏi, đánh dấu đã xong / mở lại, nhắn khách về một đơn.
+
+Mỗi khách chỉ có một cuộc trò chuyện với mỗi chi nhánh; câu hỏi về đơn hay sản phẩm hiện thành
+thẻ ngay trong lịch sử tin."""
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -9,36 +12,35 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from ung_dung.ban_hang.selectors import lay_don
-from ung_dung.chung.loc_danh_sach import BoLoc, OChon
+from ung_dung.chung.loc_danh_sach import BoLoc
 from ung_dung.chung.permissions import yeu_cau_quyen
 from ung_dung.kho.loc import o_chi_nhanh
 
 from ..forms import TinDauVeDonForm
 from ..selectors import (
     HANG_CHO,
-    LOAI_HOP_THU,
+    cac_don_da_hoi,
     dem_hang_cho,
     kem_tom_tat,
     lay_cac_phong,
     lay_lich_su,
     lay_tin_cu,
     loc_hang_cho,
+    phong_cua_don,
+    the_don,
     tim_phong,
 )
 from ..services import bat_dau_ve_don, danh_dau_xong, kiem_tra_nhan_ve_don, mo_lai
-from ._chung import so_truoc
+from ._chung import gui_tin_kem_anh, so_truoc, the_don_cho_gui, xem_anh
 
 
 def _bo_loc(request):
     return BoLoc(
         request,
         ham_tim=tim_phong,  # tìm cả trong nội dung tin, không chỉ cột của phòng
-        nhan_tim="Tên, SĐT khách, mã đơn hoặc nội dung tin",
+        nhan_tim="Tên, SĐT khách, mã đơn, tên thuốc hoặc nội dung tin",
         mac_dinh_moi_trang=25,
-        cac_o_chon=[
-            OChon("loai", "Loại", LOAI_HOP_THU, "loai_cuoc_tro_chuyen"),
-            *o_chi_nhanh(request.user, "chi_nhanh_id"),
-        ],
+        cac_o_chon=o_chi_nhanh(request.user, "chi_nhanh_id"),
     )
 
 
@@ -68,11 +70,12 @@ def danh_sach(request):
 @require_GET
 def chi_tiet(request, ma):
     phong = get_object_or_404(lay_cac_phong(request.user), pk=ma)
-    # Bảng bên cạnh: đơn đang trao đổi, hoặc các đơn gần đây của khách để tư vấn đúng ngữ cảnh.
-    don_gan_day = (
-        []
-        if phong.la_don_hang
-        else list(lay_don(request.user).filter(khach_hang=phong.khach_hang)[:5])
+    don_da_hoi = list(cac_don_da_hoi(phong))
+    # Bảng bên cạnh: đơn khách đã hỏi trong cuộc này và các đơn gần đây tại chi nhánh.
+    don_gan_day = list(
+        lay_don(request.user)
+        .filter(khach_hang=phong.khach_hang, chi_nhanh=phong.chi_nhanh)
+        .exclude(pk__in=[don.pk for don in don_da_hoi])[:5]
     )
     return render(
         request,
@@ -80,6 +83,8 @@ def chi_tiet(request, ma):
         {
             "phong": phong,
             "lich_su": lay_lich_su(request.user, phong),
+            "the_cho": the_don_cho_gui(request, phong),
+            "don_da_hoi": don_da_hoi,
             "don_gan_day": don_gan_day,
             "cac_phong_cung_khach": lay_cac_phong(request.user)
             .filter(khach_hang=phong.khach_hang)
@@ -125,22 +130,43 @@ def mo_lai_phong(request, ma):
 @yeu_cau_quyen("tro_chuyen.dung")
 @require_http_methods(["GET", "POST"])
 def tu_don_hang(request, ma):
-    """Nhân sự liên hệ khách về đơn (báo hết hàng, hẹn giờ giao…). Đã có cuộc trò chuyện thì
-    mở nó; chưa có thì soạn tin đầu, khách chỉ thấy cuộc trò chuyện khi tin được gửi."""
+    """Nhân sự liên hệ khách về đơn (báo hết hàng, hẹn giờ giao…). Đã có cuộc trò chuyện với khách
+    thì mở nó, thẻ đơn chờ sẵn ở khung soạn tin; chưa có thì soạn tin đầu, khách chỉ thấy cuộc
+    trò chuyện khi tin được gửi."""
     don = get_object_or_404(lay_don(request.user), pk=ma)
     kiem_tra_nhan_ve_don(request.user, don)
-    phong = lay_cac_phong(request.user).filter(don_hang=don).first()
+    phong = phong_cua_don(request.user, don)
     if phong is not None:
-        return redirect("tro_chuyen:chi_tiet", ma=phong.pk)
-    form = TinDauVeDonForm(request.POST or None)
+        return redirect(reverse("tro_chuyen:chi_tiet", args=[phong.pk]) + f"?don={don.pk}")
+    form = TinDauVeDonForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         try:
-            phong = bat_dau_ve_don(request.user, don, form.cleaned_data["noi_dung"])
+            phong = bat_dau_ve_don(
+                request.user,
+                don,
+                form.cleaned_data["noi_dung"],
+                cac_anh=form.cleaned_data["cac_anh"],
+            )
         except ValidationError as loi:
             form.add_error(None, loi)
         else:
             return redirect("tro_chuyen:chi_tiet", ma=phong.pk)
-    return render(request, "tro_chuyen/soan_ve_don.html", {"don": don, "form": form})
+    return render(
+        request, "tro_chuyen/soan_ve_don.html", {"don": don, "form": form, "the_cho": the_don(don)}
+    )
+
+
+@yeu_cau_quyen("tro_chuyen.dung")
+@require_POST
+def gui_tin(request, ma):
+    phong = get_object_or_404(lay_cac_phong(request.user), pk=ma)
+    return gui_tin_kem_anh(request, phong)
+
+
+@yeu_cau_quyen("tro_chuyen.dung")
+@require_GET
+def anh(request, ma):
+    return xem_anh(request, ma)
 
 
 @yeu_cau_quyen("tro_chuyen.dung")

@@ -66,7 +66,17 @@
           <button class="nut" name="next" value="{% url 'ban_hang:dat_hang' %}"><i data-lucide="zap" aria-hidden="true"></i>{% if thuoc.la_thuoc_ke_don %}Đặt giữ ngay{% else %}Mua ngay{% endif %}</button>
         </form>
       {% endif %}
-      <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Xem chi nhánh còn thuốc này</a>
+      <div class="lien-ket-phu-thuoc">
+        <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}?thuoc={{ thuoc.ma_thuoc|urlencode }}"><i data-lucide="map-pin" aria-hidden="true"></i>Xem chi nhánh còn thuốc này</a>
+        {% if not noi_bo %}
+          {% url 'tro_chuyen:khach_danh_sach' as url_chat %}
+          {% if user.is_authenticated %}
+            <a class="lien-ket-noi-bat" href="{{ url_chat }}?thuoc={{ thuoc.ma_thuoc|urlencode }}" data-hoi-ve-thuoc="{{ url_chat }}?thuoc={{ thuoc.ma_thuoc|urlencode }}&amp;nhung=1"><i data-lucide="message-circle-question" aria-hidden="true"></i>Hỏi dược sĩ về thuốc này</a>
+          {% else %}
+            <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:dang_nhap' %}?next={{ request.path|urlencode }}%23tu-van&amp;ly_do=tu_van"><i data-lucide="message-circle-question" aria-hidden="true"></i>Đăng nhập để hỏi dược sĩ về thuốc này</a>
+          {% endif %}
+        {% endif %}
+      </div>
     </div>
   </section>
   {% if thuoc.noi_dung_chi_tiet %}

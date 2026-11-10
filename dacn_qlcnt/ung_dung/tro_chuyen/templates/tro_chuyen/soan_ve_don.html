@@ -13,8 +13,10 @@
         </div>
       </header>
       <div class="soan-tin-dau">
-        <p class="chu-mo-ta"><i data-lucide="info" aria-hidden="true"></i>Khách chỉ thấy cuộc trò chuyện khi bạn gửi tin đầu tiên; tin được báo ngay trên website và trong mục Tin nhắn của khách.</p>
-        <form method="post" class="form-chinh" data-soan-tin>
+        <p class="dau-the-cho">Tin nhắn sẽ gắn thẻ đơn hàng này</p>
+        {% include "tro_chuyen/_the_tin.html" with the=the_cho ben="nha_thuoc" only %}
+        <p class="chu-mo-ta"><i data-lucide="info" aria-hidden="true"></i>Khách chưa từng nhắn chi nhánh này. Khách chỉ thấy cuộc trò chuyện khi bạn gửi tin đầu tiên; tin được báo ngay trên website và trong mục Tin nhắn của khách. Các câu hỏi sau này của khách với chi nhánh đều nằm chung cuộc trò chuyện đó.</p>
+        <form method="post" enctype="multipart/form-data" class="form-chinh" data-soan-tin>
           {% csrf_token %}
           {{ form.non_field_errors }}
           {% include "components/_o_nhap.html" with truong=form.noi_dung %}
@@ -23,6 +25,7 @@
             <button type="button" data-cau="Chào anh/chị, một số thuốc trong đơn {{ don.ma_don_hang }} tạm hết hàng. Nhà thuốc xin phép trao đổi để đổi thuốc tương đương.">Báo hết hàng</button>
             <button type="button" data-cau="Chào anh/chị, nhà thuốc cần xác nhận lại địa chỉ và giờ nhận hàng của đơn {{ don.ma_don_hang }}.">Xác nhận giao nhận</button>
           </div>
+          {% include "tro_chuyen/_chon_anh_form.html" with truong=form.cac_anh only %}
           <button class="nut" type="submit"><i data-lucide="send-horizontal" aria-hidden="true"></i>Gửi tin nhắn</button>
         </form>
       </div>
@@ -48,4 +51,4 @@
     </aside>
   </div>
 {% endblock %}
-{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/soan_tin.js' %}"></script>{% endblock %}
+{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/chon_anh.js' %}"></script><script defer src="{% tep_tinh 'tro_chuyen/js/soan_tin.js' %}"></script>{% endblock %}

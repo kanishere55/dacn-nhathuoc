@@ -119,7 +119,7 @@
         {% endif %}
         {% if don.ghi_chu_khach %}<p><em>Lời nhắn: {{ don.ghi_chu_khach }}</em></p>{% endif %}
         {% if duoc_chat %}
-          <p class="form-nhan-khach"><a class="nut nut-phu nut-nho" href="{% if phong_chat %}{% url 'tro_chuyen:chi_tiet' phong_chat.pk %}{% else %}{% url 'tro_chuyen:tu_don_hang' don.pk %}{% endif %}"><i data-lucide="messages-square" aria-hidden="true"></i>{% if phong_chat %}Mở trò chuyện về đơn{% else %}Nhắn khách về đơn này{% endif %}{% if phong_chat.so_chua_doc %}<span class="so-chua-doc">{{ phong_chat.so_chua_doc }}</span>{% endif %}</a></p>
+          <p class="form-nhan-khach"><a class="nut nut-phu nut-nho" href="{% url 'tro_chuyen:tu_don_hang' don.pk %}" title="{% if phong_chat %}Mở cuộc trò chuyện với khách, kèm thẻ đơn này{% else %}Gửi tin đầu tiên cho khách, kèm thẻ đơn này{% endif %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn khách về đơn này{% if phong_chat.so_chua_doc %}<span class="so-chua-doc">{{ phong_chat.so_chua_doc }}</span>{% endif %}</a></p>
         {% endif %}
         {% if phieu_ban %}<p>Phiếu bán: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_chi_tiet' phieu_ban.pk %}">{{ phieu_ban.ma_phieu_ban }}</a> · <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_in' phieu_ban.pk %}">In hóa đơn</a></p>{% endif %}
         {% if yeu_cau_hoa_don %}<p>Hóa đơn công ty: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:xuat_hoa_don_danh_sach' %}">{{ yeu_cau_hoa_don.ten_cong_ty }}</a> · {{ yeu_cau_hoa_don.get_trang_thai_display }}</p>{% endif %}

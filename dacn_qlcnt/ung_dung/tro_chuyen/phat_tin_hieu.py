@@ -7,7 +7,7 @@ from channels.layers import get_channel_layer
 from django.db import transaction
 from django.urls import reverse
 
-from .selectors import bieu_dien_tin
+from .selectors import bieu_dien_tin, xem_truoc
 
 NHOM_TOAN_CHUOI = "thong_bao.toan_chuoi"
 nhat_ky = logging.getLogger(__name__)
@@ -41,7 +41,12 @@ def thong_bao_tin_moi(nguoi, phong, tin):
             if tu_khach
             else f"Nhà thuốc {phong.chi_nhanh.ten_chi_nhanh}"
         ),
-        "xem_truoc": tin.noi_dung_tin_nhan[:90],
+        "xem_truoc": xem_truoc(
+            noi_dung=tin.noi_dung_tin_nhan,
+            so_anh=tin.so_anh,
+            ma_don=tin.don_hang.ma_don_hang if tin.don_hang_id else None,
+            ten_thuoc=tin.thuoc.ten_thuoc if tin.thuoc_id else None,
+        )[:90],
         "url_khach": reverse("tro_chuyen:khach_chi_tiet", args=[phong.pk]),
         "url_nha_thuoc": reverse("tro_chuyen:chi_tiet", args=[phong.pk]),
     }
@@ -50,7 +55,7 @@ def thong_bao_tin_moi(nguoi, phong, tin):
 
 
 def phat_sau_khi_luu(nguoi, phong, tin):
-    """Dùng cho tin lưu qua HTTP (câu hỏi đầu ở form): phát sau khi transaction commit."""
+    """Dùng cho tin lưu qua HTTP (tin đầu ở form, tin kèm ảnh): phát sau khi transaction commit."""
     du_lieu_tin = bieu_dien_tin(tin, phong.khach_hang_id)
     thong_bao, nhom = thong_bao_tin_moi(nguoi, phong, tin)
 

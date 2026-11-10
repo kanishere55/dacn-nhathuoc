@@ -1,7 +1,11 @@
-"""Nghiệp vụ trò chuyện: bắt đầu cuộc trò chuyện bằng tin đầu tiên, ghi tin, đã đọc, đã xong.
+"""Nghiệp vụ trò chuyện: một cuộc trò chuyện cho mỗi khách với mỗi chi nhánh (kiểu Shopee).
 
-Phòng chỉ được tạo cùng tin đầu tiên trong một giao dịch: bấm "Nhắn nhà thuốc" mà chưa gửi gì
-thì không có phòng nào ở cả hai phía. Khách bị giới hạn tốc độ gửi để chống spam hộp thư.
+Dù khách hỏi tư vấn, hỏi về một sản phẩm hay về một đơn hàng, mọi tin đều nằm chung một hộp
+thoại giữ toàn bộ lịch sử. Hỏi từ trang thuốc hoặc trang đơn thì tin đầu tiên gắn thẻ sản phẩm
+hoặc thẻ đơn hàng ("Bạn đang hỏi về…"), nhắn thẳng thì không có thẻ.
+
+Cuộc trò chuyện chỉ được tạo cùng tin đầu tiên trong một giao dịch: bấm nút mà chưa gửi gì thì
+không có gì ở cả hai phía. Khách bị giới hạn tốc độ gửi để chống spam hộp thư.
 """
 
 from datetime import timedelta
@@ -13,45 +17,30 @@ from django.utils import timezone
 
 from ung_dung.chung.van_ban import cat_khoang_trang
 
-from .models import CuocTroChuyen, TinNhan
+from .models import SO_ANH_TOI_DA, AnhTinNhan, CuocTroChuyen, TinNhan
 from .permissions import duoc_phu_trach_chi_nhanh, kiem_tra_phong
 
 # Khách gửi quá số tin này trong một phút thì phải chờ; đủ cho người gõ thật, chặn gửi dồn.
 GIOI_HAN_TIN_MOT_PHUT = 8
-# Một khách mở tối đa từng này cuộc trò chuyện mới mỗi ngày (tư vấn + về đơn).
+# Một khách mở tối đa từng này cuộc trò chuyện mới mỗi ngày (mỗi chi nhánh một cuộc).
 GIOI_HAN_PHONG_MOT_NGAY = 10
+SO_KY_TU_TOI_DA = 2000
 
 
 def _la_khach(nguoi):
     return nguoi.is_authenticated and nguoi.is_active and nguoi.vai_tro == "khach_hang"
 
 
-def _lay_hoac_tao(**khoa):
-    """Trả (phòng, mới tạo). Hai yêu cầu cùng lúc: bản sau vướng ràng buộc duy nhất thì đọc lại."""
+def _lay_hoac_tao(khach_id, chi_nhanh_id):
+    """Trả (cuộc trò chuyện, mới tạo). Hai yêu cầu cùng lúc: bản sau vướng ràng buộc duy nhất
+    (khách, chi nhánh) thì đọc lại bản đã có."""
     try:
         with transaction.atomic():
-            return CuocTroChuyen.objects.get_or_create(**khoa)
+            return CuocTroChuyen.objects.get_or_create(
+                khach_hang_id=khach_id, chi_nhanh_id=chi_nhanh_id
+            )
     except IntegrityError:
-        phong = CuocTroChuyen.objects.get(
-            khach_hang_id=khoa["khach_hang_id"],
-            chi_nhanh_id=khoa["chi_nhanh_id"],
-            don_hang=khoa["don_hang"],
-        )
-        return phong, False
-
-
-def _mo_phong_tu_van(nguoi, chi_nhanh):
-    """Phòng tư vấn chung của khách với một chi nhánh, không cần đã mua hàng."""
-    if not _la_khach(nguoi):
-        raise PermissionDenied("Chỉ khách hàng được mở cuộc trò chuyện tư vấn.")
-    if not chi_nhanh.dang_hoat_dong:
-        raise ValidationError("Chi nhánh đã ngừng hoạt động.")
-    return _lay_hoac_tao(
-        khach_hang_id=nguoi.pk,
-        chi_nhanh_id=chi_nhanh.pk,
-        don_hang=None,
-        loai_cuoc_tro_chuyen="tu_van",
-    )
+        return CuocTroChuyen.objects.get(khach_hang_id=khach_id, chi_nhanh_id=chi_nhanh_id), False
 
 
 def kiem_tra_nhan_ve_don(nguoi, don):
@@ -63,24 +52,12 @@ def kiem_tra_nhan_ve_don(nguoi, don):
         raise PermissionDenied("Bạn không phụ trách chi nhánh của đơn này.")
 
 
-def _mo_phong_don(nguoi, don):
-    kiem_tra_nhan_ve_don(nguoi, don)
-    return _lay_hoac_tao(
-        khach_hang_id=don.khach_hang_id,
-        chi_nhanh_id=don.chi_nhanh_id,
-        don_hang=don,
-        loai_cuoc_tro_chuyen="don_hang",
-    )
-
-
 def mo_phong(nguoi, chi_nhanh):
-    """Dùng trong kiểm thử/dữ liệu mẫu; giao diện luôn đi qua bat_dau_tu_van."""
-    return _mo_phong_tu_van(nguoi, chi_nhanh)[0]
-
-
-def mo_phong_don_hang(nguoi, don):
-    """Dùng trong kiểm thử/dữ liệu mẫu; giao diện luôn đi qua bat_dau_ve_don."""
-    return _mo_phong_don(nguoi, don)[0]
+    """Cuộc trò chuyện của khách với chi nhánh (tạo nếu chưa có). Dùng cho kiểm thử, dữ liệu mẫu;
+    giao diện luôn đi qua bat_dau_tro_chuyen để không sinh cuộc trò chuyện rỗng."""
+    if not _la_khach(nguoi):
+        raise PermissionDenied("Chỉ khách hàng được mở cuộc trò chuyện tư vấn.")
+    return _lay_hoac_tao(nguoi.pk, chi_nhanh.pk)[0]
 
 
 def ben_cua(nguoi, phong):
@@ -128,82 +105,149 @@ def _kiem_so_phong_moi(nguoi):
     da_mo = CuocTroChuyen.objects.filter(khach_hang=nguoi, thoi_diem_tao__gte=dau_ngay).count()
     if da_mo > GIOI_HAN_PHONG_MOT_NGAY:
         raise ValidationError(
-            "Hôm nay bạn đã mở nhiều cuộc trò chuyện. Hãy nhắn tiếp trong cuộc trò chuyện đang có."
+            "Hôm nay bạn đã nhắn với nhiều nhà thuốc. Hãy nhắn tiếp trong cuộc trò chuyện đang có."
         )
 
 
+def kiem_tra_the(phong, *, thuoc=None, don=None):
+    """Thẻ gắn vào tin: thuốc đang bán, hoặc đơn của đúng khách tại đúng chi nhánh."""
+    if thuoc is not None and don is not None:
+        raise ValidationError("Một tin chỉ gắn thẻ sản phẩm hoặc thẻ đơn hàng.")
+    if thuoc is not None and not thuoc.dang_hoat_dong:
+        raise ValidationError("Sản phẩm này đã ngừng kinh doanh.")
+    if don is not None and (
+        don.khach_hang_id != phong.khach_hang_id or don.chi_nhanh_id != phong.chi_nhanh_id
+    ):
+        raise ValidationError("Đơn hàng không thuộc cuộc trò chuyện này.")
+
+
+def _chuan_hoa_noi_dung(noi_dung, co_anh):
+    if noi_dung is None:
+        noi_dung = ""
+    if not isinstance(noi_dung, str):
+        raise ValidationError("Tin nhắn phải là văn bản.")
+    noi_dung = cat_khoang_trang(noi_dung)
+    if "\x00" in noi_dung:
+        raise ValidationError("Tin nhắn chứa ký tự không hợp lệ.")
+    if len(noi_dung) > SO_KY_TU_TOI_DA:
+        raise ValidationError(
+            f"Tin nhắn dài {len(noi_dung)} ký tự, tối đa {SO_KY_TU_TOI_DA} ký tự. "
+            "Hãy chia thành nhiều tin."
+        )
+    if not noi_dung and not co_anh:
+        raise ValidationError("Hãy nhập nội dung tin nhắn hoặc chọn ảnh.")
+    return noi_dung
+
+
 @transaction.atomic
-def ghi_tin_nhan(nguoi, phong, ma, noi_dung):
+def ghi_tin_nhan(nguoi, phong, ma, noi_dung, *, cac_anh=(), thuoc=None, don=None):
+    """Ghi một tin (chữ và/hoặc tối đa 5 ảnh, có thể kèm thẻ). Trả (tin, mới tạo).
+
+    `ma` là UUID trình duyệt tạo: gửi lại cùng mã sau khi mất mạng trả về tin cũ, không ghi trùng.
+    """
     kiem_tra_phong(nguoi, phong)
     try:
         ma = str(UUID(ma))
     except (ValueError, TypeError, AttributeError) as loi:
         raise ValidationError("Mã tin nhắn không hợp lệ.") from loi
-    if not isinstance(noi_dung, str):
-        raise ValidationError("Tin nhắn phải là văn bản.")
-    noi_dung = cat_khoang_trang(noi_dung)
-    if not noi_dung or len(noi_dung) > 2000 or "\x00" in noi_dung:
-        raise ValidationError("Tin nhắn phải có từ 1 đến 2000 ký tự hợp lệ.")
-    if not TinNhan.objects.filter(nguoi_gui=nguoi, ma_tin_nhan=ma).exists():
-        # Gửi lại cùng mã sau khi mất mạng không tính là tin mới nên không bị giới hạn.
-        _kiem_toc_do(nguoi)
-    tin, da_tao = TinNhan.objects.get_or_create(
-        nguoi_gui=nguoi,
-        ma_tin_nhan=ma,
-        defaults={"cuoc_tro_chuyen": phong, "noi_dung_tin_nhan": noi_dung},
-    )
-    if tin.cuoc_tro_chuyen_id != phong.pk or tin.noi_dung_tin_nhan != noi_dung:
-        raise ValidationError("Mã đã được dùng cho tin nhắn khác.")
-    if da_tao:
-        khoa = CuocTroChuyen.objects.select_for_update().get(pk=phong.pk)
-        ben = ben_cua(nguoi, khoa)
-        khoa.tin_cuoi = tin
-        cac_cot = ["tin_cuoi"]
-        if ben == "khach" and khoa.da_xong:
-            # Khách hỏi tiếp sau khi nhà thuốc đã đóng: mở lại để không bị bỏ sót.
-            khoa.trang_thai_xu_ly = "dang_mo"
-            khoa.thoi_diem_xong = None
-            khoa.nguoi_danh_dau_xong = None
-            cac_cot += ["trang_thai_xu_ly", "thoi_diem_xong", "nguoi_danh_dau_xong"]
-        khoa.save(update_fields=cac_cot)
-        phong.tin_cuoi_id = tin.pk
-        phong.trang_thai_xu_ly = khoa.trang_thai_xu_ly
-        # Người vừa trả lời chắc chắn đã xem mọi tin trước đó của phòng.
-        _day_moc_da_doc(khoa, ben, tin.pk)
-    return tin, da_tao
+    cac_anh = list(cac_anh)
+    if len(cac_anh) > SO_ANH_TOI_DA:
+        raise ValidationError(f"Mỗi tin gửi tối đa {SO_ANH_TOI_DA} ảnh.")
+    noi_dung = _chuan_hoa_noi_dung(noi_dung, bool(cac_anh))
+    kiem_tra_the(phong, thuoc=thuoc, don=don)
+    tin_cu = TinNhan.objects.filter(nguoi_gui=nguoi, ma_tin_nhan=ma).first()
+    if tin_cu is not None:
+        if tin_cu.cuoc_tro_chuyen_id != phong.pk or tin_cu.noi_dung_tin_nhan != noi_dung:
+            raise ValidationError("Mã đã được dùng cho tin nhắn khác.")
+        return tin_cu, False
+    # Gửi lại cùng mã sau khi mất mạng không tính là tin mới nên không bị giới hạn.
+    _kiem_toc_do(nguoi)
+    # Xử lý ảnh trước khi ghi: tệp lỗi thì không có tin nào được tạo.
+    du_lieu_anh = []
+    for thu_tu, tep in enumerate(cac_anh):
+        anh = AnhTinNhan(thu_tu=thu_tu)
+        try:
+            anh.gan_du_lieu(tep)
+        except ValidationError as loi:
+            ten = getattr(tep, "name", "") or f"thứ {thu_tu + 1}"
+            raise ValidationError(f"Ảnh {ten}: {loi.messages[0]}") from loi
+        du_lieu_anh.append(anh)
+    try:
+        with transaction.atomic():
+            tin = TinNhan.objects.create(
+                nguoi_gui=nguoi,
+                ma_tin_nhan=ma,
+                cuoc_tro_chuyen=phong,
+                noi_dung_tin_nhan=noi_dung,
+                so_anh=len(du_lieu_anh),
+                thuoc=thuoc,
+                don_hang=don,
+            )
+    except IntegrityError:
+        # Hai kết nối gửi cùng mã gần như đồng thời: bản sau đọc lại tin của bản trước.
+        tin_cu = TinNhan.objects.filter(nguoi_gui=nguoi, ma_tin_nhan=ma).first()
+        if tin_cu is None:
+            raise
+        return tin_cu, False
+    for anh in du_lieu_anh:
+        anh.tin_nhan = tin
+    AnhTinNhan.objects.bulk_create(du_lieu_anh)
+    khoa = CuocTroChuyen.objects.select_for_update().get(pk=phong.pk)
+    ben = ben_cua(nguoi, khoa)
+    khoa.tin_cuoi = tin
+    cac_cot = ["tin_cuoi"]
+    if ben == "khach" and khoa.da_xong:
+        # Khách hỏi tiếp sau khi nhà thuốc đã đóng: mở lại để không bị bỏ sót.
+        khoa.trang_thai_xu_ly = "dang_mo"
+        khoa.thoi_diem_xong = None
+        khoa.nguoi_danh_dau_xong = None
+        cac_cot += ["trang_thai_xu_ly", "thoi_diem_xong", "nguoi_danh_dau_xong"]
+    khoa.save(update_fields=cac_cot)
+    phong.tin_cuoi_id = tin.pk
+    phong.trang_thai_xu_ly = khoa.trang_thai_xu_ly
+    # Người vừa trả lời chắc chắn đã xem mọi tin trước đó của cuộc trò chuyện.
+    _day_moc_da_doc(khoa, ben, tin.pk)
+    return tin, True
 
 
 @transaction.atomic
-def gui_tin_dau(nguoi, phong, noi_dung):
-    """Tin gửi qua form HTTP (không qua WebSocket); vẫn báo phía bên kia tức thời."""
+def gui_tin_http(nguoi, phong, noi_dung, *, ma=None, cac_anh=(), thuoc=None, don=None):
+    """Tin gửi qua HTTP (form tin đầu, tin kèm ảnh); vẫn báo phía bên kia tức thời qua Redis."""
     from .phat_tin_hieu import phat_sau_khi_luu
 
-    tin, da_tao = ghi_tin_nhan(nguoi, phong, str(uuid4()), noi_dung)
+    tin, da_tao = ghi_tin_nhan(
+        nguoi, phong, ma or str(uuid4()), noi_dung, cac_anh=cac_anh, thuoc=thuoc, don=don
+    )
     if da_tao:
         phat_sau_khi_luu(nguoi, phong, tin)
     return tin
 
 
-def _bat_dau(nguoi, mo, noi_dung):
-    """Tạo (hoặc dùng lại) phòng và ghi tin đầu trong một giao dịch: tin lỗi thì không có phòng."""
-    if not isinstance(noi_dung, str) or not cat_khoang_trang(noi_dung):
-        raise ValidationError("Hãy nhập nội dung tin nhắn.")
+def bat_dau_tro_chuyen(nguoi, chi_nhanh, noi_dung, *, cac_anh=(), thuoc=None):
+    """Khách nhắn một nhà thuốc (có thể kèm thẻ sản phẩm). Đã có cuộc trò chuyện với nhà thuốc
+    đó thì tin nối tiếp vào lịch sử cũ; chưa có thì tạo cùng tin đầu trong một giao dịch."""
+    if not _la_khach(nguoi):
+        raise PermissionDenied("Chỉ khách hàng được bắt đầu trò chuyện với nhà thuốc.")
+    if not chi_nhanh.dang_hoat_dong:
+        raise ValidationError("Chi nhánh đã ngừng hoạt động.")
     with transaction.atomic():
-        phong, moi_tao = mo()
+        phong, moi_tao = _lay_hoac_tao(nguoi.pk, chi_nhanh.pk)
         if moi_tao:
             _kiem_so_phong_moi(nguoi)
-        gui_tin_dau(nguoi, phong, noi_dung)
+        gui_tin_http(nguoi, phong, noi_dung, cac_anh=cac_anh, thuoc=thuoc)
     return phong
 
 
-def bat_dau_tu_van(nguoi, chi_nhanh, noi_dung):
-    """Khách hỏi một nhà thuốc; đã có phòng tư vấn với nhà thuốc đó thì nhắn tiếp vào phòng cũ."""
-    return _bat_dau(nguoi, lambda: _mo_phong_tu_van(nguoi, chi_nhanh), noi_dung)
-
-
-def bat_dau_ve_don(nguoi, don, noi_dung):
-    """Khách hoặc nhân sự nhắn về một đơn; phòng của đơn chỉ xuất hiện khi tin đầu được gửi."""
-    return _bat_dau(nguoi, lambda: _mo_phong_don(nguoi, don), noi_dung)
+def bat_dau_ve_don(nguoi, don, noi_dung, *, cac_anh=()):
+    """Khách hoặc nhân sự nhắn về một đơn: tin gắn thẻ đơn, vào cuộc trò chuyện chung của khách
+    với chi nhánh của đơn (tạo cùng tin nếu chưa có)."""
+    kiem_tra_nhan_ve_don(nguoi, don)
+    with transaction.atomic():
+        phong, moi_tao = _lay_hoac_tao(don.khach_hang_id, don.chi_nhanh_id)
+        if moi_tao:
+            _kiem_so_phong_moi(nguoi)
+        gui_tin_http(nguoi, phong, noi_dung, cac_anh=cac_anh, don=don)
+    return phong
 
 
 def _dat_trang_thai(nguoi, phong, xong):
@@ -221,7 +265,7 @@ def _dat_trang_thai(nguoi, phong, xong):
 
 @transaction.atomic
 def danh_dau_xong(nguoi, phong):
-    """Nhân sự đóng cuộc trò chuyện đã giải quyết: phòng rời hàng chờ, khách nhắn lại thì mở lại."""
+    """Nhân sự đóng cuộc trò chuyện đã giải quyết: rời hàng chờ, khách nhắn lại thì mở lại."""
     return _dat_trang_thai(nguoi, phong, True)
 
 

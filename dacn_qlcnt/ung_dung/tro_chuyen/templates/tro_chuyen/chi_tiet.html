@@ -9,7 +9,7 @@
         <span class="anh-dai-dien" aria-hidden="true">{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap|slice:":1" }}</span>
         <div>
           <h1>{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}</h1>
-          <p>{% if phong.la_don_hang %}Về đơn {{ phong.don_hang.ma_don_hang }}{% else %}Tư vấn{% endif %} · {{ phong.chi_nhanh.ten_chi_nhanh }}</p>
+          <p>Trò chuyện với {{ phong.chi_nhanh.ten_chi_nhanh }}{% if phong.khach_hang.so_dien_thoai %} · {{ phong.khach_hang.so_dien_thoai }}{% endif %}</p>
         </div>
         {% if phong.da_xong %}
           <form method="post" action="{% url 'tro_chuyen:mo_lai' phong.pk %}">
@@ -27,7 +27,7 @@
       {% if phong.da_xong %}
         <p class="bao-da-xong"><i data-lucide="circle-check" aria-hidden="true"></i>Đã xong lúc {{ phong.thoi_diem_xong|date:"H:i d/m/Y" }} bởi {{ phong.nguoi_danh_dau_xong.ho_ten|default:phong.nguoi_danh_dau_xong.ten_dang_nhap }}. Khách nhắn tiếp thì cuộc trò chuyện tự mở lại.</p>
       {% endif %}
-      {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="nha_thuoc" la_khach=False goi_y_trong="Chưa có tin nhắn trong cuộc này." only %}
+      {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="nha_thuoc" la_khach=False the_cho=the_cho goi_y_trong="Chưa có tin nhắn trong cuộc này." only %}
     </section>
 
     <aside class="cot-thong-tin-chat">
@@ -38,41 +38,41 @@
         {% if phong.khach_hang.email %}<p><i data-lucide="mail" aria-hidden="true"></i> {{ phong.khach_hang.email }}</p>{% endif %}
       </section>
 
-      {% if phong.la_don_hang %}
-        {% with don=phong.don_hang %}
-          <section class="khoi-trang the-don-chat">
-            <h2>Đơn đang trao đổi</h2>
-            <p class="ma-don-chat"><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a></p>
-            <dl>
-              <div><dt>Trạng thái</dt><dd>{{ don.get_trang_thai_display }}</dd></div>
-              <div><dt>Hình thức</dt><dd>{{ don.get_hinh_thuc_nhan_display }}</dd></div>
-              <div><dt>Tổng tiền</dt><dd>{{ don.tong_thanh_toan|tien }}</dd></div>
-              <div><dt>Đặt lúc</dt><dd>{{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</dd></div>
-            </dl>
-            <a class="nut nut-phu nut-nho" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}"><i data-lucide="external-link" aria-hidden="true"></i>Mở trang xử lý đơn</a>
-          </section>
-        {% endwith %}
-      {% else %}
-        <section class="khoi-trang">
-          <h2>Đơn gần đây của khách</h2>
-          {% if don_gan_day %}
-            <ul class="ds-don-gan-day">
-              {% for don in don_gan_day %}
-                <li><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a><small>{{ don.get_trang_thai_display }} · {{ don.tong_thanh_toan|tien }} · {{ don.thoi_diem_tao|date:"d/m/Y" }}</small></li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="chu-mo-ta">Khách chưa có đơn nào ở phạm vi bạn phụ trách. Đây là khách hỏi tư vấn trước khi mua.</p>
-          {% endif %}
+      {% if don_da_hoi %}
+        <section class="khoi-trang the-don-chat">
+          <h2>Đơn khách đã hỏi</h2>
+          <ul class="ds-don-gan-day">
+            {% for don in don_da_hoi %}
+              <li>
+                <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a>
+                <small>{{ don.get_trang_thai_display }} · {{ don.get_hinh_thuc_nhan_display }} · {{ don.tong_thanh_toan|tien }} · {{ don.thoi_diem_tao|date:"d/m/Y" }}</small>
+                <a class="lien-ket-nho" href="?don={{ don.pk }}{% if quay_lai %}&amp;quay_lai={{ quay_lai|urlencode }}{% endif %}">Gắn thẻ đơn vào tin trả lời</a>
+              </li>
+            {% endfor %}
+          </ul>
         </section>
       {% endif %}
+      <section class="khoi-trang">
+        <h2>Đơn gần đây tại chi nhánh</h2>
+        {% if don_gan_day %}
+          <ul class="ds-don-gan-day">
+            {% for don in don_gan_day %}
+              <li><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a><small>{{ don.get_trang_thai_display }} · {{ don.tong_thanh_toan|tien }} · {{ don.thoi_diem_tao|date:"d/m/Y" }}</small></li>
+            {% endfor %}
+          </ul>
+        {% elif not don_da_hoi %}
+          <p class="chu-mo-ta">Khách chưa có đơn nào ở chi nhánh này. Đây là khách hỏi tư vấn trước khi mua.</p>
+        {% else %}
+          <p class="chu-mo-ta">Không còn đơn nào khác.</p>
+        {% endif %}
+      </section>
 
       {% if cac_phong_cung_khach %}
         <section class="khoi-trang">
-          <h2>Cuộc trò chuyện khác của khách</h2>
+          <h2>Khách cũng nhắn chi nhánh khác</h2>
           <ul class="ds-don-gan-day">
             {% for p in cac_phong_cung_khach %}
-              <li><a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' p.pk %}">{% if p.la_don_hang %}Về đơn {{ p.don_hang.ma_don_hang }}{% else %}Tư vấn{% endif %}</a><small>{{ p.chi_nhanh.ten_chi_nhanh }}</small></li>
+              <li><a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' p.pk %}">{{ p.chi_nhanh.ten_chi_nhanh }}</a><small>{{ p.tin_cuoi.thoi_diem_tao|date:"H:i d/m/Y" }}</small></li>
             {% endfor %}
           </ul>
         </section>
@@ -80,4 +80,4 @@
     </aside>
   </div>
 {% endblock %}
-{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}
+{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/chon_anh.js' %}"></script><script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}

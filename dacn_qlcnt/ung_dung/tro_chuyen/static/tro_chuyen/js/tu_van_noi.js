@@ -30,6 +30,13 @@
   });
   // Liên kết "Xem đơn" trong khung mở ở trang chính (target=_top); khung tự đóng theo trang mới.
   window.moKhungTuVan = mo;
+  // "Hỏi dược sĩ về thuốc này" ở trang sản phẩm: mở khung nổi kèm thẻ sản phẩm thay vì rời trang.
+  document.addEventListener('click', suKien => {
+    const lienKet = suKien.target.closest('[data-hoi-ve-thuoc]');
+    if (!lienKet || suKien.ctrlKey || suKien.metaKey || suKien.shiftKey) return;
+    suKien.preventDefault();
+    mo(lienKet.dataset.hoiVeThuoc);
+  });
 
   if (location.hash === '#tu-van') {
     history.replaceState(null, '', location.pathname + location.search);

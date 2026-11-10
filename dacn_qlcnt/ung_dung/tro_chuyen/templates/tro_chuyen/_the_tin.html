@@ -1,0 +1,9 @@
+{% comment %}Thẻ sản phẩm / đơn hàng gắn trong tin. `ben` chọn đường dẫn đúng khu (khách hoặc quản lý).{% endcomment %}
+<a class="the-tin the-tin-{{ the.loai }}" href="{% if ben == 'khach' %}{{ the.url_khach }}{% else %}{{ the.url_nha_thuoc }}{% endif %}" target="_top">
+  {% if the.url_anh %}<img src="{{ the.url_anh }}" alt="" loading="lazy">{% else %}<span class="icon-the" aria-hidden="true"><i data-lucide="{% if the.loai == 'don' %}package{% else %}pill{% endif %}"></i></span>{% endif %}
+  <span class="chu-the">
+    <small>{{ the.tieu_de }}{% if the.ke_don %} · Thuốc kê đơn{% endif %}</small>
+    <strong>{{ the.ten }}</strong>
+    <span>{{ the.phu }}</span>
+  </span>
+</a>

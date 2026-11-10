@@ -1,14 +1,25 @@
 {% comment %}
   Khung chat dùng chung cho khách và nhân sự. `ben` là phía người đang xem (khach / nha_thuoc).
   Tin được vẽ sẵn từ server; JS nối WebSocket rồi vẽ lại kèm trạng thái đã xem, vạch Tin mới.
+  `the_cho`: thẻ sản phẩm / đơn hàng chờ gắn vào tin kế tiếp ("Bạn đang hỏi về…").
+  Tin chỉ có chữ đi qua WebSocket; tin kèm ảnh gửi multipart tới data-url-gui.
 {% endcomment %}
 <section class="khung-chat" data-tro-chuyen data-ma-phong="{{ phong.pk }}" data-ben="{{ ben }}"
-         data-url-tin-cu="{% if ben == 'khach' %}{% url 'tro_chuyen:khach_tin_cu' phong.pk %}{% else %}{% url 'tro_chuyen:tin_cu' phong.pk %}{% endif %}" data-con-tin-cu="{{ lich_su.con_nua|yesno:'1,' }}"
+         data-url-tin-cu="{% if ben == 'khach' %}{% url 'tro_chuyen:khach_tin_cu' phong.pk %}{% else %}{% url 'tro_chuyen:tin_cu' phong.pk %}{% endif %}"
+         data-url-gui="{% if ben == 'khach' %}{% url 'tro_chuyen:khach_gui_tin' phong.pk %}{% else %}{% url 'tro_chuyen:gui_tin' phong.pk %}{% endif %}"
+         data-url-anh="{% if ben == 'khach' %}{% url 'tro_chuyen:khach_anh' 0 %}{% else %}{% url 'tro_chuyen:anh' 0 %}{% endif %}"
+         data-con-tin-cu="{{ lich_su.con_nua|yesno:'1,' }}"
          data-khach-da-doc="{{ lich_su.khach_da_doc|default_if_none:'' }}" data-nha-thuoc-da-doc="{{ lich_su.nha_thuoc_da_doc|default_if_none:'' }}">
   <ol class="cac-tin-chat" data-cac-tin aria-live="polite" aria-label="Tin nhắn">
     {% for tin in lich_su.cac_tin %}
       <li class="tin-chat {% if tin.la_khach == la_khach %}cua-toi{% else %}cua-ho{% endif %}" data-id-tin="{{ tin.id_tin_nhan }}">
-        <div class="bong-tin">{{ tin.noi_dung|linebreaksbr }}</div>
+        {% if tin.the %}{% include "tro_chuyen/_the_tin.html" with the=tin.the ben=ben only %}{% endif %}
+        {% if tin.anh %}
+          <div class="luoi-anh-tin so-anh-{{ tin.anh|length }}">
+            {% for anh in tin.anh %}{% if ben == 'khach' %}{% url 'tro_chuyen:khach_anh' anh.id as url_anh %}{% else %}{% url 'tro_chuyen:anh' anh.id as url_anh %}{% endif %}<a href="{{ url_anh }}" target="_blank" rel="noopener"><img src="{{ url_anh }}" alt="Ảnh đính kèm" width="{{ anh.rong }}" height="{{ anh.cao }}" loading="lazy"></a>{% endfor %}
+          </div>
+        {% endif %}
+        {% if tin.noi_dung %}<div class="bong-tin">{{ tin.noi_dung|linebreaksbr }}</div>{% endif %}
       </li>
     {% empty %}
       <li class="chat-trong" data-chat-trong>{{ goi_y_trong|default:"Chưa có tin nhắn. Hãy gửi tin đầu tiên." }}</li>
@@ -21,8 +32,29 @@
     </div>
   {% endif %}
   <form class="o-soan-tin" data-form-tin>
-    <label class="sr-only" for="noi-dung-tin-{{ phong.pk }}">Nội dung tin nhắn</label>
-    <textarea id="noi-dung-tin-{{ phong.pk }}" name="noi_dung" rows="1" maxlength="2000" placeholder="Nhập tin nhắn… (Enter để gửi)" title="Enter để gửi, Shift + Enter để xuống dòng" required></textarea>
-    <button class="nut-gui-tin" type="submit" disabled aria-label="Gửi tin"><i data-lucide="send-horizontal" aria-hidden="true"></i></button>
+    {% if the_cho %}
+      <div class="the-cho-gui" data-the-cho data-loai="{{ the_cho.loai }}" data-id="{{ the_cho.id }}">
+        <p class="dau-the-cho">{% if the_cho.loai == 'thuoc' %}Bạn đang hỏi về sản phẩm này{% elif ben == 'khach' %}Bạn đang hỏi về đơn hàng này{% else %}Tin kế tiếp sẽ gắn thẻ đơn hàng này{% endif %}</p>
+        {% include "tro_chuyen/_the_tin.html" with the=the_cho ben=ben only %}
+        <button type="button" class="nut-bo-the" data-bo-the aria-label="Bỏ thẻ, nhắn tin thường"><i data-lucide="x" aria-hidden="true"></i></button>
+      </div>
+    {% endif %}
+    <ul class="xem-truoc-anh" data-xem-truoc-anh aria-label="Ảnh sẽ gửi" hidden></ul>
+    <div class="hang-soan-tin">
+      <label class="nut-dinh-kem" title="Gửi ảnh (tối đa 5 ảnh, mỗi ảnh tối đa 10 MB)">
+        <input class="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-chon-anh>
+        <i data-lucide="image-plus" aria-hidden="true"></i><span class="sr-only">Chọn ảnh để gửi</span>
+      </label>
+      <label class="sr-only" for="noi-dung-tin-{{ phong.pk }}">Nội dung tin nhắn</label>
+      <textarea id="noi-dung-tin-{{ phong.pk }}" name="noi_dung" rows="1" maxlength="2000" placeholder="{% if the_cho.loai == 'thuoc' %}Hỏi về sản phẩm này… (Enter để gửi){% elif the_cho %}Nhắn về đơn hàng này… (Enter để gửi){% else %}Nhập tin nhắn… (Enter để gửi){% endif %}" title="Enter để gửi, Shift + Enter để xuống dòng. Có thể dán ảnh (Ctrl + V)."></textarea>
+      <button class="nut-gui-tin" type="submit" disabled aria-label="Gửi tin"><i data-lucide="send-horizontal" aria-hidden="true"></i></button>
+    </div>
   </form>
+  <dialog class="hop-xem-anh" data-hop-xem-anh aria-label="Xem ảnh">
+    <img alt="Ảnh đính kèm cỡ lớn">
+    <div class="thanh-xem-anh">
+      <a data-mo-anh-goc target="_blank" rel="noopener"><i data-lucide="external-link" aria-hidden="true"></i>Mở ảnh gốc</a>
+      <button type="button" data-dong-xem-anh><i data-lucide="x" aria-hidden="true"></i>Đóng</button>
+    </div>
+  </dialog>
 </section>

@@ -18,6 +18,7 @@ from .phat_tin_hieu import (
 )
 from .selectors import bieu_dien_tin, dem_chua_doc, lay_lich_su
 from .services import danh_dau_da_doc, ghi_tin_nhan
+from .the_dinh_kem import doc_the
 
 
 class TroChuyenConsumer(AsyncJsonWebsocketConsumer):
@@ -42,9 +43,10 @@ class TroChuyenConsumer(AsyncJsonWebsocketConsumer):
         return lay_lich_su(*self.lay_doi_tuong())
 
     @database_sync_to_async
-    def luu_tin(self, ma, noi_dung):
+    def luu_tin(self, ma, noi_dung, id_thuoc, id_don):
         nguoi, phong = self.lay_doi_tuong()
-        tin, da_tao = ghi_tin_nhan(nguoi, phong, ma, noi_dung)
+        thuoc, don = doc_the(id_thuoc, id_don)
+        tin, da_tao = ghi_tin_nhan(nguoi, phong, ma, noi_dung, thuoc=thuoc, don=don)
         thong_bao, nhom = thong_bao_tin_moi(nguoi, phong, tin)
         return bieu_dien_tin(tin, phong.khach_hang_id), da_tao, thong_bao, nhom
 
@@ -107,7 +109,10 @@ class TroChuyenConsumer(AsyncJsonWebsocketConsumer):
                 await self.xu_ly_da_doc(content.get("id_tin"))
                 return
             tin, da_tao, thong_bao, nhom = await self.luu_tin(
-                content.get("ma_tin_nhan"), content.get("noi_dung")
+                content.get("ma_tin_nhan"),
+                content.get("noi_dung"),
+                content.get("thuoc"),
+                content.get("don_hang"),
             )
         except PermissionDenied:
             await self.close(code=4403)

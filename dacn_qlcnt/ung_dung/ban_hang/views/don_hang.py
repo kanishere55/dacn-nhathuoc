@@ -10,7 +10,7 @@ from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
 from ung_dung.kho.loc import o_chi_nhanh
 from ung_dung.thanh_toan.selectors import giao_dich_cua_don
 from ung_dung.thanh_toan.services.cong import hoan_tien, xac_nhan_tay
-from ung_dung.tro_chuyen.selectors import lay_hop_thu
+from ung_dung.tro_chuyen.selectors import phong_cua_don
 
 from ..forms import PHUONG_THUC_TAI_QUAY, XuLyDonForm
 from ..models import (
@@ -110,7 +110,7 @@ def chi_tiet(request, ma):
             "cac_hanh_dong": hanh_dong,
             "duoc_chat": co_quyen(request.user, "tro_chuyen.dung"),
             "phong_chat": (
-                lay_hop_thu(request.user).filter(don_hang=don).first()
+                phong_cua_don(request.user, don)
                 if co_quyen(request.user, "tro_chuyen.dung")
                 else None
             ),
