@@ -18,6 +18,21 @@ def so_nguyen(gia_tri):
 
 
 @register.filter
+def so_ngay_toi(ngay, moc):
+    """Số ngày từ mốc (thường là hôm nay) tới ngày đã cho; âm khi đã qua."""
+    try:
+        return (ngay - moc).days
+    except TypeError:
+        return ""
+
+
+@register.filter
+def thuoc_tinh(doi_tuong, ten):
+    """Lấy thuộc tính theo tên cho bảng có cột cấu hình từ view."""
+    return getattr(doi_tuong, ten, "")
+
+
+@register.filter
 def tien(gia_tri):
     """12000 → 12.000 đ"""
     if gia_tri in (None, ""):

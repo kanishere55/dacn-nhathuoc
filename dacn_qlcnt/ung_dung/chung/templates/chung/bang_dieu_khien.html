@@ -8,12 +8,12 @@
 {% block noi_dung %}
   <header class="dau-bang-dieu-khien">
     <div class="tieu-de-trang">
-      <p class="chu-dan">{% if quan_tri_chuoi %}TOÀN CHUỖI{% else %}{{ chi_nhanh.ma_chi_nhanh }}{% endif %}</p>
-      <h1>{{ tieu_de }}</h1>
+      <p class="chu-dan">{% if quan_tri_chuoi %}TOÀN CHUỖI{% else %}{{ chi_nhanh.ten_chi_nhanh|upper }}{% endif %}</p>
+      <h1>{% if quan_tri_chuoi %}{{ tieu_de }}{% else %}Chào {{ user.ho_ten|default:user.ten_dang_nhap }}{% endif %}</h1>
       {% if quan_tri_chuoi %}
         <p>Theo dõi tồn khả dụng, cảnh báo kho và nhu cầu thuốc ở các chi nhánh.</p>
       {% else %}
-        <p>{{ chi_nhanh.ten_chi_nhanh }} · {{ chi_nhanh.dia_chi }}</p>
+        <p>Hôm nay {{ hom_nay|date:"l, d/m/Y" }} · {{ chi_nhanh.dia_chi }}</p>
       {% endif %}
     </div>
     <div class="tac-vu-bang-dieu-khien">
@@ -25,17 +25,38 @@
       {% endif %}
     </div>
   </header>
-  <dl class="chi-so-bang-dieu-khien" aria-label="Số liệu tổng quan">
+  <dl class="chi-so-bang-dieu-khien chi-so-bam-duoc" aria-label="Số liệu tổng quan">
     {% if quan_tri_chuoi %}
       <div><dt><i data-lucide="store" aria-hidden="true"></i>Chi nhánh</dt><dd>{{ so_chi_nhanh }}</dd></div>
     {% endif %}
-    {% if duoc_xem_kho %}
-      <div><dt><i data-lucide="calendar-clock" aria-hidden="true"></i>Lô cần theo dõi</dt><dd>{{ so_lo_canh_bao }}</dd></div>
-      <div><dt><i data-lucide="package-minus" aria-hidden="true"></i>Cảnh báo tồn thấp</dt><dd>{{ so_canh_bao_ton_thap }}</dd></div>
+    {% if ban_hom_nay %}
+      <div>
+        <dt><i data-lucide="receipt" aria-hidden="true"></i>Bán hôm nay</dt>
+        <dd>{{ ban_hom_nay.doanh_thu|tien }}<small>{{ ban_hom_nay.so_phieu }} phiếu</small></dd>
+        <a class="lien-ket-o" href="{% url 'ban_hang:phieu_ban_danh_sach' %}?thoi_gian=hom_nay"><span class="sr-only">Xem phiếu bán hôm nay</span></a>
+      </div>
     {% endif %}
-    {% if duoc_xem_don %}<div><dt><i data-lucide="shopping-basket" aria-hidden="true"></i>Đơn đang chờ nhận</dt><dd>{{ so_don_cho_nhan }}</dd></div>{% endif %}
-    {% if not quan_tri_chuoi and duoc_chat %}
-      <div><dt><i data-lucide="messages-square" aria-hidden="true"></i>Cuộc trò chuyện chờ phản hồi</dt><dd>{{ so_cuoc_co_tin_moi }}</dd></div>
+    {% if duoc_xem_kho %}
+      <div class="{% if so_lo_canh_bao %}can-chu-y{% endif %}">
+        <dt><i data-lucide="calendar-clock" aria-hidden="true"></i>Lô cần theo dõi</dt><dd>{{ so_lo_canh_bao }}</dd>
+        <a class="lien-ket-o" href="{% url 'kho:canh_bao' %}"><span class="sr-only">Xem cảnh báo hạn dùng</span></a>
+      </div>
+      <div class="{% if so_canh_bao_ton_thap %}can-chu-y{% endif %}">
+        <dt><i data-lucide="package-minus" aria-hidden="true"></i>Tồn dưới ngưỡng</dt><dd>{{ so_canh_bao_ton_thap }}</dd>
+        <a class="lien-ket-o" href="{% url 'kho:canh_bao' %}#muc-ton_thap"><span class="sr-only">Xem mặt hàng tồn thấp</span></a>
+      </div>
+    {% endif %}
+    {% if duoc_xem_don %}
+      <div class="{% if so_don_cho_nhan %}can-chu-y{% endif %}">
+        <dt><i data-lucide="shopping-basket" aria-hidden="true"></i>Đơn chờ xử lý</dt><dd>{{ so_don_cho_nhan }}</dd>
+        <a class="lien-ket-o" href="{% url 'ban_hang:don_hang_danh_sach' %}"><span class="sr-only">Xem đơn hàng</span></a>
+      </div>
+    {% endif %}
+    {% if not quan_tri_chuoi and duoc_chat and not ban_hom_nay %}
+      <div class="{% if so_cuoc_co_tin_moi %}can-chu-y{% endif %}">
+        <dt><i data-lucide="messages-square" aria-hidden="true"></i>Tin nhắn chờ trả lời</dt><dd>{{ so_cuoc_co_tin_moi }}</dd>
+        <a class="lien-ket-o" href="{% url 'tro_chuyen:danh_sach' %}"><span class="sr-only">Mở trò chuyện</span></a>
+      </div>
     {% endif %}
   </dl>
   {% if quan_tri_chuoi and duoc_xem_ban_do_nhiet %}
@@ -87,7 +108,7 @@
         {% for dong in cac_lo_canh_bao %}
           <li>
             <strong>{{ dong.lo_thuoc.thuoc.ten_thuoc }} · {{ dong.lo_thuoc.ma_lo_thuoc }}</strong>
-            <span>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}{% if not dong.lo_thuoc.duoc_phep_ban %} · Ngừng bán{% endif %}{% if quan_tri_chuoi %} · {{ dong.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
+            <span>HSD {{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }} · {% with con=dong.lo_thuoc.ngay_het_han|so_ngay_toi:hom_nay %}{% if con < 0 %}đã hết hạn{% else %}còn {{ con }} ngày{% endif %}{% endwith %}{% if not dong.lo_thuoc.duoc_phep_ban %} · Ngừng bán{% endif %}{% if quan_tri_chuoi %} · {{ dong.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
           </li>
         {% empty %}<li>Chưa có cảnh báo về lô.</li>{% endfor %}
       </ul>

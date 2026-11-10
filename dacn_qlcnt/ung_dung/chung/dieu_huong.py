@@ -97,6 +97,21 @@ MENU_KHACH = (
 )
 
 
+# Nhân viên quầy chỉ cần tra cứu thuốc; các danh mục cấu hình vẫn mở được theo quyền
+# nhưng không hiện trên menu để menu chỉ còn việc hằng ngày.
+AN_VOI_NHAN_VIEN = {
+    "danh_muc:chi_nhanh_danh_sach",
+    "danh_muc:danh_muc_san_pham_danh_sach",
+    "danh_muc:khuyen_mai_danh_sach",
+    "danh_muc:nhom_atc_danh_sach",
+    "danh_muc:don_vi_tinh_danh_sach",
+    "danh_muc:quy_doi_bao_goi_danh_sach",
+    "danh_muc:nha_cung_cap_danh_sach",
+    "danh_muc:nhan_vien_danh_sach",
+}
+# Nhóm ít dùng: thu gọn mặc định, tự mở khi đang ở một trang trong nhóm.
+NHOM_THU_GON = {"Danh mục", "Website"}
+
 # Nhóm menu quản lý theo nghiệp vụ; mục không thuộc nhóm nào xếp vào "Khác".
 NHOM_MENU = (
     ("", ("chung:bang_dieu_khien",)),
@@ -141,12 +156,18 @@ def nhom_menu(cac_muc):
         muc = [theo_ten[ten] for ten in cac_ten if ten in theo_ten]
         da_xep.update(m["ten"] for m in muc)
         if muc:
+            dang_chon = any(m["dang_chon"] for m in muc)
             ket_qua.append(
-                {"nhan": nhan, "cac_muc": muc, "dang_mo": any(m["dang_chon"] for m in muc)}
+                {
+                    "nhan": nhan,
+                    "cac_muc": muc,
+                    "dang_mo": dang_chon,
+                    "mo_san": dang_chon or nhan not in NHOM_THU_GON or len(muc) <= 2,
+                }
             )
     con_lai = [m for m in cac_muc if m["ten"] not in da_xep]
     if con_lai:
-        ket_qua.append({"nhan": "Khác", "cac_muc": con_lai, "dang_mo": False})
+        ket_qua.append({"nhan": "Khác", "cac_muc": con_lai, "dang_mo": False, "mo_san": True})
     return ket_qua
 
 
@@ -170,7 +191,8 @@ def dieu_huong(request):
                 ("tai_khoan:danh_sach", "Tài khoản", "user-round"),
                 ("tai_khoan:nhom_quyen_danh_sach", "Nhóm quyền", "shield-check"),
             )
-            if ten not in QUYEN_MENU or co_quyen(nguoi, QUYEN_MENU[ten])
+            if (ten not in QUYEN_MENU or co_quyen(nguoi, QUYEN_MENU[ten]))
+            and not (nguoi.vai_tro == "nhan_vien" and ten in AN_VOI_NHAN_VIEN)
         ]
     phien = getattr(request, "session", None)
     return {
@@ -184,7 +206,12 @@ def dieu_huong(request):
             menu := [
                 {
                     "ten": ten,
-                    "duong_dan": reverse(ten),
+                    "duong_dan": reverse(
+                        "ban_hang:phieu_ban_tao"
+                        if ten == "ban_hang:phieu_ban_danh_sach"
+                        and co_quyen(nguoi, "phieu_ban.tao")
+                        else ten
+                    ),
                     "nhan": nhan,
                     "bieu_tuong": icon,
                     "dang_chon": ten == trang

@@ -10,6 +10,8 @@
 @import "./ban_do.css";
 @import "./chon_co_tim.css";
 @import "./phan_tich.css";
+@import "./nghiep_vu.css";
+@import "./quay_ban.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {
@@ -183,6 +185,28 @@
   .bieu-tuong-hieu svg.lucide {
     width: 25px;
     height: 25px;
+  }
+  .nhom-menu > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    list-style: none;
+    border-radius: 6px;
+  }
+  .nhom-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+  .nhom-menu > summary:hover {
+    color: var(--color-chinh);
+  }
+  .nhom-menu > summary svg.lucide {
+    width: 14px;
+    height: 14px;
+    transition: transform .15s;
+  }
+  .nhom-menu:not([open]) > summary svg.lucide {
+    transform: rotate(-90deg);
   }
   .nhan-menu {
     margin: 18px 12px 6px;

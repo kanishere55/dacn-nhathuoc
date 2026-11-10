@@ -1,7 +1,8 @@
-from uuid import uuid4
+import secrets
 
 from django.core.exceptions import ValidationError
 from django.db import connection
+from django.utils import timezone
 
 from ung_dung.chung.permissions import kiem_tra_quyen_ghi_chi_nhanh
 from ung_dung.danh_muc.models import ChiNhanh
@@ -9,9 +10,17 @@ from ung_dung.danh_muc.models import ChiNhanh
 from ..models import TonKho
 from ..selectors import lay_ton_kha_dung
 
+# Bảng chữ Crockford base32: bỏ I, L, O, U để đọc qua điện thoại không nhầm với 1, 0, V.
+CHU_MA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
 
 def ma_chung_tu(tien_to):
-    return tien_to + uuid4().hex[:20].upper()
+    """Mã ngắn đọc được: BH-261110-7KQ2XM (loại, ngày lập yymmdd, 6 ký tự ngẫu nhiên).
+
+    32^6 ≈ 1 tỷ tổ hợp mỗi loại mỗi ngày; cột mã có ràng buộc duy nhất làm lớp bảo vệ cuối.
+    """
+    ngau_nhien = "".join(secrets.choice(CHU_MA) for _ in range(6))
+    return f"{tien_to}-{timezone.localdate():%y%m%d}-{ngau_nhien}"
 
 
 def khoa_chi_nhanh(nguoi, chi_nhanh, quyen):

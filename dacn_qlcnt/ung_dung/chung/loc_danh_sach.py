@@ -26,6 +26,9 @@ class OChon:
     gia_tri: str = ""
     # Hàm tùy biến (queryset, giá trị) -> queryset khi một cột bằng chưa đủ.
     ham_loc: object = None
+    # Nhãn của lựa chọn trống; khi loc_khi_trong, ham_loc vẫn chạy với giá trị "" (mặc định riêng).
+    nhan_trong: str = "Tất cả"
+    loc_khi_trong: bool = False
 
 
 @dataclass
@@ -59,7 +62,7 @@ class BoLoc:
                 dieu_kien |= Q(**{f"{cot}__icontains": self.tim})
             tap_hop = tap_hop.filter(dieu_kien)
         for o in self.cac_o_chon:
-            if not o.gia_tri:
+            if not o.gia_tri and not (o.loc_khi_trong and o.ham_loc):
                 continue
             if o.ham_loc:
                 tap_hop = o.ham_loc(tap_hop, o.gia_tri)

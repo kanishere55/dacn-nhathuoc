@@ -8,7 +8,7 @@ from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
 from ..forms import DongNhapFormSet, PhieuNhapForm, TepNhapExcelForm
 from ..models import PhieuNhap
 from ..nhap_excel import tao_tep_mau
-from ..selectors import lay_phieu
+from ..selectors import lay_phieu, lay_phieu_nhap_danh_sach
 from ..services.phieu_nhap import nhap_hang
 from . import chung_tu
 
@@ -18,8 +18,12 @@ def danh_sach(request):
     return chung_tu.hien_danh_sach(
         request,
         PhieuNhap,
-        lay_phieu(request.user, PhieuNhap),
+        lay_phieu_nhap_danh_sach(request.user),
         tieu_de="Phiếu nhập",
+        cac_cot=(
+            ("Nhà cung cấp", "ten_nha_cung_cap", "chu"),
+            ("Giá trị nhập", "gia_tri_nhap", "tien"),
+        ),
         url_tao="kho:phieu_nhap_tao" if co_quyen(request.user, "phieu_nhap.tao") else None,
         url_chi_tiet="kho:phieu_nhap_chi_tiet",
     )

@@ -98,7 +98,9 @@ def lay_lich_su(don):
 
 
 def lay_phieu_ban(nguoi):
-    tap_hop = PhieuBan.objects.select_related("chi_nhanh", "nguoi_lap", "don_hang").order_by("-pk")
+    tap_hop = PhieuBan.objects.select_related("chi_nhanh", "nguoi_lap", "don_hang").order_by(
+        "-thoi_diem_tao", "-pk"
+    )
     if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
     return tap_hop
@@ -131,3 +133,73 @@ def lay_yeu_cau_xuat_hoa_don(nguoi, *, trang_thai=""):
     if trang_thai:
         tap_hop = tap_hop.filter(trang_thai=trang_thai)
     return tap_hop
+
+
+def du_lieu_quay_ban(cac_chi_nhanh):
+    """Dữ liệu màn bán tại quầy: thuốc, giá đang áp dụng, bao gói, tồn khả dụng theo chi nhánh.
+
+    Chỉ để hiển thị và tính tạm trên trình duyệt; giá, tồn và FEFO vẫn do ban_tai_quay
+    tính lại khi xác nhận.
+    """
+    from ung_dung.danh_muc.models import QuyDoiBaoGoi
+    from ung_dung.kho.selectors import lay_ton_kha_dung
+
+    cac_thuoc = (
+        them_gia_va_anh(Thuoc.objects.filter(dang_hoat_dong=True))
+        .select_related("don_vi_tinh")
+        .order_by("ten_thuoc")
+    )
+    bao_goi = {}
+    for qd in QuyDoiBaoGoi.objects.order_by("he_so"):
+        bao_goi.setdefault(qd.thuoc_id, []).append(
+            {"id": qd.pk, "ten": qd.ten_quy_doi_bao_goi, "he_so": qd.he_so}
+        )
+    ton = {}
+    for chi_nhanh_id, thuoc_id, tong in (
+        lay_ton_kha_dung()
+        .filter(chi_nhanh__in=cac_chi_nhanh)
+        .values_list("chi_nhanh_id", "lo_thuoc__thuoc_id")
+        .annotate(tong=Sum("kha_dung"))
+        .order_by()
+    ):
+        ton.setdefault(str(chi_nhanh_id), {})[str(thuoc_id)] = tong
+    return {
+        "thuoc": [
+            {
+                "id": t.pk,
+                "ma": t.ma_thuoc,
+                "ten": t.ten_thuoc,
+                "hoat_chat": t.hoat_chat or "",
+                "don_vi": t.don_vi_tinh.ten_don_vi_tinh,
+                "don_gia": int(t.don_gia),
+                "gia_goc": int(t.gia_ban),
+                "ke_don": t.la_thuoc_ke_don,
+                "bao_goi": bao_goi.get(t.pk, []),
+            }
+            for t in cac_thuoc
+        ],
+        "ton": ton,
+    }
+
+
+def lay_phieu_ban_danh_sach(nguoi):
+    """Phiếu bán kèm số mặt hàng, tổng tiền và cách khách trả, cho trang danh sách."""
+    from django.db.models import CharField, ExpressionWrapper, OuterRef, Subquery, Value
+
+    from ung_dung.thanh_toan.models import PHUONG_THUC, GiaoDichThanhToan
+
+    dong = ChiTietPhieuBan.objects.filter(phieu_ban=OuterRef("pk")).order_by().values("phieu_ban")
+    tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
+    phuong_thuc = GiaoDichThanhToan.objects.filter(
+        phieu_ban=OuterRef("pk"), loai_giao_dich="thu"
+    ).values("phuong_thuc")[:1]
+    return lay_phieu_ban(nguoi).annotate(
+        so_mat_hang=Subquery(dong.annotate(n=Count("pk")).values("n")),
+        tong_tien=Subquery(dong.annotate(t=Sum(tien)).values("t"), output_field=DecimalField()),
+        ma_phuong_thuc=Subquery(phuong_thuc),
+        cach_tra=Case(
+            *(When(ma_phuong_thuc=ma, then=Value(nhan)) for ma, nhan in PHUONG_THUC),
+            default=Value(""),
+            output_field=CharField(),
+        ),
+    )

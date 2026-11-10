@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from ung_dung.ban_hang.selectors import lay_don
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 from ung_dung.du_bao.selectors import lay_ket_qua_moi_nhat
@@ -28,6 +30,7 @@ def lay_bang_dieu_khien(nguoi):
         don_cho_nhan = don_cho_nhan.none()
     noi_dung = {
         **quyen,
+        "hom_nay": timezone.localdate(),
         "quan_tri_chuoi": la_quan_tri(nguoi),
         "quan_ly_chi_nhanh": co_vai_tro(nguoi, "quan_ly_chi_nhanh"),
         "so_lo_canh_bao": len(lo_canh_bao),
@@ -59,7 +62,29 @@ def lay_bang_dieu_khien(nguoi):
                 else "Tổng quan nhân viên"
             ),
             chi_nhanh=nguoi.chi_nhanh,
+            ban_hom_nay=_ban_hom_nay(nguoi) if co_quyen(nguoi, "phieu_ban.xem") else None,
             so_cuoc_co_tin_moi=cac_phong.count(),
             cac_cuoc_co_tin_moi=list(cac_phong[:SO_DONG_TOM_TAT]),
         )
     return noi_dung
+
+
+def _ban_hom_nay(nguoi):
+    """Số phiếu và doanh thu hàng hôm nay của chi nhánh (không tính phiếu đã hoàn kho)."""
+    from django.db.models import DecimalField, ExpressionWrapper, F, Sum
+
+    from ung_dung.ban_hang.models import ChiTietPhieuBan, PhieuHoanKho
+    from ung_dung.ban_hang.selectors import lay_phieu_ban
+
+    phieu = (
+        lay_phieu_ban(nguoi)
+        .filter(thoi_diem_tao__date=timezone.localdate())
+        .exclude(pk__in=PhieuHoanKho.objects.values("phieu_ban"))
+    )
+    tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
+    return {
+        "so_phieu": phieu.count(),
+        "doanh_thu": ChiTietPhieuBan.objects.filter(phieu_ban__in=phieu).aggregate(
+            tong=Sum(tien, default=0)
+        )["tong"],
+    }

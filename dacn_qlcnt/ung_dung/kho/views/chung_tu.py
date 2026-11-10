@@ -5,6 +5,7 @@ from functools import reduce
 from django.http import HttpResponse
 from django.shortcuts import render
 
+from ung_dung.danh_muc.selectors import lay_chi_nhanh
 from ung_dung.thong_bao.services import ten_thuong_hieu
 
 from ..chung_tu import du_lieu_chung_tu, ten_tep_pdf, ve_pdf
@@ -12,9 +13,23 @@ from ..loc import loc_phieu
 
 
 def hien_danh_sach(
-    request, model, cac_phieu, *, tieu_de, url_tao, url_chi_tiet, chi_nhanh="chi_nhanh"
+    request,
+    model,
+    cac_phieu,
+    *,
+    tieu_de,
+    url_tao,
+    url_chi_tiet,
+    chi_nhanh="chi_nhanh",
+    cac_cot=(),
+    nhan_tao="Lập phiếu mới",
+    mo_ta="",
 ):
-    """Danh sách chứng từ có tìm kiếm, lọc theo chi nhánh/thời gian và phân trang."""
+    """Danh sách chứng từ có tìm kiếm, lọc theo chi nhánh/thời gian và phân trang.
+
+    `cac_cot` thêm cột riêng của loại chứng từ: (nhãn, thuộc tính, kiểu "tien"/"so"/"chu").
+    Cột chi nhánh chỉ hiện khi người xem có nhiều hơn một chi nhánh.
+    """
     loc = loc_phieu(request, model, chi_nhanh)
     cac_phieu = cac_phieu.select_related("nguoi_lap", chi_nhanh)
     ngu_canh = loc.ngu_canh(cac_phieu)
@@ -28,6 +43,10 @@ def hien_danh_sach(
             "tieu_de": tieu_de,
             "url_tao": url_tao,
             "url_chi_tiet": url_chi_tiet,
+            "cac_cot": [{"nhan": n, "khoa": k, "kieu": kieu} for n, k, kieu in cac_cot],
+            "nhieu_chi_nhanh": lay_chi_nhanh(request.user).count() > 1,
+            "nhan_tao": nhan_tao,
+            "mo_ta": mo_ta,
         },
     )
 

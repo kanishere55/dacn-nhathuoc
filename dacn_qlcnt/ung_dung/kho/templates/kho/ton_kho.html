@@ -5,35 +5,43 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">KHO</p>
     <h1>Tồn kho theo lô</h1>
+    <p>Mỗi dòng là một lô thuốc trong kho. "Có thể bán" là số còn lại sau khi trừ hàng đang giữ cho khách và lô đã hết hạn hoặc bị khóa.</p>
   </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
   <div id="vung-danh-sach">
     <div class="khoi-trang khung-bang">
-      <table>
+      <table class="bang-canh-bao bang-ton-kho">
         <thead>
           <tr>
-            <th>Chi nhánh</th>
-            <th>Thuốc / đơn vị</th>
-            <th>Lô</th>
-            <th>Hạn dùng</th>
-            <th>Vật lý</th>
-            <th>Đang giữ</th>
-            <th>Khả dụng hợp lệ</th>
+            <th scope="col">Thuốc</th>
+            <th scope="col">Lô và hạn dùng</th>
+            {% if nhieu_chi_nhanh %}<th scope="col">Chi nhánh</th>{% endif %}
+            <th scope="col" class="o-so">Trong kho</th>
+            <th scope="col" class="o-so">Đang giữ cho khách</th>
+            <th scope="col" class="o-so">Có thể bán</th>
           </tr>
         </thead>
         <tbody>
           {% for dong in trang %}
-            <tr>
-              <td>{{ dong.chi_nhanh }}</td>
-              <td>{{ dong.lo_thuoc.thuoc }} / {{ dong.lo_thuoc.thuoc.don_vi_tinh }}</td>
-              <td>{{ dong.lo_thuoc.ma_lo_thuoc }}</td>
-              <td>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}</td>
-              <td>{{ dong.so_luong }}</td>
-              <td>{{ dong.dang_giu }}</td>
-              <td>{{ dong.kha_dung_hop_le }}</td>
-            </tr>
+            {% with han=dong.lo_thuoc.ngay_het_han %}
+              <tr>
+                <th scope="row">{{ dong.lo_thuoc.thuoc.ten_thuoc }}<small>{{ dong.lo_thuoc.thuoc.ma_thuoc }}</small></th>
+                <td>
+                  Lô {{ dong.lo_thuoc.ma_lo_thuoc }}
+                  <small>HSD {{ han|date:"d/m/Y" }}
+                    {% if han < hom_nay %}<span class="nhan-han het">Đã hết hạn</span>
+                    {% elif han <= moc_canh_bao %}<span class="nhan-han gan">Còn {{ han|so_ngay_toi:hom_nay }} ngày</span>{% endif %}
+                    {% if not dong.lo_thuoc.duoc_phep_ban %}<span class="nhan-han khoa">Khóa bán</span>{% endif %}
+                  </small>
+                </td>
+                {% if nhieu_chi_nhanh %}<td>{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
+                <td class="o-so">{{ dong.so_luong|so_nguyen }} <small>{{ dong.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></td>
+                <td class="o-so">{% if dong.dang_giu %}{{ dong.dang_giu|so_nguyen }}{% else %}<span class="chu-mo">—</span>{% endif %}</td>
+                <td class="o-so"><strong>{{ dong.kha_dung_hop_le|so_nguyen }}</strong></td>
+              </tr>
+            {% endwith %}
           {% empty %}
-            <tr><td colspan="7">{% if loc.dang_loc %}Không có dòng tồn kho phù hợp bộ lọc.{% else %}Chưa có tồn kho.{% endif %}</td></tr>
+            <tr><td colspan="6">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc.{% else %}Kho chưa có lô nào còn hàng.{% endif %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

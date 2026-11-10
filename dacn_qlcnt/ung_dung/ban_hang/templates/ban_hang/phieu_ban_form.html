@@ -1,28 +1,111 @@
-{% extends "kho/form_phieu.html" %}
+{% extends "base.html" %}
+{% block tieu_de %}Bán tại quầy · Khu quản lý{% endblock %}
 {% block vi_tri %}Bán tại quầy{% endblock %}
-{% block truong_phieu %}
-  {{ form.khoa_yeu_cau }}{{ form.khoa_yeu_cau.errors }}
-  <p class="ghi-chu-khach">Tính theo giá đang áp dụng; số lượng nhập theo đơn vị cơ sở hoặc bao gói đã chọn.</p>
-  {% if form.chi_nhanh_mac_dinh %}
-    <p class="ghi-chu-khach">Bán tại <strong>{{ form.chi_nhanh_mac_dinh.ten_chi_nhanh }}</strong></p>
-    {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}
-  {% endif %}
-{% endblock %}
-{% block sau_cac_dong %}
-  {% if not form.chi_nhanh_mac_dinh %}
-    {% include "components/_o_nhap.html" with truong=form.chi_nhanh %}
-  {% endif %}
-  {% include "components/_o_nhap.html" with truong=form.phuong_thuc_thanh_toan %}
-  <details class="nhom-don-thuoc" data-don-thuoc-tai-quay{% if form.ten_nguoi_ke_don.errors or form.noi_kham_benh.errors or form.ma_don_thuoc.errors %} open{% endif %}>
-    <summary>Thông tin đơn thuốc <span class="chu-tuy-chon">(khi bán thuốc kê đơn)</span></summary>
-    {% include "components/_o_nhap.html" with truong=form.da_kiem_tra_don_thuoc %}
-    {% include "components/_o_nhap.html" with truong=form.ten_nguoi_ke_don %}
-    {% include "components/_o_nhap.html" with truong=form.noi_kham_benh %}
-    {% include "components/_o_nhap.html" with truong=form.ma_don_thuoc %}
-  </details>
-  {{ id_thuoc_ke_don|json_script:"id-thuoc-ke-don" }}
+{% block noi_dung %}
+  <header class="dau-quay-ban">
+    <div>
+      <h1>Bán tại quầy</h1>
+      <p>Gõ tên, mã hoặc hoạt chất để thêm thuốc. Giá và số còn trong kho hiện ngay khi chọn.</p>
+    </div>
+    <a class="nut nut-phu" href="{% url 'ban_hang:phieu_ban_danh_sach' %}"><i data-lucide="history" aria-hidden="true"></i>Phiếu đã bán</a>
+  </header>
+
+  <form method="post" class="quay-ban" data-quay-ban novalidate>
+    {% csrf_token %}
+    {{ form.khoa_yeu_cau }}
+    {{ cac_dong.management_form }}
+    <div data-dong-an></div>
+
+    <div class="cot-ban">
+      <div class="khoi-trang o-tim-quay">
+        <label for="tim-thuoc-quay">Thêm thuốc vào phiếu</label>
+        <div class="vung-tim-quay">
+          <i data-lucide="search" aria-hidden="true"></i>
+          <input id="tim-thuoc-quay" type="search" autocomplete="off" placeholder="Ví dụ: panadol, TA-PANADOL-500, paracetamol" data-o-tim role="combobox" aria-expanded="false" aria-controls="goi-y-thuoc" aria-autocomplete="list">
+          <kbd title="Bấm phím / để về ô tìm">/</kbd>
+        </div>
+        <ul id="goi-y-thuoc" class="goi-y-thuoc" role="listbox" data-goi-y hidden></ul>
+      </div>
+
+      <div class="khoi-trang gio-quay">
+        <table class="bang-gio-quay">
+          <thead>
+            <tr>
+              <th scope="col">Thuốc</th>
+              <th scope="col">Đơn vị bán</th>
+              <th scope="col" class="o-so">Số lượng</th>
+              <th scope="col" class="o-so">Đơn giá</th>
+              <th scope="col" class="o-so">Thành tiền</th>
+              <th scope="col"><span class="sr-only">Bỏ</span></th>
+            </tr>
+          </thead>
+          <tbody data-cac-dong></tbody>
+        </table>
+        <div class="gio-quay-trong" data-gio-trong>
+          <i data-lucide="shopping-basket" aria-hidden="true"></i>
+          <p><strong>Phiếu chưa có thuốc.</strong> Tìm thuốc ở ô phía trên rồi bấm Enter hoặc chọn trong danh sách.</p>
+        </div>
+      </div>
+    </div>
+
+    <aside class="cot-thanh-toan">
+      <div class="khoi-trang the-thanh-toan">
+        {% if form.chi_nhanh_mac_dinh %}
+          <p class="ban-tai"><i data-lucide="store" aria-hidden="true"></i>Bán tại <strong>{{ form.chi_nhanh_mac_dinh.ten_chi_nhanh }}</strong></p>
+          {{ form.chi_nhanh }}
+        {% else %}
+          <div class="nhom-truong">
+            <label for="{{ form.chi_nhanh.id_for_label }}">Chi nhánh bán</label>
+            {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}
+          </div>
+        {% endif %}
+
+        <dl class="tong-quay">
+          <div><dt>Số mặt hàng</dt><dd data-so-mat-hang>0</dd></div>
+          <div class="tong-tien-quay"><dt>Khách cần trả</dt><dd data-tong-tien>0 đ</dd></div>
+        </dl>
+
+        <fieldset class="chon-thanh-toan">
+          <legend>Khách trả bằng</legend>
+          <div class="nut-chon-nhom">
+            {% for gia_tri, nhan in form.fields.phuong_thuc_thanh_toan.choices %}
+              <label><input type="radio" name="phuong_thuc_thanh_toan" value="{{ gia_tri }}"{% if form.phuong_thuc_thanh_toan.value == gia_tri %} checked{% endif %}><span>{{ nhan }}</span></label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="tien-mat-quay" data-tien-mat>
+          <label for="khach-dua">Khách đưa <span class="chu-tuy-chon">(để tính tiền thối)</span></label>
+          <input id="khach-dua" type="number" min="0" step="1000" inputmode="numeric" data-khach-dua>
+          <p class="tien-thoi">Tiền thối lại: <strong data-tien-thoi>–</strong></p>
+        </div>
+
+        <details class="nhom-don-thuoc" data-don-thuoc{% if form.ten_nguoi_ke_don.errors or form.noi_kham_benh.errors or form.ma_don_thuoc.errors or form.da_kiem_tra_don_thuoc.errors %} open{% endif %}>
+          <summary>Thông tin đơn thuốc <span class="chu-tuy-chon" data-nhan-don>(chỉ cần khi có thuốc kê đơn)</span></summary>
+          {% include "components/_o_nhap.html" with truong=form.da_kiem_tra_don_thuoc %}
+          {% include "components/_o_nhap.html" with truong=form.ten_nguoi_ke_don %}
+          {% include "components/_o_nhap.html" with truong=form.noi_kham_benh %}
+          {% include "components/_o_nhap.html" with truong=form.ma_don_thuoc %}
+        </details>
+
+        {% if form.non_field_errors or loi_dong %}
+          <div class="thong-bao thong-bao-loi" role="alert">
+            {% for loi in form.non_field_errors %}<p>{{ loi }}</p>{% endfor %}
+            {% for loi in loi_dong %}<p>{{ loi }}</p>{% endfor %}
+          </div>
+        {% endif %}
+        <p class="canh-bao-quay" data-canh-bao role="status" hidden></p>
+
+        <button class="nut nut-hoan-tat" type="submit" data-nut-hoan-tat disabled>
+          <i data-lucide="check" aria-hidden="true"></i>Hoàn tất bán hàng
+        </button>
+        <p class="goi-y-phim">Bấm <kbd>Ctrl</kbd> + <kbd>Enter</kbd> để hoàn tất nhanh. Sau đó có thể in hóa đơn.</p>
+      </div>
+    </aside>
+  </form>
+  {{ du_lieu_quay|json_script:"du-lieu-quay" }}
+  {{ dong_ban_dau|json_script:"dong-ban-dau" }}
 {% endblock %}
 {% block cuoi_trang %}
-  {{ block.super }}
-  <script src="{% tep_tinh 'ban_hang/js/phieu_ban.js' %}" defer></script>
+  <script src="{% tep_tinh 'ban_hang/js/quay_ban.js' %}" defer></script>
 {% endblock %}

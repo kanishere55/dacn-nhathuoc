@@ -76,15 +76,20 @@ def loc_ton_kho(request):
             OChon(
                 "han_dung", "Hạn dùng", HAN_DUNG, ham_loc=_loc_han_dung("lo_thuoc__ngay_het_han")
             ),
+            # Mặc định chỉ hiện lô còn hàng: lô đã về 0 là lịch sử, không cần thấy hằng ngày.
             OChon(
                 "con_hang",
                 "Tồn",
-                [("co", "Còn hàng"), ("khong", "Đã hết")],
+                [("khong", "Lô đã hết"), ("tat_ca", "Tất cả lô")],
                 ham_loc=lambda tap_hop, gia_tri: (
-                    tap_hop.filter(so_luong__gt=0)
-                    if gia_tri == "co"
+                    tap_hop
+                    if gia_tri == "tat_ca"
                     else tap_hop.filter(so_luong=0)
+                    if gia_tri == "khong"
+                    else tap_hop.filter(so_luong__gt=0)
                 ),
+                nhan_trong="Còn hàng",
+                loc_khi_trong=True,
             ),
         ],
         mac_dinh_moi_trang=50,

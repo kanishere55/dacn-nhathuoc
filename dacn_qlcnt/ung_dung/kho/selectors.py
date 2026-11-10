@@ -147,7 +147,7 @@ def lay_canh_bao(nguoi):
 
 
 def lay_phieu(nguoi, model, duong_dan="chi_nhanh"):
-    tap_hop = model.objects.all().order_by("-pk")
+    tap_hop = model.objects.all().order_by("-thoi_diem_tao", "-pk")
     if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(**{f"{duong_dan}_id": nguoi.chi_nhanh_id})
     return tap_hop
@@ -155,7 +155,7 @@ def lay_phieu(nguoi, model, duong_dan="chi_nhanh"):
 
 def lay_phieu_dieu_chuyen(nguoi):
     """Phiếu điều chuyển chi nhánh được xem: cả phiếu chuyển đi lẫn phiếu chuyển đến."""
-    tap_hop = PhieuDieuChuyen.objects.all().order_by("-pk")
+    tap_hop = PhieuDieuChuyen.objects.all().order_by("-thoi_diem_tao", "-pk")
     if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(
             Q(chi_nhanh_nguon_id=nguoi.chi_nhanh_id) | Q(chi_nhanh_dich_id=nguoi.chi_nhanh_id)
@@ -176,4 +176,66 @@ def lay_lo_het_han_con_ton(chi_nhanh):
         lay_so_du(chi_nhanh=chi_nhanh)
         .filter(lo_thuoc__ngay_het_han__lt=timezone.localdate(), kha_dung__gt=0)
         .order_by("lo_thuoc__ngay_het_han", "lo_thuoc__ma_lo_thuoc")
+    )
+
+
+# Mức cảnh báo theo độ gấp; thứ tự trong bộ này là thứ tự hiển thị trên trang Cảnh báo kho.
+MUC_CANH_BAO = (
+    ("het_han", "Đã hết hạn", "Không được bán. Tách khỏi kệ và lập phiếu xuất hủy."),
+    ("duoi_7", "Hết hạn trong 7 ngày", "Ưu tiên bán trước hoặc trả nhà cung cấp nếu còn được."),
+    ("duoi_30", "Hết hạn trong 30 ngày", "Theo dõi; khi bán hệ thống tự lấy lô gần hạn trước."),
+    ("khoa_ban", "Đang khóa bán", "Lô bị khóa bán. Chờ quản lý kiểm tra và mở khóa hoặc xuất hủy."),
+)
+
+
+def phan_loai_canh_bao(nguoi):
+    """Nhóm các lô cần chú ý theo mức độ gấp, kèm số ngày còn lại để hiển thị."""
+    hom_nay = timezone.localdate()
+    theo_muc = {ma: [] for ma, _, _ in MUC_CANH_BAO}
+    for dong in lay_canh_bao(nguoi):
+        con_lai = (dong.lo_thuoc.ngay_het_han - hom_nay).days
+        dong.so_ngay_con = con_lai
+        dong.so_ngay_qua = -con_lai
+        if con_lai < 0:
+            muc = "het_han"
+        elif not dong.lo_thuoc.duoc_phep_ban:
+            muc = "khoa_ban"
+        elif con_lai <= 7:
+            muc = "duoi_7"
+        else:
+            muc = "duoi_30"
+        theo_muc[muc].append(dong)
+
+    def thu_tu(dong):
+        return (
+            dong.lo_thuoc.ngay_het_han,
+            dong.chi_nhanh.ten_chi_nhanh,
+            dong.lo_thuoc.thuoc.ten_thuoc,
+        )
+
+    return [
+        {"ma": ma, "ten": ten, "huong_dan": huong_dan, "cac_dong": sorted(theo_muc[ma], key=thu_tu)}
+        for ma, ten, huong_dan in MUC_CANH_BAO
+    ]
+
+
+def lay_phieu_nhap_danh_sach(nguoi):
+    """Phiếu nhập kèm nhà cung cấp và tổng giá trị nhập, cho trang danh sách."""
+    from django.db.models import DecimalField, ExpressionWrapper
+
+    from .models import ChiTietPhieuNhap, PhieuNhap
+
+    dong = (
+        ChiTietPhieuNhap.objects.filter(phieu_nhap=OuterRef("pk")).order_by().values("phieu_nhap")
+    )
+    tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
+    return (
+        lay_phieu(nguoi, PhieuNhap)
+        .select_related("nha_cung_cap")
+        .annotate(
+            ten_nha_cung_cap=F("nha_cung_cap__ten_nha_cung_cap"),
+            gia_tri_nhap=Subquery(
+                dong.annotate(t=Sum(tien)).values("t"), output_field=DecimalField()
+            ),
+        )
     )

@@ -19,7 +19,7 @@
     <label>
       <span class="chu-tuy-chon">{{ o.nhan }}</span>
       <select name="{{ o.ten }}">
-        <option value="">Tất cả</option>
+        <option value="">{{ o.nhan_trong }}</option>
         {% for gia_tri, nhan in o.lua_chon %}<option value="{{ gia_tri }}"{% if gia_tri|stringformat:"s" == o.gia_tri %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
       </select>
     </label>

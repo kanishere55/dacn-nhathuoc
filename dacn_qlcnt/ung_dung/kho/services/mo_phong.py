@@ -60,6 +60,12 @@ NHAN_SU_MO_PHONG = (
     ("mp_quan_ly", "quan_ly_chi_nhanh", "Quản lý mô phỏng"),
     ("mp_nhan_vien", "nhan_vien", "Nhân viên mô phỏng"),
 )
+# Họ tên hiển thị của quản lý và nhân viên từng chi nhánh, theo thứ tự NHAN_SU_MO_PHONG.
+HO_TEN_NHAN_SU = (
+    ("Nguyễn Thị Lan", "Lê Văn Hùng"),
+    ("Phạm Thu Hà", "Võ Minh Tuấn"),
+    ("Đặng Ngọc Mai", "Bùi Quốc Bảo"),
+)
 
 
 @transaction.atomic
@@ -118,9 +124,9 @@ def tao_du_lieu_mo_phong(nguoi, *, mat_khau=None):
             vi_tri=Point(kinh_do, vi_do, srid=4326),
         )
         cac_tai_khoan = {}
-        for ten, vai_tro, ho_ten in NHAN_SU_MO_PHONG:
+        for (ten, vai_tro, _), ho_ten in zip(NHAN_SU_MO_PHONG, HO_TEN_NHAN_SU[so - 1], strict=True):
             tai_khoan = tao_tai_khoan_ky_thuat(
-                f"{ten}{hau_to}", mat_khau, vai_tro=vai_tro, chi_nhanh=chi_nhanh
+                f"{ten}{hau_to}", mat_khau, vai_tro=vai_tro, chi_nhanh=chi_nhanh, ho_ten=ho_ten
             )
             NhanVien.objects.create(
                 ma_nhan_vien=f"MP-{vai_tro.upper()}{hau_to}",

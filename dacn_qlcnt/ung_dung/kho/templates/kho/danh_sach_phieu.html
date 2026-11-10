@@ -6,25 +6,38 @@
     <div>
       <p class="chu-dan">CHỨNG TỪ</p>
       <h1>{{ tieu_de }}</h1>
-      <p><span id="tong-so-ban-ghi">{{ trang.paginator.count }}</span> chứng từ, mới nhất ở trên.</p>
+      <p>{% if mo_ta %}{{ mo_ta }} {% endif %}<span id="tong-so-ban-ghi">{{ trang.paginator.count|so_nguyen }}</span> phiếu, mới nhất ở trên.</p>
     </div>
-    {% if url_tao %}<a class="nut" href="{% url url_tao %}"><i data-lucide="plus" aria-hidden="true"></i>Lập phiếu mới</a>{% endif %}
+    {% if url_tao %}<a class="nut" href="{% url url_tao %}"><i data-lucide="plus" aria-hidden="true"></i>{{ nhan_tao }}</a>{% endif %}
   </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
   <div id="vung-danh-sach">
     <div class="khoi-trang khung-bang">
-      <table>
-        <thead><tr><th>Mã chứng từ</th><th>Chi nhánh</th><th>Người lập</th><th>Thời điểm</th></tr></thead>
+      <table class="bang-chung-tu-ds">
+        <thead>
+          <tr>
+            <th scope="col">Mã phiếu</th>
+            <th scope="col">Thời điểm</th>
+            {% for cot in cac_cot %}<th scope="col"{% if cot.kieu != "chu" %} class="o-so"{% endif %}>{{ cot.nhan }}</th>{% endfor %}
+            {% if nhieu_chi_nhanh %}<th scope="col">Chi nhánh</th>{% endif %}
+            <th scope="col">Người lập</th>
+          </tr>
+        </thead>
         <tbody>
           {% for phieu in trang %}
             <tr>
-              <td>{% if url_chi_tiet %}<a class="duong-dan-noi-dung" href="{% url url_chi_tiet phieu.pk %}">{{ phieu }}</a>{% else %}{{ phieu }}{% endif %}</td>
-              <td>{{ phieu.chi_nhanh_hien.ten_chi_nhanh|default:"—" }}</td>
+              <td class="o-ma">{% if url_chi_tiet %}<a class="duong-dan-noi-dung" href="{% url url_chi_tiet phieu.pk %}">{{ phieu }}</a>{% else %}{{ phieu }}{% endif %}</td>
+              <td class="o-thoi-gian">{{ phieu.thoi_diem_tao|date:"H:i" }}<small>{{ phieu.thoi_diem_tao|date:"d/m/Y" }}</small></td>
+              {% for cot in cac_cot %}
+                {% with gia_tri=phieu|thuoc_tinh:cot.khoa %}
+                  <td{% if cot.kieu != "chu" %} class="o-so"{% endif %}>{% if cot.kieu == "tien" %}{{ gia_tri|tien|default:"—" }}{% elif cot.kieu == "so" %}{{ gia_tri|so_nguyen|default:"—" }}{% else %}{{ gia_tri|default:"—" }}{% endif %}</td>
+                {% endwith %}
+              {% endfor %}
+              {% if nhieu_chi_nhanh %}<td>{{ phieu.chi_nhanh_hien.ten_chi_nhanh|default:"—" }}</td>{% endif %}
               <td>{{ phieu.nguoi_lap.ho_ten|default:phieu.nguoi_lap.ten_dang_nhap }}</td>
-              <td>{{ phieu.thoi_diem_tao|date:"H:i d/m/Y" }}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="4">{% if loc.dang_loc %}Không có chứng từ phù hợp bộ lọc.{% else %}Chưa có chứng từ nào.{% if url_tao %} Bấm “Lập phiếu mới” để bắt đầu.{% endif %}{% endif %}</td></tr>
+            <tr><td colspan="9">{% if loc.dang_loc %}Không có phiếu phù hợp bộ lọc.{% else %}Chưa có phiếu nào.{% if url_tao %} Bấm “{{ nhan_tao }}” để bắt đầu.{% endif %}{% endif %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

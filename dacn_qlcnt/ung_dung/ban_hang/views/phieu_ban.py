@@ -4,14 +4,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
-from ung_dung.danh_muc.selectors import lay_thuoc_cong_khai
 from ung_dung.kho.forms import DongThuocFormSet
 from ung_dung.kho.views.chung_tu import hien_danh_sach
 
 from ..forms import PhieuBanForm
 from ..hoa_don import du_lieu_hoa_don, ten_tep_pdf, ve_pdf
 from ..models import PhieuBan
-from ..selectors import lay_phieu_ban
+from ..selectors import du_lieu_quay_ban, lay_phieu_ban, lay_phieu_ban_danh_sach
 from ..services.phieu_ban import ban_tai_quay
 
 
@@ -20,10 +19,17 @@ def danh_sach(request):
     return hien_danh_sach(
         request,
         PhieuBan,
-        lay_phieu_ban(request.user),
-        tieu_de="Bán hàng tại quầy",
+        lay_phieu_ban_danh_sach(request.user),
+        tieu_de="Phiếu đã bán",
         url_tao="ban_hang:phieu_ban_tao" if co_quyen(request.user, "phieu_ban.tao") else None,
         url_chi_tiet="ban_hang:phieu_ban_chi_tiet",
+        cac_cot=(
+            ("Số mặt hàng", "so_mat_hang", "so"),
+            ("Tổng tiền", "tong_tien", "tien"),
+            ("Khách trả bằng", "cach_tra", "chu"),
+        ),
+        nhan_tao="Bán hàng",
+        mo_ta="Phiếu bán tại quầy và phiếu xuất cho đơn hàng.",
     )
 
 
@@ -52,11 +58,39 @@ def tao(request):
             "form": form,
             "cac_dong": cac_dong,
             "tieu_de": "Bán tại quầy",
-            "id_thuoc_ke_don": list(
-                lay_thuoc_cong_khai().filter(la_thuoc_ke_don=True).values_list("pk", flat=True)
-            ),
+            "du_lieu_quay": du_lieu_quay_ban(form.fields["chi_nhanh"].queryset),
+            "dong_ban_dau": _dong_da_nhap(cac_dong) if request.method == "POST" else [],
+            "loi_dong": _loi_cac_dong(cac_dong) if request.method == "POST" else [],
         },
     )
+
+
+def _dong_da_nhap(cac_dong):
+    """Các dòng người bán đã nhập, để màn hình dựng lại phiếu khi server báo lỗi."""
+    du_lieu = cac_dong.data
+    ket_qua = []
+    for i in range(min(cac_dong.total_form_count(), 50)):
+        ma = du_lieu.get(f"form-{i}-thuoc", "")
+        if not ma.isdecimal() or du_lieu.get(f"form-{i}-DELETE"):
+            continue
+        so_luong = du_lieu.get(f"form-{i}-so_luong", "")
+        bao_goi = du_lieu.get(f"form-{i}-quy_doi_bao_goi", "")
+        ket_qua.append(
+            {
+                "thuoc": int(ma),
+                "so_luong": int(so_luong) if so_luong.isdecimal() else 1,
+                "bao_goi": int(bao_goi) if bao_goi.isdecimal() else None,
+            }
+        )
+    return ket_qua
+
+
+def _loi_cac_dong(cac_dong):
+    loi = list(cac_dong.non_form_errors())
+    for i, dong in enumerate(cac_dong.forms, start=1):
+        for cac_thong_bao in dong.errors.values():
+            loi.extend(f"Dòng {i}: {thong_bao}" for thong_bao in cac_thong_bao)
+    return loi
 
 
 @yeu_cau_quyen("phieu_ban.xem")
