@@ -17,6 +17,7 @@ from PIL import Image
 from ung_dung.ban_hang.services.dat_hang import dat_hang
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 
+from ..goi_y import GOI_Y_CHUNG, GOI_Y_VE_DON, GOI_Y_VE_THUOC
 from ..models import AnhTinNhan, CuocTroChuyen, TinNhan
 from ..routing import websocket_urlpatterns
 from ..selectors import dem_chua_doc, lay_hop_thu, lay_tin_cu
@@ -326,6 +327,64 @@ class GiaoDienTests(TestCase):
             self.client.get(reverse("tai_khoan:dang_nhap") + "?ly_do=tu_van"),
             "Đăng nhập để nhắn tin với dược sĩ",
         )
+
+    def test_goi_y_theo_ngu_canh_va_an_khi_khach_da_nhan(self):
+        d = self.d
+        # Nhà thuốc nhắn trước (khách chưa gửi gì): gợi ý câu chung, không nói "thuốc này".
+        phong = mo_phong(d.khach, d.cn)
+        ghi_tin_nhan(d.nv, phong, str(uuid4()), "Đơn của bạn đã soạn xong")
+        self.client.force_login(d.khach)
+        url_phong = reverse("tro_chuyen:khach_chi_tiet", args=[phong.pk])
+        trang = self.client.get(url_phong)
+        self.assertEqual(trang.context["cac_goi_y"], GOI_Y_CHUNG)
+        self.assertContains(trang, "data-goi-y-trong-chat")
+        self.assertNotContains(trang, "data-theo-the")
+        # Khách đã nhắn: không còn gợi ý khi không có thẻ, kể cả trong khung chat nổi.
+        ghi_tin_nhan(d.khach, phong, str(uuid4()), "Cảm ơn nhà thuốc")
+        for tham_so in ({}, {"nhung": "1"}):
+            trang = self.client.get(url_phong, tham_so)
+            self.assertEqual(trang.context["cac_goi_y"], ())
+            self.assertNotContains(trang, "data-goi-y-trong-chat")
+        # Có thẻ sản phẩm / đơn chờ gửi: gợi ý đúng chủ đề, gắn với thẻ.
+        thuoc = self.client.get(url_phong, {"thuoc": d.thuoc.ma_thuoc})
+        self.assertEqual(thuoc.context["cac_goi_y"], GOI_Y_VE_THUOC)
+        self.assertContains(thuoc, "data-theo-the")
+        don = self.client.get(url_phong, {"don": self.don.pk})
+        self.assertEqual(don.context["cac_goi_y"], GOI_Y_VE_DON)
+        # Thẻ đơn không thuộc khách thì không có thẻ, cũng không có gợi ý về đơn.
+        la = self.client.get(url_phong, {"don": "999999"})
+        self.assertIsNone(la.context["the_cho"])
+        self.assertEqual(la.context["cac_goi_y"], ())
+
+    def test_an_va_hien_lai_luu_y_tu_van(self):
+        d = self.d
+        phong = mo_phong(d.khach, d.cn)
+        ghi_tin_nhan(d.khach, phong, str(uuid4()), "Chào nhà thuốc")
+        url_phong = reverse("tro_chuyen:khach_chi_tiet", args=[phong.pk])
+        url_luu_y = reverse("tro_chuyen:khach_luu_y")
+        self.client.force_login(d.khach)
+        trang = self.client.get(url_phong)
+        self.assertFalse(trang.context["an_luu_y"])
+        self.assertContains(trang, "data-dong-luu-y")
+        self.assertContains(trang, "Không gửi ảnh giấy tờ tùy thân")
+        self.assertEqual(self.client.get(url_luu_y).status_code, 405)
+        self.assertEqual(self.client.post(url_luu_y, {"an": "1"}).status_code, 204)
+        # Trang tin nhắn và khung chat nổi dùng chung phiên: cả hai đều đã ẩn, nút (i) hiện.
+        for tham_so in ({}, {"nhung": "1"}):
+            trang = self.client.get(url_phong, tham_so)
+            self.assertTrue(trang.context["an_luu_y"])
+            self.assertContains(trang, 'data-luu-y data-url="' + url_luu_y + '" hidden')
+        self.client.post(url_luu_y, {"an": "0"})
+        self.assertFalse(self.client.get(url_phong).context["an_luu_y"])
+        self.client.post(url_luu_y, {"an": "1"})
+        # Đăng nhập lại (phiên mới) thì lưu ý an toàn hiện lại.
+        self.client.logout()
+        self.assertEqual(self.client.post(url_luu_y, {"an": "1"}).status_code, 302)
+        self.client.force_login(d.khach)
+        self.assertFalse(self.client.get(url_phong).context["an_luu_y"])
+        # Nhân sự không dùng được nút này.
+        self.client.force_login(d.nv)
+        self.assertEqual(self.client.post(url_luu_y, {"an": "1"}).status_code, 403)
 
     def test_nhan_su_hop_thu_loc_va_mo_tu_don(self):
         d = self.d

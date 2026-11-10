@@ -97,16 +97,51 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    padding: 8px 12px 0;
   }
   .goi-y-nhanh button {
-    padding: 5px 11px;
+    max-width: 100%;
+    padding: 6px 12px;
     border: 1px solid #b9d6c9;
     border-radius: 999px;
-    background: #f1f8f4;
+    background: #fff;
     color: var(--color-chinh);
-    font-size: 12px;
+    font-size: 12.5px;
+    line-height: 1.35;
+    text-align: left;
     cursor: pointer;
+  }
+  .goi-y-nhanh button:hover,
+  .goi-y-nhanh button:focus-visible {
+    border-color: var(--color-chinh);
+    background: #e7f2ec;
+  }
+  /* Câu hỏi gợi ý nằm cuối luồng tin như lựa chọn trả lời nhanh: cuộn cùng tin, không chiếm chỗ
+     cố định nên khung chat nổi nhỏ vẫn thấy đủ; tự ẩn khi khách đã gửi tin. */
+  .goi-y-trong-chat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    margin-top: 16px;
+  }
+  .goi-y-trong-chat[hidden] {
+    display: none;
+  }
+  .tieu-de-goi-y {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 4px;
+    color: var(--chu-phu);
+    font-size: 11.5px;
+  }
+  .tieu-de-goi-y svg.lucide {
+    width: 13px;
+    height: 13px;
+  }
+  .goi-y-trong-chat .goi-y-nhanh {
+    justify-content: flex-end;
+    max-width: 90%;
   }
   .o-soan-tin {
     display: flex;
@@ -127,9 +162,17 @@
     padding: 10px 14px;
     border: 1px solid var(--vien);
     border-radius: 21px;
+    /* Thanh cuộn chỉ bật khi nội dung vượt chiều cao tối đa (tro_chuyen.js, coGian). */
+    overflow-y: hidden;
     resize: none;
     font: inherit;
     line-height: 1.45;
+  }
+  /* Khung chat nổi hẹp: chữ gợi ý trong ô nhập giữ một dòng, không đẩy ra thanh cuộn. */
+  .o-soan-tin textarea::placeholder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .o-soan-tin textarea:focus {
     outline: 2px solid #9cc6b5;
@@ -156,11 +199,15 @@
     height: 19px;
   }
 
-  /* ---- Messenger phía khách ---- */
+  /* ---- Messenger phía khách ----
+     Chiều cao cố định theo màn hình: tin mới cuộn bên trong danh sách tin, khung không dài ra.
+     (Không có chiều cao xác định thì flex: 1 của danh sách tin bị tính theo nội dung.) */
   .messenger {
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
-    min-height: 560px;
+    grid-template-rows: minmax(0, 1fr);
+    height: clamp(520px, calc(100vh - 190px), 820px);
+    height: clamp(520px, calc(100dvh - 190px), 820px);
     margin: 8px 0 32px;
     overflow: hidden;
     border: 1px solid var(--vien);
@@ -171,6 +218,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0;
     border-right: 1px solid var(--vien);
   }
   .dau-ds-hoi-thoai {
@@ -261,6 +309,11 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0;
+  }
+  /* Form hỏi mới (không có khung chat) cao hơn khung thì cuộn trong vùng này. */
+  .messenger .vung-hoi-thoai:not(:has(.khung-chat)) {
+    overflow-y: auto;
   }
   .dau-hoi-thoai {
     display: flex;
@@ -276,7 +329,10 @@
   .dau-hoi-thoai h1,
   .dau-hoi-thoai h2 {
     margin: 0;
+    overflow: hidden;
     font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .dau-hoi-thoai p {
     margin: 2px 0 0;
@@ -300,26 +356,76 @@
     display: none;
     color: var(--color-chu);
   }
+  /* Lưu ý an toàn: khách đọc xong bấm X để ẩn; nút (i) ở đầu cuộc trò chuyện mở lại. */
   .luu-y-tu-van {
     display: flex;
+    flex-shrink: 0;
     gap: 8px;
     align-items: flex-start;
-    margin: 0;
-    padding: 8px 16px;
+    padding: 8px 8px 8px 16px;
     background: #fdf7e2;
     color: #6b5212;
     font-size: 12px;
     line-height: 1.5;
   }
-  .luu-y-tu-van svg.lucide {
+  .luu-y-tu-van[hidden],
+  .nut-luu-y[hidden] {
+    display: none;
+  }
+  .luu-y-tu-van p {
+    flex: 1;
+    margin: 0;
+  }
+  .luu-y-tu-van > svg.lucide {
     flex-shrink: 0;
     width: 15px;
     height: 15px;
-    margin-top: 1px;
+    margin-top: 2px;
+  }
+  .nut-dong-luu-y {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin: -3px 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #8a6d1c;
+    cursor: pointer;
+  }
+  .nut-dong-luu-y:hover,
+  .nut-dong-luu-y:focus-visible {
+    background: #f6e9bd;
+    color: #4f3c0b;
+  }
+  .nut-dong-luu-y svg.lucide {
+    width: 15px;
+    height: 15px;
+  }
+  .nut-luu-y {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--vien);
+    border-radius: 50%;
+    background: #fff;
+    color: #8a6d1c;
+    cursor: pointer;
+  }
+  .nut-luu-y:hover {
+    background: #fdf7e2;
+  }
+  .nut-luu-y svg.lucide {
+    width: 16px;
+    height: 16px;
   }
   .messenger .cac-tin-chat {
     max-height: none;
-    min-height: 360px;
+    min-height: 120px;
     height: 0;
   }
   .hoi-duoc-si {
@@ -418,18 +524,16 @@
     height: 0;
     min-height: 0;
   }
-  /* Gợi ý câu hỏi: một hàng cuộn ngang, không chiếm chỗ của tin nhắn. */
-  .che-do-nhung .goi-y-nhanh {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-  .che-do-nhung .goi-y-nhanh button {
-    flex-shrink: 0;
+  .che-do-nhung .goi-y-trong-chat .goi-y-nhanh {
+    max-width: 100%;
   }
   .che-do-nhung .dau-hoi-thoai {
+    gap: 8px;
     padding: 10px 12px;
+  }
+  /* Khung nổi hẹp: bỏ biểu tượng trang trí để tên nhà thuốc không bị cắt. */
+  .che-do-nhung .dau-hoi-thoai .icon-hoi-thoai {
+    display: none;
   }
   .che-do-nhung .hoi-duoc-si {
     margin: 0;
@@ -897,13 +1001,18 @@
     .phong-chat-nha-thuoc { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 760px) {
-    .messenger { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+    .messenger {
+      grid-template-columns: minmax(0, 1fr);
+      height: clamp(440px, calc(100vh - 185px), 820px);
+      height: clamp(440px, calc(100dvh - 185px), 820px);
+    }
+    .messenger .dau-hoi-thoai { gap: 8px; padding: 10px 12px; }
+    .messenger .dau-hoi-thoai .icon-hoi-thoai { display: none; }
     .messenger.dang-mo-phong .ds-hoi-thoai,
     .messenger:not(.dang-mo-phong) .vung-hoi-thoai { display: none; }
     .messenger:not(.dang-mo-phong):has(.hop-thu-trong) .vung-hoi-thoai { display: flex; }
     .messenger .nut-quay-lai { display: inline-grid; }
     .messenger .hoi-duoc-si .lien-ket-quay-lai { display: inline-flex; }
-    .messenger .cac-tin-chat { height: 58vh; }
     .tin-chat { max-width: 88%; }
     .khung-tu-van {
       position: fixed;

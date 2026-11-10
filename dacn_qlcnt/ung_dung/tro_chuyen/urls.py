@@ -11,6 +11,7 @@ urlpatterns = [
     path("tro-chuyen/anh/<int:ma>/", khach.anh, name="khach_anh"),
     path("tro-chuyen/don-hang/<int:ma>/", khach.tu_don_hang, name="khach_tu_don_hang"),
     path("tro-chuyen/chua-doc/", khach.so_chua_doc, name="so_chua_doc"),
+    path("tro-chuyen/luu-y/", khach.luu_y, name="khach_luu_y"),
     path("quan-ly/tro-chuyen/", noi_bo.danh_sach, name="danh_sach"),
     path("quan-ly/tro-chuyen/<int:ma>/", noi_bo.chi_tiet, name="chi_tiet"),
     path("quan-ly/tro-chuyen/<int:ma>/tin-cu/", noi_bo.tin_cu, name="tin_cu"),

@@ -24,13 +24,17 @@
     {% empty %}
       <li class="chat-trong" data-chat-trong>{{ goi_y_trong|default:"Chưa có tin nhắn. Hãy gửi tin đầu tiên." }}</li>
     {% endfor %}
+    {% if cac_goi_y %}
+      {% comment %}Gợi ý nằm cuối luồng tin, JS giữ nó ở cuối khi vẽ lại và ẩn sau khi gửi tin.{% endcomment %}
+      <li class="goi-y-trong-chat" data-goi-y-trong-chat{% if the_cho %} data-theo-the{% endif %}>
+        <span class="tieu-de-goi-y" id="tieu-de-goi-y-{{ phong.pk }}"><i data-lucide="message-circle-question" aria-hidden="true"></i>Câu hỏi gợi ý, bấm để điền vào ô nhập</span>
+        <div class="goi-y-nhanh" data-goi-y-nhanh role="group" aria-labelledby="tieu-de-goi-y-{{ phong.pk }}">
+          {% for cau in cac_goi_y %}<button type="button" data-cau="{{ cau }}">{{ cau }}</button>{% endfor %}
+        </div>
+      </li>
+    {% endif %}
   </ol>
   <p class="trang-thai-chat" data-trang-thai role="status" aria-live="polite">Đang kết nối…</p>
-  {% if cac_goi_y %}
-    <div class="goi-y-nhanh" data-goi-y-nhanh aria-label="Câu hỏi gợi ý">
-      {% for cau in cac_goi_y %}<button type="button" data-cau="{{ cau }}">{{ cau }}</button>{% endfor %}
-    </div>
-  {% endif %}
   <form class="o-soan-tin" data-form-tin>
     {% if the_cho %}
       <div class="the-cho-gui" data-the-cho data-loai="{{ the_cho.loai }}" data-id="{{ the_cho.id }}">

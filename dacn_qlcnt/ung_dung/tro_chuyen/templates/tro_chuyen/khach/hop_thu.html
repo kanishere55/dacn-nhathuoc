@@ -41,27 +41,32 @@
           <a class="nut-quay-lai" href="{% url 'tro_chuyen:khach_danh_sach' %}{% if nhung %}?nhung=1{% endif %}" aria-label="Quay lại danh sách tin nhắn"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
           <span class="icon-hoi-thoai" aria-hidden="true"><i data-lucide="store"></i></span>
           <div>
-            <h2>{{ phong.chi_nhanh.ten_chi_nhanh }}</h2>
+            <h2 title="{{ phong.chi_nhanh.ten_chi_nhanh }}">{{ phong.chi_nhanh.ten_chi_nhanh }}</h2>
             <p>Dược sĩ tư vấn · {{ phong.chi_nhanh.dia_chi }}</p>
           </div>
+          <button type="button" class="nut-luu-y" data-mo-luu-y aria-controls="luu-y-tu-van" title="Xem lưu ý khi tư vấn" aria-label="Xem lưu ý khi tư vấn"{% if not an_luu_y %} hidden{% endif %}><i data-lucide="info" aria-hidden="true"></i></button>
           {% if thuoc_dang_hoi %}
             <a class="nut nut-phu nut-nho" href="{% url 'tro_chuyen:khach_danh_sach' %}?moi=1&amp;thuoc={{ thuoc_dang_hoi.ma_thuoc|urlencode }}{% if nhung %}&amp;nhung=1{% endif %}" title="Hỏi sản phẩm này ở nhà thuốc khác">Đổi nhà thuốc</a>
           {% else %}
             <a class="nut nut-phu nut-nho" href="{% url 'danh_muc:khach_chi_nhanh_chi_tiet' phong.chi_nhanh.ma_chi_nhanh %}" target="_top">Xem nhà thuốc</a>
           {% endif %}
         </header>
-        <p class="luu-y-tu-van"><i data-lucide="info" aria-hidden="true"></i>Dược sĩ tư vấn để tham khảo, không thay cho khám bệnh. Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ. Không gửi ảnh giấy tờ tùy thân hay thông tin thẻ ngân hàng.</p>
+        <div class="luu-y-tu-van" id="luu-y-tu-van" role="note" data-luu-y data-url="{% url 'tro_chuyen:khach_luu_y' %}"{% if an_luu_y %} hidden{% endif %}>
+          <i data-lucide="info" aria-hidden="true"></i>
+          <p>Dược sĩ tư vấn để tham khảo, không thay cho khám bệnh. Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ. Không gửi ảnh giấy tờ tùy thân hay thông tin thẻ ngân hàng.</p>
+          <button type="button" class="nut-dong-luu-y" data-dong-luu-y title="Đã đọc, ẩn lưu ý" aria-label="Đã đọc, ẩn lưu ý"><i data-lucide="x" aria-hidden="true"></i></button>
+        </div>
         {% if the_cho.loai == "don" %}
-          {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="khach" la_khach=True the_cho=the_cho goi_y_trong="Hỏi nhà thuốc về đơn này: thời gian nhận hàng, đổi thuốc, thanh toán…" cac_goi_y=goi_y_ve_don only %}
+          {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="khach" la_khach=True the_cho=the_cho goi_y_trong="Hỏi nhà thuốc về đơn này: thời gian nhận hàng, đổi thuốc, thanh toán…" cac_goi_y=cac_goi_y only %}
         {% else %}
-          {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="khach" la_khach=True the_cho=the_cho goi_y_trong="Đặt câu hỏi cho dược sĩ. Nhà thuốc trả lời trong giờ mở cửa." cac_goi_y=goi_y_tu_van only %}
+          {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="khach" la_khach=True the_cho=the_cho goi_y_trong="Đặt câu hỏi cho dược sĩ. Nhà thuốc trả lời trong giờ mở cửa." cac_goi_y=cac_goi_y only %}
         {% endif %}
       {% elif don_nhap %}
         <header class="dau-hoi-thoai">
           <a class="nut-quay-lai" href="{% url 'tro_chuyen:khach_danh_sach' %}{% if nhung %}?nhung=1{% endif %}" aria-label="Quay lại danh sách tin nhắn"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
           <span class="icon-hoi-thoai" aria-hidden="true"><i data-lucide="store"></i></span>
           <div>
-            <h2>{{ don_nhap.chi_nhanh.ten_chi_nhanh }}</h2>
+            <h2 title="{{ don_nhap.chi_nhanh.ten_chi_nhanh }}">{{ don_nhap.chi_nhanh.ten_chi_nhanh }}</h2>
             <p>Dược sĩ tư vấn · {{ don_nhap.chi_nhanh.dia_chi }}</p>
           </div>
         </header>

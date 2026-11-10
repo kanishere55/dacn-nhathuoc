@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -23,6 +23,7 @@ from ung_dung.chung.permissions import yeu_cau_vai_tro
 from ung_dung.danh_muc.selectors import lay_chi_nhanh_cong_khai, lay_thuoc_cong_khai
 
 from ..forms import MoPhongForm, TinDauVeDonForm
+from ..goi_y import GOI_Y_VE_DON, chon_goi_y
 from ..selectors import (
     chi_nhanh_goi_y,
     dem_chua_doc,
@@ -37,19 +38,9 @@ from ..selectors import (
 from ..services import bat_dau_tro_chuyen, bat_dau_ve_don
 from ._chung import gui_tin_kem_anh, so_truoc, the_don_cho_gui, xem_anh
 
-# Câu hỏi hay gặp, bấm để điền sẵn vào ô nhập.
-GOI_Y_TU_VAN = [
-    "Nhà thuốc còn thuốc này không?",
-    "Thuốc này dùng cho trẻ em được không?",
-    "Uống thuốc trước hay sau ăn?",
-    "Tôi đang mang thai, dùng được không?",
-]
-GOI_Y_VE_DON = [
-    "Khi nào tôi nhận được hàng?",
-    "Tôi muốn đổi giờ nhận hàng.",
-    "Tôi muốn thêm hoặc bớt thuốc trong đơn.",
-]
 SO_PHONG_MOI_TRANG = 30
+# Khóa trong session (lưu ở PostgreSQL): khách đã ẩn lưu ý tư vấn.
+KHOA_AN_LUU_Y = "an_luu_y_tu_van"
 
 
 def _nhung(request):
@@ -111,8 +102,11 @@ def _hien_thi(request, *, phong=None, form=None, don_nhap=None, form_don=None, t
                 or don_nhap is not None
                 or thuoc is not None
             ),
-            "goi_y_tu_van": GOI_Y_TU_VAN,
+            # Câu hỏi gợi ý theo thẻ đang chờ; tự ẩn khi khách đã nhắn (goi_y.py).
+            "cac_goi_y": chon_goi_y(phong, the_cho) if phong else (),
             "goi_y_ve_don": GOI_Y_VE_DON,
+            # Khách đã bấm X ẩn lưu ý tư vấn trong phiên đăng nhập này.
+            "an_luu_y": bool(request.session.get(KHOA_AN_LUU_Y)),
         },
     )
 
@@ -222,3 +216,15 @@ def so_chua_doc(request):
     if not request.user.is_authenticated:
         return JsonResponse({"tong": 0})
     return JsonResponse({"tong": dem_chua_doc(request.user)})
+
+
+@yeu_cau_vai_tro("khach_hang")
+@require_POST
+def luu_y(request):
+    """Nút X / nút (i) của lưu ý tư vấn: an=1 ẩn, an=0 hiện lại.
+
+    Ghi vào session (bảng phiên trong PostgreSQL) để khung chat nổi và trang tin nhắn cùng nhớ;
+    đăng nhập lại thì lưu ý hiện lại vì đây là cảnh báo an toàn.
+    """
+    request.session[KHOA_AN_LUU_Y] = request.POST.get("an") == "1"
+    return HttpResponse(status=204)

@@ -3,6 +3,7 @@
 // Cuộc trò chuyện dài chỉ nạp 30 tin gần nhất; "Xem tin cũ hơn" tải tiếp từng trang qua HTTP.
 // Tin chỉ có chữ đi qua WebSocket; tin kèm ảnh gửi multipart qua HTTP rồi máy chủ phát lại qua
 // Redis. Thẻ "Bạn đang hỏi về sản phẩm/đơn này" (nếu có) gắn vào tin kế tiếp rồi tự biến mất.
+// Câu hỏi gợi ý nằm cuối luồng tin và ẩn ngay khi khách gửi tin; lưu ý tư vấn có nút X để ẩn.
 (() => {
   const khung = document.querySelector('[data-tro-chuyen]');
   if (!khung) return;
@@ -13,6 +14,11 @@
   const hopXemAnh = khung.querySelector('[data-hop-xem-anh]');
   const lichSu = khung.querySelector('[data-cac-tin]');
   const trangThai = khung.querySelector('[data-trang-thai]');
+  // Lưu ý tư vấn ở đầu cuộc trò chuyện (chỉ phía khách) và nút (i) mở lại khi đã ẩn.
+  const luuY = document.querySelector('[data-luu-y]');
+  const nutMoLuuY = document.querySelector('[data-mo-luu-y]');
+  // Dòng câu hỏi gợi ý do server vẽ sẵn; giữ lại để mỗi lần vẽ lại vẫn đặt ở cuối luồng tin.
+  let dongGoiY = lichSu.querySelector('[data-goi-y-trong-chat]');
   const ben = khung.dataset.ben; // "khach" hoặc "nha_thuoc"
   const toiLaKhach = ben === 'khach';
   const giaoThuc = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -168,13 +174,37 @@
     if (!cacDong.length) {
       cacDong.push(tao('li', 'chat-trong', lichSu.querySelector('[data-chat-trong]')?.textContent || 'Chưa có tin nhắn.'));
     }
-    const oCuoi = lichSu.scrollHeight - lichSu.scrollTop - lichSu.clientHeight < 80;
+    if (dongGoiY) cacDong.push(dongGoiY);
+    const oCuoi = dangOCuoi();
     lichSu.replaceChildren(...cacDong);
     window.lucide?.createIcons();
     if (oCuoi || !ve.daCuon) {
       lichSu.scrollTop = lichSu.scrollHeight;
       ve.daCuon = true;
     }
+  }
+
+  const dangOCuoi = () => lichSu.scrollHeight - lichSu.scrollTop - lichSu.clientHeight < 80;
+
+  // Khách đã gửi tin thì gợi ý hết tác dụng: bỏ hẳn khỏi luồng tin (tải lại trang cũng không hiện,
+  // xem goi_y.py).
+  function anGoiY() {
+    if (!dongGoiY) return;
+    dongGoiY.remove();
+    dongGoiY = null;
+  }
+
+  // Ẩn / hiện lưu ý tư vấn; server nhớ lựa chọn trong phiên đăng nhập để lần mở sau không hiện lại.
+  function datLuuY(an) {
+    if (!luuY) return;
+    const oCuoi = dangOCuoi();
+    luuY.hidden = an;
+    if (nutMoLuuY) nutMoLuuY.hidden = !an;
+    if (oCuoi) lichSu.scrollTop = lichSu.scrollHeight;
+    (an ? nutMoLuuY : luuY.querySelector('[data-dong-luu-y]'))?.focus();
+    const duLieu = new FormData();
+    duLieu.append('an', an ? '1' : '0');
+    fetch(luuY.dataset.url, {method: 'POST', body: duLieu, headers: {'X-CSRFToken': maCsrf()}}).catch(() => {});
   }
 
   function themTin(tin) {
@@ -285,6 +315,8 @@
       }
       if (ketQua.loai === 'ket_noi_con_song') henKiemTraKetNoi(hienTai);
       if (ketQua.tin) {
+        // Tin của mình (gửi từ thẻ này hoặc thẻ khác) đã lưu: gợi ý không còn cần.
+        if (laCuaToi(ketQua.tin)) anGoiY();
         themTin(ketQua.tin);
         ve();
         if (!laCuaToi(ketQua.tin)) baoDaDoc();
@@ -299,6 +331,7 @@
           coGian();
         }
         if (dangGui.thuoc || dangGui.don_hang) boThe();
+        anGoiY();
         dangGui = null;
         trangThai.textContent = '';
         capNhatNut();
@@ -336,6 +369,8 @@
     if (!theCho || theCho.hidden) return;
     theCho.hidden = true;
     oNhap.placeholder = 'Nhập tin nhắn… (Enter để gửi)';
+    // Gợi ý theo thẻ ("thuốc này", "đơn này") mất nghĩa khi không còn thẻ.
+    if (dongGoiY?.hasAttribute('data-theo-the')) anGoiY();
     // Tải lại trang không gắn lại thẻ đã gửi hoặc đã bỏ.
     const url = new URL(location.href);
     url.searchParams.delete('thuoc');
@@ -371,6 +406,7 @@
           ketQua.loi || (phanHoi.status === 413 ? 'Ảnh quá lớn, hãy bỏ bớt ảnh.' : 'Chưa gửi được ảnh, hãy thử lại.'),
         );
       }
+      anGoiY();
       themTin(ketQua.tin);
       oNhap.value = '';
       coGian();
@@ -403,6 +439,7 @@
   function coGian() {
     oNhap.style.height = 'auto';
     oNhap.style.height = `${Math.min(oNhap.scrollHeight, 150)}px`;
+    oNhap.style.overflowY = oNhap.scrollHeight > 150 ? 'auto' : 'hidden';
   }
 
   form.addEventListener('submit', suKien => {
@@ -439,6 +476,8 @@
     boThe();
     oNhap.focus();
   });
+  luuY?.querySelector('[data-dong-luu-y]')?.addEventListener('click', () => datLuuY(true));
+  nutMoLuuY?.addEventListener('click', () => datLuuY(false));
   hopXemAnh?.querySelector('[data-dong-xem-anh]')?.addEventListener('click', () => hopXemAnh.close());
   hopXemAnh?.addEventListener('click', suKien => {
     if (suKien.target === hopXemAnh) hopXemAnh.close();
