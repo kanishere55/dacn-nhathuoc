@@ -670,6 +670,7 @@
     color: #d7ebe2;
   }
   .nhan-loai {
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -709,6 +710,7 @@
     display: inline-grid;
   }
   .phong-chat-nha-thuoc .cac-tin-chat {
+    flex: none;
     height: 56vh;
     max-height: none;
   }
@@ -771,6 +773,116 @@
   }
   .form-nhan-khach {
     margin-top: 10px;
+  }
+  .dong-trang-thai-hop-thu {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dong-trang-thai-hop-thu:empty {
+    display: none;
+  }
+  .nhan-xong {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eef2f0;
+    color: var(--chu-phu);
+    font-weight: 600;
+  }
+  .nhan-xong svg.lucide {
+    width: 12px;
+    height: 12px;
+  }
+  .bao-da-xong {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 0;
+    padding: 8px 16px;
+    background: #eef6f1;
+    color: var(--color-chinh);
+    font-size: 13px;
+  }
+  .bao-da-xong svg.lucide {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+  .hop-thu .phan-trang {
+    padding: 10px 14px 6px;
+    border-top: 1px solid var(--vien);
+  }
+
+  /* ---- Tải tin cũ, soạn tin đầu, trang danh sách khách ---- */
+  .dong-tai-tin-cu {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0 8px;
+  }
+  .nut-tai-tin-cu {
+    padding: 5px 14px;
+    border: 1px solid var(--vien);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-chinh);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .nut-tai-tin-cu:disabled {
+    color: var(--chu-phu);
+    cursor: progress;
+  }
+  .soan-tin-dau {
+    display: grid;
+    gap: 12px;
+    padding: 18px 16px;
+  }
+  .soan-tin-dau .chu-mo-ta {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0;
+  }
+  .soan-tin-dau .chu-mo-ta svg.lucide {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+  }
+  .soan-tin-dau textarea {
+    width: 100%;
+  }
+  .soan-tin-dau .goi-y-nhanh {
+    padding: 0 0 4px;
+  }
+  .soan-tin-dau .nut {
+    gap: 6px;
+    justify-self: start;
+  }
+  .trang-hoi-thoai {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-top: 1px solid var(--vien);
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+  .trang-hoi-thoai a {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-chinh);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .trang-hoi-thoai svg.lucide {
+    width: 14px;
+    height: 14px;
   }
   .form-nhan-khach .nut {
     gap: 6px;

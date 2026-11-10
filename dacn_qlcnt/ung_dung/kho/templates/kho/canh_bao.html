@@ -1,43 +1,74 @@
 {% extends "base.html" %}
+{% load loc_trang %}
 {% block tieu_de %}Cảnh báo kho · Khu quản lý{% endblock %}
 {% block vi_tri %}Cảnh báo kho{% endblock %}
 {% block noi_dung %}
   <header class="tieu-de-trang">
     <p class="chu-dan">KHO</p>
     <h1>Cảnh báo kho</h1>
-    <p>Các lô và mặt hàng cần xử lý, xếp từ gấp nhất đến ít gấp. Mỗi nhóm có gợi ý việc nên làm.</p>
+    <p>Mỗi thẻ là một nhóm việc, xếp từ gấp nhất. Chọn thẻ để xem danh sách, lọc theo chi nhánh hoặc danh mục khi có nhiều dòng.</p>
   </header>
 
-  {% if not tong_canh_bao %}
+  {% if not tong_canh_bao and not loc.dang_loc %}
     <section class="khoi-trang trang-trong-canh-bao">
       <i data-lucide="circle-check-big" aria-hidden="true"></i>
       <h2>Kho đang ổn</h2>
       <p>Không có lô hết hạn, sắp hết hạn, bị khóa bán hay mặt hàng nào dưới ngưỡng tồn.</p>
     </section>
   {% else %}
-    <nav class="tom-tat-canh-bao" aria-label="Tóm tắt cảnh báo">
-      {% for muc in cac_muc %}
-        <a class="o-tom-tat muc-{{ muc.ma }}{% if not muc.cac_dong %} trong{% endif %}" href="#muc-{{ muc.ma }}">
-          <strong>{{ muc.cac_dong|length }}</strong><span>{{ muc.ten }}</span>
-        </a>
-      {% endfor %}
-      <a class="o-tom-tat muc-ton_thap{% if not ton_thap %} trong{% endif %}" href="#muc-ton_thap">
-        <strong>{{ ton_thap|length }}</strong><span>Tồn dưới ngưỡng</span>
-      </a>
-    </nav>
+    {% include "components/_thanh_loc.html" with loc=loc vung="vung-canh-bao" giu_muc=muc %}
 
-    {% for muc in cac_muc %}
-      {% if muc.cac_dong %}
-        <section class="khoi-trang khoi-canh-bao muc-{{ muc.ma }}" id="muc-{{ muc.ma }}" aria-labelledby="tieu-de-{{ muc.ma }}">
-          <div class="dau-khoi-canh-bao">
-            <div>
-              <h2 id="tieu-de-{{ muc.ma }}"><span class="cham-muc-canh-bao" aria-hidden="true"></span>{{ muc.ten }}<span class="dem">{{ muc.cac_dong|length }} lô</span></h2>
-              <p>{{ muc.huong_dan }}</p>
-            </div>
-            {% if muc.ma == "het_han" and duoc_xuat_huy %}
-              <a class="nut" href="{% url 'kho:phieu_xuat_huy_tao' %}?loai=het_han"><i data-lucide="trash-2" aria-hidden="true"></i>Lập phiếu xuất hủy</a>
-            {% endif %}
+    <div id="vung-canh-bao">
+      <nav class="tom-tat-canh-bao" aria-label="Nhóm cảnh báo">
+        {% for the in cac_the %}
+          <a class="o-tom-tat muc-{{ the.ma }}{% if not the.so %} trong{% endif %}{% if the.ma == muc %} dang-chon{% endif %}" href="{% truy_van muc=the.ma page=None %}"{% if the.ma == muc %} aria-current="page"{% endif %}>
+            <strong>{{ the.so }}</strong><span>{{ the.ten }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+
+      <section class="khoi-trang khoi-canh-bao muc-{{ muc }}" aria-labelledby="tieu-de-canh-bao">
+        <div class="dau-khoi-canh-bao">
+          <div>
+            <h2 id="tieu-de-canh-bao"><span class="cham-muc-canh-bao" aria-hidden="true"></span>{{ the_dang_mo.ten }}<span class="dem">{{ trang.paginator.count }} {% if muc == "ton_thap" %}mặt hàng{% else %}lô{% endif %}</span></h2>
+            <p>{{ the_dang_mo.huong_dan }}</p>
           </div>
+          {% if muc == "het_han" and duoc_xuat_huy and trang.paginator.count %}
+            <a class="nut" href="{% url 'kho:phieu_xuat_huy_tao' %}?loai=het_han"><i data-lucide="trash-2" aria-hidden="true"></i>Lập phiếu xuất hủy</a>
+          {% elif muc == "ton_thap" and duoc_nhap and trang.paginator.count %}
+            <a class="nut" href="{% url 'kho:phieu_nhap_tao' %}"><i data-lucide="package-plus" aria-hidden="true"></i>Lập phiếu nhập</a>
+          {% endif %}
+        </div>
+
+        {% if not trang.paginator.count %}
+          <p class="canh-bao-trong">{% if loc.dang_loc %}Không có dòng nào khớp bộ lọc trong nhóm này.{% else %}Không có việc nào trong nhóm này.{% endif %}</p>
+        {% elif muc == "ton_thap" %}
+          <div class="khung-bang">
+            <table class="bang-canh-bao">
+              <thead>
+                <tr>
+                  <th scope="col">Thuốc</th>
+                  <th scope="col">Còn bán được so với ngưỡng</th>
+                  {% if nhieu_chi_nhanh %}<th scope="col">Chi nhánh</th>{% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for dong in trang %}
+                  <tr>
+                    <th scope="row">{{ dong.thuoc.ten_thuoc }}<small>{{ dong.thuoc.ma_thuoc }}</small></th>
+                    <td class="o-muc-ton">
+                      <div class="muc-ton">
+                        <span class="thanh-muc-ton" aria-hidden="true"><span style="width: {{ dong.ty_le }}%"></span></span>
+                        <span><strong>{{ dong.thuoc.kha_dung|so_nguyen }}</strong> / {{ dong.thuoc.nguong_canh_bao|so_nguyen }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span>
+                      </div>
+                    </td>
+                    {% if nhieu_chi_nhanh %}<td class="o-chi-nhanh">{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
           <div class="khung-bang">
             <table class="bang-canh-bao">
               <thead>
@@ -50,62 +81,24 @@
                 </tr>
               </thead>
               <tbody>
-                {% for dong in muc.cac_dong %}
+                {% for dong in trang %}
                   <tr>
                     <th scope="row">{{ dong.lo_thuoc.thuoc.ten_thuoc }}<small>Lô {{ dong.lo_thuoc.ma_lo_thuoc }}</small></th>
-                    <td>
+                    <td class="o-han">
                       {{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}
                       <small class="con-han">{% if dong.so_ngay_con < 0 %}Đã quá {{ dong.so_ngay_qua }} ngày{% elif dong.so_ngay_con == 0 %}Hết hạn hôm nay{% else %}Còn {{ dong.so_ngay_con }} ngày{% endif %}</small>
                     </td>
                     <td class="o-so">{{ dong.so_luong|so_nguyen }} <small>{{ dong.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></td>
-                    {% if nhieu_chi_nhanh %}<td>{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
+                    {% if nhieu_chi_nhanh %}<td class="o-chi-nhanh">{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
                     {% if duoc_xem_lo %}<td class="o-thao-tac"><a href="{% url 'kho:lo_thuoc_danh_sach' %}?tim={{ dong.lo_thuoc.ma_lo_thuoc|urlencode }}">Xem lô</a></td>{% endif %}
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
-        </section>
-      {% endif %}
-    {% endfor %}
-
-    {% if ton_thap %}
-      <section class="khoi-trang khoi-canh-bao muc-ton_thap" id="muc-ton_thap" aria-labelledby="tieu-de-ton-thap">
-        <div class="dau-khoi-canh-bao">
-          <div>
-            <h2 id="tieu-de-ton-thap"><span class="cham-muc-canh-bao" aria-hidden="true"></span>Tồn dưới ngưỡng<span class="dem">{{ ton_thap|length }} mặt hàng</span></h2>
-            <p>Lượng còn bán được thấp hơn ngưỡng đã đặt cho thuốc. Nên nhập thêm hoặc xin điều chuyển từ chi nhánh khác.</p>
-          </div>
-          {% if duoc_nhap %}
-            <a class="nut" href="{% url 'kho:phieu_nhap_tao' %}"><i data-lucide="package-plus" aria-hidden="true"></i>Lập phiếu nhập</a>
-          {% endif %}
-        </div>
-        <div class="khung-bang">
-          <table class="bang-canh-bao">
-            <thead>
-              <tr>
-                <th scope="col">Thuốc</th>
-                <th scope="col">Còn bán được so với ngưỡng</th>
-                {% if nhieu_chi_nhanh %}<th scope="col">Chi nhánh</th>{% endif %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for muc in ton_thap %}
-                <tr>
-                  <th scope="row">{{ muc.thuoc.ten_thuoc }}<small>{{ muc.thuoc.ma_thuoc }}</small></th>
-                  <td>
-                    <div class="muc-ton">
-                      <span class="thanh-muc-ton" aria-hidden="true"><span style="width: {{ muc.ty_le }}%"></span></span>
-                      <span><strong>{{ muc.thuoc.kha_dung|so_nguyen }}</strong> / {{ muc.thuoc.nguong_canh_bao|so_nguyen }} {{ muc.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span>
-                    </div>
-                  </td>
-                  {% if nhieu_chi_nhanh %}<td>{{ muc.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        {% endif %}
+        {% if trang.paginator.count %}{% include "components/_phan_trang.html" with trang=trang %}{% endif %}
       </section>
-    {% endif %}
+    </div>
   {% endif %}
 {% endblock %}

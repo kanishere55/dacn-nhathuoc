@@ -27,6 +27,13 @@
           <li class="hop-thu-trong"><p>Bạn chưa có cuộc trò chuyện nào.</p></li>
         {% endfor %}
       </ul>
+      {% if trang.has_other_pages %}
+        <nav class="trang-hoi-thoai" aria-label="Trang danh sách tin nhắn">
+          {% if trang.has_previous %}<a href="?page={{ trang.previous_page_number }}{% if nhung %}&amp;nhung=1{% endif %}"><i data-lucide="chevron-left" aria-hidden="true"></i>Mới hơn</a>{% else %}<span></span>{% endif %}
+          <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
+          {% if trang.has_next %}<a href="?page={{ trang.next_page_number }}{% if nhung %}&amp;nhung=1{% endif %}">Cũ hơn<i data-lucide="chevron-right" aria-hidden="true"></i></a>{% else %}<span></span>{% endif %}
+        </nav>
+      {% endif %}
     </aside>
 
     <section class="vung-hoi-thoai" aria-label="Nội dung trò chuyện">
@@ -48,13 +55,36 @@
         {% else %}
           {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="khach" la_khach=True goi_y_trong="Đặt câu hỏi cho dược sĩ. Nhà thuốc trả lời trong giờ mở cửa." cac_goi_y=goi_y_tu_van only %}
         {% endif %}
+      {% elif don_nhap %}
+        <header class="dau-hoi-thoai">
+          <a class="nut-quay-lai" href="{% url 'tro_chuyen:khach_danh_sach' %}{% if nhung %}?nhung=1{% endif %}" aria-label="Quay lại danh sách tin nhắn"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
+          <span class="icon-hoi-thoai loai-don_hang" aria-hidden="true"><i data-lucide="package"></i></span>
+          <div>
+            <h2>{{ don_nhap.chi_nhanh.ten_chi_nhanh }}</h2>
+            <p>Về đơn {{ don_nhap.ma_don_hang }} · {{ don_nhap.get_trang_thai_display }}</p>
+          </div>
+          <a class="nut nut-phu nut-nho" href="{% url 'ban_hang:khach_don_hang_chi_tiet' don_nhap.pk %}" target="_top">Xem đơn</a>
+        </header>
+        <div class="soan-tin-dau">
+          <p class="chu-mo-ta">Nhắn cho nhà thuốc {{ don_nhap.chi_nhanh.ten_chi_nhanh }} về đơn này. Dược sĩ trả lời ngay tại đây, bạn nhận thông báo khi có trả lời.</p>
+          <form method="post" class="form-chinh" data-soan-tin>
+            {% csrf_token %}
+            {% if nhung %}<input type="hidden" name="nhung" value="1">{% endif %}
+            {{ form_don.non_field_errors }}
+            {% include "components/_o_nhap.html" with truong=form_don.noi_dung %}
+            <div class="goi-y-nhanh" data-goi-y-nhanh aria-label="Câu hỏi gợi ý">
+              {% for cau in goi_y_ve_don %}<button type="button" data-cau="{{ cau }}">{{ cau }}</button>{% endfor %}
+            </div>
+            <button class="nut" type="submit"><i data-lucide="send-horizontal" aria-hidden="true"></i>Gửi tin nhắn</button>
+          </form>
+        </div>
       {% else %}
         <div class="hoi-duoc-si">
           {% if cac_phong %}<a class="nut-quay-lai lien-ket-quay-lai" href="{% url 'tro_chuyen:khach_danh_sach' %}{% if nhung %}?nhung=1{% endif %}"><i data-lucide="arrow-left" aria-hidden="true"></i>Tin nhắn của tôi</a>{% endif %}
           <span class="icon-lon" aria-hidden="true"><i data-lucide="stethoscope"></i></span>
           <h2>Hỏi dược sĩ</h2>
           <p>Chưa mua hàng vẫn hỏi được. Chọn nhà thuốc rồi gõ câu hỏi, dược sĩ sẽ trả lời ngay tại đây và bạn nhận thông báo khi có trả lời.</p>
-          <form method="post" class="form-chinh form-hoi-duoc-si">
+          <form method="post" class="form-chinh form-hoi-duoc-si" data-soan-tin>
             {% csrf_token %}
             {% if nhung %}<input type="hidden" name="nhung" value="1">{% endif %}
             {{ form.non_field_errors }}
@@ -69,5 +99,6 @@
   </div>
 {% endblock %}
 {% block cuoi_trang %}
-  {% if phong %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endif %}
+  {% if phong %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>
+  {% else %}<script defer src="{% tep_tinh 'tro_chuyen/js/soan_tin.js' %}"></script>{% endif %}
 {% endblock %}

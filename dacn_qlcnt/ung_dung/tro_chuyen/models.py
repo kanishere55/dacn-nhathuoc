@@ -10,6 +10,11 @@ LOAI_CUOC_TRO_CHUYEN = [
     ("don_hang", "Về đơn hàng"),
 ]
 
+TRANG_THAI_XU_LY = [
+    ("dang_mo", "Đang trao đổi"),
+    ("da_xong", "Đã xong"),
+]
+
 
 class CuocTroChuyen(models.Model):
     id_cuoc_tro_chuyen = models.BigAutoField(
@@ -27,6 +32,7 @@ class CuocTroChuyen(models.Model):
     chi_nhanh = models.ForeignKey(
         "danh_muc.ChiNhanh",
         on_delete=models.PROTECT,
+        db_index=False,
         db_column="id_chi_nhanh",
         db_comment="Chi nhánh phụ trách trao đổi; với phòng về đơn hàng là chi nhánh của đơn.",
     )
@@ -76,6 +82,44 @@ class CuocTroChuyen(models.Model):
             "tin của khách có id lớn hơn là chưa đọc."
         ),
     )
+    tin_cuoi = models.ForeignKey(
+        "tro_chuyen.TinNhan",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        db_column="id_tin_nhan_cuoi",
+        db_comment=(
+            "Tin mới nhất của phòng, service cập nhật trong cùng giao dịch ghi tin. Lưu sẵn để "
+            "hộp thư hàng nghìn phòng sắp xếp, lọc Chờ trả lời bằng chỉ mục thay vì quét tin_nhan. "
+            "Phòng chỉ được tạo cùng tin đầu tiên nên NULL chỉ còn ở dữ liệu cũ."
+        ),
+    )
+    trang_thai_xu_ly = models.TextField(
+        choices=TRANG_THAI_XU_LY,
+        default="dang_mo",
+        db_default="dang_mo",
+        db_column="trang_thai_xu_ly",
+        db_comment=(
+            "dang_mo: còn cần theo dõi; da_xong: nhân sự đánh dấu đã giải quyết. "
+            "Khách gửi tin mới thì phòng tự mở lại."
+        ),
+    )
+    thoi_diem_xong = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column="thoi_diem_xong",
+        db_comment="Lúc đánh dấu đã xong; NULL khi đang trao đổi.",
+    )
+    nguoi_danh_dau_xong = models.ForeignKey(
+        "tai_khoan.TaiKhoan",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        db_column="id_tai_khoan_danh_dau_xong",
+        db_comment="Nhân sự đánh dấu đã xong; NULL khi đang trao đổi.",
+    )
     thoi_diem_tao = models.DateTimeField(
         db_column="thoi_diem_tao",
         db_comment="Thời điểm hệ thống ghi nhận nghiệp vụ.",
@@ -92,9 +136,44 @@ class CuocTroChuyen(models.Model):
             "Mỗi hàng là phòng trò chuyện của một khách với một chi nhánh: phòng tư vấn chung "
             "hoặc phòng về một đơn hàng."
         )
+        indexes = [
+            # Hộp thư nhân sự: phòng của chi nhánh, mới nhất trước.
+            models.Index(
+                fields=["chi_nhanh", "-tin_cuoi"],
+                name=ten_rang_buoc(
+                    "chi_muc", "cuoc_tro_chuyen", "id_chi_nhanh", "id_tin_nhan_cuoi"
+                ),
+            ),
+            # Hộp thư khách.
+            models.Index(
+                fields=["khach_hang", "-tin_cuoi"],
+                name=ten_rang_buoc(
+                    "chi_muc", "cuoc_tro_chuyen", "id_tai_khoan_khach", "id_tin_nhan_cuoi"
+                ),
+            ),
+        ]
         constraints = [
             *rang_buoc_van_ban(
                 "cuoc_tro_chuyen", "loai_cuoc_tro_chuyen", rong=False, nhieu_dong=False
+            ),
+            *rang_buoc_van_ban("cuoc_tro_chuyen", "trang_thai_xu_ly", rong=False, nhieu_dong=False),
+            models.CheckConstraint(
+                condition=Q(trang_thai_xu_ly__in=[ma for ma, _ in TRANG_THAI_XU_LY]),
+                name=ten_rang_buoc("kiem_tra", "cuoc_tro_chuyen", "trang_thai_hop_le"),
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    trang_thai_xu_ly="dang_mo",
+                    thoi_diem_xong__isnull=True,
+                    nguoi_danh_dau_xong__isnull=True,
+                )
+                | Q(
+                    trang_thai_xu_ly="da_xong",
+                    thoi_diem_xong__isnull=False,
+                    nguoi_danh_dau_xong__isnull=False,
+                ),
+                name=ten_rang_buoc("kiem_tra", "cuoc_tro_chuyen", "trang_thai_khop_moc_xong"),
+                violation_error_message="Phòng đã xong phải có thời điểm và người đánh dấu.",
             ),
             models.CheckConstraint(
                 condition=Q(loai_cuoc_tro_chuyen__in=[ma for ma, _ in LOAI_CUOC_TRO_CHUYEN]),
@@ -126,6 +205,10 @@ class CuocTroChuyen(models.Model):
     def la_don_hang(self):
         return self.loai_cuoc_tro_chuyen == "don_hang"
 
+    @property
+    def da_xong(self):
+        return self.trang_thai_xu_ly == "da_xong"
+
 
 class TinNhan(models.Model):
     id_tin_nhan = models.BigAutoField(
@@ -136,6 +219,7 @@ class TinNhan(models.Model):
     cuoc_tro_chuyen = models.ForeignKey(
         "tro_chuyen.CuocTroChuyen",
         on_delete=models.PROTECT,
+        db_index=False,
         db_column="id_cuoc_tro_chuyen",
         db_comment="Phòng sở hữu tin.",
     )
@@ -164,6 +248,13 @@ class TinNhan(models.Model):
         db_table = "tin_nhan"
         db_table_comment = "Mỗi hàng là tin đã được ghi bền vững trước khi phát Redis."
         verbose_name = "Mỗi hàng là tin đã được ghi bền vững trước khi phát Redis."
+        indexes = [
+            # Lịch sử tải dần (tin cũ hơn một mốc) và đếm tin chưa đọc sau mốc đã đọc.
+            models.Index(
+                fields=["cuoc_tro_chuyen", "-id_tin_nhan"],
+                name=ten_rang_buoc("chi_muc", "tin_nhan", "id_cuoc_tro_chuyen", "id_tin_nhan"),
+            ),
+        ]
         constraints = [
             *rang_buoc_van_ban("tin_nhan", "ma_tin_nhan", dinh_dang=MA_UUID),
             *rang_buoc_van_ban("tin_nhan", "noi_dung_tin_nhan", rong=False, nhieu_dong=True),

@@ -3,6 +3,7 @@
 from decimal import Decimal, InvalidOperation
 
 from django import template
+from django.utils import timezone
 
 register = template.Library()
 
@@ -59,3 +60,18 @@ def phong_phu(noi_dung):
     from ung_dung.chung.noi_dung_phong_phu import hien_thi
 
     return mark_safe(hien_thi(noi_dung))  # noqa: S308 - đã làm sạch bằng nh3
+
+
+@register.filter
+def da_qua(thoi_diem):
+    """Khoảng thời gian từ `thoi_diem` tới nay, gọn bằng tiếng Việt: "dưới 1 phút", "25 phút", "3 giờ"."""
+    if not thoi_diem:
+        return ""
+    giay = max(0, int((timezone.now() - thoi_diem).total_seconds()))
+    if giay < 60:
+        return "dưới 1 phút"
+    if giay < 3600:
+        return f"{giay // 60} phút"
+    if giay < 86400:
+        return f"{giay // 3600} giờ"
+    return f"{giay // 86400} ngày"

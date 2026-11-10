@@ -101,12 +101,16 @@ def lay_ton_kiem_ke(chi_nhanh, *, tu_khoa="", chi_con_hang=False):
     return tap_hop.order_by("lo_thuoc__thuoc__ten_thuoc", "lo_thuoc__ngay_het_han", "pk")
 
 
-def lay_canh_bao_ton_thap(nguoi):
+def lay_canh_bao_ton_thap(nguoi, *, chi_nhanh_id="", danh_muc_id="", tim=""):
+    """(chi nhánh, thuốc) có lượng bán được dưới ngưỡng; lọc theo chi nhánh, danh mục, từ khóa."""
     from ung_dung.danh_muc.models import Thuoc
     from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
+    cac_chi_nhanh = lay_chi_nhanh(nguoi)
+    if chi_nhanh_id:
+        cac_chi_nhanh = cac_chi_nhanh.filter(pk=chi_nhanh_id)
     cac_canh_bao = []
-    for chi_nhanh in lay_chi_nhanh(nguoi):
+    for chi_nhanh in cac_chi_nhanh:
         luong = (
             lay_ton_kha_dung(chi_nhanh=chi_nhanh)
             .filter(lo_thuoc__thuoc_id=OuterRef("pk"))
@@ -126,8 +130,12 @@ def lay_canh_bao_ton_thap(nguoi):
                 )
             )
             .filter(kha_dung__lt=F("nguong_canh_bao"))
-            .order_by("ma_thuoc")
+            .order_by("kha_dung", "ma_thuoc")
         )
+        if danh_muc_id:
+            cac_thuoc = cac_thuoc.filter(danh_muc_san_pham_id=danh_muc_id)
+        if tim:
+            cac_thuoc = cac_thuoc.filter(Q(ten_thuoc__icontains=tim) | Q(ma_thuoc__icontains=tim))
         cac_canh_bao.extend((chi_nhanh, thuoc) for thuoc in cac_thuoc)
     return cac_canh_bao
 
@@ -206,35 +214,27 @@ MUC_CANH_BAO = (
 )
 
 
-def phan_loai_canh_bao(nguoi):
-    """Nhóm các lô cần chú ý theo mức độ gấp, kèm số ngày còn lại để hiển thị."""
+def lo_theo_muc_canh_bao(tap_hop, muc):
+    """Lọc số dư lô còn hàng theo một mức cảnh báo; dùng cho từng thẻ của trang cảnh báo.
+
+    Thứ tự ưu tiên: đã hết hạn > đang khóa bán > hết hạn trong 7 ngày > trong 30 ngày.
+    """
+    from datetime import timedelta
+
     hom_nay = timezone.localdate()
-    theo_muc = {ma: [] for ma, _, _ in MUC_CANH_BAO}
-    for dong in lay_canh_bao(nguoi):
-        con_lai = (dong.lo_thuoc.ngay_het_han - hom_nay).days
-        dong.so_ngay_con = con_lai
-        dong.so_ngay_qua = -con_lai
-        if con_lai < 0:
-            muc = "het_han"
-        elif not dong.lo_thuoc.duoc_phep_ban:
-            muc = "khoa_ban"
-        elif con_lai <= 7:
-            muc = "duoi_7"
-        else:
-            muc = "duoi_30"
-        theo_muc[muc].append(dong)
-
-    def thu_tu(dong):
-        return (
-            dong.lo_thuoc.ngay_het_han,
-            dong.chi_nhanh.ten_chi_nhanh,
-            dong.lo_thuoc.thuoc.ten_thuoc,
-        )
-
-    return [
-        {"ma": ma, "ten": ten, "huong_dan": huong_dan, "cac_dong": sorted(theo_muc[ma], key=thu_tu)}
-        for ma, ten, huong_dan in MUC_CANH_BAO
-    ]
+    tap_hop = tap_hop.filter(so_luong__gt=0)
+    if muc == "het_han":
+        return tap_hop.filter(lo_thuoc__ngay_het_han__lt=hom_nay)
+    con_han = tap_hop.filter(lo_thuoc__ngay_het_han__gte=hom_nay)
+    if muc == "khoa_ban":
+        return con_han.filter(lo_thuoc__duoc_phep_ban=False)
+    dang_ban = con_han.filter(lo_thuoc__duoc_phep_ban=True)
+    if muc == "duoi_7":
+        return dang_ban.filter(lo_thuoc__ngay_het_han__lte=hom_nay + timedelta(days=7))
+    return dang_ban.filter(
+        lo_thuoc__ngay_het_han__gt=hom_nay + timedelta(days=7),
+        lo_thuoc__ngay_het_han__lte=hom_nay + timedelta(days=30),
+    )
 
 
 def lay_phieu_nhap_danh_sach(nguoi):

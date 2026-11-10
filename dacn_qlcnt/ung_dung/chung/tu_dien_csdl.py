@@ -24,7 +24,7 @@ TU_VUNG = frozenset(
     tuc viet
     hoa thue ty
     quyen rieng gioi
-    phong
+    phong xong
     """.split()
 )
 

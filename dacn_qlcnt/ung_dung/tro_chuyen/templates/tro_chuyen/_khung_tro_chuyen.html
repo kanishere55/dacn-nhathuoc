@@ -3,6 +3,7 @@
   Tin được vẽ sẵn từ server; JS nối WebSocket rồi vẽ lại kèm trạng thái đã xem, vạch Tin mới.
 {% endcomment %}
 <section class="khung-chat" data-tro-chuyen data-ma-phong="{{ phong.pk }}" data-ben="{{ ben }}"
+         data-url-tin-cu="{% if ben == 'khach' %}{% url 'tro_chuyen:khach_tin_cu' phong.pk %}{% else %}{% url 'tro_chuyen:tin_cu' phong.pk %}{% endif %}" data-con-tin-cu="{{ lich_su.con_nua|yesno:'1,' }}"
          data-khach-da-doc="{{ lich_su.khach_da_doc|default_if_none:'' }}" data-nha-thuoc-da-doc="{{ lich_su.nha_thuoc_da_doc|default_if_none:'' }}">
   <ol class="cac-tin-chat" data-cac-tin aria-live="polite" aria-label="Tin nhắn">
     {% for tin in lich_su.cac_tin %}

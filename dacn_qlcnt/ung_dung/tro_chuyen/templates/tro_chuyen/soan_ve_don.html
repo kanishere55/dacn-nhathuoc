@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block vi_tri %}Trò chuyện{% endblock %}
+{% block tieu_de %}Nhắn khách về đơn {{ don.ma_don_hang }} · Khu quản lý{% endblock %}
+{% block noi_dung %}
+  <div class="phong-chat-nha-thuoc">
+    <section class="cot-chat">
+      <header class="dau-hoi-thoai">
+        <a class="nut-quay-lai" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}" aria-label="Về trang xử lý đơn"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
+        <span class="anh-dai-dien" aria-hidden="true">{{ don.khach_hang.ho_ten|default:don.khach_hang.ten_dang_nhap|slice:":1" }}</span>
+        <div>
+          <h1>{{ don.khach_hang.ho_ten|default:don.khach_hang.ten_dang_nhap }}</h1>
+          <p>Tin nhắn mới về đơn {{ don.ma_don_hang }} · {{ don.chi_nhanh.ten_chi_nhanh }}</p>
+        </div>
+      </header>
+      <div class="soan-tin-dau">
+        <p class="chu-mo-ta"><i data-lucide="info" aria-hidden="true"></i>Khách chỉ thấy cuộc trò chuyện khi bạn gửi tin đầu tiên; tin được báo ngay trên website và trong mục Tin nhắn của khách.</p>
+        <form method="post" class="form-chinh" data-soan-tin>
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+          {% include "components/_o_nhap.html" with truong=form.noi_dung %}
+          <div class="goi-y-nhanh" data-goi-y-nhanh aria-label="Mẫu câu">
+            <button type="button" data-cau="Chào anh/chị, đơn {{ don.ma_don_hang }} đã soạn xong, mời anh/chị ghé nhà thuốc nhận hàng.">Đơn đã soạn xong</button>
+            <button type="button" data-cau="Chào anh/chị, một số thuốc trong đơn {{ don.ma_don_hang }} tạm hết hàng. Nhà thuốc xin phép trao đổi để đổi thuốc tương đương.">Báo hết hàng</button>
+            <button type="button" data-cau="Chào anh/chị, nhà thuốc cần xác nhận lại địa chỉ và giờ nhận hàng của đơn {{ don.ma_don_hang }}.">Xác nhận giao nhận</button>
+          </div>
+          <button class="nut" type="submit"><i data-lucide="send-horizontal" aria-hidden="true"></i>Gửi tin nhắn</button>
+        </form>
+      </div>
+    </section>
+
+    <aside class="cot-thong-tin-chat">
+      <section class="khoi-trang the-don-chat">
+        <h2>Đơn đang trao đổi</h2>
+        <p class="ma-don-chat"><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a></p>
+        <dl>
+          <div><dt>Trạng thái</dt><dd>{{ don.get_trang_thai_display }}</dd></div>
+          <div><dt>Hình thức</dt><dd>{{ don.get_hinh_thuc_nhan_display }}</dd></div>
+          <div><dt>Tổng tiền</dt><dd>{{ don.tong_thanh_toan|tien }}</dd></div>
+          <div><dt>Đặt lúc</dt><dd>{{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</dd></div>
+        </dl>
+      </section>
+      {% if don.khach_hang.so_dien_thoai %}
+        <section class="khoi-trang">
+          <h2>Gọi khách nếu gấp</h2>
+          <p><i data-lucide="phone" aria-hidden="true"></i> <a href="tel:{{ don.khach_hang.so_dien_thoai }}">{{ don.khach_hang.so_dien_thoai }}</a></p>
+        </section>
+      {% endif %}
+    </aside>
+  </div>
+{% endblock %}
+{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/soan_tin.js' %}"></script>{% endblock %}

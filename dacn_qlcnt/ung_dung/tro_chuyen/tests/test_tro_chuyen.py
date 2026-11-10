@@ -54,6 +54,12 @@ class TroChuyenTests(TransactionTestCase):
             self.client.get(reverse("tro_chuyen:khach_danh_sach")), str(self.d.khach)
         )
         self.client.force_login(self.d.khach)
+        # Phòng chưa có tin không hiện ở đâu cả; có tin rồi mới mở được.
+        self.assertEqual(
+            self.client.get(reverse("tro_chuyen:khach_chi_tiet", args=[self.phong.pk])).status_code,
+            404,
+        )
+        ghi_tin_nhan(self.d.khach, self.phong, str(uuid4()), "Chào nhà thuốc")
         self.assertContains(
             self.client.get(reverse("tro_chuyen:khach_chi_tiet", args=[self.phong.pk])), "Tin nhắn"
         )
@@ -113,7 +119,13 @@ class TroChuyenTests(TransactionTestCase):
         try:
             self.assertEqual(
                 await khach.receive_json_from(),
-                {"loai": "lich_su", "cac_tin": [], "khach_da_doc": None, "nha_thuoc_da_doc": None},
+                {
+                    "loai": "lich_su",
+                    "cac_tin": [],
+                    "con_nua": False,
+                    "khach_da_doc": None,
+                    "nha_thuoc_da_doc": None,
+                },
             )
             await khach.send_json_to({"loai": "kiem_tra_ket_noi"})
             self.assertEqual(await khach.receive_json_from(), {"loai": "ket_noi_con_song"})

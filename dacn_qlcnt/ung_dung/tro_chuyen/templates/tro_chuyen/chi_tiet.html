@@ -5,13 +5,28 @@
   <div class="phong-chat-nha-thuoc">
     <section class="cot-chat">
       <header class="dau-hoi-thoai">
-        <a class="nut-quay-lai" href="{% url 'tro_chuyen:danh_sach' %}" aria-label="Về hộp thư"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
+        <a class="nut-quay-lai" href="{{ quay_lai }}" aria-label="Về hộp thư"><i data-lucide="arrow-left" aria-hidden="true"></i></a>
         <span class="anh-dai-dien" aria-hidden="true">{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap|slice:":1" }}</span>
         <div>
           <h1>{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}</h1>
           <p>{% if phong.la_don_hang %}Về đơn {{ phong.don_hang.ma_don_hang }}{% else %}Tư vấn{% endif %} · {{ phong.chi_nhanh.ten_chi_nhanh }}</p>
         </div>
+        {% if phong.da_xong %}
+          <form method="post" action="{% url 'tro_chuyen:mo_lai' phong.pk %}">
+            {% csrf_token %}
+            <button class="nut nut-phu nut-nho" type="submit"><i data-lucide="rotate-ccw" aria-hidden="true"></i>Mở lại</button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'tro_chuyen:xong' phong.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="quay_lai" value="{{ quay_lai }}">
+            <button class="nut nut-phu nut-nho" type="submit" title="Chuyển sang Đã xong, rời khỏi hàng chờ"><i data-lucide="check" aria-hidden="true"></i>Đã xong</button>
+          </form>
+        {% endif %}
       </header>
+      {% if phong.da_xong %}
+        <p class="bao-da-xong"><i data-lucide="circle-check" aria-hidden="true"></i>Đã xong lúc {{ phong.thoi_diem_xong|date:"H:i d/m/Y" }} bởi {{ phong.nguoi_danh_dau_xong.ho_ten|default:phong.nguoi_danh_dau_xong.ten_dang_nhap }}. Khách nhắn tiếp thì cuộc trò chuyện tự mở lại.</p>
+      {% endif %}
       {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong lich_su=lich_su ben="nha_thuoc" la_khach=False goi_y_trong="Chưa có tin nhắn trong cuộc này." only %}
     </section>
 

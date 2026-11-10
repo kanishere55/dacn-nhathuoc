@@ -37,6 +37,8 @@ class BoLoc:
     cac_o_chon: list = field(default_factory=list)
     cac_cot_tim: tuple = ()
     nhan_tim: str = "Tìm kiếm"
+    # Hàm tìm tùy biến (queryset, từ khóa) -> queryset khi tìm theo cột chưa đủ.
+    ham_tim: object = None
     mac_dinh_moi_trang: int = 25
     tim: str = ""
     moi_trang: int = 25
@@ -56,7 +58,9 @@ class BoLoc:
             o.gia_tri = gia_tri if gia_tri in {str(ma) for ma, _ in o.lua_chon} else ""
 
     def ap_dung(self, tap_hop):
-        if self.tim and self.cac_cot_tim:
+        if self.tim and self.ham_tim:
+            tap_hop = self.ham_tim(tap_hop, self.tim)
+        elif self.tim and self.cac_cot_tim:
             dieu_kien = Q()
             for cot in self.cac_cot_tim:
                 dieu_kien |= Q(**{f"{cot}__icontains": self.tim})
@@ -80,6 +84,10 @@ class BoLoc:
     @property
     def dang_loc(self):
         return bool(self.tim or any(o.gia_tri for o in self.cac_o_chon))
+
+    @property
+    def co_o_tim(self):
+        return bool(self.cac_cot_tim or self.ham_tim)
 
     def ngu_canh(self, tap_hop):
         """Áp bộ lọc, phân trang rồi trả các biến template dùng chung."""

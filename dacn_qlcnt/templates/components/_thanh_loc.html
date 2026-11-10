@@ -1,6 +1,6 @@
 {% comment %}
   Thanh lọc dùng chung. Biến: loc (BoLoc), vung (id vùng danh sách được thay khi lọc),
-  giu_loai / giu_trang_thai (tham số do thẻ phía trên chọn, giữ lại khi lọc).
+  giu_loai / giu_trang_thai / giu_muc (tham số do thẻ phía trên chọn, giữ lại khi lọc).
   Ô chọn tự lọc khi đổi; ô tìm kiếm lọc sau khi ngừng gõ 0,4 giây. Không có JS vẫn dùng được bằng nút Lọc.
 {% endcomment %}
 {% load loc_trang %}
@@ -9,7 +9,8 @@
       hx-trigger="change, keyup changed delay:400ms from:find input[name=tim], submit" hx-push-url="true">
   {% if giu_loai %}<input type="hidden" name="loai" value="{{ giu_loai }}">{% endif %}
   {% if giu_trang_thai %}<input type="hidden" name="trang_thai" value="{{ giu_trang_thai }}">{% endif %}
-  {% if loc.cac_cot_tim %}
+  {% if giu_muc %}<input type="hidden" name="muc" value="{{ giu_muc }}">{% endif %}
+  {% if loc.co_o_tim %}
     <label class="o-tim">
       <span class="chu-tuy-chon">{{ loc.nhan_tim }}</span>
       <input type="search" name="tim" value="{{ loc.tim }}" placeholder="{{ loc.nhan_tim }}…" autocomplete="off">

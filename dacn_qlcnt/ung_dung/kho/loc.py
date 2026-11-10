@@ -125,3 +125,25 @@ def loc_lo_thuoc(request):
             ),
         ],
     )
+
+
+def loc_canh_bao(request):
+    """Lọc trang cảnh báo; cùng tham số dùng cho bảng lô và bảng tồn dưới ngưỡng."""
+    return BoLoc(
+        request,
+        cac_cot_tim=(
+            "lo_thuoc__thuoc__ten_thuoc",
+            "lo_thuoc__thuoc__ma_thuoc",
+            "lo_thuoc__ma_lo_thuoc",
+        ),
+        nhan_tim="Tên, mã thuốc hoặc mã lô",
+        cac_o_chon=[
+            *o_chi_nhanh(request.user, "chi_nhanh_id"),
+            OChon(
+                "danh_muc",
+                "Danh mục",
+                [(d.pk, d.ten_danh_muc_san_pham) for d in DanhMucSanPham.objects.all()],
+                "lo_thuoc__thuoc__danh_muc_san_pham_id",
+            ),
+        ],
+    )

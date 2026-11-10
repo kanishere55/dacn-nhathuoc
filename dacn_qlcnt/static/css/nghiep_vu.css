@@ -38,6 +38,24 @@
     color: var(--chu-phu);
     font-size: 12px;
   }
+  .o-tom-tat.dang-chon {
+    border-color: var(--mau-muc);
+    background: var(--nen-muc);
+    box-shadow: inset 0 0 0 1px var(--mau-muc);
+  }
+  .o-tom-tat.dang-chon span {
+    color: var(--color-chu);
+    font-weight: 600;
+  }
+  .canh-bao-trong {
+    margin: 0;
+    padding: 24px 0 12px;
+    color: var(--chu-phu);
+    text-align: center;
+  }
+  .khoi-canh-bao .phan-trang {
+    margin-top: 12px;
+  }
   .o-tom-tat.trong {
     border-left-color: var(--vien);
     opacity: .65;
@@ -163,6 +181,24 @@
   }
   @media (max-width: 560px) {
     .tom-tat-canh-bao { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Màn hẹp: mỗi dòng cảnh báo thành một thẻ, số lượng bên phải, chi nhánh ở dòng dưới. */
+    .bang-canh-bao thead { display: none; }
+    .bang-canh-bao tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 2px 12px;
+      padding: 10px 2px;
+      border-bottom: 1px solid var(--vien);
+    }
+    .bang-canh-bao tbody tr:last-child { border-bottom: 0; }
+    .bang-canh-bao tr > * { padding: 0; border: 0; }
+    .bang-canh-bao tbody th { grid-column: 1; }
+    .bang-canh-bao .o-so { grid-column: 2; grid-row: 1; text-align: right; }
+    .bang-canh-bao .o-han { grid-column: 1; }
+    .bang-canh-bao .o-han .con-han { display: inline; margin-left: 6px; }
+    .bang-canh-bao .o-muc-ton { grid-column: 1 / -1; }
+    .bang-canh-bao .o-chi-nhanh { grid-column: 1; color: var(--chu-phu); font-size: 12px; }
+    .bang-canh-bao .o-thao-tac { grid-column: 2; grid-row: 2; text-align: right; }
     .bang-canh-bao th,
     .bang-canh-bao td { padding: 9px 8px; }
     .muc-ton { flex-direction: column; align-items: flex-start; gap: 4px; }

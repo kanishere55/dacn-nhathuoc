@@ -15,8 +15,17 @@ from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 
 from ..models import CuocTroChuyen, TinNhan
 from ..routing import websocket_urlpatterns
-from ..selectors import dem_chua_doc, lay_hop_thu
-from ..services import danh_dau_da_doc, ghi_tin_nhan, mo_phong, mo_phong_don_hang
+from ..selectors import dem_chua_doc, lay_hop_thu, lay_tin_cu
+from ..services import (
+    GIOI_HAN_TIN_MOT_PHUT,
+    bat_dau_tu_van,
+    bat_dau_ve_don,
+    danh_dau_da_doc,
+    danh_dau_xong,
+    ghi_tin_nhan,
+    mo_phong,
+    mo_phong_don_hang,
+)
 
 KENH_BO_NHO = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
@@ -83,10 +92,78 @@ class NghiepVuTests(TestCase):
         tin_khac, _ = ghi_tin_nhan(d.khach, phong_don, str(uuid4()), "Đơn của em")
         with self.assertRaises(ValidationError):
             danh_dau_da_doc(d.khach, phong, tin_khac.pk)
-        self.assertEqual(lay_hop_thu(d.nv, "don_hang").get(), phong_don)
-        self.assertEqual(lay_hop_thu(d.nv, "tu_van").get(), phong)
+        self.assertEqual(lay_hop_thu(d.nv).filter(loai_cuoc_tro_chuyen="don_hang").get(), phong_don)
+        self.assertEqual(lay_hop_thu(d.nv, "da_tra_loi").get(), phong)
         # Nhân sự chi nhánh khác không thấy và không đếm tin của chi nhánh này.
         self.assertEqual(dem_chua_doc(d.ql2), 0)
+
+
+class BatDauVaHangChoTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.d = tao_du_lieu()
+        cls.don = tao_don(cls.d)
+
+    def test_phong_chi_sinh_ra_cung_tin_dau(self):
+        d = self.d
+        with self.assertRaises(ValidationError):
+            bat_dau_ve_don(d.khach, self.don, "   ")
+        self.assertFalse(CuocTroChuyen.objects.exists())
+        phong = bat_dau_ve_don(d.khach, self.don, "Khi nào nhận được hàng?")
+        self.assertEqual(phong.tin_cuoi.noi_dung_tin_nhan, "Khi nào nhận được hàng?")
+        # Nhắn lần nữa dùng lại đúng phòng, không tạo phòng mới.
+        self.assertEqual(bat_dau_ve_don(d.nv, self.don, "Chiều nay có ạ"), phong)
+        self.assertEqual(CuocTroChuyen.objects.count(), 1)
+        with self.assertRaises(PermissionDenied):
+            bat_dau_ve_don(d.khac, self.don, "Spam")
+
+    def test_gioi_han_toc_do_chi_ap_cho_khach(self):
+        d = self.d
+        phong = bat_dau_tu_van(d.khach, d.cn, "Tin 1")
+        for i in range(GIOI_HAN_TIN_MOT_PHUT - 1):
+            ghi_tin_nhan(d.khach, phong, str(uuid4()), f"Tin {i + 2}")
+        with self.assertRaises(ValidationError):
+            ghi_tin_nhan(d.khach, phong, str(uuid4()), "Tin quá nhanh")
+        for i in range(GIOI_HAN_TIN_MOT_PHUT + 2):
+            ghi_tin_nhan(d.nv, phong, str(uuid4()), f"Trả lời {i}")
+
+    def test_da_xong_roi_hang_cho_va_tu_mo_lai(self):
+        d = self.d
+        phong = bat_dau_tu_van(d.khach, d.cn, "Hỏi thuốc ho")
+        self.assertEqual(list(lay_hop_thu(d.nv, "cho_tra_loi")), [phong])
+        with self.assertRaises(PermissionDenied):
+            danh_dau_xong(d.khach, phong)
+        danh_dau_xong(d.nv, phong)
+        self.assertFalse(lay_hop_thu(d.nv, "cho_tra_loi").exists())
+        self.assertEqual(lay_hop_thu(d.nv, "da_xong").get().nguoi_danh_dau_xong, d.nv)
+        ghi_tin_nhan(d.khach, phong, str(uuid4()), "Cho em hỏi thêm")
+        phong.refresh_from_db()
+        self.assertEqual(
+            (phong.trang_thai_xu_ly, phong.thoi_diem_xong, phong.nguoi_danh_dau_xong),
+            ("dang_mo", None, None),
+        )
+        self.assertEqual(list(lay_hop_thu(d.nv, "cho_tra_loi")), [phong])
+
+    def test_lich_su_tai_dan(self):
+        d = self.d
+        phong = bat_dau_tu_van(d.khach, d.cn, "Tin đầu")
+        for i in range(40):
+            ghi_tin_nhan(d.nv, phong, str(uuid4()), f"Trả lời {i}")
+        trang_dau = lay_tin_cu(d.khach, phong)
+        self.assertEqual((len(trang_dau["cac_tin"]), trang_dau["con_nua"]), (30, True))
+        cu_hon = lay_tin_cu(d.khach, phong, trang_dau["cac_tin"][0]["id_tin_nhan"])
+        self.assertEqual((len(cu_hon["cac_tin"]), cu_hon["con_nua"]), (11, False))
+        self.assertEqual(cu_hon["cac_tin"][0]["noi_dung"], "Tin đầu")
+        self.client.force_login(d.khach)
+        json = self.client.get(
+            reverse("tro_chuyen:khach_tin_cu", args=[phong.pk]),
+            {"truoc": trang_dau["cac_tin"][0]["id_tin_nhan"]},
+        ).json()
+        self.assertEqual(len(json["cac_tin"]), 11)
+        self.client.force_login(d.khac)
+        self.assertEqual(
+            self.client.get(reverse("tro_chuyen:khach_tin_cu", args=[phong.pk])).status_code, 404
+        )
 
 
 class GiaoDienTests(TestCase):
@@ -113,9 +190,20 @@ class GiaoDienTests(TestCase):
         nhung = self.client.get(reverse("tro_chuyen:khach_chi_tiet", args=[phong.pk]) + "?nhung=1")
         self.assertEqual(nhung["X-Frame-Options"], "SAMEORIGIN")
         self.assertNotContains(nhung, "chan-trang-khach")
-        tu_don = self.client.post(reverse("tro_chuyen:khach_tu_don_hang", args=[self.don.pk]))
+        # Câu hỏi trống không tạo phòng.
+        self.client.post(url, {"chi_nhanh": d.cn.pk, "noi_dung": ""})
+        self.assertEqual(CuocTroChuyen.objects.count(), 1)
+        # Mở trang soạn tin về đơn không tạo gì; chỉ khi gửi mới có phòng.
+        url_don = reverse("tro_chuyen:khach_tu_don_hang", args=[self.don.pk])
+        soan = self.client.get(url_don)
+        self.assertContains(soan, self.don.ma_don_hang)
+        self.assertFalse(CuocTroChuyen.objects.filter(don_hang=self.don).exists())
+        tu_don = self.client.post(url_don, {"noi_dung": "Khi nào nhận được hàng?"})
         phong_don = CuocTroChuyen.objects.get(don_hang=self.don)
         self.assertRedirects(tu_don, reverse("tro_chuyen:khach_chi_tiet", args=[phong_don.pk]))
+        self.assertRedirects(
+            self.client.get(url_don), reverse("tro_chuyen:khach_chi_tiet", args=[phong_don.pk])
+        )
         self.client.force_login(d.khac)
         self.assertEqual(
             self.client.post(
@@ -147,19 +235,29 @@ class GiaoDienTests(TestCase):
         ghi_tin_nhan(d.khach, phong, str(uuid4()), "Hỏi thuốc ho")
         self.client.force_login(d.nv)
         hop_thu = self.client.get(reverse("tro_chuyen:danh_sach"))
-        self.assertEqual(hop_thu.context["dem"]["cho_tra_loi"], 1)
+        self.assertEqual(
+            dict((ma, so) for ma, _, so in hop_thu.context["cac_the"])["cho_tra_loi"], 1
+        )
+        self.assertContains(hop_thu, "Chờ ")
         self.assertContains(hop_thu, "Tư vấn")
         menu = {m["ten"]: m for m in hop_thu.context["menu_ung_dung"]}
         self.assertEqual(menu["tro_chuyen:danh_sach"]["so"], 1)
-        self.assertEqual(
-            len(
-                self.client.get(reverse("tro_chuyen:danh_sach"), {"loc": "don_hang"}).context[
-                    "cac_phong"
-                ]
-            ),
-            0,
+        url = reverse("tro_chuyen:danh_sach")
+        self.assertEqual(len(self.client.get(url, {"loai": "don_hang"}).context["trang"]), 0)
+        self.assertEqual(len(self.client.get(url, {"tim": "thuốc ho"}).context["trang"]), 1)
+        self.assertEqual(len(self.client.get(url, {"tim": "không khớp"}).context["trang"]), 0)
+        # Đã xong: rời hàng chờ, quay lại đúng thẻ đang xem.
+        xong = self.client.post(
+            reverse("tro_chuyen:xong", args=[phong.pk]), {"quay_lai": url + "?loai=tu_van"}
         )
-        mo = self.client.post(reverse("tro_chuyen:tu_don_hang", args=[self.don.pk]))
+        self.assertRedirects(xong, url + "?loai=tu_van")
+        self.assertEqual(len(self.client.get(url).context["trang"]), 0)
+        self.assertEqual(len(self.client.get(url, {"trang_thai": "da_xong"}).context["trang"]), 1)
+        # Nhân sự soạn tin về đơn: trang soạn không tạo phòng, gửi rồi mới có.
+        url_don = reverse("tro_chuyen:tu_don_hang", args=[self.don.pk])
+        self.assertContains(self.client.get(url_don), "Gửi tin nhắn")
+        self.assertFalse(CuocTroChuyen.objects.filter(don_hang=self.don).exists())
+        mo = self.client.post(url_don, {"noi_dung": "Đơn đã soạn xong ạ"})
         phong_don = CuocTroChuyen.objects.get(don_hang=self.don)
         self.assertRedirects(mo, reverse("tro_chuyen:chi_tiet", args=[phong_don.pk]))
         self.assertContains(

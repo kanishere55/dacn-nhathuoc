@@ -38,16 +38,25 @@ class TraiNghiemTests(TestCase):
         tao_ton(self.d, "LO-GAN-HAN", ngay=4, luong=7)
         tao_ton(self.d, "LO-KHOA", ngay=200, luong=2, duoc_ban=False)
         self.client.force_login(self.d.ql)
-        trang = self.client.get(reverse("kho:canh_bao"))
-        theo_muc = {
-            m["ma"]: [d.lo_thuoc.ma_lo_thuoc for d in m["cac_dong"]]
-            for m in trang.context["cac_muc"]
-        }
-        self.assertEqual(theo_muc["het_han"], ["LO-QUA-HAN"])
-        self.assertEqual(theo_muc["duoi_7"], ["LO-GAN-HAN"])
-        self.assertEqual(theo_muc["khoa_ban"], ["LO-KHOA"])
+        url = reverse("kho:canh_bao")
+        trang = self.client.get(url)
+        # Mặc định mở thẻ gấp nhất đang có việc.
+        self.assertEqual(trang.context["muc"], "het_han")
+
+        def cac_lo(**tham_so):
+            return [d.lo_thuoc.ma_lo_thuoc for d in self.client.get(url, tham_so).context["trang"]]
+
+        self.assertEqual(cac_lo(muc="het_han"), ["LO-QUA-HAN"])
+        self.assertEqual(cac_lo(muc="duoi_7"), ["LO-GAN-HAN"])
+        self.assertEqual(cac_lo(muc="khoa_ban"), ["LO-KHOA"])
+        self.assertEqual(cac_lo(muc="duoi_7", tim="LO-GAN"), ["LO-GAN-HAN"])
+        self.assertEqual(cac_lo(muc="duoi_7", tim="khong-co"), [])
+        so = {the["ma"]: the["so"] for the in trang.context["cac_the"]}
+        self.assertEqual((so["het_han"], so["duoi_7"], so["khoa_ban"]), (1, 1, 1))
         self.assertContains(trang, "Đã quá 3 ngày")
         self.assertContains(trang, reverse("kho:phieu_xuat_huy_tao") + "?loai=het_han")
+        # Phân trang: 1 dòng/trang không có trong lựa chọn nên giữ mặc định, trang lạ về trang cuối.
+        self.assertEqual(self.client.get(url, {"muc": "het_han", "page": "99"}).status_code, 200)
 
     def test_man_ban_giu_lai_dong_khi_loi_va_ban_thanh_cong(self):
         tao_ton(self.d, luong=3)

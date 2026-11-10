@@ -1,5 +1,6 @@
 // Phòng chat: WebSocket qua Redis, tự nối lại khi mất mạng, vẽ tin dạng bong bóng,
 // báo "Đã xem" theo mốc đã đọc lưu trong CSDL và đánh dấu đã đọc khi người xem thực sự nhìn thấy.
+// Cuộc trò chuyện dài chỉ nạp 30 tin gần nhất; "Xem tin cũ hơn" tải tiếp từng trang qua HTTP.
 (() => {
   const khung = document.querySelector('[data-tro-chuyen]');
   if (!khung) return;
@@ -28,6 +29,8 @@
   };
   let mocVachMoi = null;
   let daGuiDaDoc = 0;
+  let conTinCu = khung.dataset.conTinCu === '1';
+  let dangTaiTinCu = false;
 
   const laCuaToi = tin => tin.la_khach === toiLaKhach;
   const gio = iso =>
@@ -43,6 +46,15 @@
     const benHo = toiLaKhach ? 'nha_thuoc' : 'khach';
     const tinCuoiCuaToi = [...cacTin].reverse().find(laCuaToi);
     const cacDong = [];
+    if (conTinCu && cacTin.length) {
+      const dongNut = tao('li', 'dong-tai-tin-cu');
+      const nutTai = tao('button', 'nut-tai-tin-cu', dangTaiTinCu ? 'Đang tải…' : 'Xem tin cũ hơn');
+      nutTai.type = 'button';
+      nutTai.disabled = dangTaiTinCu;
+      nutTai.addEventListener('click', taiTinCu);
+      dongNut.append(nutTai);
+      cacDong.push(dongNut);
+    }
     cacTin.forEach((tin, i) => {
       if (mocVachMoi !== null && tin.id_tin_nhan === mocVachMoi) {
         cacDong.push(tao('li', 'vach-tin-moi', 'Tin mới'));
@@ -84,7 +96,29 @@
     if (cacTin.some(t => t.id_tin_nhan === tin.id_tin_nhan)) return;
     cacTin.push(tin);
     cacTin.sort((a, b) => a.id_tin_nhan - b.id_tin_nhan);
-    if (cacTin.length > 100) cacTin = cacTin.slice(-100);
+  }
+
+  async function taiTinCu() {
+    if (dangTaiTinCu || !cacTin.length) return;
+    dangTaiTinCu = true;
+    ve();
+    const caoTruoc = lichSu.scrollHeight;
+    const viTriTruoc = lichSu.scrollTop;
+    try {
+      const phanHoi = await fetch(`${khung.dataset.urlTinCu}?truoc=${cacTin[0].id_tin_nhan}`, {
+        headers: {Accept: 'application/json'},
+      });
+      if (!phanHoi.ok) throw new Error(String(phanHoi.status));
+      const ketQua = await phanHoi.json();
+      ketQua.cac_tin.forEach(themTin);
+      conTinCu = ketQua.con_nua;
+    } catch {
+      trangThai.textContent = 'Chưa tải được tin cũ. Bấm lại để thử.';
+    }
+    dangTaiTinCu = false;
+    ve();
+    // Giữ nguyên chỗ đang đọc: tin cũ chèn phía trên, không nhảy màn hình.
+    lichSu.scrollTop = lichSu.scrollHeight - caoTruoc + viTriTruoc;
   }
 
   // Chỉ báo đã đọc khi trang đang hiện và người dùng ở trong cửa sổ này.
@@ -142,7 +176,13 @@
       if (hienTai !== socket) return;
       const ketQua = JSON.parse(suKien.data);
       if (ketQua.loai === 'lich_su') {
-        cacTin = [];
+        // Nối lại sau khi mất mạng: giữ tin cũ đã tải, trừ khi giữa hai đoạn có thể bị hở.
+        const moiNhat = cacTin.length ? cacTin[cacTin.length - 1].id_tin_nhan : 0;
+        const cuNhatMoi = ketQua.cac_tin.length ? ketQua.cac_tin[0].id_tin_nhan : 0;
+        if (!cacTin.length || (ketQua.con_nua && cuNhatMoi > moiNhat)) {
+          cacTin = [];
+          conTinCu = Boolean(ketQua.con_nua);
+        }
         ketQua.cac_tin.forEach(themTin);
         moc.khach = ketQua.khach_da_doc || 0;
         moc.nha_thuoc = ketQua.nha_thuoc_da_doc || 0;

@@ -86,10 +86,7 @@
       <div class="hanh-dong-khach">
         {% if co_hoa_don %}<a class="nut" href="{% url 'ban_hang:khach_hoa_don_in' don.pk %}"><i data-lucide="receipt-text" aria-hidden="true"></i>Xem hóa đơn</a>{% endif %}
         {% if duoc_tra_hang %}<a class="nut nut-phu" href="{% url 'ban_hang:khach_tra_hang' don.pk %}"><i data-lucide="undo-2" aria-hidden="true"></i>Yêu cầu trả hàng</a>{% endif %}
-        <form method="post" action="{% url 'tro_chuyen:khach_tu_don_hang' don.pk %}">
-          {% csrf_token %}
-          <button class="nut nut-phu" type="submit"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn nhà thuốc về đơn này</button>
-        </form>
+        <a class="nut nut-phu" href="{% url 'tro_chuyen:khach_tu_don_hang' don.pk %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn nhà thuốc về đơn này</a>
         {% if duoc_huy %}
           <form method="post" action="{% url 'ban_hang:khach_don_hang_huy' don.pk %}" onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')">
             {% csrf_token %}<input type="hidden" name="ly_do" value="Khách hủy đơn">
