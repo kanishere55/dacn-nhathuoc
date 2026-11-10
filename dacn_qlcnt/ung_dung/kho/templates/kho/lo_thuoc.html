@@ -5,26 +5,47 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">KHO</p>
     <h1>Lô thuốc</h1>
+    <p>Mỗi lô có mã lô và hạn dùng riêng. Khóa bán một lô khi nghi hàng lỗi hoặc bị thu hồi; khi bán, hệ thống bỏ qua lô bị khóa.</p>
   </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
   <div id="vung-danh-sach">
-    <div class="khoi-trang khung-bang bang-the-di-dong">
-      <table role="table">
-        <caption>Mã lô và hạn sử dụng</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col">Thuốc</th><th scope="col">Lô</th><th scope="col">Hạn dùng</th><th scope="col">Điều kiện bán</th>{% if duoc_sua %}<th scope="col">Thao tác</th>{% endif %}</tr></thead>
-        <tbody role="rowgroup">
+    <div class="khoi-trang khung-bang">
+      <table class="bang-canh-bao">
+        <thead>
+          <tr>
+            <th scope="col">Thuốc</th>
+            <th scope="col">Lô và hạn dùng</th>
+            <th scope="col" class="o-so">Còn trong kho</th>
+            <th scope="col">Điều kiện bán</th>
+            {% if duoc_sua %}<th scope="col"><span class="sr-only">Thao tác</span></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
           {% for lo in trang %}
-            <tr role="row">
-              <td role="cell" data-nhan="Thuốc">{{ lo.thuoc }}</td><td role="cell" data-nhan="Lô">{{ lo.ma_lo_thuoc }}</td><td role="cell" data-nhan="Hạn dùng">{{ lo.ngay_het_han|date:"d/m/Y" }}</td>
-              <td role="cell" data-nhan="Điều kiện bán">{{ lo.duoc_phep_ban|yesno:"Cho phép,Ngừng bán" }}</td>
+            <tr>
+              <th scope="row">{{ lo.thuoc.ten_thuoc }}<small>{{ lo.thuoc.ma_thuoc }}</small></th>
+              <td>
+                Lô {{ lo.ma_lo_thuoc }}
+                <small>HSD {{ lo.ngay_het_han|date:"d/m/Y" }}
+                  {% with con=lo.ngay_het_han|so_ngay_toi:hom_nay %}
+                    {% if con < 0 %}<span class="nhan-han het">Đã hết hạn</span>{% elif con <= 30 %}<span class="nhan-han gan">Còn {{ con }} ngày</span>{% endif %}
+                  {% endwith %}
+                </small>
+              </td>
+              <td class="o-so">{% if lo.tong_ton %}{{ lo.tong_ton|so_nguyen }}{% else %}<span class="chu-mo">0</span>{% endif %}</td>
+              <td>{% if lo.duoc_phep_ban %}<span class="nhan-co-khong co">Được bán</span>{% else %}<span class="nhan-han khoa">Đang khóa bán</span>{% endif %}</td>
               {% if duoc_sua %}
-                <td role="cell" data-nhan="Thao tác"><form method="post" action="{% url 'kho:lo_thuoc_doi_trang_thai' lo.pk %}">
-                  {% csrf_token %}
-                  <button class="nut nut-phu" name="duoc_phep_ban" value="{{ lo.duoc_phep_ban|yesno:'0,1' }}">{{ lo.duoc_phep_ban|yesno:"Ngừng bán,Cho phép bán" }}</button>
-                </form></td>
+                <td class="o-thao-tac">
+                  <form method="post" action="{% url 'kho:lo_thuoc_doi_trang_thai' lo.pk %}"{% if lo.duoc_phep_ban %} onsubmit="return confirm('Khóa bán lô {{ lo.ma_lo_thuoc|escapejs }}? Nhân viên sẽ không bán được lô này.')"{% endif %}>
+                    {% csrf_token %}
+                    <button class="nut nut-phu nut-nho" name="duoc_phep_ban" value="{{ lo.duoc_phep_ban|yesno:'0,1' }}">{{ lo.duoc_phep_ban|yesno:"Khóa bán,Mở bán lại" }}</button>
+                  </form>
+                </td>
               {% endif %}
             </tr>
-          {% empty %}<tr role="row"><td role="cell" colspan="{{ duoc_sua|yesno:'5,4' }}">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc.{% else %}Chưa có lô thuốc.{% endif %}</td></tr>{% endfor %}
+          {% empty %}
+            <tr><td colspan="5">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc.{% else %}Không có lô nào còn hàng.{% endif %}</td></tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>

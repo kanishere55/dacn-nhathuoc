@@ -35,6 +35,7 @@ def tao(request):
     chi_nhanh = next((cn for cn in cac_chi_nhanh if str(cn.pk) == ma), mac_dinh)
     form = PhieuKiemKeForm(du_lieu, nguoi=request.user, initial={"chi_nhanh": chi_nhanh})
     tu_khoa = request.GET.get("q", "").strip()[:150]
+    ca_lo_het = request.GET.get("ca_lo_het") == "1"
     trang = None
     ban_dau = []
     if form.is_bound:
@@ -49,7 +50,11 @@ def tao(request):
         }
         cac_ton = lay_ton_kiem_ke(chi_nhanh).filter(pk__in=cac_ma_ton) if chi_nhanh else ()
     else:
-        trang = Paginator(lay_ton_kiem_ke(chi_nhanh, tu_khoa=tu_khoa), DongKiemKeFormSet.max_num)
+        # Mặc định chỉ kiểm lô còn trên sổ; lô đã về 0 chỉ hiện khi người dùng chọn.
+        trang = Paginator(
+            lay_ton_kiem_ke(chi_nhanh, tu_khoa=tu_khoa, chi_con_hang=not ca_lo_het),
+            DongKiemKeFormSet.max_num,
+        )
         trang = trang.get_page(request.GET.get("page"))
         cac_ton = list(trang.object_list)
         ban_dau = [{"ton_kho": ton.pk, "so_luong_so_sach": ton.so_luong} for ton in cac_ton]
@@ -87,6 +92,7 @@ def tao(request):
             "chi_nhanh_da_chon": chi_nhanh,
             "trang": trang,
             "tu_khoa": tu_khoa,
+            "ca_lo_het": ca_lo_het,
         },
     )
 

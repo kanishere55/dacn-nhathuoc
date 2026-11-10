@@ -216,3 +216,70 @@
     }
   }
 }
+
+@layer components {
+  /* Kiểm kê: lưới chọn lô ba cột, bảng mỗi lô một dòng có chênh lệch tự tính. */
+  .luoi-thong-tin-phieu.ba-cot {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+    align-items: end;
+  }
+  .o-loc-cuoi {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 2px;
+  }
+  .o-loc-cuoi label {
+    margin: 0;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  .bang-kiem-ke {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bang-kiem-ke th,
+  .bang-kiem-ke td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--vien);
+    text-align: left;
+    vertical-align: middle;
+  }
+  .bang-kiem-ke thead th {
+    color: var(--chu-phu);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .bang-kiem-ke tbody th {
+    font-weight: 500;
+  }
+  .bang-kiem-ke .o-so {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .bang-kiem-ke .o-dem input {
+    width: 110px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--vien);
+    border-radius: 8px;
+    text-align: right;
+  }
+  .bang-kiem-ke [data-chenh].thua { color: #1f6db5; font-weight: 600; }
+  .bang-kiem-ke [data-chenh].thieu { color: #b23b24; font-weight: 600; }
+  .bang-kiem-ke [data-chenh].khop { color: #1f7a50; }
+  .phan-trang-kiem-ke {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    color: var(--chu-phu);
+  }
+  @media (max-width: 800px) {
+    .luoi-thong-tin-phieu.ba-cot { grid-template-columns: minmax(0, 1fr); }
+    .o-loc-cuoi { flex-wrap: wrap; }
+    .bang-kiem-ke th, .bang-kiem-ke td { padding: 8px 4px; }
+    .bang-kiem-ke .o-dem input { width: 80px; }
+  }
+}

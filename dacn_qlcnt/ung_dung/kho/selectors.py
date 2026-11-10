@@ -86,10 +86,12 @@ def lay_bang_ton(nguoi):
     )
 
 
-def lay_ton_kiem_ke(chi_nhanh, *, tu_khoa=""):
+def lay_ton_kiem_ke(chi_nhanh, *, tu_khoa="", chi_con_hang=False):
     tap_hop = TonKho.objects.filter(chi_nhanh=chi_nhanh).select_related(
         "lo_thuoc__thuoc__don_vi_tinh"
     )
+    if chi_con_hang:
+        tap_hop = tap_hop.filter(so_luong__gt=0)
     if tu_khoa:
         tap_hop = tap_hop.filter(
             Q(lo_thuoc__ma_lo_thuoc__icontains=tu_khoa)
@@ -168,6 +170,22 @@ def lay_cac_lo(nguoi):
     if not thay_toan_chuoi(nguoi):
         cac_lo = cac_lo.filter(tonkho__chi_nhanh_id=nguoi.chi_nhanh_id).distinct()
     return cac_lo
+
+
+def lay_lo_kem_ton(nguoi):
+    """Lô thuốc kèm tổng lượng còn trong các kho người xem phụ trách."""
+    from ung_dung.danh_muc.selectors import lay_chi_nhanh
+
+    ton = (
+        TonKho.objects.filter(lo_thuoc=OuterRef("pk"), chi_nhanh__in=lay_chi_nhanh(nguoi))
+        .order_by()
+        .values("lo_thuoc")
+        .annotate(tong=Sum("so_luong"))
+        .values("tong")
+    )
+    return lay_cac_lo(nguoi).annotate(
+        tong_ton=Coalesce(Subquery(ton, output_field=BigIntegerField()), 0)
+    )
 
 
 def lay_lo_het_han_con_ton(chi_nhanh):

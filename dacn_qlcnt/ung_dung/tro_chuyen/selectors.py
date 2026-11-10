@@ -1,4 +1,4 @@
-from django.db.models import F, OuterRef, QuerySet, Subquery
+from django.db.models import BooleanField, Case, F, OuterRef, QuerySet, Subquery, Value, When
 
 from ung_dung.chung.permissions import co_quyen, thay_toan_chuoi
 
@@ -50,3 +50,26 @@ def lay_lich_su(nguoi, phong):
         TinNhan.objects.filter(cuoc_tro_chuyen=phong).select_related("nguoi_gui").order_by("-pk")
     )
     return [bieu_dien_tin(tin) for tin in reversed(list(tin_nhan[:100]))]
+
+
+def lay_hop_thu(nguoi):
+    """Các cuộc trò chuyện kèm tin cuối, giờ gửi và cờ chờ trả lời; mới nhất ở trên."""
+    tin_cuoi = TinNhan.objects.filter(cuoc_tro_chuyen_id=OuterRef("pk")).order_by("-pk")
+    return (
+        lay_cac_phong(nguoi)
+        .annotate(
+            noi_dung_cuoi=Subquery(tin_cuoi.values("noi_dung_tin_nhan")[:1]),
+            luc_gui_cuoi=Subquery(tin_cuoi.values("thoi_diem_tao")[:1]),
+            nguoi_gui_cuoi=Subquery(tin_cuoi.values("nguoi_gui_id")[:1]),
+            id_tin_cuoi=Subquery(tin_cuoi.values("pk")[:1]),
+        )
+        .annotate(
+            # Tin cuối do khách gửi nghĩa là khách đang chờ nhà thuốc trả lời.
+            cho_tra_loi=Case(
+                When(nguoi_gui_cuoi=F("khach_hang_id"), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
+        .order_by(F("id_tin_cuoi").desc(nulls_last=True), "-pk")
+    )

@@ -41,7 +41,9 @@ class DonThuocForm(forms.Form):
 
 
 class PhieuBanForm(DonThuocForm):
-    chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
+    chi_nhanh = forms.ModelChoiceField(
+        ChiNhanh.objects.none(), label="Chi nhánh", empty_label="Chọn chi nhánh bán"
+    )
     khoa_yeu_cau = forms.UUIDField(widget=forms.HiddenInput, initial=uuid4)
     phuong_thuc_thanh_toan = forms.ChoiceField(
         label="Khách trả bằng", choices=PHUONG_THUC_TAI_QUAY, initial="tien_mat"

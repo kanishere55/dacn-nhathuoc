@@ -7,7 +7,7 @@
           <th scope="col">{{ cot }}</th>
         {% endfor %}
         {% if duoc_sua %}
-          <th scope="col">Thao tác</th>
+          <th scope="col"><span class="sr-only">Thao tác</span></th>
         {% endif %}
       </tr>
     </thead>
@@ -26,10 +26,10 @@
             </td>
           {% endif %}
           {% for o in dong.o %}
-            <td>{% if co_anh and forloop.first %}<span class="anh-nho-cot"><span>{{ o }}</span></span>{% else %}{{ o }}{% endif %}</td>
+            <td>{% if co_anh and forloop.first %}<span class="anh-nho-cot"><span>{{ o }}</span></span>{% elif o == "Có" %}<span class="nhan-co-khong co">Có</span>{% elif o == "Không" %}<span class="nhan-co-khong khong">Không</span>{% else %}{{ o }}{% endif %}</td>
           {% endfor %}
           {% if duoc_sua %}
-            <td><a href="{{ dong.ma }}/sua/">Sửa</a></td>
+            <td class="o-thao-tac"><a href="{{ dong.ma }}/sua/">Sửa</a></td>
           {% endif %}
         </tr>
       {% empty %}

@@ -1,16 +1,14 @@
 {% extends "base.html" %}
 {% block vi_tri %}{{ tieu_de }}{% endblock %}
 {% block noi_dung %}
-  <header class="tieu-de-trang">
-    <p class="chu-dan">DANH MỤC</p>
-    <h1>{{ tieu_de }}</h1>
-    <p><span id="tong-so-ban-ghi">{{ trang.paginator.count }}</span> mục</p>
-  </header>
-  {% if duoc_sua %}
-    <div class="thanh-cong-cu">
-      <a class="nut" href="tao/">Thêm mới</a>
+  <header class="tieu-de-trang dau-chi-tiet-don">
+    <div>
+      <p class="chu-dan">DANH MỤC</p>
+      <h1>{{ tieu_de }}</h1>
+      <p><span id="tong-so-ban-ghi">{{ trang.paginator.count|so_nguyen }}</span> mục</p>
     </div>
-  {% endif %}
+    {% if duoc_sua %}<a class="nut" href="tao/"><i data-lucide="plus" aria-hidden="true"></i>Thêm mới</a>{% endif %}
+  </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
   <div id="vung-danh-sach">
     {% include "danh_muc/_bang.html" %}

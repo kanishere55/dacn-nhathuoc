@@ -109,5 +109,19 @@ def loc_lo_thuoc(request):
                 [("co", "Cho phép bán"), ("khong", "Ngừng bán")],
                 ham_loc=lambda tap_hop, gia_tri: tap_hop.filter(duoc_phep_ban=gia_tri == "co"),
             ),
+            OChon(
+                "con_hang",
+                "Tồn",
+                [("khong", "Lô đã hết"), ("tat_ca", "Tất cả lô")],
+                ham_loc=lambda tap_hop, gia_tri: (
+                    tap_hop
+                    if gia_tri == "tat_ca"
+                    else tap_hop.filter(tong_ton=0)
+                    if gia_tri == "khong"
+                    else tap_hop.filter(tong_ton__gt=0)
+                ),
+                nhan_trong="Còn hàng",
+                loc_khi_trong=True,
+            ),
         ],
     )

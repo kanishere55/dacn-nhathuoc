@@ -1,13 +1,36 @@
 {% extends "base.html" %}
 {% block tieu_de %}Trò chuyện · Khu quản lý{% endblock %}
+{% block vi_tri %}Trò chuyện{% endblock %}
 {% block noi_dung %}
-  <h1>Trò chuyện</h1>
-  <section class="khoi-trang">
-    <h2>Cuộc trò chuyện</h2>
-    <ul class="space-y-3 mt-4">
+  <header class="tieu-de-trang">
+    <p class="chu-dan">BÁN HÀNG</p>
+    <h1>Trò chuyện với khách</h1>
+    <p>Khách nhắn hỏi thuốc, hỏi đơn từ website. Cuộc có nhãn "Chờ trả lời" là khách đang đợi nhà thuốc phản hồi.</p>
+  </header>
+  <section class="khoi-trang hop-thu" aria-label="Danh sách cuộc trò chuyện">
+    <ul class="danh-sach-hop-thu">
       {% for phong in cac_phong %}
-        <li><a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">{{ phong.chi_nhanh }} · {{ phong.khach_hang }}</a></li>
-      {% empty %}<li>Chưa có cuộc trò chuyện.</li>{% endfor %}
+        {% with cho=phong.cho_tra_loi %}
+          <li>
+            <a class="muc-hop-thu{% if cho %} cho-tra-loi{% endif %}" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">
+              <span class="anh-dai-dien" aria-hidden="true">{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap|slice:":1" }}</span>
+              <span class="noi-dung-hop-thu">
+                <strong>{{ phong.khach_hang.ho_ten|default:phong.khach_hang.ten_dang_nhap }}{% if nhieu_chi_nhanh %}<small> · {{ phong.chi_nhanh.ten_chi_nhanh }}</small>{% endif %}</strong>
+                <span class="xem-truoc-tin">{% if phong.noi_dung_cuoi %}{% if not cho %}Bạn: {% endif %}{{ phong.noi_dung_cuoi|truncatechars:110 }}{% else %}Chưa có tin nhắn{% endif %}</span>
+              </span>
+              <span class="thoi-gian-hop-thu">
+                {% if phong.luc_gui_cuoi %}<time datetime="{{ phong.luc_gui_cuoi|date:'c' }}">{{ phong.luc_gui_cuoi|date:"H:i d/m" }}</time>{% endif %}
+                {% if cho %}<span class="nhan-cho">Chờ trả lời</span>{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endwith %}
+      {% empty %}
+        <li class="hop-thu-trong">
+          <i data-lucide="messages-square" aria-hidden="true"></i>
+          <p>Chưa có khách nào nhắn tin. Khi khách bấm "Nhắn nhà thuốc" trên website, cuộc trò chuyện sẽ hiện ở đây.</p>
+        </li>
+      {% endfor %}
     </ul>
   </section>
 {% endblock %}

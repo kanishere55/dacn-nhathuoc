@@ -1,56 +1,104 @@
 {% extends "base.html" %}
+{% block tieu_de %}Kiểm kê · Khu quản lý{% endblock %}
+{% block vi_tri %}Kiểm kê{% endblock %}
 {% block noi_dung %}
-  <h1>Kiểm kê</h1>
+  <header class="dau-quay-ban">
+    <div>
+      <h1>Kiểm kê kho</h1>
+      <p>Đếm hàng thực tế trên kệ rồi nhập số đếm. Hệ thống tự tính chênh lệch và điều chỉnh tồn theo số đếm khi bạn xác nhận.</p>
+    </div>
+    <a class="nut nut-phu" href="{% url 'kho:phieu_kiem_ke_danh_sach' %}"><i data-lucide="list" aria-hidden="true"></i>Phiếu đã lập</a>
+  </header>
+
   {% if cac_chi_nhanh %}
-    <form method="get" class="thanh-cong-cu loc-kiem-ke">
-      <label for="chon-chi-nhanh-kiem-ke">Kho cần kiểm kê</label>
-      <select id="chon-chi-nhanh-kiem-ke" name="chi_nhanh">
-        {% for cn in cac_chi_nhanh %}
-          <option value="{{ cn.pk }}"{% if cn == chi_nhanh_da_chon %} selected{% endif %}>{{ cn }}</option>
-        {% endfor %}
-      </select>
-      <label for="tim-lo-kiem-ke">Tìm thuốc hoặc lô</label>
-      <input type="search" id="tim-lo-kiem-ke" name="q" maxlength="150" value="{{ tu_khoa }}">
-      <button class="nut nut-phu">Xem danh sách lô</button>
+    <form method="get" class="khoi-trang loc-kiem-ke-moi">
+      <h2 class="tieu-de-buoc"><span>1</span>Chọn lô cần đếm</h2>
+      <div class="luoi-thong-tin-phieu ba-cot">
+        <div>
+          <label for="chon-chi-nhanh-kiem-ke">Kho cần kiểm kê</label>
+          <select id="chon-chi-nhanh-kiem-ke" name="chi_nhanh">
+            {% for cn in cac_chi_nhanh %}<option value="{{ cn.pk }}"{% if cn == chi_nhanh_da_chon %} selected{% endif %}>{{ cn }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="tim-lo-kiem-ke">Tìm thuốc hoặc mã lô <span class="chu-tuy-chon">(để trống: tất cả)</span></label>
+          <input type="search" id="tim-lo-kiem-ke" name="q" maxlength="150" value="{{ tu_khoa }}" placeholder="Ví dụ: panadol">
+        </div>
+        <div class="o-loc-cuoi">
+          <label class="lua-chon-mot-dong"><input type="checkbox" name="ca_lo_het" value="1"{% if ca_lo_het %} checked{% endif %}> Gồm cả lô sổ sách đã về 0</label>
+          <button class="nut nut-phu">Xem danh sách lô</button>
+        </div>
+      </div>
     </form>
   {% endif %}
+
   {% if cac_dong.initial_form_count or cac_dong.is_bound %}
-    <form method="post" class="khoi-trang form-chinh">
+    <form method="post" class="form-phieu-kho" data-kiem-ke>
       {% csrf_token %}
-      {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}{{ form.non_field_errors }}
-      <p id="huong-dan-kiem-ke">Nhập số đếm ở các lô đã kiểm. Để trống các lô khác. Nhập 0 nếu đã đếm và không còn hàng.</p>
-      {% if cac_dong.initial_form_count > 5 %}<p><a class="duong-dan-noi-dung" href="#xac-nhan-kiem-ke">Đến phần xác nhận</a></p>{% endif %}
-      {{ cac_dong.management_form }}{{ cac_dong.non_form_errors }}
-      <ul class="dong-kiem-ke">
-        {% for dong in cac_dong %}
-          <li>
-            <div>
-              <strong id="{{ dong.prefix }}-nhan-lo">{{ dong.nhan_lo }}</strong>
-              <p>Tồn sổ sách khi mở phiếu <strong>{{ dong.so_luong_so_sach.value }}</strong></p>
-              {{ dong.ton_kho }}{{ dong.so_luong_so_sach }}
-              {{ dong.ton_kho.errors }}{{ dong.so_luong_so_sach.errors }}{{ dong.non_field_errors }}
-            </div>
-            <div class="nhom-truong">
-              <label id="{{ dong.prefix }}-nhan-so-dem" for="{{ dong.so_luong_thuc_te.id_for_label }}">{{ dong.so_luong_thuc_te.label }}</label>
-              {{ dong.so_luong_thuc_te }}{{ dong.so_luong_thuc_te.errors }}
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-      <div id="xac-nhan-kiem-ke" tabindex="-1">
+      {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}
+      {% if form.non_field_errors %}<div class="thong-bao thong-bao-loi" role="alert">{% for loi in form.non_field_errors %}<p>{{ loi }}</p>{% endfor %}</div>{% endif %}
+      <section class="khoi-trang" aria-labelledby="tieu-de-dem">
+        <h2 id="tieu-de-dem" class="tieu-de-buoc"><span>2</span>Nhập số đếm thực tế</h2>
+        <p id="huong-dan-kiem-ke" class="mo-ta-bang-dieu-khien">Chỉ nhập ở những lô bạn đã đếm, để trống các lô khác. Nhập 0 nếu đã tìm mà không còn hàng.</p>
+        {{ cac_dong.management_form }}{{ cac_dong.non_form_errors }}
+        <div class="khung-bang">
+          <table class="bang-kiem-ke">
+            <thead>
+              <tr>
+                <th scope="col">Thuốc và lô</th>
+                <th scope="col" class="o-so">Sổ sách</th>
+                <th scope="col" class="o-so">Đếm thực tế</th>
+                <th scope="col" class="o-so">Chênh lệch</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for dong in cac_dong %}
+                <tr data-dong-kiem-ke>
+                  <th scope="row">
+                    <span id="{{ dong.prefix }}-nhan-lo">{{ dong.nhan_lo }}</span>
+                    {{ dong.ton_kho }}{{ dong.so_luong_so_sach }}
+                    {% for loi in dong.ton_kho.errors %}<span class="loi-o">{{ loi }}</span>{% endfor %}
+                    {% for loi in dong.non_field_errors %}<span class="loi-o">{{ loi }}</span>{% endfor %}
+                  </th>
+                  <td class="o-so" data-so-sach="{{ dong.so_luong_so_sach.value }}">{{ dong.so_luong_so_sach.value|so_nguyen }}</td>
+                  <td class="o-so o-dem">
+                    <label class="sr-only" id="{{ dong.prefix }}-nhan-so-dem" for="{{ dong.so_luong_thuc_te.id_for_label }}">Số lượng đếm thực tế</label>
+                    {{ dong.so_luong_thuc_te }}
+                    {% for loi in dong.so_luong_thuc_te.errors %}<span class="loi-o">{{ loi }}</span>{% endfor %}
+                  </td>
+                  <td class="o-so" data-chenh>–</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if trang.paginator.num_pages > 1 %}
+          <nav class="phan-trang-kiem-ke" aria-label="Trang lô kiểm kê">
+            {% if trang.has_previous %}<a class="nut nut-phu nut-nho" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+            <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}. Lưu các dòng đã đếm trước khi chuyển trang.</span>
+            {% if trang.has_next %}<a class="nut nut-phu nut-nho" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+          </nav>
+        {% endif %}
+      </section>
+
+      <section class="khoi-trang" id="xac-nhan-kiem-ke" tabindex="-1" aria-labelledby="tieu-de-xac-nhan">
+        <h2 id="tieu-de-xac-nhan" class="tieu-de-buoc"><span>3</span>Xác nhận</h2>
         {% include "components/_o_nhap.html" with truong=form.ghi_chu %}
         {% include "components/_o_nhap.html" with truong=form.da_dem_thuc_te %}
-        <button class="nut">Xác nhận kiểm kê</button>
+      </section>
+
+      <div class="thanh-luu-phieu">
+        <span data-tom-tat-kiem-ke>Chưa nhập lô nào</span>
+        <button class="nut" type="submit"><i data-lucide="check" aria-hidden="true"></i>Lưu phiếu kiểm kê</button>
       </div>
     </form>
   {% else %}
-    <p class="khoi-trang">{% if chi_nhanh_da_chon %}Không có lô phù hợp trong kho này.{% else %}Chưa có kho để kiểm kê.{% endif %}</p>
+    <section class="khoi-trang trang-trong-canh-bao">
+      <i data-lucide="clipboard-check" aria-hidden="true"></i>
+      <p>{% if chi_nhanh_da_chon %}Không có lô phù hợp trong kho này.{% else %}Chưa có kho để kiểm kê.{% endif %}</p>
+    </section>
   {% endif %}
-  {% if trang.paginator.num_pages > 1 %}
-    <nav class="thanh-cong-cu" aria-label="Trang lô kiểm kê">
-      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
-      <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}. Xác nhận các dòng đã đếm trước khi chuyển trang.</span>
-      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
-    </nav>
-  {% endif %}
+{% endblock %}
+{% block cuoi_trang %}
+  <script src="{% tep_tinh 'kho/js/kiem_ke.js' %}" defer></script>
 {% endblock %}
