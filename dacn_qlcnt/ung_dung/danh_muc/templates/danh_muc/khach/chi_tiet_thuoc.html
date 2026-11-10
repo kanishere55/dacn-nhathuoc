@@ -19,7 +19,7 @@
         {% endfor %}
         {% if thuoc.phan_tram_giam %}<span class="nhan-giam">-{{ thuoc.phan_tram_giam }}%</span>{% endif %}
       </div>
-      {% for anh in cac_anh %}{% if anh.nguon_anh %}<p class="ghi-chu-khach" x-show="chon === {{ forloop.counter0 }}"{% if not forloop.first %} x-cloak{% endif %}>Nguồn ảnh: {{ anh.nguon_anh|urlizetrunc:36 }}</p>{% endif %}{% endfor %}
+      {% if cac_anh %}<p class="ghi-chu-anh">Hình ảnh mang tính chất minh họa, bao bì có thể thay đổi theo lô sản xuất.</p>{% endif %}
       {% if cac_anh|length > 1 %}
         <div class="anh-nho-thuoc" role="tablist" aria-label="Chọn ảnh">
           {% for anh in cac_anh %}

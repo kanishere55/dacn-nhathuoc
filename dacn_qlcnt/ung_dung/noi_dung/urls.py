@@ -21,5 +21,6 @@ urlpatterns = [
     path("tin-tuc/", khach.tin_tuc_danh_sach, name="khach_tin_tuc_danh_sach"),
     path("tin-tuc/<slug:duong_dan>/", khach.tin_tuc_chi_tiet, name="khach_tin_tuc_chi_tiet"),
     path("anh/banner/<int:ma>/", khach.anh_banner, name="anh_banner"),
+    path("nguon-hinh-anh/", khach.nguon_hinh_anh, name="nguon_hinh_anh"),
     path("quan-ly/noi-dung/", include(quan_tri)),
 ]

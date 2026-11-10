@@ -546,6 +546,35 @@
     font-size: 13px;
     color: var(--chu-phu);
   }
+  /* Một dòng chú thích chung dưới bộ ảnh; nguồn và giấy phép ở trang Nguồn hình ảnh (Q39). */
+  .ghi-chu-anh {
+    margin: 8px 0 0;
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+  .ds-nguon-anh {
+    display: grid;
+    gap: 8px;
+    margin: 8px 0 20px;
+    padding: 0;
+    list-style: none;
+  }
+  .ds-nguon-anh li {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--vien);
+    border-radius: 10px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .ds-nguon-anh span {
+    color: var(--chu-phu);
+  }
+  .day-chan-trang a {
+    color: inherit;
+    text-decoration: underline;
+  }
   .nhan-tai-quay > p,
   .nhan-tai-quay form {
     margin-block: 12px 8px;

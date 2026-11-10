@@ -15,6 +15,7 @@
       <div class="anh-chi-nhanh">
         {% for anh in cac_anh|slice:":3" %}<img src="{% url 'danh_muc:anh_chi_nhanh' anh.pk %}" alt="{{ chi_nhanh.ten_chi_nhanh }} – ảnh {{ forloop.counter }}" loading="lazy">{% endfor %}
       </div>
+      <p class="ghi-chu-anh">Hình ảnh mang tính chất minh họa.</p>
     {% endif %}
     <dl class="the-khach chi-so-chi-nhanh">
       <div><dt><i data-lucide="clock" aria-hidden="true"></i>Giờ mở cửa</dt><dd>{{ chi_nhanh.gio_mo_cua|time:"H:i" }} – {{ chi_nhanh.gio_dong_cua|time:"H:i" }} hằng ngày {% if dang_mo_cua %}<span class="nhan-dang-mo">Đang mở cửa</span>{% else %}<span class="nhan-da-dong">Đã đóng cửa</span>{% endif %}</dd></div>
@@ -23,7 +24,6 @@
     </dl>
   </div>
   {% if chi_nhanh.gioi_thieu %}<section class="the-khach" aria-label="Giới thiệu chi nhánh"><div class="noi-dung-phong-phu">{{ chi_nhanh.gioi_thieu|phong_phu }}</div></section>{% endif %}
-  {% for anh in cac_anh|slice:":3" %}{% if anh.nguon_anh %}<p class="ghi-chu-khach">Nguồn ảnh {{ forloop.counter }}: {{ anh.nguon_anh|urlizetrunc:36 }}</p>{% endif %}{% endfor %}
   <div class="hanh-dong-khach">
     {% if not noi_bo %}
       <a class="nut" href="{% url 'tro_chuyen:khach_danh_sach' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện với chi nhánh</a>

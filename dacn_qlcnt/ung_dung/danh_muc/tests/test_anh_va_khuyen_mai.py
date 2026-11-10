@@ -132,3 +132,32 @@ class GiaVaKhuyenMaiTests(TestCase):
         self.assertEqual(lay_thuoc_cong_khai(khong_ke_don=True).count(), 0)
         phan_hoi = self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=["THUOC1"]))
         self.assertContains(phan_hoi, "không bán qua giao hàng")
+
+
+class NguonAnhTests(TestCase):
+    """Q39: trang khách không in nguồn từng ảnh; nguồn và giấy phép nằm ở trang Nguồn hình ảnh."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.d = tao_du_lieu()
+        anh = them_anh(cls.d.admin, "thuoc", cls.d.thuoc, [tep_anh(300, 300)])[0]
+        AnhThuoc.objects.filter(pk=anh.pk).update(
+            nguon_anh="Ảnh minh họa cùng hoạt chất · Tác giả A · CC BY-SA 4.0 · https://commons.wikimedia.org/wiki/File:A.jpg"
+        )
+
+    def test_trang_thuoc_khong_in_nguon_anh(self):
+        trang = self.client.get(
+            reverse("danh_muc:khach_thuoc_chi_tiet", args=[self.d.thuoc.ma_thuoc])
+        )
+        self.assertNotContains(trang, "Nguồn ảnh")
+        self.assertNotContains(trang, "CC BY-SA")
+        self.assertContains(trang, "Hình ảnh mang tính chất minh họa")
+        self.assertContains(trang, reverse("noi_dung:nguon_hinh_anh"))
+
+    def test_trang_nguon_hinh_anh_ghi_cong_tac_gia(self):
+        trang = self.client.get(reverse("noi_dung:nguon_hinh_anh"))
+        self.assertContains(trang, self.d.thuoc.ten_thuoc)
+        self.assertContains(trang, "Tác giả A · CC BY-SA 4.0")
+        # Thuốc ngừng bán không còn hiện ảnh nên cũng không liệt kê.
+        type(self.d.thuoc).objects.filter(pk=self.d.thuoc.pk).update(dang_hoat_dong=False)
+        self.assertNotContains(self.client.get(reverse("noi_dung:nguon_hinh_anh")), "Tác giả A")

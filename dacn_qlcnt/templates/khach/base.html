@@ -63,7 +63,7 @@
       </div>
       <div class="be-rong-khach day-chan-trang">
         <span>© {% now "Y" %} {{ cua_hang.ten_thuong_hieu }}{% if cua_hang.giay_phep_kinh_doanh %} · Giấy chứng nhận đủ điều kiện kinh doanh dược số {{ cua_hang.giay_phep_kinh_doanh }}{% endif %}</span>
-        <span>Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ.</span>
+        <span>Thuốc kê đơn chỉ bán tại quầy khi có đơn của bác sĩ. <a href="{% url 'noi_dung:nguon_hinh_anh' %}">Nguồn hình ảnh</a></span>
       </div>
     </footer>
     {% if not noi_bo and request.resolver_match.app_name != "tro_chuyen" %}

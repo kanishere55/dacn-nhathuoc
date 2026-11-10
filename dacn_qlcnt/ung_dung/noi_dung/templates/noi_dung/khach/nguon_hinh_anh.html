@@ -1,0 +1,18 @@
+{% extends "khach/base.html" %}
+{% block tieu_de %}Nguồn hình ảnh · {{ cua_hang.ten_thuong_hieu }}{% endblock %}
+{% block noi_dung %}
+  <article class="the-khach bai-trang-thong-tin trang-nguon-anh">
+    <header class="tieu-de-khach">
+      <h1>Nguồn hình ảnh</h1>
+      <p>Ảnh trên website là ảnh chụp thật có giấy phép mở (Wikimedia Commons, StockSnap), dùng để minh họa. Dưới đây ghi công tác giả và giấy phép theo yêu cầu của từng giấy phép.</p>
+    </header>
+    {% for nhom in nhom_anh %}{% if nhom.cac_dong %}
+      <section aria-labelledby="nhom-anh-{{ forloop.counter }}">
+        <h2 id="nhom-anh-{{ forloop.counter }}">{{ nhom.tieu_de }}</h2>
+        <ul class="ds-nguon-anh">
+          {% for dong in nhom.cac_dong %}<li><strong>{{ dong.ten }}</strong><span>{{ dong.nguon|urlizetrunc:60 }}</span></li>{% endfor %}
+        </ul>
+      </section>
+    {% endif %}{% empty %}<p>Chưa có ảnh cần ghi nguồn.</p>{% endfor %}
+  </article>
+{% endblock %}

@@ -5,7 +5,7 @@ from django.views.decorators.http import require_GET
 from ung_dung.chung.anh import tra_anh
 
 from ..models import BannerTrangChu, TrangNoiDung
-from ..selectors import tin_tuc_cong_khai
+from ..selectors import nguon_hinh_anh_cong_khai, tin_tuc_cong_khai
 
 
 @require_GET
@@ -33,4 +33,14 @@ def tin_tuc_chi_tiet(request, duong_dan):
     tin_khac = tin_tuc_cong_khai().exclude(pk=tin.pk).defer("noi_dung_tin_tuc")[:3]
     return render(
         request, "noi_dung/khach/tin_tuc_chi_tiet.html", {"tin": tin, "tin_khac": tin_khac}
+    )
+
+
+@require_GET
+def nguon_hinh_anh(request):
+    """Ghi công tác giả và giấy phép của ảnh đang hiện trên website (CC BY-SA bắt buộc ghi công).
+
+    Thông tin nằm ở một trang riêng thay vì dưới từng ảnh sản phẩm (Q39)."""
+    return render(
+        request, "noi_dung/khach/nguon_hinh_anh.html", {"nhom_anh": nguon_hinh_anh_cong_khai()}
     )
