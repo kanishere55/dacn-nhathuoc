@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% block tieu_de %}Trò chuyện · {{ phong.chi_nhanh }} · Khu quản lý{% endblock %}
 {% load static %}
 {% block noi_dung %}
   <h1>Trò chuyện với {{ phong.chi_nhanh }}</h1>
   {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong cac_tin=cac_tin only %}
 {% endblock %}
-{% block cuoi_trang %}<script defer src="{% static 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}
+{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ho_so, khach, noi_bo
+from .views import ho_so, khach, nhom_quyen, noi_bo
 
 app_name = "tai_khoan"
 urlpatterns = [
@@ -29,4 +29,8 @@ urlpatterns = [
     path("quan-ly/tai-khoan/", noi_bo.danh_sach, name="danh_sach"),
     path("quan-ly/tai-khoan/tao/", noi_bo.chinh_sua, name="tao"),
     path("quan-ly/tai-khoan/<int:ma>/sua/", noi_bo.chinh_sua, name="sua"),
+    path("quan-ly/nhom-quyen/", nhom_quyen.danh_sach, name="nhom_quyen_danh_sach"),
+    path("quan-ly/nhom-quyen/tao/", nhom_quyen.chinh_sua, name="nhom_quyen_tao"),
+    path("quan-ly/nhom-quyen/<int:ma>/sua/", nhom_quyen.chinh_sua, name="nhom_quyen_sua"),
+    path("quan-ly/nhom-quyen/<int:ma>/xoa/", nhom_quyen.xoa, name="nhom_quyen_xoa"),
 ]

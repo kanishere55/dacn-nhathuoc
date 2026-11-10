@@ -5,17 +5,6 @@
   {% if url_lap_san %}
     <p class="thanh-cong-cu"><a class="nut nut-phu" href="{% url url_lap_san %}?loai=het_han"><i data-lucide="calendar-x" aria-hidden="true"></i>Lập sẵn mọi lô đã hết hạn còn tồn</a></p>
   {% endif %}
-  {% if cac_chi_nhanh %}
-    <form method="get" class="thanh-cong-cu">
-      <label for="chon-chi-nhanh-kiem-ke">Kho cần kiểm kê</label>
-      <select id="chon-chi-nhanh-kiem-ke" name="chi_nhanh">
-        {% for cn in cac_chi_nhanh %}
-          <option value="{{ cn.pk }}"{% if cn == chi_nhanh_da_chon %} selected{% endif %}>{{ cn }}</option>
-        {% endfor %}
-      </select>
-      <button class="nut nut-phu">Mở danh sách lô</button>
-    </form>
-  {% endif %}
   {% if form_excel %}
     <form method="post" enctype="multipart/form-data" class="khoi-trang form-chinh">
       {% csrf_token %}
@@ -31,9 +20,11 @@
   <form method="post" class="khoi-trang form-chinh" data-formset>
     {% csrf_token %}
     {{ form.non_field_errors }}
+    {% block truong_phieu %}
     {% for truong in form %}
       {% include "components/_o_nhap.html" %}
     {% endfor %}
+    {% endblock %}
     {{ cac_dong.management_form }}{{ cac_dong.non_form_errors }}
     <div data-cac-dong>
       {% for dong in cac_dong %}
@@ -54,10 +45,11 @@
       </fieldset>
     </template>
     <button type="button" class="nut nut-phu" data-them-dong>Thêm dòng</button>
+    {% block sau_cac_dong %}{% endblock %}
     <button class="nut">Xác nhận chứng từ</button>
   </form>
 {% endblock %}
 {% block cuoi_trang %}
-  <script src="{% static 'kho/js/dong_phieu.js' %}" defer>
+  <script src="{% tep_tinh 'kho/js/dong_phieu.js' %}" defer>
   </script>
 {% endblock %}

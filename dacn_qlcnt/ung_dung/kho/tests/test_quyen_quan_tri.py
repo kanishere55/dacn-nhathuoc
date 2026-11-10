@@ -14,6 +14,8 @@ from .du_lieu import tao_du_lieu
 
 
 class QuyenQuanTriKhoTests(TestCase):
+    """Quản trị chuỗi lập được mọi chứng từ kho ở mọi chi nhánh; nhân viên vẫn bị giới hạn."""
+
     @classmethod
     def setUpTestData(cls):
         cls.d = tao_du_lieu()
@@ -30,77 +32,45 @@ class QuyenQuanTriKhoTests(TestCase):
     def setUp(self):
         self.client.force_login(self.d.admin)
 
-    def kiem_tra_chan_ghi(self, ten_phieu, service, *tham_so):
-        with self.assertRaises(PermissionDenied):
-            service(self.d.admin, *tham_so)
-        url = reverse(f"kho:{ten_phieu}_tao")
-        self.assertEqual(self.client.get(url).status_code, 403)
-        self.assertEqual(self.client.post(url).status_code, 403)
-        self.assertEqual(TonKho.objects.get(pk=self.ton.pk).so_luong, 20)
-
-    def test_quan_tri_khong_lap_phieu_nhap(self):
+    def test_quan_tri_lap_phieu_nhap_o_chi_nhanh_bat_ky(self):
         d = self.d
-        self.kiem_tra_chan_ghi("phieu_nhap", nhap_hang, d.cn2, d.ncc, [self.dong_nhap])
-        self.assertEqual(PhieuNhap.objects.count(), 1)
+        trang = self.client.get(reverse("kho:phieu_nhap_tao"))
+        self.assertEqual(trang.status_code, 200)
+        nhap_hang(d.admin, d.cn2, d.ncc, [{**self.dong_nhap, "ma_lo_thuoc": "LO-NHAP-2"}])
+        self.assertEqual(PhieuNhap.objects.count(), 2)
 
-    def test_quan_tri_khong_dieu_chuyen(self):
+    def test_quan_tri_dieu_chuyen_tra_ncc_kiem_ke(self):
         d = self.d
-        self.kiem_tra_chan_ghi(
-            "phieu_dieu_chuyen", dieu_chuyen, d.cn2, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}]
-        )
-        self.assertFalse(PhieuDieuChuyen.objects.exists())
-        self.assertFalse(TonKho.objects.filter(chi_nhanh=d.cn).exists())
-
-    def test_quan_tri_khong_tra_nha_cung_cap(self):
-        self.kiem_tra_chan_ghi(
-            "phieu_tra",
-            tra_nha_cung_cap,
-            self.phieu,
-            [{"lo_thuoc": self.ton.lo_thuoc, "so_luong": 2}],
-        )
-        self.assertFalse(PhieuTraNhaCungCap.objects.exists())
-
-    def test_quan_tri_khong_kiem_ke(self):
-        self.kiem_tra_chan_ghi(
-            "phieu_kiem_ke",
-            kiem_ke,
-            self.d.cn2,
-            [{"ton_kho": self.ton, "so_luong_so_sach": 20, "so_luong_thuc_te": 18}],
-        )
-        self.assertFalse(PhieuKiemKe.objects.exists())
-
-    def test_quan_tri_xem_ton_va_chung_tu_nhung_khong_co_nut_tao(self):
-        d = self.d
-        phieu_tra = tra_nha_cung_cap(
-            d.ql2, self.phieu, [{"lo_thuoc": self.ton.lo_thuoc, "so_luong": 2}]
-        )
-        phieu_chuyen = dieu_chuyen(d.ql2, d.cn2, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
-        phieu_kiem = kiem_ke(
-            d.ql2,
+        for ten in ("phieu_dieu_chuyen", "phieu_tra", "phieu_kiem_ke", "phieu_xuat_huy"):
+            with self.subTest(trang=ten):
+                self.assertEqual(self.client.get(reverse(f"kho:{ten}_tao")).status_code, 200)
+        dieu_chuyen(d.admin, d.cn2, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
+        tra_nha_cung_cap(d.admin, self.phieu, [{"lo_thuoc": self.ton.lo_thuoc, "so_luong": 2}])
+        kiem_ke(
+            d.admin,
             d.cn2,
             [{"ton_kho": self.ton, "so_luong_so_sach": 15, "so_luong_thuc_te": 14}],
         )
-        for ten, phieu in (
-            ("phieu_nhap", self.phieu),
-            ("phieu_tra", phieu_tra),
-            ("phieu_dieu_chuyen", phieu_chuyen),
-            ("phieu_kiem_ke", phieu_kiem),
-        ):
+        self.assertEqual(PhieuDieuChuyen.objects.count(), 1)
+        self.assertEqual(PhieuTraNhaCungCap.objects.count(), 1)
+        self.assertEqual(PhieuKiemKe.objects.count(), 1)
+
+    def test_quan_tri_thay_nut_tao_tren_moi_danh_sach(self):
+        for ten in ("phieu_nhap", "phieu_tra", "phieu_dieu_chuyen", "phieu_kiem_ke"):
             with self.subTest(chung_tu=ten):
                 trang = self.client.get(reverse(f"kho:{ten}_danh_sach"))
-                self.assertContains(trang, str(phieu))
-                self.assertNotContains(trang, reverse(f"kho:{ten}_tao"))
-                chi_tiet = self.client.get(reverse(f"kho:{ten}_chi_tiet", args=[phieu.pk]))
-                self.assertContains(chi_tiet, str(phieu))
+                self.assertContains(trang, reverse(f"kho:{ten}_tao"))
         ton = self.client.get(reverse("kho:ton_kho_danh_sach"))
-        self.assertContains(ton, d.cn.ten_chi_nhanh)
-        self.assertContains(ton, d.cn2.ten_chi_nhanh)
-        self.client.force_login(d.ql2)
-        self.assertContains(
-            self.client.get(reverse("kho:phieu_kiem_ke_danh_sach")), "Lập phiếu mới"
-        )
+        self.assertContains(ton, self.d.cn2.ten_chi_nhanh)
 
-    def test_quan_tri_van_doi_duoc_trang_thai_lo(self):
+    def test_nhan_vien_khong_dieu_chuyen_va_khong_lap_o_chi_nhanh_khac(self):
+        d = self.d
+        with self.assertRaises(PermissionDenied):
+            dieu_chuyen(d.nv, d.cn, d.cn2, [{"thuoc": d.thuoc, "so_luong": 1}])
+        with self.assertRaises(PermissionDenied):
+            nhap_hang(d.nv, d.cn2, d.ncc, [self.dong_nhap])
+
+    def test_quan_tri_doi_duoc_trang_thai_lo(self):
         lo = self.ton.lo_thuoc
         url = reverse("kho:lo_thuoc_doi_trang_thai", args=[lo.pk])
         self.assertContains(self.client.get(reverse("kho:lo_thuoc_danh_sach")), url)

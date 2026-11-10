@@ -42,12 +42,8 @@ NHAN = {
     "nuoc_san_xuat": "Nước sản xuất",
     "so_dang_ky": "Số đăng ký",
     "mo_ta_ngan": "Mô tả ngắn",
-    "cong_dung": "Công dụng",
-    "cach_dung": "Liều dùng và cách dùng",
-    "chong_chi_dinh": "Chống chỉ định",
-    "tac_dung_phu": "Tác dụng không mong muốn",
-    "luu_y": "Thận trọng, lưu ý",
-    "bao_quan": "Bảo quản",
+    "noi_dung_chi_tiet": "Mô tả chi tiết",
+    "gioi_thieu": "Giới thiệu chi nhánh",
     "ma_danh_muc_san_pham": "Mã danh mục",
     "ten_danh_muc_san_pham": "Tên danh mục",
     "mo_ta": "Mô tả",
@@ -61,9 +57,9 @@ NHAN = {
     "ngay_ket_thuc": "Đến ngày",
 }
 # Cột văn bản được nhập nhiều dòng; cột văn bản khác dùng ô một dòng.
-NHIEU_DONG = {"cong_dung", "cach_dung", "chong_chi_dinh", "tac_dung_phu", "luu_y"}
+NHIEU_DONG = {"noi_dung_chi_tiet", "gioi_thieu"}
 # Ô một dòng thường dài, chiếm cả hàng trên form.
-TRUONG_RONG = {"mo_ta_ngan", "hoat_chat", "dia_chi", "mo_ta", "ten_khuyen_mai", "bao_quan"}
+TRUONG_RONG = {"mo_ta_ngan", "hoat_chat", "dia_chi", "mo_ta", "ten_khuyen_mai"}
 NHOM_TRUONG = {
     "thuoc": [
         (
@@ -93,15 +89,7 @@ NHOM_TRUONG = {
         ("Giá và tồn kho", ["gia_ban", "nguong_canh_bao"]),
         (
             "Nội dung hiển thị cho khách",
-            [
-                "mo_ta_ngan",
-                "cong_dung",
-                "cach_dung",
-                "chong_chi_dinh",
-                "tac_dung_phu",
-                "luu_y",
-                "bao_quan",
-            ],
+            ["mo_ta_ngan", "noi_dung_chi_tiet"],
         ),
     ],
     "chi_nhanh": [
@@ -110,7 +98,8 @@ NHOM_TRUONG = {
             ["ma_chi_nhanh", "ten_chi_nhanh", "dia_chi", "so_dien_thoai", "dang_hoat_dong"],
         ),
         ("Giờ mở cửa hằng ngày", ["gio_mo_cua", "gio_dong_cua"]),
-        ("Tọa độ WGS84", ["kinh_do", "vi_do"]),
+        ("Vị trí trên bản đồ", ["kinh_do", "vi_do"]),
+        ("Nội dung hiển thị cho khách", ["gioi_thieu"]),
     ],
 }
 
@@ -168,11 +157,15 @@ class TruongNhieuTep(forms.FileField):
     def clean(self, data, initial=None):
         lam_sach = super().clean
         if isinstance(data, (list, tuple)):
+            if not data:
+                return lam_sach(None, initial)  # báo thiếu tệp
             return [lam_sach(tep, initial) for tep in data]
         return [lam_sach(data, initial)]
 
 
 class TaiAnhForm(forms.Form):
+    # Trang dùng JS giữ danh sách ảnh đã chọn nên ô tệp có thể trống lúc gửi; máy chủ vẫn kiểm bắt buộc.
+    use_required_attribute = False
     cac_anh = TruongNhieuTep(
         label="Thêm ảnh",
         help_text="JPEG, PNG, WebP hoặc GIF; ảnh được nén WebP, cạnh dài tối đa 1600 px.",
@@ -191,8 +184,22 @@ def lay_form(loai):
     if loai == "chi_nhanh":
 
         class FormChiNhanh(lop):
-            kinh_do = forms.FloatField(label="Kinh độ", min_value=-180, max_value=180)
-            vi_do = forms.FloatField(label="Vĩ độ", min_value=-90, max_value=90)
+            # Tọa độ lấy từ bản đồ (bấm, kéo ghim hoặc tìm địa chỉ); ô ẩn giữ giá trị gửi đi.
+            nhom_ban_do = "Vị trí trên bản đồ"
+            kinh_do = forms.FloatField(
+                label="Kinh độ",
+                min_value=102,
+                max_value=110,
+                widget=forms.HiddenInput,
+                error_messages={"required": "Hãy ghim vị trí chi nhánh trên bản đồ."},
+            )
+            vi_do = forms.FloatField(
+                label="Vĩ độ",
+                min_value=8,
+                max_value=23.5,
+                widget=forms.HiddenInput,
+                error_messages={"required": "Hãy ghim vị trí chi nhánh trên bản đồ."},
+            )
 
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)

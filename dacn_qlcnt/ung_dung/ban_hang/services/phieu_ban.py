@@ -79,7 +79,7 @@ def ban_tai_quay(
     """
     if phuong_thuc_thanh_toan not in PHUONG_THUC_TAI_QUAY:
         raise ValidationError("Tại quầy chỉ nhận tiền mặt hoặc chuyển khoản.")
-    khoa_chi_nhanh(nguoi, chi_nhanh)
+    khoa_chi_nhanh(nguoi, chi_nhanh, "don_hang.xu_ly" if don_hang else "phieu_ban.tao")
     khoa_yeu_cau = str(khoa_yeu_cau or uuid4())
     da_co = PhieuBan.objects.filter(
         khoa_yeu_cau=khoa_yeu_cau, nguoi_lap=nguoi, chi_nhanh=chi_nhanh

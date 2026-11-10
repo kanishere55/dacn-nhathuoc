@@ -1,17 +1,40 @@
+// Ô chọn thả xuống có ô tìm kiếm (Choices.js): mọi ô trong thanh lọc, và ô dài từ 7 lựa chọn ở form.
+// Thêm data-khong-tim để giữ ô chọn gốc; data-tim-kiem-chon để luôn bật tìm kiếm.
+const ganChonCoTim = (pham_vi = document) => {
+  if (!window.Choices) return;
+  pham_vi.querySelectorAll('select').forEach((o) => {
+    if (o.dataset.daGanChon || o.multiple || o.disabled || o.hasAttribute('data-khong-tim')) return;
+    if (o.closest('.ql-toolbar, .leaflet-container')) return;
+    // Mọi ô lọc ở khu quản lý (form GET) đều có tìm kiếm, trừ ô số dòng mỗi trang.
+    const laOLoc = (o.closest('.thanh-loc') || (o.closest('form[method="get"]') && o.closest('.khung-ung-dung')))
+      && o.name !== 'moi_trang';
+    if (!(laOLoc || o.hasAttribute('data-tim-kiem-chon') || o.options.length >= 7)) return;
+    o.dataset.daGanChon = '1';
+    // eslint-disable-next-line no-new
+    new window.Choices(o, {
+      allowHTML: false,
+      shouldSort: false,
+      searchEnabled: true,
+      searchResultLimit: 50,
+      searchFields: ['label'],
+      fuseOptions: { threshold: 0.3, ignoreLocation: true },
+      itemSelectText: '',
+      position: 'bottom',
+      searchPlaceholderValue: 'Gõ để tìm…',
+      noResultsText: 'Không có kết quả phù hợp',
+      noChoicesText: 'Không còn lựa chọn',
+      loadingText: 'Đang tải…',
+    });
+  });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   if (window.lucide) window.lucide.createIcons();
+  ganChonCoTim();
 });
-document.addEventListener("htmx:afterSwap", () => {
+document.addEventListener("htmx:afterSwap", (suKien) => {
   if (window.lucide) window.lucide.createIcons();
-});
-
-// Form có data-doi-lua-chon: đổi ô có data-tai-lai thì tải lại trang bằng GET để máy chủ tính lại.
-document.addEventListener('change', (suKien) => {
-  const o = suKien.target;
-  if (!o.matches('[data-doi-lua-chon] [data-tai-lai]')) return;
-  const thamSo = new URLSearchParams(new FormData(o.form));
-  thamSo.delete('csrfmiddlewaretoken');
-  window.location.search = thamSo.toString();
+  ganChonCoTim(suKien.target);
 });
 
 // Nút data-sao-chep="giá trị": chép vào bộ nhớ tạm, đổi nhãn trong 2 giây.

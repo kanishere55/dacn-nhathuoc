@@ -1,9 +1,9 @@
 import re
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 
-from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.chung.permissions import kiem_tra_quyen, thay_toan_chuoi
 from ung_dung.chung.ten_csdl import MA_NGHIEP_VU
 from ung_dung.chung.van_ban import cat_khoang_trang
 
@@ -13,8 +13,13 @@ from ..selectors import DANH_MUC
 
 @transaction.atomic
 def luu_danh_muc(nguoi, loai, du_lieu, doi_tuong=None):
-    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
+    kiem_tra_quyen(nguoi, f"{loai}.sua")
     model = DANH_MUC[loai][0]
+    if loai == "chi_nhanh" and not thay_toan_chuoi(nguoi):
+        if doi_tuong is None or doi_tuong.pk != nguoi.chi_nhanh_id:
+            raise PermissionDenied(
+                "Chỉ sửa được chi nhánh được phân công; tạo chi nhánh cần phạm vi toàn chuỗi."
+            )
     if doi_tuong:
         doi_tuong = model.objects.select_for_update().get(pk=doi_tuong.pk)
     else:
@@ -43,6 +48,9 @@ def luu_danh_muc(nguoi, loai, du_lieu, doi_tuong=None):
         raise ValidationError(
             "Hồ sơ nhân viên phải liên kết tài khoản nhân viên hoặc quản lý chi nhánh."
         )
+    if loai == "nhan_vien" and not thay_toan_chuoi(nguoi):
+        if doi_tuong.tai_khoan.chi_nhanh_id != nguoi.chi_nhanh_id:
+            raise ValidationError("Chỉ quản lý hồ sơ nhân viên thuộc chi nhánh của bạn.")
     if isinstance(doi_tuong, KhuyenMai):
         kiem_khuyen_mai_trung(doi_tuong)
     doi_tuong.full_clean()

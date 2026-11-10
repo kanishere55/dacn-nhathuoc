@@ -258,7 +258,17 @@ def dat_lai_mat_khau(ma_phien, ma_otp, mat_khau_moi):
         validate_password(mat_khau_moi, tai_khoan)
         tai_khoan.set_password(mat_khau_moi)
         tai_khoan.da_xac_thuc_email = True
-        tai_khoan.save(update_fields=["password", "da_xac_thuc_email"])
+        # Chủ tài khoản đã chứng minh qua email nên mở khóa đăng nhập do nhập sai.
+        tai_khoan.so_lan_dang_nhap_sai = 0
+        tai_khoan.thoi_diem_mo_khoa_dang_nhap = None
+        tai_khoan.save(
+            update_fields=[
+                "password",
+                "da_xac_thuc_email",
+                "so_lan_dang_nhap_sai",
+                "thoi_diem_mo_khoa_dang_nhap",
+            ]
+        )
         bao_doi_mat_khau(tai_khoan, "đặt lại bằng mã xác thực email")
         return tai_khoan
 

@@ -66,6 +66,7 @@ quan_ly = [
     ),
     path("khuyen-mai/tao/", khuyen_mai.tao, name="khuyen_mai_tao"),
     path("khuyen-mai/<int:ma>/sua/", khuyen_mai.sua, name="khuyen_mai_sua"),
+    path("noi-dung-anh/tai-len/", anh.tai_anh_noi_dung, name="anh_noi_dung_tai_len"),
     path("<loai_anh:loai>/<int:ma>/anh/", anh.tai_len, name="anh_tai_len"),
     path("<loai_anh:loai>/<int:ma>/anh/<int:id_anh>/xoa/", anh.xoa, name="anh_xoa"),
     path(
@@ -77,6 +78,7 @@ quan_ly = [
 urlpatterns = [
     path("anh/thuoc/<int:ma>/", anh.anh_thuoc, name="anh_thuoc"),
     path("anh/chi-nhanh/<int:ma>/", anh.anh_chi_nhanh, name="anh_chi_nhanh"),
+    path("anh/noi-dung/<int:ma>/", anh.anh_noi_dung, name="anh_noi_dung"),
     path("thuoc/", khach.danh_sach_thuoc, name="khach_thuoc_danh_sach"),
     path("thuoc/<str:ma>/danh-gia/", khach.danh_gia_thuoc, name="khach_danh_gia_thuoc"),
     path("thuoc/<str:ma>/", khach.chi_tiet_thuoc, name="khach_thuoc_chi_tiet"),

@@ -1,36 +1,43 @@
 {% extends "base.html" %}
+{% block tieu_de %}Tồn kho theo lô · Khu quản lý{% endblock %}
+{% block vi_tri %}Tồn kho{% endblock %}
 {% block noi_dung %}
-  <h1>Tồn kho theo lô</h1>
-  <div class="khoi-trang khung-bang">
-    <table>
-      <thead>
-        <tr>
-          <th>Chi nhánh</th>
-          <th>Thuốc / đơn vị</th>
-          <th>Lô</th>
-          <th>Hạn dùng</th>
-          <th>Vật lý</th>
-          <th>Đang giữ</th>
-          <th>Khả dụng hợp lệ</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for dong in cac_dong %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">KHO</p>
+    <h1>Tồn kho theo lô</h1>
+  </header>
+  {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
+  <div id="vung-danh-sach">
+    <div class="khoi-trang khung-bang">
+      <table>
+        <thead>
           <tr>
-            <td>{{ dong.chi_nhanh }}</td>
-            <td>{{ dong.lo_thuoc.thuoc }} / {{ dong.lo_thuoc.thuoc.don_vi_tinh }}</td>
-            <td>{{ dong.lo_thuoc.ma_lo_thuoc }}</td>
-            <td>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}</td>
-            <td>{{ dong.so_luong }}</td>
-            <td>{{ dong.dang_giu }}</td>
-            <td>{{ dong.kha_dung_hop_le }}</td>
+            <th>Chi nhánh</th>
+            <th>Thuốc / đơn vị</th>
+            <th>Lô</th>
+            <th>Hạn dùng</th>
+            <th>Vật lý</th>
+            <th>Đang giữ</th>
+            <th>Khả dụng hợp lệ</th>
           </tr>
-        {% empty %}
-          <tr>
-            <td>Chưa có tồn kho.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for dong in trang %}
+            <tr>
+              <td>{{ dong.chi_nhanh }}</td>
+              <td>{{ dong.lo_thuoc.thuoc }} / {{ dong.lo_thuoc.thuoc.don_vi_tinh }}</td>
+              <td>{{ dong.lo_thuoc.ma_lo_thuoc }}</td>
+              <td>{{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}</td>
+              <td>{{ dong.so_luong }}</td>
+              <td>{{ dong.dang_giu }}</td>
+              <td>{{ dong.kha_dung_hop_le }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7">{% if loc.dang_loc %}Không có dòng tồn kho phù hợp bộ lọc.{% else %}Chưa có tồn kho.{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/_phan_trang.html" %}
   </div>
 {% endblock %}

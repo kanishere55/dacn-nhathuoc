@@ -1,0 +1,412 @@
+/* Bản đồ: ghim nhà thuốc, ghim người dùng, trang tìm nhà thuốc, lộ trình. */
+@layer components {
+  .ghim-nha-thuoc {
+    background: none;
+    border: 0;
+  }
+  .ghim-nha-thuoc .than-ghim {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 3px solid #fff;
+    border-radius: 50% 50% 50% 0;
+    background: var(--color-chinh);
+    color: #fff;
+    transform: rotate(-45deg);
+    box-shadow: 0 6px 14px -4px rgb(10 50 38 / 0.55);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+  }
+  .ghim-nha-thuoc .than-ghim svg {
+    width: 18px;
+    height: 18px;
+    transform: rotate(45deg);
+  }
+  .ghim-nha-thuoc.noi-bat .than-ghim {
+    background: #c2410c;
+  }
+  .ghim-nha-thuoc.mo .than-ghim {
+    background: #1d4ed8;
+    transform: rotate(-45deg) scale(1.15);
+  }
+  .ghim-nguoi-dung {
+    background: none;
+    border: 0;
+  }
+  .ghim-nguoi-dung .cham {
+    display: block;
+    width: 18px;
+    height: 18px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background: #2563eb;
+    box-shadow: 0 0 0 6px rgb(37 99 235 / 0.22);
+  }
+  .ghim-nguoi-dung .nhan {
+    position: absolute;
+    top: -26px;
+    left: 50%;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #1e3a8a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: translateX(-50%);
+  }
+  .popup-nha-thuoc {
+    display: grid;
+    gap: 6px;
+    min-width: 180px;
+    font-family: var(--font-sans);
+  }
+  .popup-nha-thuoc span {
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+
+  /* Trang tìm nhà thuốc: điện thoại xem bản đồ trước rồi mới tới bộ lọc, danh sách;
+     màn rộng chia hai cột cao bằng màn hình, cột trái tự cuộn, bản đồ đứng yên. */
+  .trang-tim-nha-thuoc {
+    display: grid;
+    gap: 16px;
+    align-items: start;
+  }
+  /* Trang bản đồ dùng rộng hơn khung nội dung chung (tối đa 1640px) để bản đồ không bị bó. */
+  .trang-ban-do-rong {
+    margin-inline: min(0px, calc(50% - min(820px, 50vw - 32px)));
+  }
+  .trang-tim-nha-thuoc .khung-lop-ban-do {
+    order: -1;
+  }
+  @media (min-width: 960px) {
+    .trang-tim-nha-thuoc {
+      grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+    }
+    .trang-tim-nha-thuoc .khung-lop-ban-do {
+      order: 0;
+    }
+    .trang-tim-nha-thuoc .khung-lop-ban-do,
+    .trang-tim-nha-thuoc .bang-tim-nha-thuoc {
+      position: sticky;
+      top: var(--cach-dinh-ban-do);
+    }
+    .trang-tim-nha-thuoc .bang-tim-nha-thuoc {
+      max-height: calc(100dvh - var(--cach-dinh-ban-do) - 16px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .trang-tim-nha-thuoc .ban-do.ban-do-lon {
+      height: calc(100dvh - var(--cach-dinh-ban-do) - 32px);
+      min-height: 520px;
+      max-height: 900px;
+    }
+  }
+  .bang-tim-nha-thuoc {
+    display: grid;
+    gap: 4px;
+    padding: 16px;
+  }
+  .muc-tim {
+    display: grid;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--vien);
+  }
+  .muc-tim:last-child {
+    border-bottom: 0;
+  }
+  .muc-tim h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .muc-tim h2 svg {
+    width: 18px;
+    height: 18px;
+    color: var(--color-chinh);
+  }
+  .nhan-chon {
+    display: grid;
+    gap: 6px;
+    font-weight: 600;
+  }
+  .nhan-chon select {
+    min-height: 42px;
+  }
+  .loc-theo-thuoc summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .loc-theo-thuoc summary svg {
+    width: 18px;
+    height: 18px;
+    color: var(--color-chinh);
+  }
+  .dau-ket-qua {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .danh-sach-nha-thuoc {
+    display: grid;
+    gap: 10px;
+  }
+  .the-nha-thuoc {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--vien);
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .the-nha-thuoc:hover,
+  .the-nha-thuoc.dang-chon {
+    border-color: var(--color-chinh);
+    box-shadow: 0 8px 20px -14px rgb(17 60 45 / 0.6);
+  }
+  .anh-nha-thuoc {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    background: #eaf3ed;
+    color: var(--color-chinh);
+    overflow: hidden;
+  }
+  .anh-nha-thuoc img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .noi-dung-nha-thuoc {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+  .dau-the-nha-thuoc {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 8px;
+  }
+  .dau-the-nha-thuoc h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .nhan-khoang-cach {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eef2f7;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .nhan-khoang-cach.gan-nhat {
+    background: #fff1e6;
+    color: #c2410c;
+  }
+  .dia-chi-nha-thuoc {
+    margin: 0;
+    color: var(--chu-phu);
+    font-size: 13px;
+  }
+  .meta-nha-thuoc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0;
+    font-size: 12px;
+  }
+  .meta-nha-thuoc a {
+    color: var(--color-chinh);
+  }
+  .meta-nha-thuoc .sao {
+    color: #b45309;
+  }
+  .tac-vu-nha-thuoc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .tac-vu-nha-thuoc .nut {
+    min-height: 34px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .ban-do.ban-do-lon {
+    height: clamp(340px, 58dvh, 560px);
+    margin: 0;
+    border-radius: 12px;
+  }
+  .khung-lop-ban-do {
+    position: relative;
+    padding: 8px;
+  }
+  .bang-lo-trinh {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 500;
+    width: min(340px, calc(100% - 40px));
+    padding: 14px;
+    border: 1px solid var(--vien);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 16px 34px -18px rgb(10 40 30 / 0.55);
+  }
+  .bang-lo-trinh[hidden] {
+    display: none;
+  }
+  @media (width < 960px) {
+    .bang-lo-trinh {
+      position: static;
+      width: auto;
+      margin-top: 8px;
+      box-shadow: none;
+    }
+  }
+  .dau-lo-trinh {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .dau-lo-trinh h3 {
+    margin: 2px 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .cac-phuong-tien {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .cac-phuong-tien button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 36px;
+    border: 1px solid var(--vien);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .cac-phuong-tien button svg {
+    width: 16px;
+    height: 16px;
+  }
+  .cac-phuong-tien button[aria-pressed="true"] {
+    border-color: var(--color-chinh);
+    background: var(--color-chinh);
+    color: #fff;
+  }
+  .so-lieu-lo-trinh {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+  }
+  .so-lieu-lo-trinh div {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #f3f8f4;
+  }
+  .so-lieu-lo-trinh dt {
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+  .so-lieu-lo-trinh dd {
+    margin: 2px 0 0;
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  /* Bản đồ ở trang đặt hàng: cột trái rộng nên cho cao tương xứng. */
+  .ban-do.ban-do-dat-hang {
+    height: clamp(320px, 55dvh, 540px);
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  /* Bản đồ vị trí ở trang chi nhánh của khách */
+  .ban-do[data-vi-tri-chi-nhanh] {
+    height: clamp(320px, 60dvh, 560px);
+  }
+  .tom-tat-lo-trinh {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 10px 0 0;
+    font-size: 14px;
+  }
+  .tom-tat-lo-trinh strong {
+    color: var(--color-chinh);
+  }
+
+  /* Khối chọn vị trí: ô tìm địa chỉ phía trên, bản đồ trải hết bề ngang bên dưới
+     (dùng cho vị trí chi nhánh trong khu quản lý). */
+  .chon-vi-tri {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .chon-vi-tri > .dieu-khien-vi-tri {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 8px;
+  }
+  .chon-vi-tri .tim-vi-tri {
+    max-width: 760px;
+  }
+  .chon-vi-tri .ban-do {
+    height: clamp(320px, 60dvh, 560px);
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  /* Form địa chỉ giao hàng của khách: khung đủ rộng thì các ô nhập bên trái, bản đồ cao
+     bằng cả cột bên phải; khung hẹp (điện thoại) xếp dọc. Container query vì form nằm trong
+     trang tài khoản có thanh bên, bề rộng thật nhỏ hơn màn hình. */
+  .form-dia-chi {
+    container-type: inline-size;
+  }
+  @container (min-width: 720px) {
+    .bo-cuc-dia-chi {
+      grid-template-columns: minmax(300px, 1fr) minmax(0, 1.25fr);
+      align-items: stretch;
+      gap: 22px;
+    }
+    .bo-cuc-dia-chi .tim-vi-tri {
+      max-width: none;
+    }
+    .bo-cuc-dia-chi .ban-do {
+      height: auto;
+      min-height: 460px;
+    }
+  }
+}
+
+:root {
+  /* Khoảng cách từ đỉnh màn hình tới cột dính của trang tìm nhà thuốc. */
+  --cach-dinh-ban-do: 16px;
+}

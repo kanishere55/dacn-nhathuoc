@@ -2,14 +2,14 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import yeu_cau_quyen
 
 from .forms import KichBanForm
 from .selectors import lay_ket_qua_moi_nhat
 from .services.kich_ban import tao_kich_ban
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi")
+@yeu_cau_quyen("du_bao.xem")
 @require_http_methods(["GET", "POST"])
 def ket_qua(request):
     form = KichBanForm(request.POST if request.method == "POST" else None)

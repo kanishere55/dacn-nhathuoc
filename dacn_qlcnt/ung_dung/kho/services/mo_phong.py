@@ -181,12 +181,12 @@ def bo_sung_noi_dung_mo_phong(nguoi):
         thuoc.quy_cach_dong_goi = thuoc.quy_cach_dong_goi or "Hộp 10 vỉ x 10 viên"
         thuoc.nuoc_san_xuat = thuoc.nuoc_san_xuat or "Việt Nam"
         thuoc.mo_ta_ngan = thuoc.mo_ta_ngan or "Sản phẩm mô phỏng phục vụ chạy thử hệ thống."
-        thuoc.cong_dung = thuoc.cong_dung or (
-            "Nội dung mô phỏng. Khi vận hành thật, quản trị nhập công dụng theo tờ hướng "
-            "dẫn sử dụng đã được Bộ Y tế phê duyệt."
+        thuoc.noi_dung_chi_tiet = thuoc.noi_dung_chi_tiet or (
+            "<h3>Công dụng</h3><p>Nội dung mô phỏng. Khi vận hành thật, quản trị nhập công dụng "
+            "theo tờ hướng dẫn sử dụng đã được Bộ Y tế phê duyệt.</p>"
+            "<h3>Liều dùng và cách dùng</h3><p>Dùng theo chỉ dẫn của bác sĩ hoặc dược sĩ.</p>"
+            "<h3>Bảo quản</h3><p>Nơi khô, dưới 30°C, tránh ánh sáng.</p>"
         )
-        thuoc.cach_dung = thuoc.cach_dung or "Dùng theo chỉ dẫn của bác sĩ hoặc dược sĩ."
-        thuoc.bao_quan = thuoc.bao_quan or "Nơi khô, dưới 30°C, tránh ánh sáng."
         thuoc.save()
     for so, chi_nhanh in enumerate(
         ChiNhanh.objects.filter(ma_chi_nhanh__startswith="MP-CN-").order_by("ma_chi_nhanh"),

@@ -1,0 +1,35 @@
+{% comment %}
+  Thanh lọc dùng chung. Biến: loc (BoLoc), vung (id vùng danh sách được thay khi lọc),
+  giu_loai / giu_trang_thai (tham số do thẻ phía trên chọn, giữ lại khi lọc).
+  Ô chọn tự lọc khi đổi; ô tìm kiếm lọc sau khi ngừng gõ 0,4 giây. Không có JS vẫn dùng được bằng nút Lọc.
+{% endcomment %}
+{% load loc_trang %}
+<form method="get" class="thanh-loc" role="search" aria-label="Bộ lọc danh sách"
+      hx-get="{{ request.path }}" hx-target="#{{ vung|default:'vung-danh-sach' }}" hx-select="#{{ vung|default:'vung-danh-sach' }}" hx-swap="outerHTML" hx-select-oob="#nut-xoa-loc,#tong-so-ban-ghi"
+      hx-trigger="change, keyup changed delay:400ms from:find input[name=tim], submit" hx-push-url="true">
+  {% if giu_loai %}<input type="hidden" name="loai" value="{{ giu_loai }}">{% endif %}
+  {% if giu_trang_thai %}<input type="hidden" name="trang_thai" value="{{ giu_trang_thai }}">{% endif %}
+  {% if loc.cac_cot_tim %}
+    <label class="o-tim">
+      <span class="chu-tuy-chon">{{ loc.nhan_tim }}</span>
+      <input type="search" name="tim" value="{{ loc.tim }}" placeholder="{{ loc.nhan_tim }}…" autocomplete="off">
+    </label>
+  {% endif %}
+  {% for o in loc.cac_o_chon %}
+    <label>
+      <span class="chu-tuy-chon">{{ o.nhan }}</span>
+      <select name="{{ o.ten }}">
+        <option value="">Tất cả</option>
+        {% for gia_tri, nhan in o.lua_chon %}<option value="{{ gia_tri }}"{% if gia_tri|stringformat:"s" == o.gia_tri %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
+      </select>
+    </label>
+  {% endfor %}
+  <label>
+    <span class="chu-tuy-chon">Số dòng</span>
+    <select name="moi_trang">
+      {% for so in loc.cac_moi_trang %}<option value="{{ so }}"{% if so == loc.moi_trang %} selected{% endif %}>{{ so }} / trang</option>{% endfor %}
+    </select>
+  </label>
+  <button class="nut nut-phu" type="submit">Lọc</button>
+  <span id="nut-xoa-loc">{% if loc.dang_loc %}<a class="nut nut-phu" href="{{ request.path }}{% if giu_loai %}?loai={{ giu_loai }}{% endif %}">Xóa lọc</a>{% endif %}</span>
+</form>

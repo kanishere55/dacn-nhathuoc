@@ -1,5 +1,7 @@
 from django.db.models import F, OuterRef, QuerySet, Subquery
 
+from ung_dung.chung.permissions import co_quyen, thay_toan_chuoi
+
 from .models import CuocTroChuyen, TinNhan
 from .permissions import kiem_tra_phong
 
@@ -10,8 +12,11 @@ def lay_cac_phong(nguoi) -> QuerySet:
         return cac_phong.none()
     if nguoi.vai_tro == "khach_hang":
         return cac_phong.filter(khach_hang=nguoi)
-    if nguoi.vai_tro in {"nhan_vien", "quan_ly_chi_nhanh"} and nguoi.chi_nhanh_id:
-        return cac_phong.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
+    if co_quyen(nguoi, "tro_chuyen.dung"):
+        if thay_toan_chuoi(nguoi):
+            return cac_phong
+        if nguoi.chi_nhanh_id:
+            return cac_phong.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
     return cac_phong.none()
 
 

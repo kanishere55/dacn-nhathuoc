@@ -1,84 +1,130 @@
 {% extends "khach/base.html" %}
 {% load static %}
-{% block tieu_de %}Tìm nhà thuốc · Nhà thuốc{% endblock %}
+{% block tieu_de %}Tìm nhà thuốc gần bạn · Nhà thuốc{% endblock %}
 {% block dau_trang %}
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 {% endblock %}
 {% block noi_dung %}
+<div class="trang-ban-do-rong">
   <header class="tieu-de-khach">
     <p class="chu-dan">Bản đồ nhà thuốc</p>
-    <h1>Tìm chi nhánh còn đủ thuốc</h1>
-    <p>Chọn điểm xuất phát và thuốc cần tìm. Kết quả chỉ hiện chi nhánh còn đủ số lượng bạn chọn.</p>
+    <h1>Tìm nhà thuốc gần bạn</h1>
+    <p>Chọn vị trí của bạn để xem chi nhánh gần nhất, khoảng cách, đường đi và thời gian di chuyển. Cần một loại thuốc cụ thể? Bật “Chỉ chi nhánh còn thuốc” để lọc theo tồn kho.</p>
   </header>
-  <div class="khung-ban-do-khach" data-webgis data-url-tim="{% url 'webgis:tim_kiem' %}"
-       data-osrm="{{ may_chu_osrm }}" data-gioi-han="{{ gioi_han_so_thuoc }}"
-       {% if tu_gio %}data-url-gio="{% url 'ban_hang:dat_hang' %}"{% endif %}>
-    <form class="the-khach form-chinh bo-loc-ban-do" data-tim-kiem>
-      {% csrf_token %}
-      <div>
-        <h2>1. Chọn điểm xuất phát</h2>
-        <p class="ghi-chu-khach" data-vi-tri role="status">Bấm vào bản đồ hoặc dùng định vị.</p>
-        <div class="nut-vi-tri">
-          <button type="button" class="nut nut-phu" data-dinh-vi><i data-lucide="locate-fixed" aria-hidden="true"></i>Dùng vị trí của tôi</button>
-          <button type="button" class="nut nut-phu" data-tam-ban-do>Dùng tâm bản đồ</button>
-        </div>
-      </div>
-      <div>
-        <h2>2. Chọn thuốc cần tìm</h2>
-        {% if tu_gio %}
-          <ul class="thuoc-tu-gio" data-nhu-cau>
-            {% for dong in cac_dong %}
-              <li data-dong-thuoc data-id-thuoc="{{ dong.id_thuoc }}" data-so-luong="{{ dong.so_luong|stringformat:'d' }}">
-                <strong>{{ dong.thuoc.ten_thuoc }}</strong><span>{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span>
-              </li>
-            {% endfor %}
-          </ul>
-          <a class="lien-ket-van-ban" href="{% url 'ban_hang:gio_hang' %}">Sửa thuốc trong giỏ</a>
-        {% elif cac_thuoc %}
-          <datalist id="goi-y-thuoc" data-goi-y>
-            {% for thuoc in cac_thuoc %}
-              <option value="{{ thuoc.ten_thuoc }} · {{ thuoc.ma_thuoc }}" data-id-thuoc="{{ thuoc.pk }}"
-                      data-don-vi="{{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}"></option>
-            {% endfor %}
-          </datalist>
-          <div data-nhu-cau>
-            <div class="dong-thuoc-ban-do" data-dong-thuoc>
-              <label>Tên hoặc mã thuốc<input data-thuoc list="goi-y-thuoc" autocomplete="off" placeholder="Gõ để tìm thuốc"
-                    {% if thuoc_ban_dau %}value="{{ thuoc_ban_dau.ten_thuoc }} · {{ thuoc_ban_dau.ma_thuoc }}"{% endif %} required></label>
-              <label>Số lượng<span data-don-vi>{% if thuoc_ban_dau %} · {{ thuoc_ban_dau.don_vi_tinh.ten_don_vi_tinh|lower }}{% endif %}</span><input data-so-luong type="number" inputmode="numeric" min="1" max="{{ gioi_han_so_luong|stringformat:'d' }}" value="1" required></label>
-              <button type="button" class="nut nut-phu" data-xoa-thuoc>Bỏ thuốc</button>
-            </div>
+  {{ cac_chi_nhanh|json_script:"du-lieu-chi-nhanh" }}
+  {{ dia_chi_mac_dinh|json_script:"du-lieu-dia-chi-mac-dinh" }}
+  <div class="trang-tim-nha-thuoc" data-webgis
+       data-url-gan="{% url 'webgis:chi_nhanh_gan' %}" data-url-tim="{% url 'webgis:tim_kiem' %}"
+       {% if user.is_authenticated %}data-url-tim-dia-chi="{% url 'webgis:tim_dia_chi' %}"{% endif %}
+       data-url-dat-hang="{% url 'ban_hang:dat_hang' %}"
+       data-osrm="{{ may_chu_osrm }}" data-osrm-di-bo="{{ may_chu_osrm_di_bo }}" data-gioi-han="{{ gioi_han_so_thuoc }}"
+       {% if tu_gio %}data-tu-gio{% endif %}>
+    <aside class="bang-tim-nha-thuoc the-khach">
+      <form data-tim-kiem novalidate>
+        {% csrf_token %}
+        <section class="muc-tim" aria-labelledby="tieu-de-vi-tri">
+          <h2 id="tieu-de-vi-tri"><i data-lucide="map-pin" aria-hidden="true"></i>Vị trí của bạn</h2>
+          <div class="nut-vi-tri">
+            <button type="button" class="nut" data-dinh-vi><i data-lucide="locate-fixed" aria-hidden="true"></i>Vị trí của tôi</button>
+            {% if dia_chi_mac_dinh %}<button type="button" class="nut nut-phu" data-dia-chi-mac-dinh><i data-lucide="house" aria-hidden="true"></i>Địa chỉ đã lưu</button>{% endif %}
           </div>
-          <button type="button" class="nut nut-phu" data-them-thuoc><i data-lucide="plus" aria-hidden="true"></i>Thêm thuốc</button>
-        {% else %}
-          <p>Danh mục hiện chưa có thuốc đang kinh doanh.</p>
-        {% endif %}
-      </div>
-      <label>Phạm vi tìm kiếm
-        <select name="ban_kinh_met">
-          <option value="1000">1 km</option>
-          <option value="3000">3 km</option>
-          <option value="5000" selected>5 km</option>
-          <option value="10000">10 km</option>
-          <option value="20000">20 km</option>
-          <option value="50000">50 km</option>
-        </select>
-      </label>
-      <button class="nut"{% if not tu_gio and not cac_thuoc %} disabled{% endif %}><i data-lucide="search" aria-hidden="true"></i>Tìm chi nhánh</button>
-    </form>
-    <div class="the-khach khung-lop-ban-do">
-      <div class="ban-do" data-ban-do aria-label="Bản đồ chi nhánh"></div>
-      <p class="ghi-chu-khach" data-lo-trinh role="status">Chọn một chi nhánh trong kết quả để xem đường đi.</p>
+          {% if user.is_authenticated %}
+            <div class="tim-vi-tri">
+              <input type="search" data-tu-khoa placeholder="Nhập địa chỉ, ví dụ: 268 Lý Thường Kiệt, Quận 10" autocomplete="off" aria-label="Tìm địa chỉ">
+              <button type="button" class="nut nut-phu" data-tim-dia-chi><i data-lucide="search" aria-hidden="true"></i><span class="sr-only">Tìm địa chỉ</span></button>
+            </div>
+            <div class="ket-qua-tim-vi-tri" data-ket-qua-dia-chi></div>
+          {% else %}
+            <p class="ghi-chu-khach"><a href="{% url 'tai_khoan:dang_nhap' %}?next={{ request.get_full_path|urlencode }}">Đăng nhập</a> để tìm theo địa chỉ, hoặc bấm trực tiếp lên bản đồ.</p>
+          {% endif %}
+          <p class="trang-thai-vi-tri" data-vi-tri role="status">Bấm “Vị trí của tôi” hoặc chạm lên bản đồ để chọn điểm xuất phát.</p>
+        </section>
+
+        <section class="muc-tim">
+          <label class="nhan-chon">Phạm vi
+            <select name="ban_kinh_met" data-ban-kinh>
+              <option value="0">Tất cả chi nhánh</option>
+              <option value="1000">Trong 1 km</option>
+              <option value="2000">Trong 2 km</option>
+              <option value="5000">Trong 5 km</option>
+              <option value="10000">Trong 10 km</option>
+              <option value="20000">Trong 20 km</option>
+            </select>
+          </label>
+        </section>
+
+        <details class="muc-tim loc-theo-thuoc" data-loc-thuoc {% if che_do_thuoc %}open{% endif %}>
+          <summary><i data-lucide="pill" aria-hidden="true"></i>Chỉ chi nhánh còn thuốc</summary>
+          {% if tu_gio %}
+            <p class="ghi-chu-khach">Đang lọc theo các thuốc trong giỏ:</p>
+            <ul class="thuoc-tu-gio" data-nhu-cau>
+              {% for dong in cac_dong %}
+                <li data-dong-thuoc data-id-thuoc="{{ dong.id_thuoc }}" data-so-luong="{{ dong.so_luong|stringformat:'d' }}">
+                  <strong>{{ dong.thuoc.ten_thuoc }}</strong><span>{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+            <a class="lien-ket-van-ban" href="{% url 'ban_hang:gio_hang' %}">Sửa thuốc trong giỏ</a>
+          {% elif cac_thuoc %}
+            <datalist id="goi-y-thuoc" data-goi-y>
+              {% for thuoc in cac_thuoc %}
+                <option value="{{ thuoc.ten_thuoc }} · {{ thuoc.ma_thuoc }}" data-id-thuoc="{{ thuoc.pk }}" data-don-vi="{{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}"></option>
+              {% endfor %}
+            </datalist>
+            <div data-nhu-cau>
+              <div class="dong-thuoc-ban-do" data-dong-thuoc>
+                <label>Tên hoặc mã thuốc<input data-thuoc list="goi-y-thuoc" autocomplete="off" placeholder="Gõ để tìm thuốc"
+                      {% if thuoc_ban_dau %}value="{{ thuoc_ban_dau.ten_thuoc }} · {{ thuoc_ban_dau.ma_thuoc }}"{% endif %}></label>
+                <label>Số lượng<span data-don-vi>{% if thuoc_ban_dau %} · {{ thuoc_ban_dau.don_vi_tinh.ten_don_vi_tinh|lower }}{% endif %}</span><input data-so-luong type="number" inputmode="numeric" min="1" max="{{ gioi_han_so_luong|stringformat:'d' }}" value="1"></label>
+                <button type="button" class="nut nut-phu" data-xoa-thuoc>Bỏ thuốc</button>
+              </div>
+            </div>
+            <div class="nut-vi-tri">
+              <button type="button" class="nut nut-phu" data-them-thuoc><i data-lucide="plus" aria-hidden="true"></i>Thêm thuốc</button>
+              <button type="button" class="nut" data-ap-dung-thuoc><i data-lucide="filter" aria-hidden="true"></i>Lọc chi nhánh</button>
+              <button type="button" class="nut nut-phu" data-bo-loc-thuoc hidden>Bỏ lọc thuốc</button>
+            </div>
+          {% else %}
+            <p>Danh mục hiện chưa có thuốc đang kinh doanh.</p>
+          {% endif %}
+        </details>
+      </form>
+
+      <section class="muc-tim ket-qua-ban-do" aria-labelledby="danh-sach-ket-qua">
+        <div class="dau-ket-qua"><h2 id="danh-sach-ket-qua">Chi nhánh</h2><span class="nhan-trang-thai" data-dem>{{ cac_chi_nhanh|length }}</span></div>
+        <p class="ghi-chu-khach" data-thong-bao role="status">Đang hiển thị mọi chi nhánh. Chọn vị trí để sắp xếp theo khoảng cách.</p>
+        <div class="danh-sach-nha-thuoc" data-ket-qua></div>
+      </section>
+    </aside>
+
+    <div class="khung-lop-ban-do the-khach">
+      <div class="ban-do ban-do-lon" data-ban-do aria-label="Bản đồ chi nhánh"></div>
+      <section class="bang-lo-trinh" data-bang-lo-trinh hidden aria-live="polite">
+        <div class="dau-lo-trinh">
+          <div><p class="chu-dan">Đường đi đến</p><h3 data-ten-dich tabindex="-1"></h3></div>
+          <button type="button" class="nut nut-phu" data-dong-lo-trinh aria-label="Đóng lộ trình"><i data-lucide="x" aria-hidden="true"></i></button>
+        </div>
+        <div class="cac-phuong-tien" role="group" aria-label="Phương tiện">
+          <button type="button" data-phuong-tien="xe_may" aria-pressed="true"><i data-lucide="bike" aria-hidden="true"></i>Xe máy (ước tính)</button>
+          <button type="button" data-phuong-tien="o_to" aria-pressed="false"><i data-lucide="car" aria-hidden="true"></i>Ô tô</button>
+          {% if may_chu_osrm_di_bo %}<button type="button" data-phuong-tien="di_bo" aria-pressed="false"><i data-lucide="footprints" aria-hidden="true"></i>Đi bộ</button>{% endif %}
+        </div>
+        <dl class="so-lieu-lo-trinh">
+          <div><dt>Quãng đường</dt><dd data-quang-duong>—</dd></div>
+          <div><dt>Thời gian dự kiến</dt><dd data-thoi-gian>—</dd></div>
+        </dl>
+        <p class="ghi-chu-khach" data-ghi-chu-lo-trinh></p>
+        <p class="ghi-chu-khach" data-nguon-di-bo hidden>
+          Tuyến đi bộ từ <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">OSRM</a>
+          với dữ liệu OpenStreetMap. <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Góp ý bản đồ</a>
+        </p>
+      </section>
     </div>
-    <section class="ket-qua-ban-do" aria-labelledby="danh-sach-ket-qua">
-      <h2 id="danh-sach-ket-qua">Chi nhánh phù hợp</h2>
-      <p data-thong-bao role="status">Kết quả sẽ hiện sau khi bạn tìm kiếm.</p>
-      <div class="luoi-khach-ba" data-ket-qua></div>
-    </section>
   </div>
+</div>
 {% endblock %}
 {% block cuoi_trang %}
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
-  <script src="{% static 'webgis/js/nen_ban_do.js' %}" defer></script>
-  <script src="{% static 'webgis/js/ban_do.js' %}" defer></script>
+  <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
+  <script src="{% tep_tinh 'webgis/js/ban_do.js' %}" defer></script>
 {% endblock %}

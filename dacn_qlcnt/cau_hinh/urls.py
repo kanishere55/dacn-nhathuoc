@@ -1,6 +1,10 @@
+from django.templatetags.static import static
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    # Trình duyệt luôn thử /favicon.ico; chuyển sang biểu tượng SVG của trang để khỏi báo lỗi 404.
+    path("favicon.ico", RedirectView.as_view(url=static("bieu_tuong.svg"), permanent=True)),
     path("", include("ung_dung.chung.urls")),
     path("", include("ung_dung.tai_khoan.urls")),
     path("", include("ung_dung.danh_muc.urls")),

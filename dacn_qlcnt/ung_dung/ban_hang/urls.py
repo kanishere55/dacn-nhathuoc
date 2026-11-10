@@ -34,6 +34,11 @@ urlpatterns = [
     path("don-hang/", khach_don_hang.danh_sach, name="khach_don_hang_danh_sach"),
     path("don-hang/<int:ma>/", khach_don_hang.chi_tiet, name="khach_don_hang_chi_tiet"),
     path("don-hang/<int:ma>/huy/", khach_don_hang.huy, name="khach_don_hang_huy"),
+    path(
+        "don-hang/<int:ma>/da-nhan-hang/",
+        khach_don_hang.da_nhan_hang,
+        name="khach_don_hang_da_nhan",
+    ),
     path("don-hang/<int:ma>/hoa-don/", khach_don_hang.hoa_don_in, name="khach_hoa_don_in"),
     path("don-hang/<int:ma>/tra-hang/", tra_hang.khach_tao, name="khach_tra_hang"),
     path(

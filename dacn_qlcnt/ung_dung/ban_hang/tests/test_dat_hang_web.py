@@ -49,6 +49,23 @@ class DatHangWebTests(TestCase):
         self.client.post(reverse("ban_hang:gio_hang_sua", args=[self.d.thuoc.pk]), {"so_luong": 0})
         self.assertNotContains(self.client.get(reverse("ban_hang:gio_hang")), "2.000 đ")
 
+    def test_cap_nhat_lua_chon_chi_tra_khoi_va_khong_tao_don(self):
+        self.them_gio()
+        url = reverse("ban_hang:dat_hang")
+        lua_chon = {"hinh_thuc_nhan": "nhan_tai_quay", "chi_nhanh": self.d.cn.pk}
+        phan_hoi = self.client.get(url, lua_chon, headers={"HX-Request": "true"})
+        self.assertEqual(phan_hoi.headers["X-Khoi-Dat-Hang"], "lua-chon")
+        self.assertIn("HX-Request", phan_hoi.headers["Vary"])
+        self.assertContains(phan_hoi, 'id="lua-chon-dat-hang"')
+        self.assertContains(phan_hoi, "Chi nhánh nhận hàng")
+        self.assertNotContains(phan_hoi, 'id="form-dat-hang"')
+        self.assertNotContains(phan_hoi, "Phí giao hàng")
+
+        phan_hoi = self.client.post(url, {**lua_chon, "cap_nhat": "1", "ghi_chu_khach": "Lời nhắn"})
+        self.assertContains(phan_hoi, 'id="form-dat-hang"')
+        self.assertContains(phan_hoi, 'value="Lời nhắn"')
+        self.assertFalse(DonHang.objects.exists())
+
     @mock.patch(DUONG_DI, side_effect=quang_duong(4200))
     def test_giao_hang_cod_tinh_phi_va_tao_don(self, _):
         self.them_gio(2)
@@ -106,9 +123,16 @@ class DatHangWebTests(TestCase):
         self.them_gio(1)
         phan_hoi = self.client.get(reverse("ban_hang:dat_hang"), {"hinh_thuc_nhan": "giao_hang"})
         self.assertContains(phan_hoi, "kê đơn")
-        self.client.post(
+        # POST cố giao thuốc kê đơn không bị tự đổi thành đơn giữ; khách phải xác nhận lại.
+        phan_hoi = self.client.post(
             reverse("ban_hang:dat_hang"),
             {"hinh_thuc_nhan": "giao_hang", "chi_nhanh": self.d.cn.pk},
+        )
+        self.assertContains(phan_hoi, "chỉ nhận được tại nhà thuốc")
+        self.assertFalse(DonHang.objects.exists())
+        self.client.post(
+            reverse("ban_hang:dat_hang"),
+            {"hinh_thuc_nhan": "nhan_tai_quay", "chi_nhanh": self.d.cn.pk},
         )
         don = DonHang.objects.get()
         self.assertEqual((don.hinh_thuc_nhan, don.trang_thai), ("nhan_tai_quay", "dang_giu"))
@@ -135,6 +159,15 @@ class DatHangWebTests(TestCase):
         )
         self.assertEqual(phieu.noi_kham_benh, "Bệnh viện Nhân dân 115")
         self.assertEqual(GiaoDichThanhToan.objects.get(phieu_ban=phieu).phuong_thuc, "chuyen_khoan")
+
+    def test_chi_nhanh_khong_hop_le_khong_tu_doi_khi_dat(self):
+        self.them_gio(1)
+        phan_hoi = self.client.post(
+            reverse("ban_hang:dat_hang"),
+            {"hinh_thuc_nhan": "nhan_tai_quay", "chi_nhanh": 999999999},
+        )
+        self.assertContains(phan_hoi, "Chi nhánh đã chọn không còn đáp ứng")
+        self.assertFalse(DonHang.objects.exists())
 
     def test_khach_huy_don_dang_giu_va_lich_su(self):
         self.them_gio(1)
@@ -170,11 +203,22 @@ class DatHangWebTests(TestCase):
         for hanh_dong, trang_thai in (
             ("xac_nhan", "dang_chuan_bi"),
             ("giao_van_chuyen", "dang_giao"),
-            ("da_giao", "hoan_thanh"),
         ):
             self.client.post(reverse("ban_hang:don_hang_xu_ly", args=[don.pk, hanh_dong]))
             don.refresh_from_db()
             self.assertEqual(don.trang_thai, trang_thai)
+        # Nhân viên không tự đánh dấu khách đã nhận; chỉ khách xác nhận.
+        self.client.post(reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "da_giao"]))
+        don.refresh_from_db()
+        self.assertEqual(don.trang_thai, "dang_giao")
+        trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
+        self.assertContains(trang, "hệ thống tự hoàn thành lúc")
+        self.client.force_login(self.d.khach)
+        trang = self.client.get(reverse("ban_hang:khach_don_hang_chi_tiet", args=[don.pk]))
+        self.assertContains(trang, "Đã nhận được hàng")
+        self.client.post(reverse("ban_hang:khach_don_hang_da_nhan", args=[don.pk]))
+        don.refresh_from_db()
+        self.assertEqual(don.trang_thai, "hoan_thanh")
         self.assertEqual(don.trang_thai_thanh_toan, "da_thanh_toan")
         # Nhân viên chi nhánh khác không thấy đơn.
         self.client.force_login(self.d.ql2)
@@ -230,7 +274,7 @@ class HoaDonTests(TestCase):
         giao_cho_van_chuyen(self.d.nv, don)
         mail.outbox.clear()
         with self.captureOnCommitCallbacks(execute=True):
-            xac_nhan_da_giao(self.d.nv, don)
+            xac_nhan_da_giao(self.d.khach, don)
         self.assertEqual(mail.outbox[-1].attachments[0][2], "application/pdf")
         phan_hoi = self.client.get(url)
         self.assertContains(phan_hoi, "Hai mươi lăm nghìn đồng")

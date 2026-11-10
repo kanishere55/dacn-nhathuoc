@@ -1,21 +1,39 @@
 {% extends "khach/base.html" %}
+{% load static %}
 {% block tieu_de %}Đặt hàng · {{ block.super }}{% endblock %}
+{% block dau_trang %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endblock %}
+{% block cuoi_trang %}
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
+  <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
+  <script src="{% tep_tinh 'webgis/js/ban_do_dat_hang.js' %}" defer></script>
+  <script src="{% tep_tinh 'ban_hang/js/dat_hang.js' %}" defer></script>
+{% endblock %}
 {% block noi_dung %}
   <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'ban_hang:gio_hang' %}">Giỏ hàng</a><span aria-hidden="true">/</span><span>Đặt hàng</span></nav>
   <header class="tieu-de-khach"><h1>Đặt hàng</h1></header>
-  <form method="post" class="khung-thanh-toan" id="form-dat-hang" data-doi-lua-chon>
+  <form method="post" id="form-dat-hang"
+        hx-get="{% url 'ban_hang:dat_hang' %}"
+        hx-trigger="change target:[data-tai-lai], cap-nhat"
+        hx-params="hinh_thuc_nhan,dia_chi,chi_nhanh,phuong_thuc_thanh_toan"
+        hx-target="#lua-chon-dat-hang" hx-swap="outerHTML" hx-sync="this:replace"
+        hx-request='{"timeout":12000}'>
     {% csrf_token %}
+    <noscript><p class="ghi-chu-khach">Sau khi đổi hình thức nhận, địa chỉ hoặc chi nhánh, bấm Cập nhật lựa chọn để xem lại tổng tiền trước khi đặt hàng.</p></noscript>
+    <p class="trang-thai-dat-hang" data-trang-thai-dat-hang role="status"></p>
+    {% partialdef lua_chon inline %}
+    <div class="khung-thanh-toan" id="lua-chon-dat-hang">
     <div class="cac-buoc-dat-hang">
+      {{ form.errors }}
       <section class="the-khach" aria-labelledby="buoc-nhan">
         <h2 id="buoc-nhan"><span class="so-buoc">1</span>Hình thức nhận hàng</h2>
         <div class="cac-lua-chon-the">
           <label class="lua-chon-the{% if tom_tat.co_ke_don %} bi-khoa{% endif %}">
-            <input type="radio" name="hinh_thuc_nhan" value="giao_hang" data-tai-lai{% if hinh_thuc == "giao_hang" %} checked{% endif %}{% if tom_tat.co_ke_don %} disabled{% endif %}>
+            <input id="nhan-giao-hang" type="radio" name="hinh_thuc_nhan" value="giao_hang" data-tai-lai{% if hinh_thuc == "giao_hang" %} checked{% endif %}{% if tom_tat.co_ke_don %} disabled{% endif %}>
             <i data-lucide="truck" aria-hidden="true"></i>
             <span><strong>Giao tận nơi</strong><small>{% if tom_tat.co_ke_don %}Không áp dụng cho thuốc kê đơn{% else %}Trong bán kính {{ ban_kinh_km }} km từ chi nhánh{% endif %}</small></span>
           </label>
           <label class="lua-chon-the">
-            <input type="radio" name="hinh_thuc_nhan" value="nhan_tai_quay" data-tai-lai{% if hinh_thuc == "nhan_tai_quay" %} checked{% endif %}>
+            <input id="nhan-tai-quay" type="radio" name="hinh_thuc_nhan" value="nhan_tai_quay" data-tai-lai{% if hinh_thuc == "nhan_tai_quay" %} checked{% endif %}>
             <i data-lucide="store" aria-hidden="true"></i>
             <span><strong>Nhận tại nhà thuốc</strong><small>Giữ hàng 24 giờ, thanh toán tại quầy</small></span>
           </label>
@@ -32,7 +50,7 @@
             <div class="cac-lua-chon-the cot-don">
               {% for dc in cac_dia_chi %}
                 <label class="lua-chon-the">
-                  <input type="radio" name="dia_chi" value="{{ dc.pk }}" data-tai-lai{% if dc.pk == dia_chi.pk %} checked{% endif %}>
+                  <input id="dia-chi-{{ dc.pk }}" type="radio" name="dia_chi" value="{{ dc.pk }}" data-tai-lai{% if dc.pk == dia_chi.pk %} checked{% endif %}>
                   <i data-lucide="map-pin" aria-hidden="true"></i>
                   <span><strong>{{ dc.ten_nguoi_nhan }} · {{ dc.so_dien_thoai }}</strong><small>{{ dc.dia_chi }}</small></span>
                 </label>
@@ -42,6 +60,7 @@
             <p>Bạn chưa có địa chỉ giao hàng.</p>
           {% endif %}
           <a class="lien-ket-noi-bat" href="{% url 'tai_khoan:them_dia_chi' %}?next={{ request.get_full_path|urlencode }}"><i data-lucide="plus" aria-hidden="true"></i>Thêm địa chỉ mới</a>
+          <p class="ghi-chu-khach">Tọa độ điểm giao và chi nhánh được gửi đến OSRM để tính quãng đường và phí giao hàng. <a href="{% url 'noi_dung:trang' 'chinh-sach-bao-mat' %}" target="_blank" rel="noopener">Chính sách bảo mật</a>.</p>
         </section>
       {% endif %}
 
@@ -51,7 +70,7 @@
           <div class="cac-lua-chon-the cot-don">
             {% for pa in cac_phuong_an %}
               <label class="lua-chon-the">
-                <input type="radio" name="chi_nhanh" value="{{ pa.chi_nhanh.pk }}" data-tai-lai{% if pa.chi_nhanh.pk == phuong_an.chi_nhanh.pk %} checked{% endif %}>
+                <input id="chi-nhanh-{{ pa.chi_nhanh.pk }}" type="radio" name="chi_nhanh" value="{{ pa.chi_nhanh.pk }}" data-tai-lai{% if pa.chi_nhanh.pk == phuong_an.chi_nhanh.pk %} checked{% endif %}>
                 <i data-lucide="building-2" aria-hidden="true"></i>
                 <span>
                   <strong>{{ pa.chi_nhanh.ten_chi_nhanh }}{% if forloop.first and pa.khoang_cach_met != None %} <em class="nhan-goi-y">Gần nhất</em>{% endif %}</strong>
@@ -69,6 +88,17 @@
           <p>Chưa có chi nhánh nào còn đủ toàn bộ sản phẩm. Hãy giảm số lượng trong giỏ.</p>
         {% endif %}
       </section>
+
+      {% if cac_phuong_an %}
+        <section class="the-khach" aria-labelledby="tieu-de-ban-do-dat-hang">
+          <h2 id="tieu-de-ban-do-dat-hang"><i data-lucide="map" aria-hidden="true"></i>{% if hinh_thuc == "giao_hang" %}Lộ trình giao hàng{% else %}Đường đến nhà thuốc{% endif %}</h2>
+          {{ du_lieu_ban_do|json_script:"du-lieu-ban-do-dat-hang" }}
+          <div class="ban-do ban-do-dat-hang" data-ban-do-dat-hang aria-label="Bản đồ chi nhánh và địa chỉ nhận hàng"></div>
+          <p class="tom-tat-lo-trinh" data-tom-tat-lo-trinh role="status">Đang tải lộ trình…</p>
+          {% if hinh_thuc != "giao_hang" %}<button type="button" class="nut nut-phu" data-dinh-vi-dat-hang><i data-lucide="locate-fixed" aria-hidden="true"></i>Tính đường từ vị trí hiện tại</button>{% endif %}
+          <p class="ghi-chu-khach">Bấm vào biểu tượng nhà thuốc trên bản đồ để đổi chi nhánh.</p>
+        </section>
+      {% endif %}
 
       <section class="the-khach" aria-labelledby="buoc-thanh-toan">
         <h2 id="buoc-thanh-toan"><span class="so-buoc">{% if hinh_thuc == "giao_hang" %}4{% else %}3{% endif %}</span>Thanh toán</h2>
@@ -89,7 +119,7 @@
         {% endif %}
         <div class="nhom-truong">
           <label for="ghi-chu-khach">Lời nhắn cho nhà thuốc <span class="chu-tuy-chon">(tùy chọn)</span></label>
-          <input type="text" name="ghi_chu_khach" id="ghi-chu-khach" maxlength="300" value="{{ form.ghi_chu_khach.value|default:'' }}" placeholder="Ví dụ: gọi trước khi giao">
+          <input type="text" name="ghi_chu_khach" id="ghi-chu-khach" hx-preserve maxlength="300" value="{{ form.ghi_chu_khach.value|default:'' }}" placeholder="Ví dụ: gọi trước khi giao">
         </div>
       </section>
     </div>
@@ -107,7 +137,10 @@
         {% if hinh_thuc == "giao_hang" %}<div><dt>Phí giao hàng</dt><dd>{% if phuong_an %}{{ phi_giao_hang|tien }}{% else %}—{% endif %}</dd></div>{% endif %}
         <div class="tong-cong"><dt>Tổng thanh toán</dt><dd>{{ tong_thanh_toan|tien }}</dd></div>
       </dl>
-      <button class="nut nut-rong" type="submit"{% if not phuong_an %} disabled{% endif %}>{% if hinh_thuc == "giao_hang" %}Đặt hàng{% else %}Đặt giữ tại nhà thuốc{% endif %}</button>
+      <button class="nut nut-rong" type="submit" data-xac-nhan-dat-hang{% if phuong_an %} data-du-dieu-kien{% else %} disabled{% endif %}>{% if hinh_thuc == "giao_hang" %}Đặt hàng{% else %}Đặt giữ tại nhà thuốc{% endif %}</button>
+      <button class="nut nut-phu nut-rong" type="submit" name="cap_nhat" value="1">Cập nhật lựa chọn</button>
     </aside>
+    </div>
+    {% endpartialdef %}
   </form>
 {% endblock %}

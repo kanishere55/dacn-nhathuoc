@@ -19,17 +19,17 @@
   {% endif %}
   <div class="luoi-chi-tiet-quan-ly">
     <div>
-      <section class="khoi-trang khung-bang" aria-labelledby="dong-don">
+      <section class="khoi-trang khung-bang bang-the-di-dong" aria-labelledby="dong-don">
         <h2 id="dong-don">Sản phẩm</h2>
-        <table>
-          <thead><tr><th>Thuốc</th><th>SL</th><th class="o-tien">Đơn giá</th><th class="o-tien">Thành tiền</th></tr></thead>
-          <tbody>
+        <table role="table" aria-labelledby="dong-don">
+          <thead role="rowgroup"><tr role="row"><th scope="col">Thuốc</th><th scope="col">Số lượng</th><th scope="col" class="o-tien">Đơn giá</th><th scope="col" class="o-tien">Thành tiền</th></tr></thead>
+          <tbody role="rowgroup">
             {% for dong in cac_dong %}
-              <tr>
-                <td>{{ dong.thuoc.ma_thuoc }} · {{ dong.thuoc.ten_thuoc }}{% if dong.thuoc.la_thuoc_ke_don %} <span class="nhan-trang-thai">Kê đơn</span>{% endif %}</td>
-                <td>{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</td>
-                <td class="o-tien">{{ dong.don_gia|tien }}{% if dong.phan_tram_giam %}<small>-{{ dong.phan_tram_giam }}% từ {{ dong.gia_niem_yet|tien }}</small>{% endif %}</td>
-                <td class="o-tien">{{ dong.thanh_tien|tien }}</td>
+              <tr role="row">
+                <td role="cell" data-nhan="Thuốc"><span>{{ dong.thuoc.ma_thuoc }} · {{ dong.thuoc.ten_thuoc }}{% if dong.thuoc.la_thuoc_ke_don %} <span class="nhan-trang-thai">Kê đơn</span>{% endif %}</span></td>
+                <td role="cell" data-nhan="Số lượng">{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</td>
+                <td role="cell" data-nhan="Đơn giá" class="o-tien"><span>{{ dong.don_gia|tien }}{% if dong.phan_tram_giam %}<small>-{{ dong.phan_tram_giam }}% từ {{ dong.gia_niem_yet|tien }}</small>{% endif %}</span></td>
+                <td role="cell" data-nhan="Thành tiền" class="o-tien">{{ dong.thanh_tien|tien }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -72,6 +72,9 @@
       {% if cac_hanh_dong %}
         <section class="khoi-trang" aria-labelledby="xu-ly-don">
           <h2 id="xu-ly-don">Xử lý</h2>
+          {% if han_tu_hoan_thanh %}
+            <p class="ghi-chu-khach">Đơn hoàn thành khi khách bấm “Đã nhận được hàng”{% if don.phuong_thuc_thanh_toan == "cod" %} (ghi nhận tiền COD người giao đã thu){% endif %}. Nếu khách không xác nhận, hệ thống tự hoàn thành lúc {{ han_tu_hoan_thanh|date:"H:i d/m/Y" }}. Chỉ báo “Giao không thành công” khi không giao được.</p>
+          {% endif %}
           {% for hd in cac_hanh_dong %}
             <form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')"{% elif hd.ma == "hoan_tien" %} onsubmit="return confirm('Xác nhận đã hoàn tiền cho khách?')"{% endif %}>
               {% csrf_token %}

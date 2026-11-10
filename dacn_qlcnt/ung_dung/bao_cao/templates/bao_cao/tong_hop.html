@@ -21,7 +21,7 @@
         <p class="xuat-bao-cao"><a class="nut nut-phu" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}xuat=xlsx"><i data-lucide="file-spreadsheet" aria-hidden="true"></i>Xuất Excel</a></p>
         <dl class="chi-so-bang-dieu-khien">
           <div><dt><i data-lucide="banknote" aria-hidden="true"></i>Doanh thu bán hàng</dt><dd>{{ bao_cao.doanh_thu_gop|tien }}</dd></div>
-          <div><dt><i data-lucide="rotate-ccw" aria-hidden="true"></i>Hoàn tiền cho khách</dt><dd>{{ bao_cao.tien_hoan_khach|tien }}</dd></div>
+          <div><dt><i data-lucide="rotate-ccw" aria-hidden="true"></i>Hoàn tiền trả hàng</dt><dd>{{ bao_cao.tien_hoan_tra_hang|tien }}</dd></div>
           <div><dt><i data-lucide="trending-up" aria-hidden="true"></i>Doanh thu thuần</dt><dd>{{ bao_cao.doanh_thu_thuan|tien }}</dd></div>
           <div><dt><i data-lucide="receipt" aria-hidden="true"></i>Phiếu bán / đơn hàng</dt><dd>{{ bao_cao.so_phieu_ban }} / {{ bao_cao.so_don_giu }}</dd></div>
         </dl>
@@ -42,6 +42,7 @@
               <h2 id="phuong-thuc">Đã thu theo phương thức</h2>
               <dl class="bang-tien-don">
                 {% for ten, so_tien in bao_cao.theo_phuong_thuc %}<div><dt>{{ ten }}</dt><dd>{{ so_tien|tien }}</dd></div>{% empty %}<p>Chưa có khoản thu trong kỳ.</p>{% endfor %}
+                {% if bao_cao.tien_hoan_khach %}<div><dt>Đã hoàn cho khách (hủy đơn, trả hàng)</dt><dd>{{ bao_cao.tien_hoan_khach|tien }}</dd></div>{% endif %}
                 {% if bao_cao.tien_hoan_kho %}<div><dt>Phiếu đã hoàn kho</dt><dd>{{ bao_cao.tien_hoan_kho|tien }}</dd></div>{% endif %}
               </dl>
             </section>

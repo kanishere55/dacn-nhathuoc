@@ -18,3 +18,13 @@ def url_css_giao_dien():
     except FileNotFoundError:
         return url
     return f"{url}?v={phien_ban:x}"
+
+
+@register.simple_tag
+def tep_tinh(ten_tep):
+    """Như {% static %} nhưng thêm ?v=thời điểm sửa tệp, tránh trình duyệt dùng JS/CSS cũ."""
+    url = static(ten_tep)
+    tep = finders.find(ten_tep)
+    if not tep:
+        return url
+    return f"{url}?v={Path(tep).stat().st_mtime_ns:x}"

@@ -23,6 +23,7 @@ TU_VUNG = frozenset(
     hong hu
     tuc viet
     hoa thue ty
+    quyen rieng gioi
     """.split()
 )
 
@@ -38,6 +39,12 @@ DINH_DANH_CO_BOI_CANH = {
     ("dia_chi_giao_hang", "ten_nguoi_nhan"),
     ("don_hang", "ten_nguoi_nhan"),
     ("phien_xac_thuc", "ten_dang_nhap_dang_ky"),
+    # Mã quyền là hằng số trong danh mục quyền của mã nguồn, không phải mã nghiệp vụ do người nhập.
+    ("quyen_cua_nhom", "ma_quyen"),
+    ("quyen_rieng_tai_khoan", "ma_quyen"),
+    # Thông tin tài khoản nhận tiền hoàn do khách khai, không phải tên của bản ghi trả hàng.
+    ("yeu_cau_tra_hang", "ten_ngan_hang"),
+    ("yeu_cau_tra_hang", "ten_chu_tai_khoan"),
     # Mã do ngân hàng/cổng thanh toán cấp, chỉ duy nhất trong từng phương thức.
     ("giao_dich_thanh_toan", "ma_tham_chieu"),
     # Thông tin chép từ đơn thuốc của bác sĩ khi bán thuốc kê đơn.

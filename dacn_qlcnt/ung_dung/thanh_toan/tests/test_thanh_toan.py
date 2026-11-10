@@ -308,7 +308,7 @@ class TaiQuayVaCodTests(TestCase):
         self.assertFalse(GiaoDichThanhToan.objects.filter(don_hang=don).exists())
         xac_nhan_don(self.d.nv, don)
         giao_cho_van_chuyen(self.d.nv, don)
-        xac_nhan_da_giao(self.d.nv, don)
+        xac_nhan_da_giao(self.d.khach, don)
         gd = GiaoDichThanhToan.objects.get(don_hang=don)
         self.assertEqual((gd.phuong_thuc, gd.so_tien), ("cod", don.tong_thanh_toan))
 

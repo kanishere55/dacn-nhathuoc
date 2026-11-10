@@ -1,10 +1,65 @@
 {% extends "base.html" %}
+{% load static %}
+{% block vi_tri %}Tài khoản{% endblock %}
+{% block cuoi_trang %}<script src="{% tep_tinh 'tai_khoan/js/phan_quyen.js' %}" defer></script>{% endblock %}
 {% block noi_dung %}
-  <h1>{{ tieu_de }}</h1>
-  <form method="post" class="khoi-trang form-chinh">
+  <header class="tieu-de-trang">
+    <p class="chu-dan">HỆ THỐNG</p>
+    <h1>{{ tieu_de }}</h1>
+  </header>
+  {{ bang_quyen_nhom|json_script:"bang-quyen-nhom" }}
+  <form method="post" class="form-chinh" x-data="{ vaiTro: '{{ form.vai_tro.value|default:'khach_hang' }}' }" data-form-tai-khoan>
     {% csrf_token %}
     {{ form.non_field_errors }}
-    {% for truong in form %}{% include "components/_o_nhap.html" %}{% endfor %}
-    {% include "components/_nut.html" with loai="submit" nhan="Lưu tài khoản" %}
+    <fieldset class="khoi-trang nhom-form">
+      <legend>Thông tin tài khoản</legend>
+      <div class="luoi-form">
+        {% for truong in form %}
+          {% if not truong.name|slice:":7" == "quyen__" and truong.name != "nhom_quyen" %}
+            <div>{% include "components/_o_nhap.html" %}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </fieldset>
+    <fieldset class="khoi-trang nhom-form">
+      <legend>Phân quyền</legend>
+      <p x-show="vaiTro === 'quan_tri_chuoi'" x-cloak>Quản trị chuỗi luôn có toàn quyền trên mọi chi nhánh, không thể giới hạn.</p>
+      <p x-show="vaiTro === 'khach_hang'" x-cloak>Khách hàng chỉ dùng website bán hàng, không có quyền ở khu quản lý.</p>
+      <div x-show="vaiTro === 'quan_ly_chi_nhanh' || vaiTro === 'nhan_vien'" class="khu-phan-quyen" data-khu-phan-quyen>
+        <div class="dau-phan-quyen">
+          <div class="o-nhom-quyen">{% with truong=form.nhom_quyen %}{% include "components/_o_nhap.html" %}{% endwith %}</div>
+          <div class="tom-tat-quyen" data-tom-tat-quyen role="status"></div>
+          <div class="thanh-cong-cu">
+            <button type="button" class="nut nut-phu" data-ap-nhom><i data-lucide="rotate-ccw" aria-hidden="true"></i>Đặt lại theo nhóm</button>
+            <a class="nut nut-phu" href="{% url 'tai_khoan:nhom_quyen_danh_sach' %}" target="_blank" rel="noopener"><i data-lucide="shield-check" aria-hidden="true"></i>Quản lý nhóm quyền</a>
+          </div>
+        </div>
+        <p class="ghi-chu-khach">Tick để cấp quyền, bỏ tick để thu hồi. Quyền khác với nhóm đã chọn được đánh dấu <span class="nhan-khac-nhom">khác nhóm</span> và lưu thành quyền riêng của người này.</p>
+        <div class="ma-tran-quyen">
+          {% for ten_nhom, cac_dong in form.cac_nhom_quyen_rieng %}
+            <fieldset data-nhom-module>
+              <legend>{{ ten_nhom }}</legend>
+              <div class="dau-nhom">
+                <button type="button" data-chon-het>Chọn hết</button>
+                <button type="button" data-bo-het>Bỏ hết</button>
+              </div>
+              <div class="luoi-quyen">
+                {% for quyen, truong, trong_nhom in cac_dong %}
+                  <label class="o-quyen" data-o-quyen>
+                    {{ truong }}
+                    <span>{{ quyen.nhan }}{% if quyen.mo_ta %}<small class="block">{{ quyen.mo_ta }}</small>{% endif %}</span>
+                    <em class="nhan-khac-nhom" data-nhan-khac hidden>khác nhóm</em>
+                  </label>
+                {% endfor %}
+              </div>
+            </fieldset>
+          {% endfor %}
+        </div>
+      </div>
+    </fieldset>
+    <div class="thanh-cong-cu hanh-dong-form">
+      <button class="nut" type="submit">Lưu tài khoản</button>
+      <a class="nut nut-phu" href="{% url 'tai_khoan:danh_sach' %}">Quay lại danh sách</a>
+    </div>
   </form>
 {% endblock %}

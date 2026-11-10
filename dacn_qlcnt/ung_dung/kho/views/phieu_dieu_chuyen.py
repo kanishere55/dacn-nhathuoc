@@ -1,34 +1,29 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
 
 from ..forms import DongThuocFormSet, PhieuDieuChuyenForm
 from ..models import PhieuDieuChuyen
-from ..selectors import lay_phieu
+from ..selectors import lay_phieu_dieu_chuyen
 from ..services.phieu_dieu_chuyen import dieu_chuyen
 from . import chung_tu
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("dieu_chuyen.xem")
 def danh_sach(request):
-    return render(
+    return chung_tu.hien_danh_sach(
         request,
-        "kho/danh_sach_phieu.html",
-        {
-            "tieu_de": "Điều chuyển",
-            "cac_phieu": lay_phieu(request.user, PhieuDieuChuyen, "chi_nhanh_nguon"),
-            "url_tao": (
-                "kho:phieu_dieu_chuyen_tao"
-                if co_vai_tro(request.user, "quan_ly_chi_nhanh")
-                else None
-            ),
-            "url_chi_tiet": "kho:phieu_dieu_chuyen_chi_tiet",
-        },
+        PhieuDieuChuyen,
+        lay_phieu_dieu_chuyen(request.user),
+        tieu_de="Điều chuyển",
+        url_tao="kho:phieu_dieu_chuyen_tao" if co_quyen(request.user, "dieu_chuyen.tao") else None,
+        url_chi_tiet="kho:phieu_dieu_chuyen_chi_tiet",
+        chi_nhanh="chi_nhanh_nguon",
     )
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_quyen("dieu_chuyen.tao")
 def tao(request):
     form = PhieuDieuChuyenForm(request.POST or None, nguoi=request.user)
     cac_dong = DongThuocFormSet(request.POST or None)
@@ -53,14 +48,14 @@ def tao(request):
 
 
 def _phieu(request, ma):
-    return get_object_or_404(lay_phieu(request.user, PhieuDieuChuyen, "chi_nhanh_nguon"), pk=ma)
+    return get_object_or_404(lay_phieu_dieu_chuyen(request.user), pk=ma)
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("dieu_chuyen.xem")
 def chi_tiet(request, ma):
     return chung_tu.hien_thi(request, _phieu(request, ma))
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("dieu_chuyen.xem")
 def pdf(request, ma):
     return chung_tu.tra_pdf(request, _phieu(request, ma))

@@ -5,11 +5,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from ung_dung.ban_hang.services.dat_hang import dat_giu
-from ung_dung.chung.permissions import kiem_tra_vai_tro, la_quan_tri
+from ung_dung.chung.permissions import co_quyen, kiem_tra_vai_tro
 
-from ..selectors import lay_ban_do_nhiet, tim_chi_nhanh
+from ..selectors import lay_ban_do_nhiet, lay_chi_nhanh_ban_do, tim_chi_nhanh
 from ..services.dia_chi import dia_chi_tu_toa_do, tim_dia_chi
 from .serializers import (
+    ChiNhanhGanSerializer,
     DatGiuSerializer,
     NhietSerializer,
     TimDiaChiSerializer,
@@ -24,6 +25,22 @@ def tim_kiem(request):
     form = TimKiemSerializer(data=request.data)
     form.is_valid(raise_exception=True)
     return Response({"ket_qua": tim_chi_nhanh(**form.validated_data)})
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def chi_nhanh_gan(request):
+    """Chi nhánh đang hoạt động, sắp theo khoảng cách PostGIS tới vị trí người xem."""
+    form = ChiNhanhGanSerializer(data=request.query_params)
+    form.is_valid(raise_exception=True)
+    du_lieu = form.validated_data
+    return Response(
+        {
+            "ket_qua": lay_chi_nhanh_ban_do(
+                du_lieu.get("kinh_do"), du_lieu.get("vi_do"), du_lieu.get("ban_kinh_met") or None
+            )
+        }
+    )
 
 
 @api_view(["POST"])
@@ -50,7 +67,7 @@ def tao_dat_giu(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def ban_do_nhiet(request):
-    if not la_quan_tri(request.user):
+    if not co_quyen(request.user, "ban_do_nhiet.xem"):
         return Response({"loi": "Bạn không có quyền xem bản đồ nhiệt."}, status=403)
     form = NhietSerializer(data=request.query_params)
     form.is_valid(raise_exception=True)

@@ -2,38 +2,41 @@
   <table>
     <thead>
       <tr>
+        {% if co_anh %}<th class="o-anh-nho" scope="col"><span class="chu-tuy-chon">Ảnh</span></th>{% endif %}
         {% for cot in cac_cot %}
-          <th>{{ cot }}</th>
+          <th scope="col">{{ cot }}</th>
         {% endfor %}
         {% if duoc_sua %}
-          <th>Thao tác</th>
+          <th scope="col">Thao tác</th>
         {% endif %}
       </tr>
     </thead>
     <tbody>
-      {% for ma,dong in cac_dong %}
+      {% for dong in cac_dong %}
         <tr>
-          {% for o in dong %}
-            <td>{{ o }}</td>
+          {% if co_anh %}
+            <td class="o-anh-nho">
+              <span class="anh-nho">
+                {% if dong.id_anh %}
+                  <img src="{% if loai == 'thuoc' %}{% url 'danh_muc:anh_thuoc' dong.id_anh %}{% else %}{% url 'danh_muc:anh_chi_nhanh' dong.id_anh %}{% endif %}" alt="Ảnh {{ dong.ten }}" loading="lazy" width="48" height="48">
+                {% else %}
+                  <i data-lucide="{% if loai == 'thuoc' %}pill{% else %}store{% endif %}" aria-hidden="true"></i>
+                {% endif %}
+              </span>
+            </td>
+          {% endif %}
+          {% for o in dong.o %}
+            <td>{% if co_anh and forloop.first %}<span class="anh-nho-cot"><span>{{ o }}</span></span>{% else %}{{ o }}{% endif %}</td>
           {% endfor %}
           {% if duoc_sua %}
-            <td><a href="{{ ma }}/sua/">Sửa</a></td>
+            <td><a href="{{ dong.ma }}/sua/">Sửa</a></td>
           {% endif %}
         </tr>
       {% empty %}
         <tr>
-          <td>Chưa có dữ liệu.</td>
+          <td colspan="{{ cac_cot|length|add:2 }}">Không có dữ liệu phù hợp bộ lọc.</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
-<nav class="phan-trang">
-  {% if trang.has_previous %}
-    <a href="?page={{ trang.previous_page_number }}&amp;q={{ request.GET.q|urlencode }}">Trước</a>
-  {% endif %}
-  <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
-  {% if trang.has_next %}
-    <a href="?page={{ trang.next_page_number }}&amp;q={{ request.GET.q|urlencode }}">Sau</a>
-  {% endif %}
-</nav>

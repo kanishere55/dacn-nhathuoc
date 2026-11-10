@@ -1,18 +1,20 @@
 {% extends "tai_khoan/khach/_khung_tai_khoan.html" %}
+{% load static %}
 {% block tieu_de %}Trả hàng đơn {{ don.ma_don_hang }} · {{ block.super }}{% endblock %}
+{% block cuoi_trang %}{{ block.super }}<script src="{% tep_tinh 'ban_hang/js/tra_hang_khach.js' %}" defer></script>{% endblock %}
 {% block noi_dung_tai_khoan %}
   <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}">Đơn của tôi</a><span aria-hidden="true">/</span><a href="{% url 'ban_hang:khach_don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a><span aria-hidden="true">/</span><span>Trả hàng</span></nav>
   <header class="tieu-de-khach"><h1>Yêu cầu trả hàng</h1><p>Gửi trước {{ han|date:"H:i d/m/Y" }}. Nhà thuốc nhận lại thuốc bị giao sai, hư hỏng hoặc hết hạn và hoàn tiền theo giá bạn đã mua.</p></header>
-  <form method="post" enctype="multipart/form-data" class="form-chinh the-khach the-form-tra-hang">
+  <form method="post" enctype="multipart/form-data" class="form-chinh the-khach the-form-tra-hang" data-form-tra-hang data-toi-da="{{ so_anh_toi_da }}" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}<p class="thong-bao thong-bao-loi" role="alert">{{ form.non_field_errors|join:" " }}</p>{% endif %}
     <fieldset class="nhom-tra-hang">
-      <legend>Thuốc cần trả</legend>
+      <legend><span class="so-buoc">1</span>Thuốc cần trả</legend>
       <ul class="dong-tra-hang">
         {% for muc in form.cac_dong_don %}
           <li>
             <span class="anh-nho-dong">{% if muc.dong.id_anh %}<img src="{% url 'danh_muc:anh_thuoc' muc.dong.id_anh %}" alt="">{% else %}<i data-lucide="pill" aria-hidden="true"></i>{% endif %}</span>
-            <label for="{{ muc.o.id_for_label }}"><strong>{{ muc.dong.thuoc.ten_thuoc }}</strong><small>Đã mua {{ muc.dong.so_luong }} · {{ muc.dong.don_gia|tien }}/{{ muc.dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></label>
+            <label for="{{ muc.o.id_for_label }}"><strong>{{ muc.dong.thuoc.ten_thuoc }}</strong><small>Đã mua {{ muc.dong.so_luong }} · {{ muc.dong.don_gia|tien }}/{{ muc.dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }} · trả tối đa {{ muc.toi_da }}</small></label>
             <input type="number" name="{{ muc.o.html_name }}" id="{{ muc.o.id_for_label }}" value="{{ muc.o.value|default:0 }}" min="0" max="{{ muc.toi_da }}" inputmode="numeric">
           </li>
           {% if muc.o.errors %}<li class="loi-truong">{{ muc.o.errors|join:" " }}</li>{% endif %}
@@ -20,17 +22,46 @@
       </ul>
     </fieldset>
     <fieldset class="nhom-tra-hang">
-      <legend>Lý do</legend>
+      <legend><span class="so-buoc">2</span>Lý do</legend>
       <div class="cac-lua-chon-the cot-don">
         {% for lua_chon in form.ly_do %}
           <label class="lua-chon-the">{{ lua_chon.tag }}<i data-lucide="{% cycle 'package-x' 'package-open' 'calendar-x' 'circle-help' %}" aria-hidden="true"></i><span><strong>{{ lua_chon.choice_label }}</strong><small>{% cycle 'Thuốc khác với đơn đã đặt' 'Hộp, vỉ, chai bị rách, vỡ hoặc ẩm' 'Hạn dùng đã qua hoặc còn dưới 1 tháng' 'Lỗi khác do nhà thuốc, mô tả cụ thể bên dưới' %}</small></span></label>
         {% endfor %}
       </div>
       {% if form.ly_do.errors %}<p class="loi-truong">{{ form.ly_do.errors|join:" " }}</p>{% endif %}
+      {% include "components/_o_nhap.html" with truong=form.mo_ta %}
     </fieldset>
-    {% include "components/_o_nhap.html" with truong=form.mo_ta %}
-    {% include "components/_o_nhap.html" with truong=form.cac_anh %}
-    <p class="ghi-chu-khach">Chụp rõ hộp, vỉ thuốc và số lô, hạn dùng in trên bao bì. Tối đa 4 ảnh.</p>
+    <fieldset class="nhom-tra-hang">
+      <legend><span class="so-buoc">3</span>Ảnh minh chứng</legend>
+      <label class="o-chon-anh" data-khung-chon>
+        <i data-lucide="camera" aria-hidden="true"></i>
+        <strong>Chọn ảnh hoặc kéo thả vào đây</strong>
+        <small>Chụp rõ hộp, vỉ thuốc và số lô, hạn dùng in trên bao bì. Tối đa {{ so_anh_toi_da }} ảnh.</small>
+        <input type="file" name="{{ form.cac_anh.html_name }}" multiple accept="image/jpeg,image/png,image/webp" data-o-anh>
+      </label>
+      <ul class="xem-truoc-anh" data-xem-truoc aria-label="Ảnh đã chọn"></ul>
+      <p class="thong-bao-anh" data-thong-bao-anh role="status"></p>
+      {% if form.cac_anh.errors %}<p class="loi-truong">{{ form.cac_anh.errors|join:" " }}</p>
+      {% elif form.errors %}<p class="loi-truong">Trình duyệt không giữ ảnh sau khi gửi lỗi, bạn chọn lại ảnh giúp nhà thuốc nhé.</p>{% endif %}
+    </fieldset>
+    <fieldset class="nhom-tra-hang" x-data="{ cach: '{{ form.hinh_thuc_hoan_tien.value|default:'chuyen_khoan' }}' }">
+      <legend><span class="so-buoc">4</span>Nhận tiền hoàn qua</legend>
+      <div class="cac-lua-chon-the">
+        {% for lua_chon in form.hinh_thuc_hoan_tien %}
+          <label class="lua-chon-the"><input type="radio" name="{{ lua_chon.data.name }}" value="{{ lua_chon.data.value }}" x-model="cach"{% if lua_chon.data.selected %} checked{% endif %}><i data-lucide="{% cycle 'landmark' 'wallet' 'store' %}" aria-hidden="true"></i><span><strong>{{ lua_chon.choice_label }}</strong><small>{% cycle 'Nhà thuốc chuyển vào tài khoản bạn khai' 'Chuyển vào ví theo số điện thoại' 'Nhận tiền mặt khi mang hàng tới chi nhánh' %}</small></span></label>
+        {% endfor %}
+      </div>
+      <datalist id="danh-sach-ngan-hang">{% for ten in cac_ngan_hang %}<option value="{{ ten }}"></option>{% endfor %}</datalist>
+      <div class="luoi-form" x-show="cach === 'chuyen_khoan'">
+        {% include "components/_o_nhap.html" with truong=form.ten_ngan_hang %}
+        {% include "components/_o_nhap.html" with truong=form.so_tai_khoan %}
+        <div class="o-rong">{% include "components/_o_nhap.html" with truong=form.ten_chu_tai_khoan %}</div>
+      </div>
+      <div class="luoi-form" x-show="cach === 'momo'" x-cloak>
+        {% include "components/_o_nhap.html" with truong=form.so_dien_thoai_momo %}
+      </div>
+      <p class="ghi-chu-khach" x-show="cach === 'tai_quay'" x-cloak>Mang thuốc cần trả tới {{ don.chi_nhanh.ten_chi_nhanh }} ({{ don.chi_nhanh.dia_chi }}); nhân viên kiểm hàng và trả tiền mặt.</p>
+    </fieldset>
     <div class="hanh-dong-khach">
       <button class="nut" type="submit"><i data-lucide="send" aria-hidden="true"></i>Gửi yêu cầu</button>
       <a class="nut nut-phu" href="{% url 'ban_hang:khach_don_hang_chi_tiet' don.pk %}">Hủy</a>

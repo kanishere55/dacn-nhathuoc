@@ -53,9 +53,14 @@ def ngu_canh_nhap_ma(phien, form, **them):
 
 
 def _trang_sau_dang_nhap(request, nguoi, quay_lai):
+    hop_le = la_duong_dan_noi_bo(request, quay_lai)
     if co_vai_tro(nguoi, *NHAN_SU_CHUOI):
+        # Nhân sự quay lại đúng trang quản lý đang mở dở (ví dụ khi hết phiên), còn lại về bảng điều khiển.
+        quan_ly = reverse("chung:bang_dieu_khien")
+        if hop_le and quay_lai.startswith(quan_ly):
+            return redirect(quay_lai)
         return redirect("chung:bang_dieu_khien")
-    if la_duong_dan_noi_bo(request, quay_lai):
+    if hop_le:
         return redirect(quay_lai)
     return redirect("chung:trang_chu")
 

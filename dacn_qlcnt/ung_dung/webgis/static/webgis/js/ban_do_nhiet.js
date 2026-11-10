@@ -42,8 +42,8 @@
         luong.textContent = diem.so_luong.toLocaleString('vi-VN') + ' ' + donVi.toLocaleLowerCase('vi-VN');
         dong.append(ten, luong);
         nhan.textContent = ten.textContent + ' · ' + luong.textContent;
-        L.circleMarker([diem.vi_do, diem.kinh_do], {
-          radius: 5, color: '#116b54', fillColor: '#fff', fillOpacity: 0.9,
+        L.marker([diem.vi_do, diem.kinh_do], {
+          icon: window.bieuTuongNhaThuoc({noiBat: diem.so_luong === 0}), title: diem.ten_chi_nhanh,
         }).bindPopup(nhan).addTo(chiNhanh);
         return dong;
       }));

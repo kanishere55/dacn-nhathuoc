@@ -1,23 +1,27 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from ung_dung.chung.permissions import la_quan_tri, yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_quyen, thay_toan_chuoi, yeu_cau_quyen
 
+from ..loc import loc_lo_thuoc
 from ..models import LoThuoc
 from ..selectors import lay_cac_lo
 from ..services.lo_thuoc import doi_dieu_kien_ban
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("lo_thuoc.xem")
 def danh_sach(request):
     return render(
         request,
         "kho/lo_thuoc.html",
-        {"cac_lo": lay_cac_lo(request.user), "duoc_sua": la_quan_tri(request.user)},
+        {
+            **loc_lo_thuoc(request).ngu_canh(lay_cac_lo(request.user)),
+            "duoc_sua": co_quyen(request.user, "lo_thuoc.sua") and thay_toan_chuoi(request.user),
+        },
     )
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi")
+@yeu_cau_quyen("lo_thuoc.sua")
 @require_POST
 def doi_trang_thai(request, ma):
     lo = get_object_or_404(LoThuoc, pk=ma)

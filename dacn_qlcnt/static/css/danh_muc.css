@@ -24,12 +24,19 @@
     background: #f4f7f4;
     overflow: hidden;
   }
+  /* Ảnh chụp thật có nền và tỉ lệ khác nhau: phủ kín khung vuông, căn giữa để mọi thẻ đều nhau. */
   .anh-the-thuoc img {
+    position: absolute;
+    inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    padding: 8px;
-    mix-blend-mode: multiply;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.25s ease;
+  }
+  .the-thuoc:hover .anh-the-thuoc img {
+    transform: scale(1.04);
   }
   .anh-thay-the {
     display: grid;
@@ -229,12 +236,27 @@
     background: #f4f7f4;
     overflow: hidden;
   }
-  .anh-chinh-thuoc img {
+  /* Ảnh lớn: hiện trọn ảnh, phần trống lấp bằng chính ảnh làm mờ nên không còn dải nền lệch trên/dưới. */
+  .anh-chinh-thuoc .khung-anh-mo {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .anh-chinh-thuoc .khung-anh-mo::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    background: var(--nen) center / cover no-repeat;
+    filter: blur(22px) saturate(1.1);
+    opacity: 0.55;
+  }
+  .anh-chinh-thuoc .khung-anh-mo img {
+    position: relative;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 16px;
-    mix-blend-mode: multiply;
   }
   .anh-chinh-thuoc .anh-thay-the {
     width: 120px;
@@ -252,7 +274,8 @@
   }
   .anh-nho-thuoc button {
     aspect-ratio: 1;
-    padding: 4px;
+    padding: 0;
+    overflow: hidden;
     border: 1.5px solid var(--vien);
     border-radius: 8px;
     background: #f4f7f4;
@@ -262,9 +285,10 @@
     border-color: var(--color-chinh);
   }
   .anh-nho-thuoc img {
+    display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
   }
   .thong-tin-chinh-thuoc h1 {
     margin: 10px 0 4px;
@@ -292,7 +316,7 @@
   }
   .gia-goc-khach {
     margin-top: 4px;
-    color: var(--chu-phu);
+    color: #4e6056;
     font-size: 13px;
   }
   .mo-ta-ngan-thuoc {
@@ -342,7 +366,7 @@
     margin-bottom: 14px;
   }
   .thong-tin-chi-nhanh:not(:has(.anh-chi-nhanh)) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .anh-chi-nhanh {
     display: grid;
@@ -401,7 +425,7 @@
     .khung-danh-muc,
     .chi-tiet-thuoc,
     .thong-tin-chi-nhanh {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .loc-danh-muc {
       position: static;
@@ -506,7 +530,8 @@
     fill: #f2a516;
   }
   .diem-danh-gia small {
-    color: var(--chu-phu);
+    color: #4e6056;
+    font-size: 13px;
   }
   .phan-bo-sao {
     display: grid;
@@ -633,7 +658,7 @@
     fill: #f2a516;
   }
   .tom-tat-sao span {
-    color: var(--chu-phu);
+    color: #4e6056;
     font-weight: 400;
   }
 }

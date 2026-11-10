@@ -7,11 +7,15 @@
   <meta name="htmx-config" content='{"historyCacheSize":0,"allowEval":false,"includeIndicatorStyles":false}'>
   <title>{% block tieu_de %}Nhà thuốc{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'bieu_tuong.svg' %}">
+  {% block css_tuong_tac %}<link rel="stylesheet" href="{% static 'vendor/choices/choices.min.css' %}">{% endblock %}
   <link rel="stylesheet" href="{% url_css_giao_dien %}">
-  <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
-  <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
   <script defer src="{% static 'vendor/lucide/lucide.min.js' %}"></script>
-  <script defer src="{% static 'chung/js/giao_dien.js' %}"></script>
+  {% block js_tuong_tac %}
+    <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+    <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
+    <script defer src="{% static 'vendor/choices/choices.min.js' %}"></script>
+  {% endblock %}
+  <script defer src="{% tep_tinh 'chung/js/giao_dien.js' %}"></script>
   {% block dau_trang %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'>

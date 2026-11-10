@@ -1,13 +1,13 @@
 from django.core.paginator import Paginator
 from django.shortcuts import render
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import yeu_cau_quyen
 
 from ..models import LOAI_EMAIL, TRANG_THAI
 from ..selectors import lay_nhat_ky_email
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi")
+@yeu_cau_quyen("email.xem")
 def nhat_ky_email(request):
     bo_loc = {
         "loai_email": request.GET.get("loai_email", ""),

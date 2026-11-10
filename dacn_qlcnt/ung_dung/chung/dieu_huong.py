@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 
-from .permissions import NHAN_SU_CHI_NHANH, co_vai_tro, la_quan_tri
+from .permissions import NHAN_SU_CHI_NHANH, co_quyen, co_vai_tro
 
 DANH_MUC = (
     ("danh_muc:chi_nhanh_danh_sach", "Chi nhánh", "store"),
@@ -26,6 +26,61 @@ KHO_QUAN_LY = (
     ("kho:phieu_kiem_ke_danh_sach", "Kiểm kê", "clipboard-check"),
     ("kho:phieu_xuat_huy_danh_sach", "Xuất hủy", "trash-2"),
 )
+BAN_HANG = (
+    ("ban_hang:phieu_ban_danh_sach", "Bán tại quầy", "receipt"),
+    ("ban_hang:don_hang_danh_sach", "Đơn hàng", "shopping-basket"),
+    ("ban_hang:tra_hang_danh_sach", "Trả hàng", "undo-2"),
+    ("ban_hang:xuat_hoa_don_danh_sach", "Hóa đơn công ty", "building-2"),
+    ("tro_chuyen:danh_sach", "Trò chuyện", "messages-square"),
+)
+PHAN_TICH = (
+    ("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"),
+    ("webgis:ban_do_nhiet", "Bản đồ nhiệt", "map"),
+    ("du_bao:ket_qua", "Dự báo", "chart-line"),
+)
+WEBSITE = (
+    ("noi_dung:banner_danh_sach", "Banner trang chủ", "gallery-horizontal"),
+    ("noi_dung:trang_danh_sach", "Trang thông tin", "file-text"),
+    ("noi_dung:tin_tuc_danh_sach", "Tin tức", "newspaper"),
+    ("noi_dung:thong_tin", "Thông tin cửa hàng", "store"),
+    ("thong_bao:nhat_ky_email", "Email hệ thống", "mail"),
+)
+# Mục menu chỉ hiện khi tài khoản có quyền xem tương ứng.
+QUYEN_MENU = {
+    "danh_muc:chi_nhanh_danh_sach": "chi_nhanh.xem",
+    "danh_muc:thuoc_danh_sach": "thuoc.xem",
+    "danh_muc:danh_muc_san_pham_danh_sach": "danh_muc_san_pham.xem",
+    "danh_muc:khuyen_mai_danh_sach": "khuyen_mai.xem",
+    "danh_muc:nhom_atc_danh_sach": "nhom_atc.xem",
+    "danh_muc:don_vi_tinh_danh_sach": "don_vi_tinh.xem",
+    "danh_muc:quy_doi_bao_goi_danh_sach": "quy_doi_bao_goi.xem",
+    "danh_muc:nha_cung_cap_danh_sach": "nha_cung_cap.xem",
+    "danh_muc:nhan_vien_danh_sach": "nhan_vien.xem",
+    "danh_muc:danh_gia_danh_sach": "danh_gia.xem",
+    "kho:ton_kho_danh_sach": "ton_kho.xem",
+    "kho:canh_bao": "ton_kho.xem",
+    "kho:phieu_nhap_danh_sach": "phieu_nhap.xem",
+    "kho:lo_thuoc_danh_sach": "lo_thuoc.xem",
+    "kho:phieu_tra_danh_sach": "phieu_tra.xem",
+    "kho:phieu_dieu_chuyen_danh_sach": "dieu_chuyen.xem",
+    "kho:phieu_kiem_ke_danh_sach": "kiem_ke.xem",
+    "kho:phieu_xuat_huy_danh_sach": "xuat_huy.xem",
+    "ban_hang:phieu_ban_danh_sach": "phieu_ban.xem",
+    "ban_hang:don_hang_danh_sach": "don_hang.xem",
+    "ban_hang:tra_hang_danh_sach": "tra_hang.xem",
+    "ban_hang:xuat_hoa_don_danh_sach": "hoa_don_cong_ty.xem",
+    "tro_chuyen:danh_sach": "tro_chuyen.dung",
+    "bao_cao:tong_hop": "bao_cao.xem",
+    "webgis:ban_do_nhiet": "ban_do_nhiet.xem",
+    "du_bao:ket_qua": "du_bao.xem",
+    "noi_dung:banner_danh_sach": "banner.sua",
+    "noi_dung:trang_danh_sach": "trang.sua",
+    "noi_dung:tin_tuc_danh_sach": "tin_tuc.sua",
+    "noi_dung:thong_tin": "thong_tin.sua",
+    "thong_bao:nhat_ky_email": "email.xem",
+    "tai_khoan:danh_sach": "tai_khoan.xem",
+    "tai_khoan:nhom_quyen_danh_sach": "phan_quyen.quan_ly",
+}
 MENU_KHACH = (
     ("chung:trang_chu", "Trang chủ", ("chung:trang_chu",)),
     (
@@ -58,7 +113,12 @@ NHOM_MENU = (
     ("Kho", tuple(ten for ten, _, _ in (*KHO, *KHO_QUAN_LY))),
     (
         "Danh mục",
-        (*(ten for ten, _, _ in DANH_MUC), "danh_muc:danh_gia_danh_sach", "tai_khoan:danh_sach"),
+        (
+            *(ten for ten, _, _ in DANH_MUC),
+            "danh_muc:danh_gia_danh_sach",
+            "tai_khoan:danh_sach",
+            "tai_khoan:nhom_quyen_danh_sach",
+        ),
     ),
     ("Phân tích", ("bao_cao:tong_hop", "webgis:ban_do_nhiet", "du_bao:ket_qua")),
     (
@@ -94,40 +154,24 @@ def dieu_huong(request):
     nguoi = getattr(request, "user", None) or AnonymousUser()
     ket_qua = getattr(request, "resolver_match", None)
     trang = ket_qua.view_name if ket_qua else ""
-    quan_tri = la_quan_tri(nguoi)
-    nhan_su = co_vai_tro(nguoi, *NHAN_SU_CHI_NHANH)
-    quan_ly = co_vai_tro(nguoi, "quan_ly_chi_nhanh")
-    noi_bo = quan_tri or nhan_su
-    cac_muc = [("chung:bang_dieu_khien", "Tổng quan", "layout-dashboard")] if noi_bo else []
-    if quan_tri:
-        cac_muc.append(("tai_khoan:danh_sach", "Tài khoản", "user-round"))
+    noi_bo = co_vai_tro(nguoi, "quan_tri_chuoi", *NHAN_SU_CHI_NHANH)
+    cac_muc = []
     if noi_bo:
-        cac_muc.extend(DANH_MUC)
-        cac_muc.extend(KHO)
-        cac_muc.append(("ban_hang:phieu_ban_danh_sach", "Bán tại quầy", "receipt"))
-    if quan_tri:
-        cac_muc.append(("danh_muc:danh_gia_danh_sach", "Đánh giá", "star"))
-    if quan_tri or quan_ly:
-        cac_muc.extend(KHO_QUAN_LY)
-        cac_muc.append(("bao_cao:tong_hop", "Báo cáo", "chart-no-axes-column"))
-    if noi_bo:
-        cac_muc.append(("ban_hang:don_hang_danh_sach", "Đơn hàng", "shopping-basket"))
-        cac_muc.append(("ban_hang:tra_hang_danh_sach", "Trả hàng", "undo-2"))
-        cac_muc.append(("ban_hang:xuat_hoa_don_danh_sach", "Hóa đơn công ty", "building-2"))
-    if nhan_su:
-        cac_muc.append(("tro_chuyen:danh_sach", "Trò chuyện", "messages-square"))
-    if quan_tri:
-        cac_muc.extend(
-            (
-                ("webgis:ban_do_nhiet", "Bản đồ nhiệt", "map"),
-                ("du_bao:ket_qua", "Dự báo", "chart-line"),
-                ("thong_bao:nhat_ky_email", "Email hệ thống", "mail"),
-                ("noi_dung:banner_danh_sach", "Banner trang chủ", "gallery-horizontal"),
-                ("noi_dung:trang_danh_sach", "Trang thông tin", "file-text"),
-                ("noi_dung:tin_tuc_danh_sach", "Tin tức", "newspaper"),
-                ("noi_dung:thong_tin", "Thông tin cửa hàng", "store"),
+        cac_muc = [
+            (ten, nhan, icon)
+            for ten, nhan, icon in (
+                ("chung:bang_dieu_khien", "Tổng quan", "layout-dashboard"),
+                *DANH_MUC,
+                *KHO,
+                *KHO_QUAN_LY,
+                *BAN_HANG,
+                *PHAN_TICH,
+                *WEBSITE,
+                ("tai_khoan:danh_sach", "Tài khoản", "user-round"),
+                ("tai_khoan:nhom_quyen_danh_sach", "Nhóm quyền", "shield-check"),
             )
-        )
+            if ten not in QUYEN_MENU or co_quyen(nguoi, QUYEN_MENU[ten])
+        ]
     phien = getattr(request, "session", None)
     return {
         "noi_bo": noi_bo,
@@ -144,7 +188,11 @@ def dieu_huong(request):
                     "nhan": nhan,
                     "bieu_tuong": icon,
                     "dang_chon": ten == trang
-                    or (ten.endswith("_danh_sach") and trang.startswith(ten[:-9])),
+                    or (
+                        ten.endswith("_danh_sach")
+                        and trang.startswith(ten[:-9])
+                        and not (ten == "tai_khoan:danh_sach" and "nhom_quyen" in trang)
+                    ),
                 }
                 for ten, nhan, icon in cac_muc
             ]

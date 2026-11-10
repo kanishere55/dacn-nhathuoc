@@ -45,7 +45,7 @@ def xu_ly_yeu_cau_xuat_hoa_don(nguoi, yeu_cau, trang_thai, ghi_chu):
         .select_related("don_hang__chi_nhanh", "don_hang__khach_hang")
         .get(pk=yeu_cau.pk)
     )
-    kiem_tra_quyen_ghi_chi_nhanh(nguoi, yeu_cau.don_hang.chi_nhanh)
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, yeu_cau.don_hang.chi_nhanh, "hoa_don_cong_ty.xu_ly")
     if yeu_cau.trang_thai != "cho_xu_ly":
         raise ValidationError("Yêu cầu này đã được xử lý.")
     if trang_thai not in ("da_xuat", "tu_choi"):

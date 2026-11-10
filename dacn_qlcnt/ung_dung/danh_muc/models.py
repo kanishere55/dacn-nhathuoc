@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Now
 
-from ung_dung.chung.anh import AnhCSDL, rang_buoc_anh
+from ung_dung.chung.anh import AnhCoNguon, AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
     SO_DIEN_THOAI,
     rang_buoc_so,
@@ -61,6 +61,13 @@ class ChiNhanh(models.Model):
         db_comment="Giờ đóng cửa hằng ngày theo giờ Việt Nam, sau giờ mở cửa.",
     )
 
+    gioi_thieu = models.TextField(
+        blank=True,
+        db_default="",
+        db_column="gioi_thieu",
+        db_comment="Giới thiệu chi nhánh hiển thị cho khách; HTML định dạng đã làm sạch bằng nh3.",
+    )
+
     class Meta:
         db_table = "chi_nhanh"
         db_table_comment = "Mỗi hàng là một chi nhánh trong chuỗi mô phỏng."
@@ -80,6 +87,7 @@ class ChiNhanh(models.Model):
                 condition=Q(gio_dong_cua__gt=F("gio_mo_cua")),
                 name=ten_rang_buoc("kiem_tra", "chi_nhanh", "gio_dong_sau_gio_mo"),
             ),
+            *rang_buoc_van_ban("chi_nhanh", "gioi_thieu", rong=True, nhieu_dong=True),
         ]
 
     def __str__(self):
@@ -292,41 +300,14 @@ class Thuoc(models.Model):
         db_column="mo_ta_ngan",
         db_comment="Mô tả ngắn hiện ở thẻ thuốc; văn bản một dòng, có thể rỗng.",
     )
-    cong_dung = models.TextField(
+    noi_dung_chi_tiet = models.TextField(
         blank=True,
         db_default="",
-        db_column="cong_dung",
-        db_comment="Công dụng, chỉ định theo tờ hướng dẫn; HTML định dạng đã làm sạch bằng nh3.",
-    )
-    cach_dung = models.TextField(
-        blank=True,
-        db_default="",
-        db_column="cach_dung",
-        db_comment="Liều dùng và cách dùng; HTML định dạng đã làm sạch bằng nh3.",
-    )
-    chong_chi_dinh = models.TextField(
-        blank=True,
-        db_default="",
-        db_column="chong_chi_dinh",
-        db_comment="Chống chỉ định; HTML định dạng đã làm sạch bằng nh3.",
-    )
-    tac_dung_phu = models.TextField(
-        blank=True,
-        db_default="",
-        db_column="tac_dung_phu",
-        db_comment="Tác dụng không mong muốn; HTML định dạng đã làm sạch bằng nh3.",
-    )
-    luu_y = models.TextField(
-        blank=True,
-        db_default="",
-        db_column="luu_y",
-        db_comment="Thận trọng và lưu ý khi dùng; HTML định dạng đã làm sạch bằng nh3.",
-    )
-    bao_quan = models.TextField(
-        blank=True,
-        db_default="",
-        db_column="bao_quan",
-        db_comment="Điều kiện bảo quản; văn bản một dòng, có thể rỗng.",
+        db_column="noi_dung_chi_tiet",
+        db_comment=(
+            "Nội dung chi tiết hiển thị cho khách (công dụng, liều dùng, chống chỉ định, bảo quản...); "
+            "một khung soạn thảo, HTML định dạng đã làm sạch bằng nh3."
+        ),
     )
 
     class Meta:
@@ -352,15 +333,10 @@ class Thuoc(models.Model):
                     "nuoc_san_xuat",
                     "so_dang_ky",
                     "mo_ta_ngan",
-                    "bao_quan",
                 )
                 for rang_buoc in rang_buoc_van_ban("thuoc", cot, rong=True)
             ],
-            *[
-                rang_buoc
-                for cot in ("cong_dung", "cach_dung", "chong_chi_dinh", "tac_dung_phu", "luu_y")
-                for rang_buoc in rang_buoc_van_ban("thuoc", cot, rong=True, nhieu_dong=True)
-            ],
+            *rang_buoc_van_ban("thuoc", "noi_dung_chi_tiet", rong=True, nhieu_dong=True),
         ]
 
     def __str__(self):
@@ -521,7 +497,7 @@ class DanhMucSanPham(models.Model):
         return str(self.ten_danh_muc_san_pham)
 
 
-class AnhThuoc(AnhCSDL):
+class AnhThuoc(AnhCoNguon):
     id_anh_thuoc = models.BigAutoField(
         primary_key=True,
         db_column="id_anh_thuoc",
@@ -547,10 +523,10 @@ class AnhThuoc(AnhCSDL):
                 name=ten_rang_buoc("chi_muc", "anh_thuoc", "id_thuoc", "thu_tu"),
             )
         ]
-        constraints = rang_buoc_anh("anh_thuoc")
+        constraints = rang_buoc_anh("anh_thuoc", co_nguon=True)
 
 
-class AnhChiNhanh(AnhCSDL):
+class AnhChiNhanh(AnhCoNguon):
     id_anh_chi_nhanh = models.BigAutoField(
         primary_key=True,
         db_column="id_anh_chi_nhanh",
@@ -576,7 +552,28 @@ class AnhChiNhanh(AnhCSDL):
                 name=ten_rang_buoc("chi_muc", "anh_chi_nhanh", "id_chi_nhanh", "thu_tu"),
             )
         ]
-        constraints = rang_buoc_anh("anh_chi_nhanh")
+        constraints = rang_buoc_anh("anh_chi_nhanh", co_nguon=True)
+
+
+class AnhNoiDung(AnhCSDL):
+    id_anh_noi_dung = models.BigAutoField(
+        primary_key=True,
+        db_column="id_anh_noi_dung",
+        db_comment="Định danh nội bộ PostgreSQL cấp, dùng trên đường dẫn ảnh.",
+    )
+    tai_khoan = models.ForeignKey(
+        "tai_khoan.TaiKhoan",
+        on_delete=models.PROTECT,
+        db_column="id_tai_khoan",
+        db_comment="Tài khoản nội bộ đã tải ảnh lên khi soạn nội dung.",
+    )
+
+    class Meta:
+        db_table = "anh_noi_dung"
+        db_table_comment = "Mỗi hàng là một ảnh chèn trong nội dung soạn thảo (mô tả thuốc, giới thiệu chi nhánh), lưu bytea."
+        verbose_name = "ảnh trong nội dung"
+        ordering = ["id_anh_noi_dung"]
+        constraints = rang_buoc_anh("anh_noi_dung")
 
 
 class KhuyenMai(models.Model):

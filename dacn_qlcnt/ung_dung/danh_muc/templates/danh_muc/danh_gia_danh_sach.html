@@ -11,6 +11,8 @@
     <a class="nut{% if loai != 'thuoc' %} nut-phu{% endif %}" href="?loai=thuoc"{% if loai == 'thuoc' %} aria-current="page"{% endif %}>Thuốc</a>
     <a class="nut{% if loai != 'chi_nhanh' %} nut-phu{% endif %}" href="?loai=chi_nhanh"{% if loai == 'chi_nhanh' %} aria-current="page"{% endif %}>Chi nhánh</a>
   </nav>
+  {% include "components/_thanh_loc.html" with vung="vung-danh-sach" giu_loai=loai %}
+  <div id="vung-danh-sach">
   <div class="khoi-trang khung-bang">
     <table>
       <thead><tr><th>{% if loai == 'chi_nhanh' %}Chi nhánh{% else %}Thuốc{% endif %}</th><th>Khách</th><th>Sao</th><th>Nhận xét</th><th>Ngày</th><th></th></tr></thead>
@@ -25,16 +27,11 @@
             <td><form method="post" action="{% url url_doi_hien_thi dg.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="nut nut-phu" type="submit">{% if dg.dang_hien_thi %}Ẩn{% else %}Hiện lại{% endif %}</button></form></td>
           </tr>
         {% empty %}
-          <tr><td colspan="6">Chưa có đánh giá nào.</td></tr>
+          <tr><td colspan="6">Không có đánh giá phù hợp bộ lọc.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% if trang.has_other_pages %}
-    <nav class="thanh-cong-cu" aria-label="Phân trang">
-      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
-      <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}</span>
-      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
-    </nav>
-  {% endif %}
+  {% include "components/_phan_trang.html" %}
+  </div>
 {% endblock %}

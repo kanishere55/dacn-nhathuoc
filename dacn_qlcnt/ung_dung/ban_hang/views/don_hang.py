@@ -2,21 +2,23 @@
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from ung_dung.chung.permissions import (
-    NHAN_SU_CHI_NHANH,
-    NHAN_SU_CHUOI,
-    co_vai_tro,
-    yeu_cau_vai_tro,
-)
+from ung_dung.chung.loc_danh_sach import BoLoc, OChon, o_khoang_thoi_gian
+from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
+from ung_dung.kho.loc import o_chi_nhanh
 from ung_dung.thanh_toan.selectors import giao_dich_cua_don
 from ung_dung.thanh_toan.services.cong import hoan_tien, xac_nhan_tay
 
 from ..forms import PHUONG_THUC_TAI_QUAY, XuLyDonForm
-from ..models import HINH_THUC_NHAN, TRANG_THAI_DON, PhieuBan, YeuCauXuatHoaDon
+from ..models import (
+    HINH_THUC_NHAN,
+    PHUONG_THUC_THANH_TOAN,
+    TRANG_THAI_DON,
+    PhieuBan,
+    YeuCauXuatHoaDon,
+)
 from ..selectors import dem_don_theo_trang_thai, lay_chi_tiet_don, lay_don, lay_lich_su
 from ..services import don_hang as dich_vu
 from ..services.phieu_ban import ban_tai_quay
@@ -29,7 +31,6 @@ HANH_DONG = {
     "nhan_tai_quay": ("hoan_thanh", "Khách đã nhận và thanh toán tại quầy", False),
     "xac_nhan": ("dang_chuan_bi", "Xác nhận đơn và xuất kho", False),
     "giao_van_chuyen": ("dang_giao", "Đã giao cho người vận chuyển", False),
-    "da_giao": ("hoan_thanh", "Khách đã nhận hàng", False),
     "giao_that_bai": ("giao_that_bai", "Giao không thành công", True),
     "huy": ("da_huy", "Hủy đơn", True),
 }
@@ -42,42 +43,48 @@ def cac_hanh_dong(don, nguoi):
             continue
         if ma == "nhan_tai_quay" and don.hinh_thuc_nhan != "nhan_tai_quay":
             continue
-        if ma == "da_giao" and don.hinh_thuc_nhan != "giao_hang":
-            continue
         ket_qua.append({"ma": ma, "nhan": nhan, "can_ly_do": can_ly_do})
-    if don.trang_thai_thanh_toan == "cho_hoan_tien" and nguoi.vai_tro == "quan_ly_chi_nhanh":
+    if don.trang_thai_thanh_toan == "cho_hoan_tien" and co_quyen(nguoi, "don_hang.hoan_tien"):
         ket_qua.append({"ma": "hoan_tien", "nhan": "Đã hoàn tiền cho khách", "can_ly_do": False})
     return ket_qua
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("don_hang.xem")
 def danh_sach(request):
-    bo_loc = {
-        "trang_thai": request.GET.get("trang_thai", ""),
-        "hinh_thuc_nhan": request.GET.get("hinh_thuc_nhan", ""),
-        "tim": request.GET.get("tim", "").strip()[:60],
-    }
-    if bo_loc["trang_thai"] not in dict(TRANG_THAI_DON):
-        bo_loc["trang_thai"] = ""
-    if bo_loc["hinh_thuc_nhan"] not in dict(HINH_THUC_NHAN):
-        bo_loc["hinh_thuc_nhan"] = ""
+    # Trạng thái chọn bằng thẻ phía trên (kèm số đơn); các tiêu chí còn lại nằm trên thanh lọc chung.
+    trang_thai = request.GET.get("trang_thai", "")
+    if trang_thai not in dict(TRANG_THAI_DON):
+        trang_thai = ""
+    loc = BoLoc(
+        request,
+        cac_cot_tim=(
+            "ma_don_hang",
+            "khach_hang__ten_dang_nhap",
+            "khach_hang__ho_ten",
+            "so_dien_thoai_nhan",
+        ),
+        nhan_tim="Mã đơn, khách, số điện thoại",
+        cac_o_chon=[
+            OChon("hinh_thuc_nhan", "Hình thức", HINH_THUC_NHAN, "hinh_thuc_nhan"),
+            OChon("thanh_toan", "Thanh toán", PHUONG_THUC_THANH_TOAN, "phuong_thuc_thanh_toan"),
+            *o_chi_nhanh(request.user, "chi_nhanh_id"),
+            o_khoang_thoi_gian("thoi_diem_tao", "Đặt trong"),
+        ],
+    )
     dem = dem_don_theo_trang_thai(request.user)
     return render(
         request,
         "ban_hang/don_hang_danh_sach.html",
         {
-            "trang": Paginator(lay_don(request.user, **bo_loc), 25).get_page(
-                request.GET.get("page")
-            ),
-            "bo_loc": bo_loc,
+            **loc.ngu_canh(lay_don(request.user, trang_thai=trang_thai)),
+            "trang_thai": trang_thai,
             "cac_trang_thai": [(ma, nhan, dem.get(ma, 0)) for ma, nhan in TRANG_THAI_DON],
             "tong_so": sum(dem.values()),
-            "cac_hinh_thuc": HINH_THUC_NHAN,
         },
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("don_hang.xem")
 def chi_tiet(request, ma):
     don = get_object_or_404(lay_don(request.user), pk=ma)
     cac_dong = lay_chi_tiet_don(don)
@@ -93,18 +100,21 @@ def chi_tiet(request, ma):
             "yeu_cau_hoa_don": YeuCauXuatHoaDon.objects.filter(don_hang=don).first(),
             "cac_hanh_dong": (
                 cac_hanh_dong(don, request.user)
-                if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH)
+                if co_quyen(request.user, "don_hang.xu_ly", "don_hang.hoan_tien")
                 else []
             ),
             "co_ke_don": any(dong.thuoc.la_thuoc_ke_don for dong in cac_dong),
             "cac_giao_dich": giao_dich_cua_don(don),
             "phuong_thuc_tai_quay": PHUONG_THUC_TAI_QUAY,
+            "han_tu_hoan_thanh": (
+                dich_vu.han_tu_hoan_thanh(don) if don.trang_thai == "dang_giao" else None
+            ),
         },
     )
 
 
 @require_POST
-@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
+@yeu_cau_quyen("don_hang.xu_ly", "don_hang.hoan_tien")
 def xu_ly(request, ma, hanh_dong):
     don = get_object_or_404(lay_don(request.user), pk=ma)
     form = XuLyDonForm(request.POST)
@@ -141,8 +151,6 @@ def xu_ly(request, ma, hanh_dong):
             messages.success(request, f"Đã xác nhận đơn, phiếu bán {phieu.ma_phieu_ban}.")
         elif hanh_dong == "giao_van_chuyen":
             dich_vu.giao_cho_van_chuyen(request.user, don)
-        elif hanh_dong == "da_giao":
-            dich_vu.xac_nhan_da_giao(request.user, don)
         elif hanh_dong == "giao_that_bai":
             dich_vu.bao_giao_that_bai(request.user, don, ly_do)
         elif hanh_dong == "huy":

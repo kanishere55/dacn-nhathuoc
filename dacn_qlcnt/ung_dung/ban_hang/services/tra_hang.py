@@ -1,7 +1,9 @@
 """Trả hàng: khách gửi yêu cầu cho đơn đã hoàn thành, quản lý chi nhánh duyệt và hoàn tiền.
 
-Thuốc đã bán chỉ nhận trả khi lỗi thuộc nhà thuốc (giao sai, hư hỏng, hết hạn). Hàng
-trả không quay lại tồn bán được; quản lý lập phiếu xuất hủy cho lượng đã nhận về.
+Thuốc đã bán chỉ nhận trả khi lỗi thuộc nhà thuốc (giao sai, hư hỏng, hết hạn). Khi duyệt,
+quản lý đã nhận lại hàng và kiểm từng dòng: phần còn nguyên niêm phong (thường là thuốc giao
+nhầm) được nhập lại đúng các lô đã xuất cho đơn, ghi vào phan_bo_tra_hang để truy vết; phần
+hư hỏng hoặc hết hạn không nhập lại tồn bán vì lượng đó đã trừ khỏi kho từ lúc bán.
 """
 
 from datetime import timedelta
@@ -9,18 +11,23 @@ from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import IntegerField, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from ung_dung.chung.permissions import kiem_tra_quyen_ghi_chi_nhanh, kiem_tra_vai_tro
+from ung_dung.kho.services.giao_dich import khoa_kho, thay_doi_ton
 from ung_dung.thanh_toan.services.cong import so_tien_da_thu
 from ung_dung.thanh_toan.services.ghi import ghi_ngay
 
 from ..models import (
     AnhTraHang,
+    ChiTietPhieuHoanKho,
     ChiTietTraHang,
     DonHang,
     LichSuDonHang,
+    PhanBoPhieuBan,
+    PhanBoTraHang,
     YeuCauTraHang,
 )
 from .dat_hang import KY_TU_MA_DON
@@ -83,8 +90,11 @@ def _tao_ma(thoi_diem):
 
 
 @transaction.atomic
-def tao_yeu_cau(nguoi, don, *, ly_do, mo_ta, cac_dong, cac_anh):
-    """`cac_dong`: {id dòng đơn: số lượng trả}; `cac_anh`: tệp ảnh minh chứng."""
+def tao_yeu_cau(nguoi, don, *, ly_do, mo_ta, cac_dong, cac_anh, hoan_tien=None):
+    """`cac_dong`: {id dòng đơn: số lượng trả}; `cac_anh`: tệp ảnh minh chứng.
+
+    `hoan_tien`: hinh_thuc_hoan_tien và thông tin tài khoản/ví khách muốn nhận tiền hoàn.
+    """
     kiem_tra_vai_tro(nguoi, "khach_hang")
     don = DonHang.objects.select_for_update().get(pk=don.pk)
     if don.khach_hang_id != nguoi.pk:
@@ -111,13 +121,16 @@ def tao_yeu_cau(nguoi, don, *, ly_do, mo_ta, cac_dong, cac_anh):
     )
     so_tien = min(tien_hang, max(so_tien_da_thu(don) - da_hoan, Decimal(0)))
     bay_gio = timezone.now()
-    yeu_cau = YeuCauTraHang.objects.create(
+    yeu_cau = YeuCauTraHang(
         ma_yeu_cau_tra_hang=_tao_ma(bay_gio),
         don_hang=don,
         ly_do=ly_do,
         mo_ta=mo_ta.strip(),
         so_tien_hoan=so_tien,
+        **(hoan_tien or {"hinh_thuc_hoan_tien": "tai_quay"}),
     )
+    yeu_cau.full_clean()
+    yeu_cau.save()
     ChiTietTraHang.objects.bulk_create(
         ChiTietTraHang(yeu_cau_tra_hang=yeu_cau, chi_tiet_don_hang_id=ma, so_luong=luong)
         for ma, luong in sorted(cac_dong.items())
@@ -131,7 +144,7 @@ def tao_yeu_cau(nguoi, don, *, ly_do, mo_ta, cac_dong, cac_anh):
 
 
 def _khoa_yeu_cau(nguoi, yeu_cau, trang_thai):
-    kiem_tra_quyen_ghi_chi_nhanh(nguoi, yeu_cau.don_hang.chi_nhanh, quan_ly=True)
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, yeu_cau.don_hang.chi_nhanh, "tra_hang.duyet")
     yeu_cau = (
         YeuCauTraHang.objects.select_for_update().select_related("don_hang").get(pk=yeu_cau.pk)
     )
@@ -140,10 +153,79 @@ def _khoa_yeu_cau(nguoi, yeu_cau, trang_thai):
     return yeu_cau
 
 
+def so_luong_nhap_lai_goi_y(yeu_cau):
+    """Thuốc giao nhầm còn nguyên thường bán lại được; hư hỏng, hết hạn thì không."""
+    return {
+        dong.pk: (dong.so_luong if yeu_cau.ly_do == "sai_san_pham" else 0)
+        for dong in yeu_cau.cac_dong.all()
+    }
+
+
+def _tong_theo_phan_bo(model):
+    tong = (
+        model.objects.filter(phan_bo_phieu_ban=OuterRef("pk"))
+        .order_by()
+        .values("phan_bo_phieu_ban")
+        .annotate(tong=Sum("so_luong"))
+        .values("tong")
+    )
+    return Coalesce(Subquery(tong, output_field=IntegerField()), 0)
+
+
+def _nhap_lai_kho(yeu_cau, nhap_lai):
+    """Cộng lại tồn cho phần bán lại được, vào đúng các lô đã xuất cho đơn (lô hạn xa trước)."""
+    don = yeu_cau.don_hang
+    khoa_kho(don.chi_nhanh, cho_phep_ngung=True)
+    for dong in yeu_cau.cac_dong.select_related("chi_tiet_don_hang__thuoc").order_by("pk"):
+        so_luong = nhap_lai.get(dong.pk, 0)
+        if isinstance(so_luong, bool) or not isinstance(so_luong, int):
+            raise ValidationError("Số lượng nhập lại phải là số nguyên.")
+        if so_luong < 0 or so_luong > dong.so_luong:
+            raise ValidationError(
+                f"Nhập lại {dong.chi_tiet_don_hang.thuoc.ten_thuoc} trong khoảng 0 đến {dong.so_luong}."
+            )
+        dong.so_luong_nhap_lai = so_luong
+        dong.save(update_fields=["so_luong_nhap_lai"])
+        con_lai = so_luong
+        cac_phan_bo = (
+            PhanBoPhieuBan.objects.filter(
+                chi_tiet_phieu_ban__phieu_ban__don_hang=don,
+                chi_tiet_phieu_ban__thuoc=dong.chi_tiet_don_hang.thuoc,
+            )
+            .select_related("ton_kho__lo_thuoc")
+            # Hai Subquery riêng để tổng không bị nhân bản khi nối hai quan hệ ngược.
+            .annotate(
+                da_nhap_lai=_tong_theo_phan_bo(PhanBoTraHang),
+                da_hoan_kho=_tong_theo_phan_bo(ChiTietPhieuHoanKho),
+            )
+            .order_by("-ton_kho__lo_thuoc__ngay_het_han", "-pk")
+        )
+        for phan_bo in cac_phan_bo:
+            if not con_lai:
+                break
+            con_cho = phan_bo.so_luong - phan_bo.da_nhap_lai - phan_bo.da_hoan_kho
+            lay = min(con_lai, con_cho)
+            if lay <= 0:
+                continue
+            thay_doi_ton(phan_bo.ton_kho, lay)
+            PhanBoTraHang.objects.create(
+                chi_tiet_tra_hang=dong, phan_bo_phieu_ban=phan_bo, so_luong=lay
+            )
+            con_lai -= lay
+        if con_lai:
+            raise ValidationError(
+                f"Lượng nhập lại của {dong.chi_tiet_don_hang.thuoc.ten_thuoc} vượt lượng đã xuất cho đơn."
+            )
+
+
 @transaction.atomic
-def duyet(nguoi, yeu_cau, ghi_chu=""):
-    """Quản lý đã nhận và kiểm hàng trả về; số tiền hoàn giữ theo giá đã mua."""
+def duyet(nguoi, yeu_cau, ghi_chu="", nhap_lai=None):
+    """Quản lý đã nhận lại và kiểm hàng; số tiền hoàn giữ theo giá đã mua.
+
+    `nhap_lai`: {id dòng trả: lượng còn bán được}; None dùng gợi ý theo lý do trả.
+    """
     yeu_cau = _khoa_yeu_cau(nguoi, yeu_cau, "cho_duyet")
+    _nhap_lai_kho(yeu_cau, so_luong_nhap_lai_goi_y(yeu_cau) if nhap_lai is None else nhap_lai)
     yeu_cau.trang_thai = "da_duyet"
     yeu_cau.ghi_chu_xu_ly = ghi_chu.strip()
     yeu_cau.nguoi_xu_ly = nguoi

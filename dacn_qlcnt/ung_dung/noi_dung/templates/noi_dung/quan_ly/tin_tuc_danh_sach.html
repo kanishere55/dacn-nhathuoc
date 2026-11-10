@@ -10,11 +10,13 @@
     </div>
     <a class="nut" href="{% url 'noi_dung:tin_tuc_tao' %}"><i data-lucide="plus" aria-hidden="true"></i>Viết tin</a>
   </header>
+  {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
+  <div id="vung-danh-sach">
   <div class="khoi-trang khung-bang">
     <table>
       <thead><tr><th>Tiêu đề</th><th>Thời điểm đăng</th><th>Người viết</th><th>Trạng thái</th></tr></thead>
       <tbody>
-        {% for tin in cac_tin %}
+        {% for tin in trang %}
           <tr>
             <td><a class="duong-dan-noi-dung" href="{% url 'noi_dung:tin_tuc_sua' tin.pk %}">{{ tin.tieu_de }}</a></td>
             <td>{{ tin.thoi_diem_dang|date:"H:i d/m/Y" }}</td>
@@ -22,9 +24,11 @@
             <td>{% if not tin.dang_hien_thi %}Đang ẩn{% elif tin.thoi_diem_dang > bay_gio %}Hẹn giờ{% else %}<a href="{% url 'noi_dung:khach_tin_tuc_chi_tiet' tin.duong_dan_tin_tuc %}" target="_blank" rel="noopener">Đang hiển thị</a>{% endif %}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="4">Chưa có bài nào. Bấm “Viết tin” để đăng bài đầu tiên.</td></tr>
+          <tr><td colspan="4">{% if loc.dang_loc %}Không có bài phù hợp bộ lọc.{% else %}Chưa có bài nào. Bấm “Viết tin” để đăng bài đầu tiên.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
+  {% include "components/_phan_trang.html" %}
   </div>
 {% endblock %}

@@ -13,9 +13,7 @@ from ung_dung.ban_hang.services.don_hang import _khoa_don, xac_nhan_da_thanh_toa
 from ung_dung.ban_hang.services.thong_bao_don import bao_doi_trang_thai
 from ung_dung.ban_hang.services.trang_thai import doi_trang_thai
 from ung_dung.chung.permissions import (
-    NHAN_SU_CHI_NHANH,
     kiem_tra_quyen_ghi_chi_nhanh,
-    kiem_tra_vai_tro,
 )
 
 from ..models import PHUONG_THUC, GiaoDichThanhToan
@@ -140,8 +138,7 @@ def xu_ly_ket_qua_momo(du_lieu):
 
 def xac_nhan_tay(nguoi, don, ma_tham_chieu=""):
     """Nhân viên đối chiếu sao kê và xác nhận khách đã chuyển khoản đủ."""
-    kiem_tra_vai_tro(nguoi, *NHAN_SU_CHI_NHANH)
-    kiem_tra_quyen_ghi_chi_nhanh(nguoi, don.chi_nhanh)
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, don.chi_nhanh, "don_hang.xu_ly")
     if don.trang_thai != "cho_thanh_toan":
         raise ValidationError("Đơn không ở trạng thái chờ thanh toán.")
     nhan_tien(
@@ -169,8 +166,8 @@ def hoan_tien(nguoi, don, *, phuong_thuc, ma_tham_chieu="", ghi_chu=""):
     """Quản lý chi nhánh ghi nhận đã trả lại tiền cho khách (chuyển khoản, tiền mặt, MoMo)."""
     if nguoi is None:
         raise PermissionDenied("Hoàn tiền cần người xác nhận.")
-    kiem_tra_quyen_ghi_chi_nhanh(nguoi, don.chi_nhanh, quan_ly=True)
-    don = _khoa_don(don, nguoi)
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, don.chi_nhanh, "don_hang.hoan_tien")
+    don = _khoa_don(don, nguoi, "don_hang.hoan_tien")
     if don.trang_thai_thanh_toan != "cho_hoan_tien":
         raise ValidationError("Đơn không có khoản chờ hoàn tiền.")
     so_tien = so_tien_da_thu(don)

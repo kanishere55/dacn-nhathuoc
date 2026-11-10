@@ -12,6 +12,14 @@
       <div class="thong-diep-don thong-diep-hanh-dong"><i data-lucide="wallet" aria-hidden="true"></i><span>Đơn đang chờ thanh toán qua {{ don.get_phuong_thuc_thanh_toan_display }}, hàng được giữ đến <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong>.</span><a class="nut" href="{% url 'thanh_toan:trang_thanh_toan' don.pk %}">Thanh toán ngay</a></div>
     {% elif don.con_hieu_luc and don.trang_thai == "dang_giu" %}
       <p class="thong-diep-don"><i data-lucide="clock" aria-hidden="true"></i>Hàng được giữ tại <strong>{{ don.chi_nhanh.ten_chi_nhanh }}</strong> đến <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong>. Đọc mã đơn cho nhân viên và thanh toán tại quầy.{% if co_ke_don %} Mang theo đơn thuốc của bác sĩ.{% endif %}</p>
+    {% elif duoc_xac_nhan_nhan_hang %}
+      <div class="thong-diep-don thong-diep-hanh-dong">
+        <i data-lucide="package-check" aria-hidden="true"></i>
+        <span>Đơn đang được giao. Khi đã nhận đủ thuốc, hãy bấm <strong>Đã nhận được hàng</strong>{% if don.phuong_thuc_thanh_toan == "cod" %} sau khi trả tiền cho người giao{% endif %}. Nếu bạn không bấm, đơn tự hoàn tất lúc <strong>{{ han_tu_hoan_thanh|date:"H:i d/m/Y" }}</strong>. Hạn trả hàng 7 ngày tính từ khi đơn hoàn tất.</span>
+        <form method="post" action="{% url 'ban_hang:khach_don_hang_da_nhan' don.pk %}" onsubmit="return confirm('Xác nhận bạn đã nhận đủ hàng của đơn {{ don.ma_don_hang }}?')">
+          {% csrf_token %}<button class="nut" type="submit"><i data-lucide="check" aria-hidden="true"></i>Đã nhận được hàng</button>
+        </form>
+      </div>
     {% elif don.trang_thai == "cho_xac_nhan" %}
       <p class="thong-diep-don"><i data-lucide="hourglass" aria-hidden="true"></i>Nhà thuốc sẽ xác nhận đơn trước {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}.</p>
     {% elif don.trang_thai_thanh_toan == "cho_hoan_tien" %}
@@ -25,7 +33,7 @@
       <h2 id="san-pham-don">Sản phẩm</h2>
       <ul class="dong-tom-tat">
         {% for dong in cac_dong %}
-          <li><span class="anh-nho-dong"><i data-lucide="pill" aria-hidden="true"></i></span><span><a href="{% url 'danh_muc:khach_thuoc_chi_tiet' dong.thuoc.ma_thuoc %}">{{ dong.thuoc.ten_thuoc }}</a><small>{{ dong.so_luong }} × {{ dong.don_gia|tien }}{% if dong.phan_tram_giam %} (giảm {{ dong.phan_tram_giam }}%){% endif %}</small></span><strong>{{ dong.thanh_tien|tien }}</strong></li>
+          <li><span class="anh-nho-dong">{% if dong.id_anh %}<img src="{% url 'danh_muc:anh_thuoc' dong.id_anh %}" alt="" loading="lazy">{% else %}<i data-lucide="pill" aria-hidden="true"></i>{% endif %}</span><span><a href="{% url 'danh_muc:khach_thuoc_chi_tiet' dong.thuoc.ma_thuoc %}">{{ dong.thuoc.ten_thuoc }}</a><small>{{ dong.so_luong }} × {{ dong.don_gia|tien }}{% if dong.phan_tram_giam %} (giảm {{ dong.phan_tram_giam }}%){% endif %}</small></span><strong>{{ dong.thanh_tien|tien }}</strong></li>
         {% endfor %}
       </ul>
       {% include "ban_hang/_bang_tien.html" %}
@@ -46,7 +54,11 @@
         <h2>Trả hàng</h2>
         <ul class="danh-sach-tra-hang">
           {% for yc in cac_yeu_cau_tra %}
-            <li><span><strong>{{ yc.ma_yeu_cau_tra_hang }}</strong><small>{{ yc.get_ly_do_display }} · {{ yc.thoi_diem_tao|date:"d/m/Y" }}{% if yc.ghi_chu_xu_ly %} · {{ yc.ghi_chu_xu_ly }}{% endif %}</small></span><span class="nhan-tra-hang nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span></li>
+            <li class="muc-tra-hang-khach">
+              <span><strong>{{ yc.ma_yeu_cau_tra_hang }}</strong><small>{{ yc.get_ly_do_display }} · {{ yc.thoi_diem_tao|date:"d/m/Y" }} · Hoàn {{ yc.so_tien_hoan|tien }} qua {{ yc.get_hinh_thuc_hoan_tien_display|lower }}{% if yc.ghi_chu_xu_ly %} · {{ yc.ghi_chu_xu_ly }}{% endif %}</small></span>
+              <span class="nhan-tra-hang nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span>
+              {% if yc.cac_anh.all %}<span class="anh-tra-hang-khach">{% for anh in yc.cac_anh.all %}<a href="{% url 'ban_hang:anh_tra_hang' anh.pk %}" target="_blank" rel="noopener"><img src="{% url 'ban_hang:anh_tra_hang' anh.pk %}" alt="Ảnh minh chứng {{ forloop.counter }}" loading="lazy"></a>{% endfor %}</span>{% endif %}
+            </li>
           {% endfor %}
         </ul>
       {% endif %}

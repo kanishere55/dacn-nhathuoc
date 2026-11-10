@@ -3,14 +3,14 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.views.decorators.vary import vary_on_headers
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import yeu_cau_quyen
 
 from .forms import LocBaoCaoForm
 from .selectors import lay_bao_cao
 from .xuat import xuat_excel
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("bao_cao.xem")
 @require_GET
 @vary_on_headers("HX-Request")
 def tong_hop(request):

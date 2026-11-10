@@ -11,7 +11,7 @@ from .giao_dich import khoa_chi_nhanh, ma_chung_tu, thay_doi_ton
 
 @transaction.atomic
 def xuat_huy(nguoi, chi_nhanh, loai_xuat_huy, cac_dong, ghi_chu=""):
-    khoa_chi_nhanh(nguoi, chi_nhanh, quan_ly=True)
+    khoa_chi_nhanh(nguoi, chi_nhanh, "xuat_huy.tao")
     if loai_xuat_huy not in dict(LOAI_XUAT_HUY):
         raise ValidationError("Lý do xuất hủy không hợp lệ.")
     if not cac_dong:

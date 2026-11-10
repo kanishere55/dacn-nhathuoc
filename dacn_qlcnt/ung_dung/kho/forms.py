@@ -46,10 +46,15 @@ class TepNhapExcelForm(forms.Form):
 
 
 class DongThuocForm(forms.Form):
-    thuoc = forms.ModelChoiceField(Thuoc.objects.filter(dang_hoat_dong=True), label="Thuốc")
+    thuoc = forms.ModelChoiceField(
+        Thuoc.objects.filter(dang_hoat_dong=True), label="Thuốc", empty_label="Chọn thuốc"
+    )
     so_luong = forms.IntegerField(label="Số lượng", min_value=1, max_value=2147483647)
     quy_doi_bao_goi = forms.ModelChoiceField(
-        QuyDoiBaoGoi.objects.all(), label="Bao gói (trống = đơn vị cơ sở)", required=False
+        QuyDoiBaoGoi.objects.all(),
+        label="Bao gói",
+        empty_label="Đơn vị cơ sở",
+        required=False,
     )
 
 
@@ -86,7 +91,7 @@ class PhieuTraForm(forms.Form):
 
 class DongTraForm(forms.Form):
     lo_thuoc = forms.ModelChoiceField(LoThuoc.objects.all(), label="Lô đã nhập")
-    so_luong = forms.IntegerField(label="Lượng cơ sở trả", min_value=1)
+    so_luong = forms.IntegerField(label="Lượng cơ sở trả", min_value=1, max_value=2147483647)
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,27 +136,62 @@ class DongXuatHuyForm(forms.Form):
 
 
 class PhieuKiemKeForm(forms.Form):
-    chi_nhanh = forms.ModelChoiceField(ChiNhanh.objects.none(), label="Chi nhánh")
+    chi_nhanh = forms.ModelChoiceField(
+        ChiNhanh.objects.none(), label="Chi nhánh", widget=forms.HiddenInput
+    )
     ghi_chu = forms.CharField(label="Ghi chú", required=False)
-    da_dem_thuc_te = forms.BooleanField(label="Tôi đã đếm thực tế các lô được nhập bên dưới")
+    da_dem_thuc_te = forms.BooleanField(label="Tôi đã đếm thực tế các lô có nhập số lượng")
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
 
 
-class DongKiemKeForm(forms.Form):
-    ton_kho = forms.ModelChoiceField(TonKho.objects.all(), label="Hàng tồn")
-    so_luong_so_sach = forms.IntegerField(
-        label="Số dư khi mở form", min_value=0, widget=forms.HiddenInput
-    )
-    so_luong_thuc_te = forms.IntegerField(label="Số lượng đếm thực tế", min_value=0)
+class ChonTonKho(forms.ModelChoiceField):
+    ton_theo_id = None
 
-    def __init__(self, *args, nguoi, **kwargs):
+    def label_from_instance(self, ton):
+        lo = ton.lo_thuoc
+        return f"{lo.thuoc.ten_thuoc} · lô {lo.ma_lo_thuoc} · HSD {lo.ngay_het_han:%d/%m/%Y}"
+
+    def to_python(self, value):
+        if self.ton_theo_id is None or value in self.empty_values:
+            return super().to_python(value)
+        ton = self.ton_theo_id.get(str(value))
+        if ton is None:
+            raise forms.ValidationError("Lô này không thuộc kho đã chọn.")
+        return ton
+
+
+class DongKiemKeForm(forms.Form):
+    ton_kho = ChonTonKho(TonKho.objects.none(), label="Hàng tồn", widget=forms.HiddenInput)
+    so_luong_so_sach = forms.IntegerField(
+        label="Số dư khi mở form", min_value=0, max_value=2147483647, widget=forms.HiddenInput
+    )
+    so_luong_thuc_te = forms.IntegerField(
+        label="Số lượng đếm thực tế",
+        min_value=0,
+        max_value=2147483647,
+        required=False,
+        widget=forms.NumberInput(attrs={"inputmode": "numeric"}),
+    )
+
+    def __init__(self, *args, nguoi, ton_theo_id=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["ton_kho"].queryset = TonKho.objects.filter(
-            chi_nhanh__in=lay_chi_nhanh(nguoi)
-        ).select_related("lo_thuoc__thuoc", "chi_nhanh")
+        truong = self.fields["ton_kho"]
+        truong.ton_theo_id = ton_theo_id
+        if ton_theo_id is None:
+            truong.queryset = TonKho.objects.filter(chi_nhanh__in=lay_chi_nhanh(nguoi))
+        if self.prefix:
+            self.fields["so_luong_thuc_te"].widget.attrs["aria-labelledby"] = (
+                f"{self.prefix}-nhan-so-dem {self.prefix}-nhan-lo"
+            )
+
+    @property
+    def nhan_lo(self):
+        truong = self.fields["ton_kho"]
+        ton = (truong.ton_theo_id or {}).get(str(self["ton_kho"].value()))
+        return truong.label_from_instance(ton) if ton else "Lô không còn trong kho này"
 
 
 DongNhapFormSet = formset_factory(

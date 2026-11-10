@@ -1,7 +1,7 @@
 from django.db.models import Case, Count, DecimalField, F, IntegerField, Q, Sum, When
 from django.db.models.functions import Now
 
-from ung_dung.chung.permissions import la_quan_tri
+from ung_dung.chung.permissions import thay_toan_chuoi
 from ung_dung.danh_muc.models import Thuoc
 from ung_dung.danh_muc.selectors import them_gia_va_anh
 
@@ -57,7 +57,7 @@ def lay_don(nguoi, *, trang_thai="", hinh_thuc_nhan="", tim=""):
         )
         .order_by("-pk")
     )
-    if not la_quan_tri(nguoi):
+    if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(
             **(
                 {"khach_hang": nguoi}
@@ -99,7 +99,7 @@ def lay_lich_su(don):
 
 def lay_phieu_ban(nguoi):
     tap_hop = PhieuBan.objects.select_related("chi_nhanh", "nguoi_lap", "don_hang").order_by("-pk")
-    if not la_quan_tri(nguoi):
+    if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
     return tap_hop
 
@@ -126,7 +126,7 @@ def lay_yeu_cau_xuat_hoa_don(nguoi, *, trang_thai=""):
         Case(When(trang_thai="cho_xu_ly", then=0), default=1, output_field=IntegerField()),
         "-thoi_diem_tao",
     )
-    if not la_quan_tri(nguoi):
+    if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(don_hang__chi_nhanh_id=nguoi.chi_nhanh_id)
     if trang_thai:
         tap_hop = tap_hop.filter(trang_thai=trang_thai)

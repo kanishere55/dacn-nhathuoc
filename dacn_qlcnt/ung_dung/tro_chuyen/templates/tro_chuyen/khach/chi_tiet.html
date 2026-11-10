@@ -6,4 +6,4 @@
   <header class="tieu-de-khach"><h1>{{ phong.chi_nhanh.ten_chi_nhanh }}</h1><p>Trao đổi trực tiếp với nhân viên chi nhánh.</p></header>
   {% include "tro_chuyen/_khung_tro_chuyen.html" with phong=phong cac_tin=cac_tin only %}
 {% endblock %}
-{% block cuoi_trang %}<script defer src="{% static 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}
+{% block cuoi_trang %}<script defer src="{% tep_tinh 'tro_chuyen/js/tro_chuyen.js' %}"></script>{% endblock %}

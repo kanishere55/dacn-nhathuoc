@@ -1,12 +1,12 @@
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
 
-from ung_dung.chung.permissions import NHAN_SU_CHI_NHANH, yeu_cau_vai_tro
+from ung_dung.chung.permissions import yeu_cau_quyen
 
 from ..selectors import lay_cac_phong, lay_lich_su
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
+@yeu_cau_quyen("tro_chuyen.dung")
 @require_GET
 def danh_sach(request):
     return render(
@@ -16,7 +16,7 @@ def danh_sach(request):
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
+@yeu_cau_quyen("tro_chuyen.dung")
 @require_GET
 def chi_tiet(request, ma):
     phong = get_object_or_404(lay_cac_phong(request.user), pk=ma)

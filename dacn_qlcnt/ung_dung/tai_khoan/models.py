@@ -112,6 +112,18 @@ class TaiKhoan(AbstractBaseUser):
         db_column="da_xac_thuc_email",
         db_comment="Người dùng đã nhập đúng mã OTP gửi tới email hiện tại.",
     )
+    nhom_quyen = models.ForeignKey(
+        "tai_khoan.NhomQuyen",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="cac_tai_khoan",
+        db_column="id_nhom_quyen",
+        db_comment=(
+            "Nhóm quyền của quản lý hoặc nhân viên; NULL thì dùng nhóm mặc định của vai trò. "
+            "Quản trị chuỗi luôn có mọi quyền nên không gán nhóm."
+        ),
+    )
     dia_chi_giao_hang_mac_dinh = models.ForeignKey(
         "tai_khoan.DiaChiGiaoHang",
         null=True,
@@ -123,6 +135,22 @@ class TaiKhoan(AbstractBaseUser):
             "Địa chỉ chọn sẵn khi đặt giao hàng; service chỉ cho trỏ tới địa chỉ "
             "của chính tài khoản. NULL khi chưa chọn."
         ),
+    )
+    so_lan_dang_nhap_sai = models.SmallIntegerField(
+        "số lần đăng nhập sai",
+        db_default=0,
+        db_column="so_lan_dang_nhap_sai",
+        db_comment=(
+            "Số lần nhập sai mật khẩu liên tiếp; đạt 5 thì khóa đăng nhập 15 phút và đếm lại, "
+            "đăng nhập đúng thì về 0."
+        ),
+    )
+    thoi_diem_mo_khoa_dang_nhap = models.DateTimeField(
+        "thời điểm mở khóa đăng nhập",
+        null=True,
+        blank=True,
+        db_column="thoi_diem_mo_khoa_dang_nhap",
+        db_comment="Trước thời điểm này không nhận đăng nhập bằng mật khẩu; NULL khi không bị khóa.",
     )
     thoi_diem_tao = models.DateTimeField(
         "thời điểm tạo",
@@ -160,6 +188,12 @@ class TaiKhoan(AbstractBaseUser):
                 name="kiem_tra__tai_khoan__quan_tri_he_thong_dung_vai_tro",
                 violation_error_message="Tài khoản quản trị hệ thống phải có vai trò quản trị chuỗi.",
             ),
+            models.CheckConstraint(
+                condition=Q(nhom_quyen__isnull=True)
+                | Q(vai_tro__in=["quan_ly_chi_nhanh", "nhan_vien"]),
+                name="kiem_tra__tai_khoan__nhom_quyen_dung_vai_tro",
+                violation_error_message="Chỉ quản lý chi nhánh và nhân viên được gán nhóm quyền.",
+            ),
             models.UniqueConstraint(
                 fields=["ten_dang_nhap"],
                 name="duy_nhat__tai_khoan__ten_dang_nhap",
@@ -195,6 +229,10 @@ class TaiKhoan(AbstractBaseUser):
             ),
             models.UniqueConstraint(fields=["email"], name="duy_nhat__tai_khoan__email"),
             models.CheckConstraint(
+                condition=Q(so_lan_dang_nhap_sai__gte=0, so_lan_dang_nhap_sai__lte=5),
+                name=ten_rang_buoc("kiem_tra", "tai_khoan", "so_lan_dang_nhap_sai_hop_le"),
+            ),
+            models.CheckConstraint(
                 condition=Q(da_xac_thuc_email=False) | Q(email__isnull=False),
                 name="kiem_tra__tai_khoan__xac_thuc_can_email",
             ),
@@ -223,6 +261,17 @@ class TaiKhoan(AbstractBaseUser):
 
     def __str__(self):
         return self.ten_dang_nhap
+
+    def quyen_hieu_luc(self):
+        """Tập mã quyền đang có; tính một lần cho mỗi đối tượng người dùng."""
+        from .services.quyen import tinh_quyen_hieu_luc
+
+        if not hasattr(self, "_quyen_hieu_luc"):
+            self._quyen_hieu_luc = tinh_quyen_hieu_luc(self)
+        return self._quyen_hieu_luc
+
+    def co_quyen(self, *ma_quyen):
+        return any(ma in self.quyen_hieu_luc() for ma in ma_quyen)
 
 
 def tao_ma_uuid():
@@ -472,3 +521,142 @@ class PhienXacThuc(models.Model):
 
     def __str__(self):
         return f"{self.get_loai_xac_thuc_display()} · {self.email}"
+
+
+class NhomQuyen(models.Model):
+    BANG = "nhom_quyen"
+
+    id_nhom_quyen = models.BigAutoField(
+        primary_key=True,
+        db_column="id_nhom_quyen",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    ma_nhom_quyen = models.TextField(
+        db_column="ma_nhom_quyen", db_comment="Mã nhóm do quản trị nhập; chữ hoa, số, gạch ngang."
+    )
+    ten_nhom_quyen = models.TextField(
+        db_column="ten_nhom_quyen",
+        db_comment="Tên nhóm hiển thị khi gán quyền, ví dụ Dược sĩ phụ trách kho; một dòng.",
+    )
+    mo_ta = models.TextField(
+        blank=True,
+        db_default="",
+        db_column="mo_ta",
+        db_comment="Ghi chú phạm vi của nhóm; một dòng, có thể rỗng.",
+    )
+    vai_tro_mac_dinh = models.TextField(
+        null=True,
+        blank=True,
+        db_column="vai_tro_mac_dinh",
+        db_comment=(
+            "Vai trò dùng nhóm này khi tài khoản chưa được gán nhóm riêng; NULL với nhóm "
+            "do quản trị tự tạo. Mỗi vai trò chỉ có một nhóm mặc định."
+        ),
+    )
+    thoi_diem_tao = models.DateTimeField(
+        db_default=Now(), db_column="thoi_diem_tao", db_comment="Thời điểm tạo nhóm."
+    )
+
+    class Meta:
+        db_table = "nhom_quyen"
+        db_table_comment = "Mỗi hàng là một nhóm quyền có thể gán cho nhiều tài khoản nội bộ."
+        verbose_name = "nhóm quyền"
+        verbose_name_plural = "nhóm quyền"
+        ordering = ["ten_nhom_quyen"]
+        constraints = [
+            *rang_buoc_van_ban("nhom_quyen", "ma_nhom_quyen"),
+            *rang_buoc_van_ban("nhom_quyen", "ten_nhom_quyen"),
+            *rang_buoc_van_ban("nhom_quyen", "mo_ta", rong=True),
+            models.UniqueConstraint(
+                fields=["ma_nhom_quyen"],
+                name=ten_rang_buoc("duy_nhat", "nhom_quyen", "ma_nhom_quyen"),
+            ),
+            models.CheckConstraint(
+                condition=Q(vai_tro_mac_dinh__isnull=True)
+                | Q(vai_tro_mac_dinh__in=["quan_ly_chi_nhanh", "nhan_vien"]),
+                name=ten_rang_buoc("kiem_tra", "nhom_quyen", "vai_tro_mac_dinh_hop_le"),
+            ),
+            # NULL không trùng nhau, nên mỗi vai trò chỉ có một nhóm mặc định còn nhóm tự tạo thì không giới hạn.
+            models.UniqueConstraint(
+                fields=["vai_tro_mac_dinh"],
+                name=ten_rang_buoc("duy_nhat", "nhom_quyen", "vai_tro_mac_dinh"),
+            ),
+        ]
+
+    def __str__(self):
+        return str(self.ten_nhom_quyen)
+
+
+MA_QUYEN_DINH_DANG = r"^[a-z_]+\.[a-z_]+$"
+
+
+class QuyenCuaNhom(models.Model):
+    BANG = "quyen_cua_nhom"
+
+    id_quyen_cua_nhom = models.BigAutoField(
+        primary_key=True,
+        db_column="id_quyen_cua_nhom",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    nhom_quyen = models.ForeignKey(
+        "tai_khoan.NhomQuyen",
+        on_delete=models.CASCADE,
+        related_name="cac_quyen",
+        db_index=False,
+        db_column="id_nhom_quyen",
+        db_comment="Nhóm được cấp quyền.",
+    )
+    ma_quyen = models.TextField(
+        db_column="ma_quyen",
+        db_comment="Mã quyền dạng nhóm.hành_động, lấy từ danh mục quyền trong mã nguồn.",
+    )
+
+    class Meta:
+        db_table = "quyen_cua_nhom"
+        db_table_comment = "Mỗi hàng là một quyền mà một nhóm quyền được thực hiện."
+        verbose_name = "quyền của nhóm"
+        constraints = [
+            *rang_buoc_van_ban("quyen_cua_nhom", "ma_quyen", dinh_dang=MA_QUYEN_DINH_DANG),
+            models.UniqueConstraint(
+                fields=["nhom_quyen", "ma_quyen"],
+                name=ten_rang_buoc("duy_nhat", "quyen_cua_nhom", "id_nhom_quyen", "ma_quyen"),
+            ),
+        ]
+
+
+class QuyenRiengTaiKhoan(models.Model):
+    BANG = "quyen_rieng_tai_khoan"
+
+    id_quyen_rieng_tai_khoan = models.BigAutoField(
+        primary_key=True,
+        db_column="id_quyen_rieng_tai_khoan",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    tai_khoan = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="cac_quyen_rieng",
+        db_index=False,
+        db_column="id_tai_khoan",
+        db_comment="Tài khoản được tinh chỉnh quyền.",
+    )
+    ma_quyen = models.TextField(
+        db_column="ma_quyen",
+        db_comment="Mã quyền dạng nhóm.hành_động, lấy từ danh mục quyền trong mã nguồn.",
+    )
+    duoc_phep = models.BooleanField(
+        db_column="duoc_phep",
+        db_comment="TRUE cho thêm quyền ngoài nhóm; FALSE chặn quyền dù nhóm có cấp.",
+    )
+
+    class Meta:
+        db_table = "quyen_rieng_tai_khoan"
+        db_table_comment = "Mỗi hàng là một quyền được cho thêm hoặc chặn riêng cho một tài khoản."
+        verbose_name = "quyền riêng của tài khoản"
+        constraints = [
+            *rang_buoc_van_ban("quyen_rieng_tai_khoan", "ma_quyen", dinh_dang=MA_QUYEN_DINH_DANG),
+            models.UniqueConstraint(
+                fields=["tai_khoan", "ma_quyen"],
+                name=ten_rang_buoc("duy_nhat", "quyen_rieng_tai_khoan", "id_tai_khoan", "ma_quyen"),
+            ),
+        ]

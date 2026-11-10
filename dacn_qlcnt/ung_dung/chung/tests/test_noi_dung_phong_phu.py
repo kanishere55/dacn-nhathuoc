@@ -46,7 +46,7 @@ class TrinhSoanThaoTrenFormTests(TestCase):
             if gia_tri is not None
         }
         du_lieu.update(
-            cong_dung="<h2>Chỉ định</h2><ul><li>Hạ sốt</li><li>Giảm đau</li></ul><script>x</script>",
+            noi_dung_chi_tiet="<h2>Chỉ định</h2><ul><li>Hạ sốt</li><li>Giảm đau</li></ul><script>x</script>",
             dang_hoat_dong="on",
         )
         du_lieu.pop("la_thuoc_ke_don", None)
@@ -58,7 +58,7 @@ class TrinhSoanThaoTrenFormTests(TestCase):
         )
         d.thuoc.refresh_from_db()
         self.assertEqual(
-            d.thuoc.cong_dung, "<h2>Chỉ định</h2><ul><li>Hạ sốt</li><li>Giảm đau</li></ul>"
+            d.thuoc.noi_dung_chi_tiet, "<h2>Chỉ định</h2><ul><li>Hạ sốt</li><li>Giảm đau</li></ul>"
         )
         khach = self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=[d.thuoc.ma_thuoc]))
         self.assertContains(khach, "<li>Giảm đau</li>", html=False)

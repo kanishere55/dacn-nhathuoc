@@ -40,6 +40,44 @@ class KhungTaiKhoanTests(TestCase):
             Session.objects.filter(session_key=self.client.session.session_key).exists()
         )
 
+    def test_nhap_sai_5_lan_tam_khoa_dang_nhap(self):
+        from django.urls import reverse
+
+        get_user_model().objects.create_user("khoa_thu", password="Mat-khau-chi-dung-trong-test!")
+        url = reverse("tai_khoan:dang_nhap")
+        for _ in range(4):
+            phan_hoi = self.client.post(url, {"username": "khoa_thu", "password": "sai"})
+            self.assertContains(phan_hoi, "không đúng")
+        self.assertContains(
+            self.client.post(url, {"username": "khoa_thu", "password": "sai"}), "tạm khóa"
+        )
+        # Đang khóa thì mật khẩu đúng cũng không đăng nhập được.
+        phan_hoi = self.client.post(
+            url, {"username": "khoa_thu", "password": "Mat-khau-chi-dung-trong-test!"}
+        )
+        self.assertContains(phan_hoi, "tạm khóa")
+        self.assertNotIn("_auth_user_id", self.client.session)
+        tai_khoan = get_user_model().objects.get(ten_dang_nhap="khoa_thu")
+        tai_khoan.thoi_diem_mo_khoa_dang_nhap = None
+        tai_khoan.save(update_fields=["thoi_diem_mo_khoa_dang_nhap"])
+        self.client.post(url, {"username": "khoa_thu", "password": "Mat-khau-chi-dung-trong-test!"})
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_nhan_su_dang_nhap_quay_lai_trang_quan_ly_dang_mo(self):
+        get_user_model().objects.create_superuser("qt_quay_lai", password="Mat-khau-thu-2026!")
+        url = "/tai-khoan/dang-nhap/?next=/quan-ly/ban-hang/don-hang/%3Ftrang_thai%3Dhoan_thanh"
+        du_lieu = {"username": "qt_quay_lai", "password": "Mat-khau-thu-2026!"}
+        phan_hoi = self.client.post(url, du_lieu)
+        self.assertRedirects(
+            phan_hoi,
+            "/quan-ly/ban-hang/don-hang/?trang_thai=hoan_thanh",
+            fetch_redirect_response=False,
+        )
+        # Trang khách hoặc trang ngoài: nhân sự vẫn về bảng điều khiển.
+        self.client.logout()
+        phan_hoi = self.client.post("/tai-khoan/dang-nhap/?next=https://vi-du.com/", du_lieu)
+        self.assertRedirects(phan_hoi, "/quan-ly/", fetch_redirect_response=False)
+
     def test_khong_xac_thuc_tai_khoan_ngung_hoat_dong(self):
         get_user_model().objects.create_user(
             "ngung_hoat_dong", password="Mat-khau-thu!", dang_hoat_dong=False
@@ -161,6 +199,9 @@ class KhungTaiKhoanTests(TestCase):
                     "so_dien_thoai",
                     "thoi_diem_tao",
                     "id_dia_chi_giao_hang_mac_dinh",
+                    "id_nhom_quyen",
+                    "so_lan_dang_nhap_sai",
+                    "thoi_diem_mo_khoa_dang_nhap",
                 ],
             )
             self.assertTrue(all(cot[1] for cot in cac_cot))

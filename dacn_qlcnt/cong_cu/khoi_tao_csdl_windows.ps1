@@ -226,6 +226,8 @@ if ($trangThai[0] -ne '1') {
 
 & $python manage.py nap_thuoc_thuc_te
 if ($LASTEXITCODE -ne 0) { Dung 'nap_thuoc_thuc_te thất bại.' }
+& $python manage.py nap_anh_that
+if ($LASTEXITCODE -ne 0) { Dung 'nap_anh_that thất bại (cần Internet để tải ảnh thật).' }
 & $python manage.py tao_noi_dung_website
 if ($LASTEXITCODE -ne 0) { Dung 'tao_noi_dung_website thất bại.' }
 

@@ -3,9 +3,9 @@ from django.db.models import BigIntegerField, Case, F, OuterRef, Q, Subquery, Su
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from ung_dung.chung.permissions import la_quan_tri
+from ung_dung.chung.permissions import thay_toan_chuoi
 
-from .models import LoThuoc, TonKho
+from .models import LoThuoc, PhieuDieuChuyen, TonKho
 
 
 def lay_so_du(*, nguoi=None, chi_nhanh=None, bo_qua_don=None):
@@ -32,7 +32,7 @@ def lay_so_du(*, nguoi=None, chi_nhanh=None, bo_qua_don=None):
         .annotate(dang_giu=dang_giu)
         .annotate(kha_dung=F("so_luong") - F("dang_giu"))
     )
-    if nguoi is not None and not la_quan_tri(nguoi):
+    if nguoi is not None and not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
     if chi_nhanh is not None:
         tap_hop = tap_hop.filter(chi_nhanh=chi_nhanh)
@@ -86,6 +86,19 @@ def lay_bang_ton(nguoi):
     )
 
 
+def lay_ton_kiem_ke(chi_nhanh, *, tu_khoa=""):
+    tap_hop = TonKho.objects.filter(chi_nhanh=chi_nhanh).select_related(
+        "lo_thuoc__thuoc__don_vi_tinh"
+    )
+    if tu_khoa:
+        tap_hop = tap_hop.filter(
+            Q(lo_thuoc__ma_lo_thuoc__icontains=tu_khoa)
+            | Q(lo_thuoc__thuoc__ten_thuoc__icontains=tu_khoa)
+            | Q(lo_thuoc__thuoc__ma_thuoc__icontains=tu_khoa)
+        )
+    return tap_hop.order_by("lo_thuoc__thuoc__ten_thuoc", "lo_thuoc__ngay_het_han", "pk")
+
+
 def lay_canh_bao_ton_thap(nguoi):
     from ung_dung.danh_muc.models import Thuoc
     from ung_dung.danh_muc.selectors import lay_chi_nhanh
@@ -135,14 +148,24 @@ def lay_canh_bao(nguoi):
 
 def lay_phieu(nguoi, model, duong_dan="chi_nhanh"):
     tap_hop = model.objects.all().order_by("-pk")
-    if not la_quan_tri(nguoi):
+    if not thay_toan_chuoi(nguoi):
         tap_hop = tap_hop.filter(**{f"{duong_dan}_id": nguoi.chi_nhanh_id})
+    return tap_hop
+
+
+def lay_phieu_dieu_chuyen(nguoi):
+    """Phiếu điều chuyển chi nhánh được xem: cả phiếu chuyển đi lẫn phiếu chuyển đến."""
+    tap_hop = PhieuDieuChuyen.objects.all().order_by("-pk")
+    if not thay_toan_chuoi(nguoi):
+        tap_hop = tap_hop.filter(
+            Q(chi_nhanh_nguon_id=nguoi.chi_nhanh_id) | Q(chi_nhanh_dich_id=nguoi.chi_nhanh_id)
+        )
     return tap_hop
 
 
 def lay_cac_lo(nguoi):
     cac_lo = LoThuoc.objects.select_related("thuoc").order_by("ngay_het_han", "ma_lo_thuoc")
-    if not la_quan_tri(nguoi):
+    if not thay_toan_chuoi(nguoi):
         cac_lo = cac_lo.filter(tonkho__chi_nhanh_id=nguoi.chi_nhanh_id).distinct()
     return cac_lo
 

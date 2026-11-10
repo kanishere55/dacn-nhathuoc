@@ -1,6 +1,13 @@
 {% extends "base.html" %}
-{% block dau_trang %}{{ form.media.css }}{% endblock %}
-{% block cuoi_trang %}{{ form.media.js }}{% endblock %}
+{% load static %}
+{% block dau_trang %}{{ form.media.css }}{% if form.nhom_ban_do %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endif %}{% endblock %}
+{% block cuoi_trang %}{{ form.media.js }}{% if form_anh %}<script src="{% tep_tinh 'danh_muc/js/quan_ly_anh.js' %}" defer></script>{% endif %}
+  {% if form.nhom_ban_do %}
+    <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
+    <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
+    <script src="{% tep_tinh 'webgis/js/chon_vi_tri.js' %}" defer></script>
+  {% endif %}
+{% endblock %}
 {% block vi_tri %}{{ tieu_de }}{% endblock %}
 {% block noi_dung %}
   <header class="tieu-de-trang">
@@ -13,11 +20,31 @@
     {% for tieu_de_nhom, cac_truong in form.cac_nhom %}
       <fieldset class="khoi-trang nhom-form">
         {% if tieu_de_nhom %}<legend>{{ tieu_de_nhom }}</legend>{% endif %}
+        {% if form.nhom_ban_do and tieu_de_nhom == form.nhom_ban_do %}
+          <div class="chon-vi-tri" data-chon-vi-tri data-bieu-tuong="nha-thuoc" data-o-dia-chi="{{ form.dia_chi.id_for_label }}"
+               data-url-tim="{% url 'webgis:tim_dia_chi' %}" data-url-nguoc="{% url 'webgis:dia_chi_tu_toa_do' %}">
+            <div class="dieu-khien-vi-tri">
+              <label for="tim-vi-tri">Tìm địa chỉ để ghim vị trí</label>
+              <div class="tim-vi-tri">
+                <input id="tim-vi-tri" type="search" data-tu-khoa placeholder="Ví dụ: 102 Lê Thánh Tôn, Bến Thành, TP. Hồ Chí Minh" autocomplete="off">
+                <button type="button" class="nut nut-phu" data-tim><i data-lucide="search" aria-hidden="true"></i>Tìm</button>
+                <button type="button" class="nut nut-phu" data-dinh-vi title="Dùng vị trí hiện tại"><i data-lucide="locate-fixed" aria-hidden="true"></i><span class="sr-only">Vị trí hiện tại</span></button>
+              </div>
+              <p class="trang-thai-vi-tri" data-trang-thai role="status">Bấm lên bản đồ hoặc tìm địa chỉ để ghim vị trí; có thể kéo ghim tới đúng mặt tiền nhà thuốc.</p>
+              <div class="ket-qua-tim-vi-tri" data-ket-qua></div>
+              {% for truong, rong in cac_truong %}{{ truong }}{% endfor %}
+              <p class="ghi-chu-khach" data-toa-do></p>
+              {% for truong, rong in cac_truong %}{{ truong.errors }}{% endfor %}
+            </div>
+            <div class="ban-do" data-ban-do aria-label="Bản đồ chọn vị trí chi nhánh"></div>
+          </div>
+        {% else %}
         <div class="luoi-form">
           {% for truong, rong in cac_truong %}
             <div{% if rong %} class="o-rong"{% endif %}>{% include "components/_o_nhap.html" %}</div>
           {% endfor %}
         </div>
+        {% endif %}
       </fieldset>
     {% endfor %}
     <div class="thanh-cong-cu hanh-dong-form">
@@ -26,27 +53,36 @@
     </div>
   </form>
   {% if form_anh %}
-    <section class="khoi-trang" aria-labelledby="tieu-de-anh">
-      <div class="dau-khoi"><h2 id="tieu-de-anh">Ảnh hiển thị cho khách</h2><span class="nhan-trang-thai">{{ cac_anh|length }}/8 ảnh</span></div>
-      <ul class="luoi-anh-quan-ly">
+    <section class="khoi-trang vung-anh" data-vung-anh data-toi-da="8" aria-labelledby="tieu-de-anh">
+      <div class="dau-khoi"><h2 id="tieu-de-anh">Ảnh hiển thị cho khách</h2><span class="nhan-trang-thai" data-dem-anh>{{ cac_anh|length }}/8 ảnh</span></div>
+      <p class="chu-tuy-chon">Ảnh đầu tiên là ảnh đại diện. Chọn ảnh sẽ thấy ngay bản xem trước trước khi tải lên; xóa hoặc đổi ảnh đại diện không làm tải lại trang.</p>
+      <ul class="luoi-anh-quan-ly" data-luoi>
         {% for anh in cac_anh %}
-          <li>
+          <li data-id="{{ anh.pk }}">
             <img src="{% if loai == 'thuoc' %}{% url 'danh_muc:anh_thuoc' anh.pk %}{% else %}{% url 'danh_muc:anh_chi_nhanh' anh.pk %}{% endif %}" alt="Ảnh {{ forloop.counter }}" loading="lazy" width="{{ anh.chieu_rong }}" height="{{ anh.chieu_cao }}">
+            {% if anh.nguon_anh %}<small class="ghi-nguon">Nguồn: {{ anh.nguon_anh }}</small>{% endif %}
             <div>
               {% if forloop.first %}<span class="nhan-trang-thai">Ảnh đại diện</span>{% else %}
-                <form method="post" action="{% url 'danh_muc:anh_dai_dien' loai doi_tuong.pk anh.pk %}">{% csrf_token %}<button class="nut nut-phu" type="submit">Làm ảnh đại diện</button></form>
+                <form method="post" action="{% url 'danh_muc:anh_dai_dien' loai doi_tuong.pk anh.pk %}" data-anh-hanh-dong>{% csrf_token %}<button class="nut nut-phu" type="submit">Làm ảnh đại diện</button></form>
               {% endif %}
-              <form method="post" action="{% url 'danh_muc:anh_xoa' loai doi_tuong.pk anh.pk %}" onsubmit="return confirm('Xóa ảnh này?')">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
+              <form method="post" action="{% url 'danh_muc:anh_xoa' loai doi_tuong.pk anh.pk %}" data-anh-hanh-dong data-hoi-xac-nhan="Xóa ảnh này?">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
             </div>
           </li>
         {% empty %}
           <li class="khong-co-anh">Chưa có ảnh. Website sẽ hiện biểu tượng thay thế.</li>
         {% endfor %}
       </ul>
-      <form method="post" enctype="multipart/form-data" action="{% url 'danh_muc:anh_tai_len' loai doi_tuong.pk %}" class="form-chinh tai-anh">
+      <form method="post" enctype="multipart/form-data" action="{% url 'danh_muc:anh_tai_len' loai doi_tuong.pk %}" class="form-chinh tai-anh" data-form-tai-anh novalidate>
         {% csrf_token %}
-        {% with truong=form_anh.cac_anh %}{% include "components/_o_nhap.html" %}{% endwith %}
-        <button class="nut" type="submit">Tải ảnh lên</button>
+        <label class="o-chon-anh" data-khung-chon>
+          <i data-lucide="image-plus" aria-hidden="true"></i>
+          <strong>Chọn ảnh hoặc kéo thả vào đây</strong>
+          <small>{{ form_anh.cac_anh.help_text }}</small>
+          {{ form_anh.cac_anh }}
+        </label>
+        <ul class="xem-truoc-anh" data-xem-truoc aria-label="Ảnh đã chọn, chưa tải lên"></ul>
+        <button class="nut" type="submit" data-nut-tai disabled>Tải ảnh lên</button>
+        <p class="thong-bao-anh" role="status" data-thong-bao></p>
       </form>
     </section>
   {% endif %}

@@ -20,7 +20,7 @@ class DanhMucKhachTests(TestCase):
             (reverse("danh_muc:khach_thuoc_danh_sach"), d.thuoc.ten_thuoc),
             (reverse("danh_muc:khach_thuoc_chi_tiet", args=[d.thuoc.ma_thuoc]), d.thuoc.ham_luong),
             (reverse("danh_muc:khach_chi_nhanh_chi_tiet", args=[d.cn.ma_chi_nhanh]), d.cn.dia_chi),
-            (reverse("webgis:ban_do"), "Tìm chi nhánh còn đủ thuốc"),
+            (reverse("webgis:ban_do"), "Tìm nhà thuốc gần bạn"),
         ):
             with self.subTest(url=url):
                 trang = self.client.get(url)
@@ -58,7 +58,7 @@ class DanhMucKhachTests(TestCase):
 
 
 class NapThuocThucTeTests(TestCase):
-    def test_lenh_nap_thay_mo_phong_va_ve_anh(self):
+    def test_lenh_nap_thay_mo_phong_va_khong_tao_anh_ai(self):
         from django.core.management import call_command
 
         from ung_dung.kho.models import TonKho
@@ -73,7 +73,8 @@ class NapThuocThucTeTests(TestCase):
         self.assertFalse(Thuoc.objects.filter(ma_thuoc__startswith="MP-T-").exists())
         panadol = Thuoc.objects.get(ma_thuoc="TA-PANADOL-500")
         self.assertEqual((panadol.nhom_atc.ma_nhom_atc, panadol.la_thuoc_ke_don), ("N02BE", False))
-        self.assertEqual(AnhThuoc.objects.filter(thuoc=panadol).count(), 1)
+        # Ảnh thật nạp riêng bằng nap_anh_that; lệnh này không vẽ ảnh minh họa.
+        self.assertEqual(AnhThuoc.objects.filter(thuoc=panadol).count(), 0)
         self.assertTrue(Thuoc.objects.get(ma_thuoc="TA-STILNOX-10").la_thuoc_ke_don)
         self.assertFalse(
             KhuyenMai.objects.filter(thuoc__la_thuoc_ke_don=True, dang_hoat_dong=True).exists()
@@ -128,7 +129,7 @@ class DanhGiaThuocTests(TestCase):
         )
         xac_nhan_don(d.nv, don)
         giao_cho_van_chuyen(d.nv, don)
-        xac_nhan_da_giao(d.nv, don)
+        xac_nhan_da_giao(d.khach, don)
         trang = self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=[d.thuoc.ma_thuoc]))
         self.assertContains(trang, "Gửi đánh giá")
         self.client.post(url, {"so_sao": 4, "noi_dung": "Giao nhanh"})

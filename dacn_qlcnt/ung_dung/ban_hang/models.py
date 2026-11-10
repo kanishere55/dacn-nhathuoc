@@ -756,6 +756,11 @@ LY_DO_TRA_HANG = [
     ("het_han", "Hết hạn hoặc cận hạn"),
     ("khac", "Lỗi khác từ nhà thuốc"),
 ]
+HINH_THUC_HOAN_TIEN = [
+    ("chuyen_khoan", "Chuyển khoản ngân hàng"),
+    ("momo", "Ví MoMo"),
+    ("tai_quay", "Nhận tiền mặt tại nhà thuốc"),
+]
 TRANG_THAI_TRA_HANG = [
     ("cho_duyet", "Chờ duyệt"),
     ("da_duyet", "Đã duyệt, chờ hoàn tiền"),
@@ -810,6 +815,41 @@ class YeuCauTraHang(models.Model):
         blank=True,
         db_column="ghi_chu_xu_ly",
         db_comment="Lý do từ chối hoặc ghi chú của quản lý khi duyệt; rỗng khi chờ duyệt.",
+    )
+    hinh_thuc_hoan_tien = models.TextField(
+        choices=HINH_THUC_HOAN_TIEN,
+        default="tai_quay",
+        db_default="tai_quay",
+        db_column="hinh_thuc_hoan_tien",
+        db_comment="Nơi khách muốn nhận tiền hoàn: chuyen_khoan, momo hoặc tai_quay.",
+    )
+    ten_ngan_hang = models.TextField(
+        blank=True,
+        default="",
+        db_default="",
+        db_column="ten_ngan_hang",
+        db_comment="Ngân hàng nhận tiền hoàn; chỉ có khi hoàn bằng chuyển khoản.",
+    )
+    so_tai_khoan = models.TextField(
+        blank=True,
+        default="",
+        db_default="",
+        db_column="so_tai_khoan",
+        db_comment="Số tài khoản nhận tiền hoàn, 6 đến 19 chữ số; chỉ có khi chuyển khoản.",
+    )
+    ten_chu_tai_khoan = models.TextField(
+        blank=True,
+        default="",
+        db_default="",
+        db_column="ten_chu_tai_khoan",
+        db_comment="Họ tên chủ tài khoản viết hoa không dấu như trên thẻ; chỉ có khi chuyển khoản.",
+    )
+    so_dien_thoai_momo = models.TextField(
+        blank=True,
+        default="",
+        db_default="",
+        db_column="so_dien_thoai_momo",
+        db_comment="Số điện thoại ví MoMo nhận tiền hoàn; chỉ có khi hoàn qua MoMo.",
     )
     nguoi_xu_ly = models.ForeignKey(
         "tai_khoan.TaiKhoan",
@@ -869,6 +909,55 @@ class YeuCauTraHang(models.Model):
                 condition=~Q(trang_thai="tu_choi") | ~Q(ghi_chu_xu_ly=""),
                 name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "tu_choi_co_ly_do"),
             ),
+            models.CheckConstraint(
+                condition=Q(hinh_thuc_hoan_tien__in=_ma(HINH_THUC_HOAN_TIEN)),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "hinh_thuc_hoan_hop_le"),
+            ),
+            *rang_buoc_van_ban(
+                "yeu_cau_tra_hang", "ten_ngan_hang", rong=True, nhan="ten_ngan_hang"
+            ),
+            *rang_buoc_van_ban(
+                "yeu_cau_tra_hang", "so_tai_khoan", rong=True, dinh_dang=r"^([0-9]{6,19})?$"
+            ),
+            *rang_buoc_van_ban(
+                "yeu_cau_tra_hang",
+                "ten_chu_tai_khoan",
+                rong=True,
+                dinh_dang=r"^[A-Z ]*$",
+                nhan="ten_chu_tai_khoan",
+            ),
+            *rang_buoc_van_ban(
+                "yeu_cau_tra_hang",
+                "so_dien_thoai_momo",
+                rong=True,
+                dinh_dang=f"^({SO_DIEN_THOAI[1:-1]})?$",
+            ),
+            # Mỗi hình thức hoàn chỉ mang đúng thông tin của nó, đủ để quản lý chuyển tiền.
+            models.CheckConstraint(
+                condition=(
+                    Q(hinh_thuc_hoan_tien="chuyen_khoan", so_dien_thoai_momo="")
+                    & ~Q(ten_ngan_hang="")
+                    & ~Q(so_tai_khoan="")
+                    & ~Q(ten_chu_tai_khoan="")
+                )
+                | (
+                    Q(
+                        hinh_thuc_hoan_tien="momo",
+                        ten_ngan_hang="",
+                        so_tai_khoan="",
+                        ten_chu_tai_khoan="",
+                    )
+                    & ~Q(so_dien_thoai_momo="")
+                )
+                | Q(
+                    hinh_thuc_hoan_tien="tai_quay",
+                    ten_ngan_hang="",
+                    so_tai_khoan="",
+                    ten_chu_tai_khoan="",
+                    so_dien_thoai_momo="",
+                ),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_tra_hang", "thong_tin_hoan_dung_cach"),
+            ),
         ]
 
     def __str__(self):
@@ -898,6 +987,15 @@ class ChiTietTraHang(models.Model):
     so_luong = models.IntegerField(
         db_column="so_luong", db_comment="Số lượng trả theo đơn vị bán, không vượt số đã mua."
     )
+    so_luong_nhap_lai = models.IntegerField(
+        default=0,
+        db_default=0,
+        db_column="so_luong_nhap_lai",
+        db_comment=(
+            "Phần hàng trả còn nguyên niêm phong được nhập lại tồn bán; quản lý ghi khi duyệt, "
+            "phần còn lại không bán lại. 0 khi chờ duyệt."
+        ),
+    )
 
     class Meta:
         db_table = "chi_tiet_tra_hang"
@@ -913,6 +1011,52 @@ class ChiTietTraHang(models.Model):
             models.CheckConstraint(
                 condition=Q(so_luong__gt=0),
                 name=ten_rang_buoc("kiem_tra", "chi_tiet_tra_hang", "so_luong_duong"),
+            ),
+            models.CheckConstraint(
+                condition=Q(so_luong_nhap_lai__gte=0, so_luong_nhap_lai__lte=F("so_luong")),
+                name=ten_rang_buoc("kiem_tra", "chi_tiet_tra_hang", "nhap_lai_khong_vuot_so_tra"),
+            ),
+        ]
+
+
+class PhanBoTraHang(models.Model):
+    """Lượng hàng trả được nhập lại vào đúng lô đã xuất cho đơn, để truy vết tồn kho."""
+
+    id_phan_bo_tra_hang = models.BigAutoField(
+        primary_key=True,
+        db_column="id_phan_bo_tra_hang",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    chi_tiet_tra_hang = models.ForeignKey(
+        "ban_hang.ChiTietTraHang",
+        on_delete=models.PROTECT,
+        related_name="cac_phan_bo",
+        db_index=False,
+        db_column="id_chi_tiet_tra_hang",
+        db_comment="Dòng trả có phần hàng được nhập lại.",
+    )
+    phan_bo_phieu_ban = models.ForeignKey(
+        "ban_hang.PhanBoPhieuBan",
+        on_delete=models.PROTECT,
+        db_column="id_phan_bo_phieu_ban",
+        db_comment="Lượng đã xuất từ một lô khi bán đơn; hàng trả quay về đúng tồn của lô này.",
+    )
+    so_luong = models.IntegerField(
+        db_column="so_luong",
+        db_comment="Lượng cơ sở nhập lại vào lô; cộng các lần không vượt lượng đã xuất của phân bổ.",
+    )
+
+    class Meta:
+        db_table = "phan_bo_tra_hang"
+        db_table_comment = "Mỗi hàng là lượng hàng trả nhập lại vào một lô đã xuất của đơn."
+        verbose_name = "phân bổ nhập lại hàng trả"
+        constraints = [
+            *rang_buoc_so("phan_bo_tra_hang", "so_luong", duong=True),
+            models.UniqueConstraint(
+                fields=["chi_tiet_tra_hang", "phan_bo_phieu_ban"],
+                name=ten_rang_buoc(
+                    "duy_nhat", "phan_bo_tra_hang", "id_chi_tiet_tra_hang", "id_phan_bo_phieu_ban"
+                ),
             ),
         ]
 

@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
+from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from ..forms import DongXuatHuyFormSet, PhieuXuatHuyForm
 from ..models import PhieuXuatHuy
@@ -11,31 +12,28 @@ from ..services.phieu_xuat_huy import xuat_huy
 from . import chung_tu
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("xuat_huy.xem")
 def danh_sach(request):
-    return render(
+    return chung_tu.hien_danh_sach(
         request,
-        "kho/danh_sach_phieu.html",
-        {
-            "tieu_de": "Xuất hủy",
-            "cac_phieu": lay_phieu(request.user, PhieuXuatHuy).select_related(
-                "chi_nhanh", "nguoi_lap"
-            ),
-            "url_tao": (
-                "kho:phieu_xuat_huy_tao" if co_vai_tro(request.user, "quan_ly_chi_nhanh") else None
-            ),
-            "url_chi_tiet": "kho:phieu_xuat_huy_chi_tiet",
-        },
+        PhieuXuatHuy,
+        lay_phieu(request.user, PhieuXuatHuy),
+        tieu_de="Xuất hủy",
+        url_tao="kho:phieu_xuat_huy_tao" if co_quyen(request.user, "xuat_huy.tao") else None,
+        url_chi_tiet="kho:phieu_xuat_huy_chi_tiet",
     )
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_quyen("xuat_huy.tao")
 def tao(request):
     ban_dau, ban_dau_dong = None, None
     if request.method == "GET" and request.GET.get("loai") == "het_han":
         # Lập sẵn mọi lô quá hạn còn tồn; quản lý vẫn xem lại và bấm xác nhận.
-        cac_ton = lay_lo_het_han_con_ton(request.user.chi_nhanh)
-        ban_dau = {"chi_nhanh": request.user.chi_nhanh, "loai_xuat_huy": "het_han"}
+        cac_cn = lay_chi_nhanh(request.user)
+        ma_cn = request.GET.get("chi_nhanh", "")
+        chi_nhanh = cac_cn.filter(pk=ma_cn).first() if ma_cn.isdecimal() else cac_cn.first()
+        cac_ton = lay_lo_het_han_con_ton(chi_nhanh) if chi_nhanh else []
+        ban_dau = {"chi_nhanh": chi_nhanh, "loai_xuat_huy": "het_han"}
         ban_dau_dong = [{"lo_thuoc": t.lo_thuoc, "so_luong": t.kha_dung} for t in cac_ton[:50]]
         if not ban_dau_dong:
             messages.info(request, "Chi nhánh không có lô nào đã hết hạn còn tồn khả dụng.")
@@ -72,11 +70,11 @@ def _phieu(request, ma):
     return get_object_or_404(lay_phieu(request.user, PhieuXuatHuy), pk=ma)
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("xuat_huy.xem")
 def chi_tiet(request, ma):
     return chung_tu.hien_thi(request, _phieu(request, ma))
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("xuat_huy.xem")
 def pdf(request, ma):
     return chung_tu.tra_pdf(request, _phieu(request, ma))

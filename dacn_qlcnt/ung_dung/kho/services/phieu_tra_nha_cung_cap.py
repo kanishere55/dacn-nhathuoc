@@ -11,7 +11,7 @@ from .giao_dich import khoa_chi_nhanh, ma_chung_tu, thay_doi_ton
 
 @transaction.atomic
 def tra_nha_cung_cap(nguoi, phieu_nhap, cac_dong, ghi_chu=""):
-    khoa_chi_nhanh(nguoi, phieu_nhap.chi_nhanh, quan_ly=True)
+    khoa_chi_nhanh(nguoi, phieu_nhap.chi_nhanh, "phieu_tra.tao")
     if not cac_dong:
         raise ValidationError("Phiếu trả cần ít nhất một dòng.")
     phieu = PhieuTraNhaCungCap.objects.create(

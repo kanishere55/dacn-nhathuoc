@@ -4,13 +4,19 @@ from uuid import uuid4
 from django import forms
 
 from ung_dung.chung.ten_csdl import EMAIL
-from ung_dung.chung.truong_form import TruongMotDong
+from ung_dung.chung.truong_form import TruongMotDong, TruongSoDienThoai
 from ung_dung.danh_muc.forms import NhieuTepInput, TruongNhieuTep
 from ung_dung.danh_muc.models import ChiNhanh
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from .gio_hang import SO_LUONG_TOI_DA
-from .models import HINH_THUC_NHAN, LY_DO_TRA_HANG, MA_SO_THUE, PHUONG_THUC_THANH_TOAN
+from .models import (
+    HINH_THUC_HOAN_TIEN,
+    HINH_THUC_NHAN,
+    LY_DO_TRA_HANG,
+    MA_SO_THUE,
+    PHUONG_THUC_THANH_TOAN,
+)
 
 PHUONG_THUC_TAI_QUAY = [("tien_mat", "Tiền mặt"), ("chuyen_khoan", "Chuyển khoản")]
 
@@ -44,7 +50,14 @@ class PhieuBanForm(DonThuocForm):
 
     def __init__(self, *args, nguoi, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["chi_nhanh"].queryset = lay_chi_nhanh(nguoi)
+        cac_chi_nhanh = lay_chi_nhanh(nguoi)
+        truong = self.fields["chi_nhanh"]
+        truong.queryset = cac_chi_nhanh
+        hai_chi_nhanh = list(cac_chi_nhanh[:2])
+        self.chi_nhanh_mac_dinh = hai_chi_nhanh[0] if len(hai_chi_nhanh) == 1 else None
+        if self.chi_nhanh_mac_dinh:
+            self.initial["chi_nhanh"] = self.chi_nhanh_mac_dinh.pk
+            truong.widget = forms.HiddenInput()
 
 
 class SuaSoLuongGioForm(forms.Form):
@@ -84,6 +97,19 @@ class XuLyDonForm(DonThuocForm):
         return ma
 
 
+def chu_in_hoa_khong_dau(chuoi):
+    """Tên chủ tài khoản ngân hàng in trên thẻ: chữ in hoa, không dấu, một khoảng trắng."""
+    import unicodedata
+
+    chuoi = (chuoi or "").replace("đ", "d").replace("Đ", "D")
+    khong_dau = "".join(
+        ky_tu
+        for ky_tu in unicodedata.normalize("NFD", chuoi)
+        if unicodedata.category(ky_tu) != "Mn"
+    )
+    return " ".join(re.sub(r"[^A-Za-z ]", " ", khong_dau).upper().split())
+
+
 class TraHangForm(forms.Form):
     """Khách chọn số lượng trả cho từng dòng đơn, lý do, mô tả và ảnh minh chứng."""
 
@@ -99,6 +125,32 @@ class TraHangForm(forms.Form):
         error_messages={"required": "Cần ít nhất một ảnh chụp tình trạng thuốc."},
     )
 
+    hinh_thuc_hoan_tien = forms.ChoiceField(
+        label="Nhận tiền hoàn qua",
+        choices=HINH_THUC_HOAN_TIEN,
+        initial="chuyen_khoan",
+        widget=forms.RadioSelect,
+    )
+    ten_ngan_hang = TruongMotDong(
+        label="Ngân hàng",
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"list": "danh-sach-ngan-hang", "autocomplete": "off"}),
+    )
+    so_tai_khoan = TruongMotDong(
+        label="Số tài khoản",
+        max_length=19,
+        required=False,
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
+    )
+    ten_chu_tai_khoan = TruongMotDong(
+        label="Tên chủ tài khoản",
+        max_length=100,
+        required=False,
+        help_text="Viết đúng như trên thẻ, hệ thống tự đổi sang chữ in hoa không dấu.",
+    )
+    so_dien_thoai_momo = TruongSoDienThoai(label="Số điện thoại ví MoMo", required=False)
+
     def __init__(self, *args, cac_dong, con_lai, **kwargs):
         super().__init__(*args, **kwargs)
         self.cac_dong_don = []
@@ -111,6 +163,47 @@ class TraHangForm(forms.Form):
                 label=dong.thuoc.ten_thuoc, min_value=0, max_value=toi_da, initial=0
             )
             self.cac_dong_don.append({"dong": dong, "o": self[ten], "toi_da": toi_da})
+
+    def clean(self):
+        du_lieu = super().clean()
+        hinh_thuc = du_lieu.get("hinh_thuc_hoan_tien")
+        if hinh_thuc == "chuyen_khoan":
+            du_lieu["ten_chu_tai_khoan"] = chu_in_hoa_khong_dau(
+                du_lieu.get("ten_chu_tai_khoan", "")
+            )
+            for ten, nhan in (
+                ("ten_ngan_hang", "ngân hàng"),
+                ("so_tai_khoan", "số tài khoản"),
+                ("ten_chu_tai_khoan", "tên chủ tài khoản"),
+            ):
+                if not du_lieu.get(ten):
+                    self.add_error(ten, f"Nhập {nhan} để nhà thuốc chuyển khoản hoàn tiền.")
+            so_tk = re.sub(r"[\s.-]", "", du_lieu.get("so_tai_khoan") or "")
+            if so_tk and not re.fullmatch(r"[0-9]{6,19}", so_tk):
+                self.add_error("so_tai_khoan", "Số tài khoản gồm 6 đến 19 chữ số.")
+            du_lieu["so_tai_khoan"] = so_tk
+            du_lieu["so_dien_thoai_momo"] = ""
+        elif hinh_thuc == "momo":
+            if not du_lieu.get("so_dien_thoai_momo"):
+                self.add_error("so_dien_thoai_momo", "Nhập số điện thoại đăng ký ví MoMo.")
+            du_lieu.update(ten_ngan_hang="", so_tai_khoan="", ten_chu_tai_khoan="")
+        else:
+            du_lieu.update(
+                ten_ngan_hang="", so_tai_khoan="", ten_chu_tai_khoan="", so_dien_thoai_momo=""
+            )
+        return du_lieu
+
+    def thong_tin_hoan_tien(self):
+        return {
+            ten: self.cleaned_data.get(ten, "")
+            for ten in (
+                "hinh_thuc_hoan_tien",
+                "ten_ngan_hang",
+                "so_tai_khoan",
+                "ten_chu_tai_khoan",
+                "so_dien_thoai_momo",
+            )
+        }
 
     def cac_dong_tra(self):
         return {

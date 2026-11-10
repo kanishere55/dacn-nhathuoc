@@ -5,16 +5,29 @@ from ung_dung.kho.selectors import lay_canh_bao, lay_canh_bao_ton_thap
 from ung_dung.tro_chuyen.selectors import lay_phong_co_tin_moi
 from ung_dung.webgis.selectors import lay_tuy_chon_ban_do_nhiet
 
-from .permissions import co_vai_tro, la_quan_tri
+from .permissions import co_quyen, co_vai_tro, la_quan_tri
 
 SO_DONG_TOM_TAT = 5
 
 
 def lay_bang_dieu_khien(nguoi):
-    lo_canh_bao = lay_canh_bao(nguoi)
-    ton_thap = lay_canh_bao_ton_thap(nguoi)
+    # Mỗi khối dữ liệu chỉ nạp khi tài khoản có quyền xem tương ứng.
+    quyen = {
+        "duoc_xem_kho": co_quyen(nguoi, "ton_kho.xem"),
+        "duoc_xem_don": co_quyen(nguoi, "don_hang.xem"),
+        "duoc_ban": co_quyen(nguoi, "phieu_ban.tao"),
+        "duoc_chat": co_quyen(nguoi, "tro_chuyen.dung"),
+        "duoc_xem_bao_cao": co_quyen(nguoi, "bao_cao.xem"),
+        "duoc_xem_du_bao": co_quyen(nguoi, "du_bao.xem"),
+        "duoc_xem_ban_do_nhiet": co_quyen(nguoi, "ban_do_nhiet.xem"),
+    }
+    lo_canh_bao = lay_canh_bao(nguoi) if quyen["duoc_xem_kho"] else []
+    ton_thap = lay_canh_bao_ton_thap(nguoi) if quyen["duoc_xem_kho"] else []
     don_cho_nhan = lay_don(nguoi).filter(con_hieu_luc=True).order_by("thoi_diem_het_giu", "pk")
+    if not quyen["duoc_xem_don"]:
+        don_cho_nhan = don_cho_nhan.none()
     noi_dung = {
+        **quyen,
         "quan_tri_chuoi": la_quan_tri(nguoi),
         "quan_ly_chi_nhanh": co_vai_tro(nguoi, "quan_ly_chi_nhanh"),
         "so_lo_canh_bao": len(lo_canh_bao),
@@ -34,7 +47,11 @@ def lay_bang_dieu_khien(nguoi):
             cac_du_bao=list(du_bao["cac_du_bao"][:SO_DONG_TOM_TAT]) if du_bao["lan"] else [],
         )
     else:
-        cac_phong = lay_phong_co_tin_moi(nguoi)
+        cac_phong = (
+            lay_phong_co_tin_moi(nguoi)
+            if quyen["duoc_chat"]
+            else lay_phong_co_tin_moi(nguoi).none()
+        )
         noi_dung.update(
             tieu_de=(
                 "Tổng quan quản lý chi nhánh"

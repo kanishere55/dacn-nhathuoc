@@ -6,12 +6,20 @@
   const cacSlide = [...khoi.querySelectorAll('.slide-hero')];
   const cacCham = [...khoi.querySelectorAll('[data-den]')];
   if (cacSlide.length < 2) return;
-  const giamChuyenDong = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const giamChuyenDong = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const nutTamDung = khoi.querySelector('[data-tam-dung-banner]');
   let hienTai = 0;
   let hen = null;
+  let tamDung = giamChuyenDong.matches;
+  let reChuot = false;
+  let coFocus = false;
+  let daTaiTrang = document.readyState === 'complete';
+  let xBatDau = null;
 
   const den = (so) => {
     hienTai = (so + cacSlide.length) % cacSlide.length;
+    const anh = cacSlide[hienTai].querySelector('[data-anh-banner]');
+    if (anh) anh.replaceWith(anh.content);
     cacSlide.forEach((slide, i) => {
       const hien = i === hienTai;
       slide.classList.toggle('dang-hien', hien);
@@ -24,34 +32,54 @@
     });
     khoi.style.setProperty('--mau-hero', cacSlide[hienTai].dataset.mau);
   };
-  const dung = () => { clearInterval(hen); hen = null; };
-  const chay = () => {
-    if (giamChuyenDong || hen) return;
-    hen = setInterval(() => den(hienTai + 1), 5000);
+  const capNhatHen = () => {
+    clearInterval(hen);
+    hen = null;
+    if (daTaiTrang && !tamDung && !reChuot && !coFocus && !document.hidden && xBatDau === null) {
+      hen = setInterval(() => den(hienTai + 1), 5000);
+    }
   };
-  const datLai = () => { dung(); chay(); };
+  const chon = (so) => {
+    den(so);
+    capNhatHen();
+  };
+  const capNhatNutTamDung = () => {
+    nutTamDung.textContent = tamDung ? 'Tự chuyển banner' : 'Tạm dừng';
+    capNhatHen();
+  };
 
-  khoi.querySelector('[data-truoc]')?.addEventListener('click', () => { den(hienTai - 1); datLai(); });
-  khoi.querySelector('[data-sau]')?.addEventListener('click', () => { den(hienTai + 1); datLai(); });
-  cacCham.forEach((cham) => cham.addEventListener('click', () => { den(Number(cham.dataset.den)); datLai(); }));
-  khoi.addEventListener('mouseenter', dung);
-  khoi.addEventListener('mouseleave', chay);
-  khoi.addEventListener('focusin', dung);
-  khoi.addEventListener('focusout', chay);
-  khoi.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') { den(hienTai - 1); datLai(); }
-    if (e.key === 'ArrowRight') { den(hienTai + 1); datLai(); }
+  khoi.querySelector('[data-dieu-khien-banner]').hidden = false;
+  nutTamDung.addEventListener('click', () => { tamDung = !tamDung; capNhatNutTamDung(); });
+  giamChuyenDong.addEventListener('change', (e) => { tamDung = e.matches; capNhatNutTamDung(); });
+  khoi.querySelectorAll('[data-truoc], [data-sau]').forEach((nut) => {
+    nut.hidden = false;
+    nut.addEventListener('click', () => chon(hienTai + (nut.hasAttribute('data-truoc') ? -1 : 1)));
   });
-  document.addEventListener('visibilitychange', () => (document.hidden ? dung() : chay()));
+  cacCham.forEach((cham) => cham.addEventListener('click', () => chon(Number(cham.dataset.den))));
+  khoi.addEventListener('pointerenter', (e) => { reChuot = e.pointerType === 'mouse'; capNhatHen(); });
+  khoi.addEventListener('pointerleave', () => { reChuot = false; capNhatHen(); });
+  khoi.addEventListener('focusin', () => { coFocus = true; capNhatHen(); });
+  khoi.addEventListener('focusout', (e) => { coFocus = khoi.contains(e.relatedTarget); capNhatHen(); });
+  khoi.addEventListener('keydown', (e) => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    e.preventDefault();
+    const moi = hienTai + (e.key === 'ArrowLeft' ? -1 : 1);
+    if (e.target.closest('.slide-hero')) cacCham[(moi + cacCham.length) % cacCham.length].focus();
+    chon(moi);
+  });
+  document.addEventListener('visibilitychange', capNhatHen);
 
-  let xBatDau = null;
-  khoi.addEventListener('touchstart', (e) => { xBatDau = e.touches[0].clientX; dung(); }, { passive: true });
+  khoi.addEventListener('touchstart', (e) => { xBatDau = e.touches[0].clientX; capNhatHen(); }, { passive: true });
   khoi.addEventListener('touchend', (e) => {
     if (xBatDau === null) return;
     const lech = e.changedTouches[0].clientX - xBatDau;
     if (Math.abs(lech) > 40) den(hienTai + (lech < 0 ? 1 : -1));
     xBatDau = null;
-    chay();
+    capNhatHen();
   });
-  chay();
+  khoi.addEventListener('touchcancel', () => { xBatDau = null; capNhatHen(); });
+  if (!daTaiTrang) {
+    window.addEventListener('load', () => { daTaiTrang = true; capNhatHen(); }, { once: true });
+  }
+  capNhatNutTamDung();
 })();

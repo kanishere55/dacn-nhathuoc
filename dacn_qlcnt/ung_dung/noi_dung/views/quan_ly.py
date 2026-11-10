@@ -6,15 +6,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.loc_danh_sach import BoLoc, OChon, o_khoang_thoi_gian
+from ung_dung.chung.permissions import yeu_cau_quyen
 
 from ..forms import BannerForm, ThongTinCuaHangForm, TinTucForm, TrangNoiDungForm
 from ..models import BannerTrangChu, ThongTinCuaHang, TinTuc, TrangNoiDung
 
-QUAN_TRI = "quan_tri_chuoi"
 
-
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("banner.sua")
 def banner_danh_sach(request):
     return render(
         request,
@@ -23,7 +22,7 @@ def banner_danh_sach(request):
     )
 
 
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("banner.sua")
 def banner_sua(request, ma=None):
     banner = get_object_or_404(BannerTrangChu, pk=ma) if ma else None
     form = BannerForm(request.POST or None, request.FILES or None, instance=banner)
@@ -49,7 +48,7 @@ def banner_sua(request, ma=None):
 
 
 @require_POST
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("banner.sua")
 def banner_xoa(request, ma):
     banner = get_object_or_404(BannerTrangChu.objects.defer("noi_dung_anh"), pk=ma)
     banner.delete()
@@ -57,7 +56,7 @@ def banner_xoa(request, ma):
     return redirect("noi_dung:banner_danh_sach")
 
 
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("thong_tin.sua")
 def thong_tin(request):
     form = ThongTinCuaHangForm(
         request.POST or None, instance=ThongTinCuaHang.objects.filter(pk=1).first()
@@ -75,7 +74,7 @@ def thong_tin(request):
     )
 
 
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("trang.sua")
 def trang_danh_sach(request):
     return render(
         request,
@@ -84,7 +83,7 @@ def trang_danh_sach(request):
     )
 
 
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("trang.sua")
 def trang_sua(request, ma=None):
     trang_nd = get_object_or_404(TrangNoiDung, pk=ma) if ma else None
     form = TrangNoiDungForm(request.POST or None, instance=trang_nd)
@@ -105,19 +104,41 @@ def trang_sua(request, ma=None):
     )
 
 
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("tin_tuc.sua")
 def tin_tuc_danh_sach(request):
+    bay_gio = timezone.now()
+
+    def loc_trang_thai(tap_hop, gia_tri):
+        if gia_tri == "an":
+            return tap_hop.filter(dang_hien_thi=False)
+        if gia_tri == "hen_gio":
+            return tap_hop.filter(dang_hien_thi=True, thoi_diem_dang__gt=bay_gio)
+        return tap_hop.filter(dang_hien_thi=True, thoi_diem_dang__lte=bay_gio)
+
+    loc = BoLoc(
+        request,
+        cac_cot_tim=("tieu_de", "tom_tat", "nguoi_viet__ho_ten", "nguoi_viet__ten_dang_nhap"),
+        nhan_tim="Tiêu đề, tóm tắt, người viết",
+        cac_o_chon=[
+            OChon(
+                "trang_thai",
+                "Trạng thái",
+                [("hien", "Đang hiển thị"), ("hen_gio", "Hẹn giờ"), ("an", "Đang ẩn")],
+                ham_loc=loc_trang_thai,
+            ),
+            o_khoang_thoi_gian("thoi_diem_dang", "Đăng trong"),
+        ],
+        mac_dinh_moi_trang=10,
+    )
+    cac_tin = TinTuc.objects.defer("noi_dung_tin_tuc").select_related("nguoi_viet")
     return render(
         request,
         "noi_dung/quan_ly/tin_tuc_danh_sach.html",
-        {
-            "cac_tin": TinTuc.objects.defer("noi_dung_tin_tuc").select_related("nguoi_viet"),
-            "bay_gio": timezone.now(),
-        },
+        {**loc.ngu_canh(cac_tin), "bay_gio": bay_gio},
     )
 
 
-@yeu_cau_vai_tro(QUAN_TRI)
+@yeu_cau_quyen("tin_tuc.sua")
 def tin_tuc_sua(request, ma=None):
     tin = get_object_or_404(TinTuc, pk=ma) if ma else None
     form = TinTucForm(request.POST or None, instance=tin)

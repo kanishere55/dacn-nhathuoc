@@ -1,29 +1,47 @@
 {% extends "base.html" %}
+{% block tieu_de %}Tài khoản · Khu quản lý{% endblock %}
+{% block vi_tri %}Tài khoản{% endblock %}
 {% block noi_dung %}
-  <h1>Tài khoản và phân quyền</h1>
-  <a href="{% url 'tai_khoan:tao' %}" class="nut">Tạo tài khoản</a>
-  <div class="khoi-trang khung-bang">
-    <table>
-      <thead>
-        <tr>
-          <th>Tên đăng nhập</th>
-          <th>Vai trò</th>
-          <th>Chi nhánh</th>
-          <th>Hoạt động</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for muc in cac_tai_khoan %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">HỆ THỐNG</p>
+    <h1>Tài khoản</h1>
+  </header>
+  <div class="thanh-cong-cu">
+    {% if "tai_khoan.sua" in user.quyen_hieu_luc %}<a href="{% url 'tai_khoan:tao' %}" class="nut">Tạo tài khoản</a>{% endif %}
+    {% if "phan_quyen.quan_ly" in user.quyen_hieu_luc %}<a href="{% url 'tai_khoan:nhom_quyen_danh_sach' %}" class="nut nut-phu">Quản lý nhóm quyền</a>{% endif %}
+  </div>
+  {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
+  <div id="vung-danh-sach">
+    <div class="khoi-trang khung-bang">
+      <table>
+        <thead>
           <tr>
-            <td>{{ muc.ten_dang_nhap }}</td>
-            <td>{{ muc.get_vai_tro_display }}</td>
-            <td>{{ muc.chi_nhanh|default:"—" }}</td>
-            <td>{{ muc.dang_hoat_dong|yesno:"Có,Không" }}</td>
-            <td><a href="{% url 'tai_khoan:sua' muc.pk %}">Sửa</a></td>
+            <th>Tên đăng nhập</th>
+            <th>Họ tên</th>
+            <th>Vai trò</th>
+            <th>Chi nhánh</th>
+            <th>Nhóm quyền</th>
+            <th>Trạng thái</th>
+            <th></th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for muc in trang %}
+            <tr>
+              <td>{{ muc.ten_dang_nhap }}</td>
+              <td>{{ muc.ho_ten|default:"—" }}</td>
+              <td>{{ muc.get_vai_tro_display }}</td>
+              <td>{{ muc.chi_nhanh|default:"—" }}</td>
+              <td>{% if muc.vai_tro == "quan_tri_chuoi" %}Toàn quyền{% elif muc.vai_tro == "khach_hang" %}—{% else %}{{ muc.nhom_quyen|default:"Mặc định theo vai trò" }}{% endif %}</td>
+              <td>{{ muc.dang_hoat_dong|yesno:"Đang hoạt động,Đã khóa" }}</td>
+              <td>{% if "tai_khoan.sua" in user.quyen_hieu_luc %}<a href="{% url 'tai_khoan:sua' muc.pk %}">Sửa</a>{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7">Không có tài khoản phù hợp bộ lọc.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/_phan_trang.html" %}
   </div>
 {% endblock %}

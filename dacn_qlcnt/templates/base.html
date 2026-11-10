@@ -1,5 +1,5 @@
 {% extends "khung_trang.html" %}
-{% block tieu_de %}{{ cua_hang.ten_thuong_hieu }} · Khu quản lý{% endblock %}
+{% block tieu_de %}{% if tieu_de %}{{ tieu_de }} · {% endif %}{{ cua_hang.ten_thuong_hieu }} · Khu quản lý{% endblock %}
 {% block giao_dien %}
   <div class="khung-ung-dung" x-data="{ moMenu: false }">
     <aside class="thanh-ben" :class="{ 'dang-mo': moMenu }" aria-label="Điều hướng chính">

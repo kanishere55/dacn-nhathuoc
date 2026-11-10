@@ -1,0 +1,24 @@
+{% comment %}Phân trang dùng chung. Biến: trang (Page). Giữ nguyên mọi tham số lọc đang có trên URL.{% endcomment %}
+{% load loc_trang %}
+<nav class="phan-trang" aria-label="Phân trang">
+  <span class="so-ban-ghi">
+    {% if trang.paginator.count %}Hiển thị {{ trang.start_index }}–{{ trang.end_index }} / {{ trang.paginator.count }} mục{% else %}Không có mục nào{% endif %}
+  </span>
+  {% if trang.paginator.num_pages > 1 %}
+    <ul>
+      {% if trang.has_previous %}
+        <li><a href="{% truy_van page=1 %}" aria-label="Trang đầu" hx-boost="false">«</a></li>
+        <li><a href="{% truy_van page=trang.previous_page_number %}" aria-label="Trang trước">‹</a></li>
+      {% endif %}
+      {% for so in trang|cac_so_trang %}
+        {% if so is None %}<li class="dau-ba-cham" aria-hidden="true">…</li>
+        {% elif so == trang.number %}<li><span class="dang-chon" aria-current="page">{{ so }}</span></li>
+        {% else %}<li><a href="{% truy_van page=so %}">{{ so }}</a></li>{% endif %}
+      {% endfor %}
+      {% if trang.has_next %}
+        <li><a href="{% truy_van page=trang.next_page_number %}" aria-label="Trang sau">›</a></li>
+        <li><a href="{% truy_van page=trang.paginator.num_pages %}" aria-label="Trang cuối">»</a></li>
+      {% endif %}
+    </ul>
+  {% endif %}
+</nav>

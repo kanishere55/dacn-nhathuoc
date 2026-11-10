@@ -65,12 +65,24 @@ class TruongSoDienThoai(forms.CharField):
 class TrinhSoanThao(forms.Textarea):
     """Ô soạn nội dung có thanh công cụ định dạng (Quill); thiếu JS vẫn dùng như textarea."""
 
-    class Media:
-        css = {"all": ("vendor/quill/quill.snow.css",)}
-        js = ("vendor/quill/quill.min.js", "chung/js/trinh_soan_thao.js")
+    @property
+    def media(self):
+        from ung_dung.chung.templatetags.tai_nguyen import tep_tinh
+
+        return forms.Media(
+            css={"all": ("vendor/quill/quill.snow.css",)},
+            js=("vendor/quill/quill.min.js", tep_tinh("chung/js/trinh_soan_thao.js")),
+        )
 
     def __init__(self, attrs=None):
         super().__init__({"rows": 8, "data-trinh-soan-thao": "", **(attrs or {})})
+
+    def get_context(self, name, value, attrs):
+        from django.urls import reverse
+
+        # Đường dẫn tải ảnh lên được tính khi vẽ để không phụ thuộc thứ tự nạp URL.
+        attrs = {**(attrs or {}), "data-url-tai-anh": reverse("danh_muc:anh_noi_dung_tai_len")}
+        return super().get_context(name, value, attrs)
 
 
 class TruongPhongPhu(forms.CharField):

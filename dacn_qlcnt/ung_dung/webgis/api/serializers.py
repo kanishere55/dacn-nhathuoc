@@ -32,6 +32,19 @@ class DatGiuSerializer(serializers.Serializer):
     cac_thuoc = NhuCauSerializer(many=True, allow_empty=False, max_length=SO_THUOC_TOI_DA)
 
 
+class ChiNhanhGanSerializer(serializers.Serializer):
+    kinh_do = serializers.FloatField(min_value=-180, max_value=180, required=False)
+    vi_do = serializers.FloatField(min_value=-90, max_value=90, required=False)
+    ban_kinh_met = serializers.IntegerField(
+        min_value=0, max_value=200000, required=False, default=0
+    )
+
+    def validate(self, du_lieu):
+        if ("kinh_do" in du_lieu) != ("vi_do" in du_lieu):
+            raise serializers.ValidationError("Cần đủ cả kinh độ và vĩ độ.")
+        return du_lieu
+
+
 class NhietSerializer(serializers.Serializer):
     nhom_atc = serializers.PrimaryKeyRelatedField(queryset=NhomATC.objects.all())
     don_vi_tinh = serializers.PrimaryKeyRelatedField(queryset=DonViTinh.objects.all())

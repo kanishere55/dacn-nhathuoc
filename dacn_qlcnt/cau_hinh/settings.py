@@ -66,7 +66,10 @@ TEMPLATES = [
                 "ung_dung.chung.dieu_huong.dieu_huong",
                 "ung_dung.noi_dung.context_processors.website",
             ],
-            "builtins": ["ung_dung.chung.templatetags.dinh_dang"],
+            "builtins": [
+                "ung_dung.chung.templatetags.dinh_dang",
+                "ung_dung.chung.templatetags.tai_nguyen",
+            ],
         },
     }
 ]
@@ -90,6 +93,9 @@ for ten_thu_vien in ("GDAL_LIBRARY_PATH", "GEOS_LIBRARY_PATH"):
 AUTH_USER_MODEL = "tai_khoan.TaiKhoan"
 LOGIN_URL = "tai_khoan:dang_nhap"
 OSRM_BASE_URL = os.environ.get("OSRM_BASE_URL", "https://router.project-osrm.org").rstrip("/")
+OSRM_DI_BO_BASE_URL = os.environ.get(
+    "OSRM_DI_BO_BASE_URL", "https://routing.openstreetmap.de/routed-foot"
+).rstrip("/")
 NOMINATIM_BASE_URL = os.environ.get(
     "NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org"
 ).rstrip("/")

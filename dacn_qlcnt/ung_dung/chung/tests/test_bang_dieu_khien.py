@@ -82,7 +82,8 @@ class BangDieuKhienTests(TestCase):
         self.assertContains(trang, self.don_mot.ma_don_hang)
         self.assertContains(trang, self.don_hai.ma_don_hang)
         self.assertNotContains(trang, self.don_het_han.ma_don_hang)
-        self.assertNotContains(trang, reverse("ban_hang:phieu_ban_tao"))
+        # quản trị chuỗi có toàn quyền nên cũng bán được tại quầy
+        self.assertContains(trang, reverse("ban_hang:phieu_ban_tao"))
         self.assertNotContains(trang, "Tin đang chờ ở chi nhánh một")
 
     def test_nhan_su_chi_thay_canh_bao_don_va_tin_cua_chi_nhanh_minh(self):

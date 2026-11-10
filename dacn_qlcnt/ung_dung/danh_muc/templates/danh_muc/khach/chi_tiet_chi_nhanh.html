@@ -22,6 +22,8 @@
       <div><dt><i data-lucide="map-pin" aria-hidden="true"></i>Địa chỉ</dt><dd>{{ chi_nhanh.dia_chi }}</dd></div>
     </dl>
   </div>
+  {% if chi_nhanh.gioi_thieu %}<section class="the-khach" aria-label="Giới thiệu chi nhánh"><div class="noi-dung-phong-phu">{{ chi_nhanh.gioi_thieu|phong_phu }}</div></section>{% endif %}
+  {% for anh in cac_anh|slice:":3" %}{% if anh.nguon_anh %}<p class="ghi-chu-khach">Nguồn ảnh {{ forloop.counter }}: {{ anh.nguon_anh|urlizetrunc:36 }}</p>{% endif %}{% endfor %}
   <div class="hanh-dong-khach">
     {% if not noi_bo %}
       <a class="nut" href="{% url 'tro_chuyen:khach_danh_sach' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện với chi nhánh</a>
@@ -35,6 +37,6 @@
 {% endblock %}
 {% block cuoi_trang %}
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
-  <script src="{% static 'webgis/js/nen_ban_do.js' %}" defer></script>
-  <script src="{% static 'danh_muc/js/chi_nhanh_khach.js' %}" defer></script>
+  <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
+  <script src="{% tep_tinh 'danh_muc/js/chi_nhanh_khach.js' %}" defer></script>
 {% endblock %}

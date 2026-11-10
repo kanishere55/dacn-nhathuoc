@@ -1,0 +1,28 @@
+{% extends "kho/form_phieu.html" %}
+{% block vi_tri %}Bán tại quầy{% endblock %}
+{% block truong_phieu %}
+  {{ form.khoa_yeu_cau }}{{ form.khoa_yeu_cau.errors }}
+  <p class="ghi-chu-khach">Tính theo giá đang áp dụng; số lượng nhập theo đơn vị cơ sở hoặc bao gói đã chọn.</p>
+  {% if form.chi_nhanh_mac_dinh %}
+    <p class="ghi-chu-khach">Bán tại <strong>{{ form.chi_nhanh_mac_dinh.ten_chi_nhanh }}</strong></p>
+    {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}
+  {% endif %}
+{% endblock %}
+{% block sau_cac_dong %}
+  {% if not form.chi_nhanh_mac_dinh %}
+    {% include "components/_o_nhap.html" with truong=form.chi_nhanh %}
+  {% endif %}
+  {% include "components/_o_nhap.html" with truong=form.phuong_thuc_thanh_toan %}
+  <details class="nhom-don-thuoc" data-don-thuoc-tai-quay{% if form.ten_nguoi_ke_don.errors or form.noi_kham_benh.errors or form.ma_don_thuoc.errors %} open{% endif %}>
+    <summary>Thông tin đơn thuốc <span class="chu-tuy-chon">(khi bán thuốc kê đơn)</span></summary>
+    {% include "components/_o_nhap.html" with truong=form.da_kiem_tra_don_thuoc %}
+    {% include "components/_o_nhap.html" with truong=form.ten_nguoi_ke_don %}
+    {% include "components/_o_nhap.html" with truong=form.noi_kham_benh %}
+    {% include "components/_o_nhap.html" with truong=form.ma_don_thuoc %}
+  </details>
+  {{ id_thuoc_ke_don|json_script:"id-thuoc-ke-don" }}
+{% endblock %}
+{% block cuoi_trang %}
+  {{ block.super }}
+  <script src="{% tep_tinh 'ban_hang/js/phieu_ban.js' %}" defer></script>
+{% endblock %}

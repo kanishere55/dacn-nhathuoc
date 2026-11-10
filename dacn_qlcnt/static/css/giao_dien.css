@@ -6,17 +6,20 @@
 @import "./don_hang.css";
 @import "./hoa_don.css";
 @import "./noi_dung.css";
+@import "./quan_ly.css";
+@import "./ban_do.css";
+@import "./chon_co_tim.css";
 @source "../../templates";
 @source "../../ung_dung";
 @font-face {
   font-family: "Be Vietnam Pro";
-  src: url("../vendor/be_vietnam_pro/BeVietnamPro-Regular.ttf") format("truetype");
+  src: url("../vendor/be_vietnam_pro/BeVietnamPro-Regular.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: "Be Vietnam Pro";
-  src: url("../vendor/be_vietnam_pro/BeVietnamPro-SemiBold.ttf") format("truetype");
+  src: url("../vendor/be_vietnam_pro/BeVietnamPro-SemiBold.woff2") format("woff2");
   font-weight: 600;
   font-display: swap;
 }
@@ -29,7 +32,7 @@
 }
 @font-face {
   font-family: "Be Vietnam Pro";
-  src: url("../vendor/be_vietnam_pro/BeVietnamPro-Bold.ttf") format("truetype");
+  src: url("../vendor/be_vietnam_pro/BeVietnamPro-Bold.woff2") format("woff2");
   font-weight: 700;
   font-display: swap;
 }
@@ -38,6 +41,13 @@
   :root {
     --vien: #dce4dc;
     --chu-phu: #66776e;
+  }
+  /* Mặc định fieldset rộng tối thiểu bằng nội dung, gây tràn ngang trên điện thoại. */
+  fieldset {
+    min-width: 0;
+  }
+  input[type="file"] {
+    max-width: 100%;
   }
   body {
     margin: 0;
@@ -423,6 +433,8 @@
   }
   .nhom-truong {
     display: grid;
+    /* minmax(0, …): ô chọn tệp, chuỗi dài không đẩy khung rộng hơn màn hình điện thoại. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 7px;
     margin-bottom: 16px;
   }
@@ -526,7 +538,7 @@
       padding-inline: 28px;
     }
     .luoi-phan-he {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
   @media (max-width: 700px) {

@@ -593,27 +593,6 @@
   .thuoc-tu-gio > li > span {
     white-space: nowrap;
   }
-  .khung-lop-ban-do .ban-do {
-    height: clamp(310px, 50vh, 490px);
-    margin: 0 0 9px;
-  }
-  .ket-qua-ban-do {
-    grid-column: 1 / -1;
-  }
-  .ket-qua-ban-do > p {
-    margin-bottom: 12px;
-    color: var(--chu-phu);
-  }
-  .the-ket-qua-ban-do h3 {
-    color: var(--color-chinh);
-    font-weight: 700;
-  }
-  .the-ket-qua-ban-do h3 a:hover {
-    text-decoration: underline;
-  }
-  .the-ket-qua-ban-do p {
-    margin-block: 6px 12px;
-  }
   @media (max-width: 950px) {
     .cac-nhom-khach {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -701,7 +680,7 @@
     .khung-ban-do-khach,
     .luoi-khach-hai,
     .luoi-khach-ba {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .gioi-thieu-khach {
       padding: 20px;
@@ -730,9 +709,6 @@
       flex-direction: column;
       align-items: start;
       gap: 3px;
-    }
-    .khung-lop-ban-do {
-      grid-row: 1;
     }
   }
 }

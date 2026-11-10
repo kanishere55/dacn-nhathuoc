@@ -1,0 +1,134 @@
+/* Ô chọn có tìm kiếm (Choices.js) và ô tick: để ngoài @layer vì CSS thư viện không thuộc lớp nào. */
+.choices {
+  margin-bottom: 0;
+  font-size: 14px;
+  min-width: 170px;
+}
+.choices__inner {
+  min-height: 38px;
+  padding: 4px 10px;
+  border: 1px solid var(--vien);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+}
+.is-focused .choices__inner,
+.is-open .choices__inner {
+  border-color: var(--color-chinh);
+  box-shadow: 0 0 0 3px rgb(17 107 84 / 0.12);
+}
+.choices__list--single {
+  padding: 3px 18px 3px 0;
+}
+.choices[data-type*="select-one"]::after {
+  right: 12px;
+  border-color: #607068 transparent transparent;
+}
+.choices__list--dropdown,
+.choices__list[aria-expanded] {
+  z-index: 60;
+  border: 1px solid var(--vien);
+  border-radius: 10px;
+  box-shadow: 0 16px 32px -18px rgb(10 40 30 / 0.45);
+  word-break: normal;
+}
+.is-open .choices__list--dropdown,
+.is-open .choices__list[aria-expanded] {
+  border-color: var(--color-chinh);
+}
+.choices[data-type*="select-one"] .choices__input {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--vien);
+  font-size: 14px;
+}
+.choices__list--dropdown .choices__item,
+.choices__list[aria-expanded] .choices__item {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+.choices__list--dropdown .choices__item--selectable.is-highlighted,
+.choices__list[aria-expanded] .choices__item--selectable.is-highlighted {
+  background: #e3efe7;
+  color: var(--color-chu);
+}
+.choices__list--dropdown .choices__list {
+  max-height: 280px;
+}
+.form-chinh .choices,
+.luoi-form .choices {
+  width: 100%;
+}
+
+/* Ô tick và nút chọn tròn đồng bộ màu thương hiệu, dễ bấm hơn trên điện thoại. */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 2px solid #9bb1a5;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+  vertical-align: middle;
+}
+input[type="checkbox"] {
+  border-radius: 6px;
+}
+input[type="radio"] {
+  border-radius: 50%;
+}
+input[type="checkbox"]::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  background: #fff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+}
+input[type="radio"]::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-chinh);
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+}
+input[type="checkbox"]:checked {
+  border-color: var(--color-chinh);
+  background: var(--color-chinh);
+}
+input[type="checkbox"]:checked::before,
+input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+input[type="radio"]:checked {
+  border-color: var(--color-chinh);
+}
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  border-color: var(--color-chinh);
+}
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(17 107 84 / 0.25);
+}
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  border-color: #cfd8d2;
+  background: #f1f4f2;
+  cursor: not-allowed;
+}
+/* Chọn "Chặn" trong ma trận quyền dùng màu đỏ để dễ phân biệt. */
+.bang-quyen-rieng input[type="radio"][value="chan"]:checked {
+  border-color: #b42318;
+}
+.bang-quyen-rieng input[type="radio"][value="chan"]:checked::before {
+  background: #b42318;
+}

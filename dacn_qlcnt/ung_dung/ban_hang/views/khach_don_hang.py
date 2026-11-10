@@ -11,7 +11,7 @@ from ..forms import XuLyDonForm, YeuCauXuatHoaDonForm
 from ..hoa_don import du_lieu_hoa_don
 from ..models import TRANG_THAI_DON, PhieuBan, YeuCauXuatHoaDon
 from ..selectors import lay_chi_tiet_don, lay_don, lay_lich_su
-from ..services.don_hang import huy_don
+from ..services.don_hang import han_tu_hoan_thanh, huy_don, xac_nhan_da_giao
 from ..services.tra_hang import han_tra_hang, ly_do_khong_tra_duoc
 from ..services.trang_thai import CHUYEN_HOP_LE, KHACH
 from ..services.xuat_hoa_don import gui_yeu_cau_xuat_hoa_don
@@ -72,7 +72,17 @@ def chi_tiet(request, ma):
 
 
 def _trang_chi_tiet(request, don, form_hoa_don_cong_ty=None):
-    cac_dong = lay_chi_tiet_don(don)
+    from django.db.models import OuterRef, Subquery
+
+    from ung_dung.danh_muc.models import AnhThuoc
+
+    cac_dong = lay_chi_tiet_don(don).annotate(
+        id_anh=Subquery(
+            AnhThuoc.objects.filter(thuoc=OuterRef("thuoc"))
+            .order_by("thu_tu", "pk")
+            .values("pk")[:1]
+        )
+    )
     yeu_cau_hoa_don = YeuCauXuatHoaDon.objects.filter(don_hang=don).first()
     if form_hoa_don_cong_ty is None and not yeu_cau_hoa_don and don.trang_thai == "hoan_thanh":
         form_hoa_don_cong_ty = YeuCauXuatHoaDonForm(
@@ -92,13 +102,31 @@ def _trang_chi_tiet(request, don, form_hoa_don_cong_ty=None):
             "duoc_huy": not don.qua_han_giu
             and KHACH in CHUYEN_HOP_LE.get((don.trang_thai, "da_huy"), set()),
             "form_huy": XuLyDonForm(),
-            "cac_yeu_cau_tra": don.cac_yeu_cau_tra_hang.all(),
+            "cac_yeu_cau_tra": don.cac_yeu_cau_tra_hang.prefetch_related("cac_anh"),
+            "duoc_xac_nhan_nhan_hang": don.trang_thai == "dang_giao",
+            "han_tu_hoan_thanh": han_tu_hoan_thanh(don) if don.trang_thai == "dang_giao" else None,
             "duoc_tra_hang": ly_do_khong_tra_duoc(don) is None,
             "han_tra_hang": han_tra_hang(don),
             "co_hoa_don": don.trang_thai == "hoan_thanh"
             and PhieuBan.objects.filter(don_hang=don).exists(),
         },
     )
+
+
+@yeu_cau_vai_tro("khach_hang")
+@require_POST
+def da_nhan_hang(request, ma):
+    """Khách bấm "Đã nhận được hàng": đơn hoàn tất, bắt đầu tính hạn trả hàng 7 ngày."""
+    don = get_object_or_404(lay_don(request.user), pk=ma)
+    try:
+        xac_nhan_da_giao(request.user, don)
+    except ValidationError as loi:
+        messages.error(request, " ".join(loi.messages))
+    else:
+        messages.success(
+            request, "Cảm ơn bạn đã xác nhận. Nếu thuốc có vấn đề, bạn có thể yêu cầu trả hàng."
+        )
+    return redirect("ban_hang:khach_don_hang_chi_tiet", ma=don.pk)
 
 
 @yeu_cau_vai_tro("khach_hang")

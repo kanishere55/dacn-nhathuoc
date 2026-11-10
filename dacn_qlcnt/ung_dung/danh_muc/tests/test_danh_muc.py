@@ -31,10 +31,14 @@ class DanhMucTests(TestCase):
         self.assertEqual(phan_hoi.status_code, 302)
         self.assertEqual(ChiNhanh.objects.get().vi_tri.srid, 4326)
         phan_hoi = self.client.get(
-            reverse("danh_muc:chi_nhanh_danh_sach"), {"q": "CN-MOI"}, headers={"HX-Request": "true"}
+            reverse("danh_muc:chi_nhanh_danh_sach"),
+            {"tim": "CN-MOI"},
+            headers={"HX-Request": "true"},
         )
         self.assertContains(phan_hoi, "Chi nhánh thử")
-        self.assertNotContains(phan_hoi, "<html")
+        # htmx lấy đúng vùng danh sách bằng hx-select nên máy chủ trả trang đầy đủ
+        self.assertContains(phan_hoi, 'id="vung-danh-sach"')
+        self.assertEqual(phan_hoi.context["trang"].paginator.count, 1)
         self.assertIn("HX-Request", phan_hoi.headers["Vary"])
 
     def test_csdl_tu_choi_ma_chi_nhanh_sai_dinh_dang(self):

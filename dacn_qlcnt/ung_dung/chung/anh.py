@@ -91,10 +91,28 @@ class AnhCSDL(models.Model):
         self.kich_thuoc_byte = len(self.noi_dung_anh)
 
 
-def rang_buoc_anh(bang):
+class AnhCoNguon(AnhCSDL):
+    """Ảnh có ghi nguồn và giấy phép, cho ảnh sản phẩm lấy từ kho ảnh mở."""
+
+    nguon_anh = models.TextField(
+        blank=True,
+        db_default="",
+        db_column="nguon_anh",
+        db_comment=(
+            "Nguồn, tác giả và giấy phép của ảnh (ví dụ ảnh Wikimedia Commons); "
+            "một dòng, rỗng với ảnh tự chụp hoặc tự tải lên."
+        ),
+    )
+
+    class Meta:
+        abstract = True
+
+
+def rang_buoc_anh(bang, *, co_nguon=False):
     from .ten_csdl import rang_buoc_van_ban
 
     return [
+        *(rang_buoc_van_ban(bang, "nguon_anh", rong=True) if co_nguon else []),
         *rang_buoc_van_ban(bang, "bam_sha256", dinh_dang=r"^[0-9a-f]{64}$"),
         models.CheckConstraint(
             condition=Q(kich_thuoc_byte=DoDaiByte("noi_dung_anh"))

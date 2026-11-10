@@ -12,7 +12,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Round
 from django.utils import timezone
 
-from ung_dung.chung.permissions import la_quan_tri
+from ung_dung.chung.permissions import thay_toan_chuoi
 
 from .models import (
     AnhChiNhanh,
@@ -84,7 +84,7 @@ SAP_XEP_THUOC = {
 def lay_danh_muc(nguoi, loai, tu_khoa=""):
     model = DANH_MUC[loai][0]
     tap_hop = model.objects.all().order_by(model._meta.pk.name)
-    if not la_quan_tri(nguoi):
+    if not thay_toan_chuoi(nguoi):
         if loai == "chi_nhanh":
             tap_hop = tap_hop.filter(pk=nguoi.chi_nhanh_id)
         elif loai == "nhan_vien":
@@ -99,7 +99,7 @@ def lay_danh_muc(nguoi, loai, tu_khoa=""):
 
 
 def lay_chi_nhanh(nguoi, *, ca_chi_nhanh_ngung=False):
-    quan_tri = la_quan_tri(nguoi)
+    quan_tri = thay_toan_chuoi(nguoi)
     cac_chi_nhanh = ChiNhanh.objects.order_by("ma_chi_nhanh")
     if not quan_tri:
         cac_chi_nhanh = cac_chi_nhanh.filter(pk=nguoi.chi_nhanh_id)
@@ -193,3 +193,15 @@ def lay_danh_muc_san_pham_cong_khai():
 
 def lay_anh(loai):
     return CO_ANH[loai][1].objects.all()
+
+
+def lay_danh_gia(nguoi, loai):
+    """Đánh giá thuốc dùng chung toàn chuỗi; đánh giá chi nhánh theo phạm vi chi nhánh của người xem."""
+    from .models import DanhGiaChiNhanh, DanhGiaThuoc
+
+    if loai == "chi_nhanh":
+        tap_hop = DanhGiaChiNhanh.objects.select_related("chi_nhanh", "khach_hang")
+        if not thay_toan_chuoi(nguoi):
+            tap_hop = tap_hop.filter(chi_nhanh_id=nguoi.chi_nhanh_id)
+        return tap_hop
+    return DanhGiaThuoc.objects.select_related("thuoc", "khach_hang")

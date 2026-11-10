@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ung_dung.chung.permissions import NHAN_SU_CHI_NHANH, NHAN_SU_CHUOI, co_vai_tro, yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
 
 from ..forms import DongNhapFormSet, PhieuNhapForm, TepNhapExcelForm
 from ..models import PhieuNhap
@@ -13,23 +13,19 @@ from ..services.phieu_nhap import nhap_hang
 from . import chung_tu
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_nhap.xem")
 def danh_sach(request):
-    return render(
+    return chung_tu.hien_danh_sach(
         request,
-        "kho/danh_sach_phieu.html",
-        {
-            "tieu_de": "Phiếu nhập",
-            "cac_phieu": lay_phieu(request.user, PhieuNhap),
-            "url_tao": (
-                "kho:phieu_nhap_tao" if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH) else None
-            ),
-            "url_chi_tiet": "kho:phieu_nhap_chi_tiet",
-        },
+        PhieuNhap,
+        lay_phieu(request.user, PhieuNhap),
+        tieu_de="Phiếu nhập",
+        url_tao="kho:phieu_nhap_tao" if co_quyen(request.user, "phieu_nhap.tao") else None,
+        url_chi_tiet="kho:phieu_nhap_chi_tiet",
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
+@yeu_cau_quyen("phieu_nhap.tao")
 def tao(request):
     if request.method == "POST" and "doc_excel" in request.POST:
         return _xem_truoc_excel(request)
@@ -53,7 +49,10 @@ def tao(request):
 
 def _xem_truoc_excel(request):
     form_excel = TepNhapExcelForm(request.POST, request.FILES)
-    form = PhieuNhapForm(initial={"chi_nhanh": request.user.chi_nhanh}, nguoi=request.user)
+    form = PhieuNhapForm(
+        initial={"chi_nhanh": request.user.chi_nhanh or request.POST.get("chi_nhanh") or None},
+        nguoi=request.user,
+    )
     if not form_excel.is_valid():
         return _trang_tao(request, form, DongNhapFormSet(), form_excel)
     cac_dong = form_excel.cleaned_data["tep_excel"]
@@ -73,7 +72,7 @@ def _trang_tao(request, form, cac_dong, form_excel):
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
+@yeu_cau_quyen("phieu_nhap.tao")
 def mau_excel(request):
     phan_hoi = HttpResponse(
         tao_tep_mau(),
@@ -83,11 +82,11 @@ def mau_excel(request):
     return phan_hoi
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_nhap.xem")
 def chi_tiet(request, ma):
     return chung_tu.hien_thi(request, get_object_or_404(lay_phieu(request.user, PhieuNhap), pk=ma))
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_nhap.xem")
 def pdf(request, ma):
     return chung_tu.tra_pdf(request, get_object_or_404(lay_phieu(request.user, PhieuNhap), pk=ma))

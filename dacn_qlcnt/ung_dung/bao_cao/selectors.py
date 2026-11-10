@@ -4,7 +4,7 @@ from django.db.models import DecimalField, ExpressionWrapper, F, Q, Sum
 from django.utils import timezone
 
 from ung_dung.ban_hang.models import ChiTietPhieuBan, DonHang, PhieuBan, PhieuHoanKho
-from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.chung.permissions import kiem_tra_quyen
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 from ung_dung.kho.models import (
     ChiTietPhieuDieuChuyen,
@@ -21,7 +21,7 @@ from ung_dung.thanh_toan.models import PHUONG_THUC, GiaoDichThanhToan
 
 
 def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
-    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi", "quan_ly_chi_nhanh")
+    kiem_tra_quyen(nguoi, "bao_cao.xem")
     tu_luc = timezone.make_aware(datetime.combine(tu_ngay, time.min))
     den_luc = timezone.make_aware(datetime.combine(den_ngay + timedelta(days=1), time.min))
     cac_chi_nhanh = lay_chi_nhanh(nguoi, ca_chi_nhanh_ngung=True)
@@ -88,7 +88,8 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
         for dong in tap.order_by().values(cot).annotate(tong=Sum(bieu_thuc)):
             cac_luong.setdefault(dong[cot], {})[ten] = dong["tong"]
     # Doanh thu: phiếu bán trong kỳ trừ phiếu đã hoàn kho (đơn hủy sau khi xuất) và tiền
-    # đã hoàn cho khách trong kỳ (hủy đơn trả trước, trả hàng).
+    # hoàn do trả hàng trong kỳ. Tiền hoàn vì hủy đơn không trừ thêm: đơn hủy trước khi
+    # xuất chưa có phiếu bán, đơn hủy sau khi xuất đã bị loại qua phiếu hoàn kho.
     hoan_kho = PhieuHoanKho.objects.filter(phieu_ban__in=phieu_ban).values("phieu_ban")
     dong_hop_le = dong_ban.exclude(phieu_ban__in=hoan_kho)
     doanh_thu_gop = dong_hop_le.aggregate(tong=Sum(tien, default=0))["tong"]
@@ -104,6 +105,10 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
     tien_hoan_khach = giao_dich.filter(loai_giao_dich="hoan").aggregate(
         tong=Sum("so_tien", default=0)
     )["tong"]
+    # Trả hàng chỉ nhận trên đơn đã hoàn thành, nên khoản hoàn của đơn hoàn thành là hoàn trả hàng.
+    tien_hoan_tra_hang = giao_dich.filter(
+        loai_giao_dich="hoan", don_hang__trang_thai="hoan_thanh"
+    ).aggregate(tong=Sum("so_tien", default=0))["tong"]
     ten_phuong_thuc = dict(PHUONG_THUC)
     theo_phuong_thuc = [
         (ten_phuong_thuc.get(d["phuong_thuc"], d["phuong_thuc"]), d["tong"])
@@ -123,7 +128,8 @@ def lay_bao_cao(nguoi, tu_ngay, den_ngay, chi_nhanh=None):
         "doanh_thu_gop": doanh_thu_gop,
         "tien_hoan_kho": tien_hoan_kho,
         "tien_hoan_khach": tien_hoan_khach,
-        "doanh_thu_thuan": doanh_thu_gop - tien_hoan_khach,
+        "tien_hoan_tra_hang": tien_hoan_tra_hang,
+        "doanh_thu_thuan": doanh_thu_gop - tien_hoan_tra_hang,
         "theo_phuong_thuc": theo_phuong_thuc,
         "ban_chay": ban_chay,
         "so_phieu_nhap": phieu_nhap.count(),

@@ -89,25 +89,12 @@ def chi_tiet_thuoc(request, ma):
         if thuoc.danh_muc_san_pham_id
         else []
     )
-    cac_muc_noi_dung = [
-        (tieu_de, noi_dung)
-        for tieu_de, noi_dung in (
-            ("Công dụng", thuoc.cong_dung),
-            ("Liều dùng và cách dùng", thuoc.cach_dung),
-            ("Chống chỉ định", thuoc.chong_chi_dinh),
-            ("Tác dụng không mong muốn", thuoc.tac_dung_phu),
-            ("Thận trọng, lưu ý", thuoc.luu_y),
-            ("Bảo quản", thuoc.bao_quan),
-        )
-        if noi_dung
-    ]
     return render(
         request,
         "danh_muc/khach/chi_tiet_thuoc.html",
         {
             "thuoc": thuoc,
             "cac_anh": cac_anh,
-            "cac_muc_noi_dung": cac_muc_noi_dung,
             "cung_danh_muc": cung_danh_muc,
             "danh_gia": tom_tat_danh_gia(thuoc),
             "duoc_danh_gia": la_khach(request.user) and da_mua(request.user, thuoc),

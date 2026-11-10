@@ -1,14 +1,13 @@
 """Thay dữ liệu thuốc, chi nhánh mô phỏng bằng danh mục thực tế và ảnh minh họa đúng sản phẩm.
 
 Chạy lại được: chỉ thêm thứ còn thiếu, giữ nguyên thuốc và danh mục đã sửa trong khu quản lý.
-Ảnh minh họa vẽ tại chỗ bằng Pillow rồi lưu bytea.
-    python manage.py nap_thuoc_thuc_te [--ghi-de] [--ve-lai-anh]
+Không tạo ảnh: ảnh thật có giấy phép mở nạp riêng bằng `manage.py nap_anh_that`.
+    python manage.py nap_thuoc_thuc_te [--ghi-de]
 """
 
 from datetime import timedelta
 from random import Random
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import ProtectedError
@@ -18,10 +17,16 @@ from ung_dung.kho.models import LoThuoc, TonKho
 from ung_dung.kho.services.phieu_nhap import nhap_hang
 from ung_dung.tai_khoan.models import TaiKhoan
 
-from ...anh_minh_hoa import ve_anh_san_pham
-from ...du_lieu_thuc_te import CHI_NHANH, DANH_MUC, DON_VI, KHUYEN_MAI, NHOM_ATC_MOI, THUOC
+from ...du_lieu_thuc_te import (
+    CHI_NHANH,
+    DANH_MUC,
+    DON_VI,
+    KHUYEN_MAI,
+    NHOM_ATC_MOI,
+    THUOC,
+    ghep_noi_dung,
+)
 from ...models import (
-    AnhThuoc,
     ChiNhanh,
     DanhMucSanPham,
     DonViTinh,
@@ -34,10 +39,9 @@ from ...models import (
 
 
 class Command(BaseCommand):
-    help = "Nạp danh mục thuốc thực tế, ảnh minh họa và tồn kho chạy thử."
+    help = "Nạp danh mục thuốc thực tế và tồn kho chạy thử (ảnh nạp bằng nap_anh_that)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--ve-lai-anh", action="store_true", help="Vẽ lại ảnh cho mọi thuốc.")
         parser.add_argument(
             "--ghi-de",
             action="store_true",
@@ -53,7 +57,7 @@ class Command(BaseCommand):
         with transaction.atomic():
             self._chi_nhanh()
             cac_danh_muc = self._danh_muc(options["ghi_de"])
-            cac_thuoc = self._thuoc(cac_danh_muc, options["ve_lai_anh"], options["ghi_de"])
+            cac_thuoc = self._thuoc(cac_danh_muc, options["ghi_de"])
             self._khuyen_mai()
             self._ma_lo()
         self._ton_kho(cac_thuoc, nha_cung_cap)
@@ -90,12 +94,11 @@ class Command(BaseCommand):
             DonViTinh.objects.get_or_create(ma_don_vi_tinh=ma, defaults={"ten_don_vi_tinh": ten})
         return ket_qua
 
-    def _thuoc(self, cac_danh_muc, ve_lai_anh, ghi_de):
+    def _thuoc(self, cac_danh_muc, ghi_de):
         cac_thuoc = []
         for sp in THUOC:
             thuoc = Thuoc.objects.filter(ma_thuoc=sp["ma"]).first()
             if thuoc is not None and not ghi_de:
-                self._anh(thuoc, sp, ve_lai_anh)
                 cac_thuoc.append(thuoc)
                 continue
             doi_tu_mo_phong = False
@@ -118,15 +121,7 @@ class Command(BaseCommand):
             thuoc.quy_cach_dong_goi = sp["quy_cach"]
             thuoc.nuoc_san_xuat = sp["nuoc"]
             thuoc.mo_ta_ngan = sp["mo_ta"]
-            for cot in (
-                "cong_dung",
-                "cach_dung",
-                "chong_chi_dinh",
-                "tac_dung_phu",
-                "luu_y",
-                "bao_quan",
-            ):
-                setattr(thuoc, cot, sp[cot])
+            thuoc.noi_dung_chi_tiet = ghep_noi_dung(sp)
             thuoc.full_clean()
             thuoc.save()
             if doi_tu_mo_phong:
@@ -140,33 +135,8 @@ class Command(BaseCommand):
                 QuyDoiBaoGoi.objects.get_or_create(
                     thuoc=thuoc, ten_quy_doi_bao_goi=ten_bao_goi, defaults={"he_so": he_so}
                 )
-            self._anh(thuoc, sp, ve_lai_anh or doi_tu_mo_phong)
             cac_thuoc.append(thuoc)
         return cac_thuoc
-
-    def _anh(self, thuoc, sp, ve_lai):
-        if ve_lai or not AnhThuoc.objects.filter(thuoc=thuoc).exists():
-            AnhThuoc.objects.filter(thuoc=thuoc).delete()
-            anh = AnhThuoc(thuoc=thuoc, thu_tu=0)
-            anh.gan_du_lieu(
-                SimpleUploadedFile(
-                    f"{thuoc.ma_thuoc}.png",
-                    ve_anh_san_pham(
-                        {
-                            "ten_hien_thi": sp["ten"],
-                            "hoat_chat": sp["hoat_chat"],
-                            "dang_bao_che": sp["dang"],
-                            "quy_cach": sp["quy_cach"],
-                            "nha_san_xuat": sp["nsx"],
-                            "ke_don": sp["ke_don"],
-                            "mau": sp["mau"],
-                            "hinh": sp["hinh"],
-                        }
-                    ),
-                    "image/png",
-                )
-            )
-            anh.save()
 
     def _ma_lo(self):
         """Lô của dữ liệu mô phỏng mang mã MP-...: đổi sang dạng số lô in trên bao bì."""

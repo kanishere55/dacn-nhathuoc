@@ -121,9 +121,26 @@
     margin-top: 4px;
     min-height: 42px;
   }
+  /* Bản đồ nhiệt chiếm trọn bề ngang; tồn từng chi nhánh xếp thành hàng thẻ bên dưới
+     để không chừa cột trống cạnh bản đồ khi chuỗi ít chi nhánh. */
+  .hien-thi-ban-do-nhiet {
+    grid-template-columns: minmax(0, 1fr);
+    --cao-ban-do-nhiet: clamp(380px, 62dvh, 620px);
+  }
   .hien-thi-ban-do-nhiet .ban-do {
     margin-top: 0;
-    height: clamp(290px, 40vh, 440px);
+    height: var(--cao-ban-do-nhiet);
+  }
+  .hien-thi-ban-do-nhiet [data-so-lieu] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px;
+  }
+  .hien-thi-ban-do-nhiet [data-so-lieu] li {
+    padding: 10px 12px;
+    border: 1px solid var(--vien);
+    border-radius: 10px;
+    background: #fff;
   }
   .hien-thi-ban-do-nhiet h3 {
     margin-top: 0;
@@ -134,16 +151,17 @@
     }
     .luoi-bang-dieu-khien,
     .hien-thi-ban-do-nhiet {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 0;
     }
     .hien-thi-ban-do-nhiet {
       gap: 12px;
+      --cao-ban-do-nhiet: clamp(320px, 55dvh, 480px);
     }
   }
   @media (max-width: 540px) {
     .loc-ban-do-nhiet {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .loc-ban-do-nhiet .nut {
       justify-self: start;
@@ -161,6 +179,8 @@
 }
 @layer components {
   .nhom-form {
+    /* fieldset mặc định min-width: min-content, nội dung dài làm tràn ngang trên điện thoại. */
+    min-width: 0;
     margin-top: 16px;
     padding-top: 18px;
   }
@@ -170,6 +190,11 @@
     margin-bottom: 14px;
     font-size: 15px;
     font-weight: 700;
+  }
+  /* Legend float trái: mọi khối sau nó phải xuống dòng, nếu không khối dạng grid/flex
+     (bảng phân quyền, bản đồ chọn vị trí) bị ép vào khoảng hẹp cạnh legend. */
+  .nhom-form > legend ~ * {
+    clear: both;
   }
   .luoi-form {
     clear: both;

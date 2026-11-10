@@ -1,11 +1,11 @@
 """Đánh giá thuốc và chi nhánh: chỉ khách có đơn hoàn thành mới được chấm sao."""
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.db.models import Avg, Count
 from django.utils import timezone
 
-from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.chung.permissions import kiem_tra_quyen, kiem_tra_vai_tro
 from ung_dung.chung.van_ban import cat_khoang_trang
 
 from ..models import DanhGiaChiNhanh, DanhGiaThuoc
@@ -85,3 +85,17 @@ def tom_tat_danh_gia(thuoc):
 
 def tom_tat_danh_gia_chi_nhanh(chi_nhanh):
     return _tom_tat(DanhGiaChiNhanh.objects.filter(chi_nhanh=chi_nhanh, dang_hien_thi=True))
+
+
+@transaction.atomic
+def doi_hien_thi_danh_gia(nguoi, loai, ma):
+    """Quản trị ẩn hoặc hiện lại nhận xét; đánh giá chi nhánh chỉ trong phạm vi của người kiểm duyệt."""
+    from ..selectors import lay_danh_gia
+
+    kiem_tra_quyen(nguoi, "danh_gia.kiem_duyet")
+    danh_gia = lay_danh_gia(nguoi, loai).select_for_update(of=("self",)).filter(pk=ma).first()
+    if danh_gia is None:
+        raise ObjectDoesNotExist("Không có đánh giá này trong phạm vi của bạn.")
+    danh_gia.dang_hien_thi = not danh_gia.dang_hien_thi
+    danh_gia.save(update_fields=["dang_hien_thi"])
+    return danh_gia

@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ung_dung.chung.permissions import co_vai_tro, yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
 
 from ..forms import DongTraFormSet, PhieuTraForm
 from ..models import PhieuTraNhaCungCap
@@ -10,23 +10,20 @@ from ..services.phieu_tra_nha_cung_cap import tra_nha_cung_cap
 from . import chung_tu
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("phieu_tra.xem")
 def danh_sach(request):
-    return render(
+    return chung_tu.hien_danh_sach(
         request,
-        "kho/danh_sach_phieu.html",
-        {
-            "tieu_de": "Trả nhà cung cấp",
-            "cac_phieu": lay_phieu(request.user, PhieuTraNhaCungCap, "phieu_nhap__chi_nhanh"),
-            "url_tao": (
-                "kho:phieu_tra_tao" if co_vai_tro(request.user, "quan_ly_chi_nhanh") else None
-            ),
-            "url_chi_tiet": "kho:phieu_tra_chi_tiet",
-        },
+        PhieuTraNhaCungCap,
+        lay_phieu(request.user, PhieuTraNhaCungCap, "phieu_nhap__chi_nhanh"),
+        tieu_de="Trả nhà cung cấp",
+        url_tao="kho:phieu_tra_tao" if co_quyen(request.user, "phieu_tra.tao") else None,
+        url_chi_tiet="kho:phieu_tra_chi_tiet",
+        chi_nhanh="phieu_nhap__chi_nhanh",
     )
 
 
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_quyen("phieu_tra.tao")
 def tao(request):
     form = PhieuTraForm(request.POST or None, nguoi=request.user)
     cac_dong = DongTraFormSet(request.POST or None, form_kwargs={"nguoi": request.user})
@@ -55,11 +52,11 @@ def _phieu(request, ma):
     )
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("phieu_tra.xem")
 def chi_tiet(request, ma):
     return chung_tu.hien_thi(request, _phieu(request, ma))
 
 
-@yeu_cau_vai_tro("quan_tri_chuoi", "quan_ly_chi_nhanh")
+@yeu_cau_quyen("phieu_tra.xem")
 def pdf(request, ma):
     return chung_tu.tra_pdf(request, _phieu(request, ma))

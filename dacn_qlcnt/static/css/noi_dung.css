@@ -46,8 +46,81 @@
 .trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
   content: "Tiêu đề nhỏ";
 }
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-label[data-value="4"]::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-header .ql-picker-item[data-value="4"]::before {
+  content: "Tiêu đề phụ";
+}
 .trinh-soan-thao .ql-snow .ql-picker.ql-header {
   width: 116px;
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-size {
+  width: 96px;
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-label::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-item::before {
+  content: "Cỡ thường";
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="small"]::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="small"]::before {
+  content: "Nhỏ";
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="large"]::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="large"]::before {
+  content: "Lớn";
+}
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="huge"]::before,
+.trinh-soan-thao .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="huge"]::before {
+  content: "Rất lớn";
+}
+.trinh-soan-thao .ql-editor img {
+  max-width: 100%;
+  cursor: pointer;
+}
+.trinh-soan-thao .ql-editor img.dang-chon {
+  outline: 3px solid #c48230;
+  outline-offset: 2px;
+}
+.trinh-soan-thao .ql-editor::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+.trinh-soan-thao .thanh-chinh-anh {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--vien);
+  background: #fff7e8;
+  font-size: 13px;
+}
+.trinh-soan-thao .thanh-chinh-anh[hidden] {
+  display: none;
+}
+.trinh-soan-thao .thanh-chinh-anh span {
+  margin-left: 6px;
+  color: var(--chu-phu);
+  font-weight: 600;
+}
+.trinh-soan-thao .thanh-chinh-anh button {
+  padding: 4px 10px;
+  border: 1px solid var(--vien);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.trinh-soan-thao .thanh-chinh-anh button.dang-chon {
+  border-color: var(--color-chinh);
+  background: var(--color-chinh);
+  color: #fff;
+}
+.trinh-soan-thao .thanh-chinh-anh button.nguy-hiem {
+  margin-left: auto;
+  color: #b42318;
 }
 .trinh-soan-thao .ql-snow.ql-toolbar button:hover .ql-stroke,
 .trinh-soan-thao .ql-snow.ql-toolbar button.ql-active .ql-stroke,
@@ -69,8 +142,8 @@
   font-size: 14px;
 }
 .trinh-soan-thao .ql-editor {
-  min-height: 150px;
-  max-height: 420px;
+  min-height: 320px;
+  max-height: 640px;
   padding: 12px 14px;
   line-height: 1.65;
   overflow-y: auto;
@@ -162,6 +235,36 @@
   .noi-dung-phong-phu .ql-align-justify {
     text-align: justify;
   }
+  .noi-dung-phong-phu::after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+  .noi-dung-phong-phu img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+  .noi-dung-phong-phu img:not([class*="anh-nd-rong"]) {
+    max-width: min(100%, 520px);
+  }
+  .noi-dung-phong-phu .ql-size-small {
+    font-size: 0.8em;
+  }
+  .noi-dung-phong-phu .ql-size-large {
+    font-size: 1.35em;
+  }
+  .noi-dung-phong-phu .ql-size-huge {
+    font-size: 1.8em;
+  }
+  .noi-dung-phong-phu sub,
+  .noi-dung-phong-phu sup {
+    font-size: 0.75em;
+  }
+  .noi-dung-phong-phu .ql-indent-1 { padding-left: 2em; }
+  .noi-dung-phong-phu .ql-indent-2 { padding-left: 4em; }
+  .noi-dung-phong-phu .ql-indent-3 { padding-left: 6em; }
+  .noi-dung-phong-phu .ql-indent-4 { padding-left: 8em; }
 }
 
 @layer components {
@@ -290,27 +393,48 @@
   .nut-slide:hover {
     background: #fff;
   }
-  .cham-slide {
-    position: absolute;
-    bottom: 14px;
-    left: 50%;
+  .nut-slide[hidden] {
+    display: none;
+  }
+  .dieu-khien-banner:not([hidden]) {
     display: flex;
-    gap: 7px;
-    transform: translateX(-50%);
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 0 16px 12px;
+  }
+  .cham-slide {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
   }
   .cham-slide button {
-    width: 8px;
-    height: 8px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border: 0;
-    border-radius: 999px;
-    background: rgb(19 55 43 / 0.25);
+    border-radius: 8px;
     cursor: pointer;
+  }
+  .cham-slide button::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: #587166;
     transition: width 0.3s ease, background 0.3s ease;
   }
-  .cham-slide button[aria-current="true"] {
-    width: 26px;
+  .cham-slide button[aria-current="true"]::before {
+    width: 22px;
     background: var(--color-chinh);
+  }
+  .nut-dung-banner {
+    min-height: 36px;
+    padding: 6px 12px;
   }
   /* Ô tìm nhanh và cam kết dịch vụ dưới banner */
   .tim-nhanh-trang-chu {
@@ -382,9 +506,9 @@
   }
   @media (max-width: 680px) {
     .slide-hero {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 16px;
-      padding: 22px 20px 40px;
+      padding: 22px 20px;
     }
     .anh-slide {
       order: -1;
@@ -418,7 +542,7 @@
     .hero-trang-chu,
     .slide-hero,
     .slide-hero.dang-hien,
-    .cham-slide button {
+    .cham-slide button::before {
       transition: none;
     }
     .slide-hero.dang-hien .anh-slide img {

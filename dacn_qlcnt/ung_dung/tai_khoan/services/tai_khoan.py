@@ -3,8 +3,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, transaction
 
-from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.chung.permissions import kiem_tra_quyen
 from ung_dung.chung.van_ban import cat_khoang_trang
+
+from .quyen import ghi_quyen_rieng
 
 
 def tao_tai_khoan_ky_thuat(
@@ -41,13 +43,16 @@ def tao_tai_khoan_ky_thuat(
 @transaction.atomic
 def luu_tai_khoan(nguoi, du_lieu, doi_tuong=None):
     """Quản trị chuỗi tạo hoặc sửa tài khoản; email do quản trị nhập coi là đã xác thực."""
-    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
+    kiem_tra_quyen(nguoi, "tai_khoan.sua")
     model = get_user_model()
     tai_khoan = model.objects.select_for_update().get(pk=doi_tuong.pk) if doi_tuong else model()
     email_cu = tai_khoan.email
-    for ten in ("ten_dang_nhap", "vai_tro", "chi_nhanh", "dang_hoat_dong", "ho_ten"):
+    for ten in ("ten_dang_nhap", "vai_tro", "chi_nhanh", "dang_hoat_dong", "ho_ten", "nhom_quyen"):
         if ten in du_lieu:
             setattr(tai_khoan, ten, du_lieu[ten])
+    la_noi_bo_ngoai_quan_tri = tai_khoan.vai_tro in ("quan_ly_chi_nhanh", "nhan_vien")
+    if not la_noi_bo_ngoai_quan_tri:
+        tai_khoan.nhom_quyen = None
     if "so_dien_thoai" in du_lieu:
         tai_khoan.so_dien_thoai = du_lieu["so_dien_thoai"] or ""
     if "email" in du_lieu:
@@ -60,8 +65,13 @@ def luu_tai_khoan(nguoi, du_lieu, doi_tuong=None):
     if mat_khau:
         validate_password(mat_khau, tai_khoan)
         tai_khoan.set_password(mat_khau)
+        tai_khoan.so_lan_dang_nhap_sai = 0
+        tai_khoan.thoi_diem_mo_khoa_dang_nhap = None
     elif not tai_khoan.pk:
         raise ValidationError("Tài khoản mới cần có mật khẩu.")
     tai_khoan.full_clean()
     tai_khoan.save()
+    if "quyen_rieng" in du_lieu:
+        # Vai trò không dùng nhóm quyền (quản trị, khách) thì xóa sạch quyền riêng.
+        ghi_quyen_rieng(tai_khoan, du_lieu["quyen_rieng"] if la_noi_bo_ngoai_quan_tri else {})
     return tai_khoan

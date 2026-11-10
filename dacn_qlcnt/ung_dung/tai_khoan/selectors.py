@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
-from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.chung.permissions import kiem_tra_quyen, kiem_tra_vai_tro
 
 from .models import DiaChiGiaoHang
 
 
 def lay_tai_khoan(nguoi):
-    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
+    kiem_tra_quyen(nguoi, "tai_khoan.xem")
     return get_user_model().objects.select_related("chi_nhanh").order_by("ten_dang_nhap")
 
 

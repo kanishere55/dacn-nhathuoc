@@ -122,8 +122,12 @@ TRANG = [
         <h2>Mục đích</h2>
         <p>Xử lý đơn, giao hàng, hoàn tiền, gửi email xác nhận và trả lời câu hỏi của bạn.</p>
         <h2>Chia sẻ</h2>
-        <p>Chúng tôi không bán dữ liệu. Thông tin chỉ chuyển cho đơn vị giao hàng và cổng thanh toán
+        <p>Chúng tôi không bán dữ liệu. Thông tin được chuyển cho đơn vị giao hàng và cổng thanh toán
         ở mức cần thiết để hoàn tất đơn, hoặc khi cơ quan nhà nước có thẩm quyền yêu cầu.</p>
+        <h2>Vị trí và dịch vụ bản đồ</h2>
+        <p>Khi tính quãng đường và phí giao hàng, website gửi tọa độ điểm giao và chi nhánh đến
+        dịch vụ định tuyến OSRM. Khi bạn yêu cầu chỉ đường, OSRM nhận tọa độ điểm xuất phát và điểm đến.
+        Máy chủ định tuyến có thể lưu yêu cầu trong nhật ký vận hành.</p>
         <h2>Quyền của bạn</h2>
         <p>Bạn xem và sửa thông tin trong mục Tài khoản, đổi email bằng mã xác thực và có thể yêu
         cầu xóa tài khoản theo quy định pháp luật về bảo vệ dữ liệu cá nhân.</p>""",

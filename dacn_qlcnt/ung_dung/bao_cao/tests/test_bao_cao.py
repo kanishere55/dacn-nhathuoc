@@ -87,3 +87,53 @@ class DoanhThuVaExcelTests(TestCase):
         so = load_workbook(BytesIO(phan_hoi.content))
         self.assertEqual(so.sheetnames, ["Tổng hợp", "Thuốc bán chạy", "Biến động kho"])
         self.assertEqual(so["Tổng hợp"]["B6"].value, 6000)
+
+    def test_hoan_tien_huy_don_khong_tru_hai_lan_va_excel_khong_chay_cong_thuc(self):
+        from io import BytesIO
+
+        from django.contrib.gis.geos import Point
+        from openpyxl import load_workbook
+
+        from ung_dung.ban_hang.services.dat_hang import dat_hang
+        from ung_dung.ban_hang.services.don_hang import huy_don, xac_nhan_don
+        from ung_dung.thanh_toan.services.ghi import ghi_ngay
+
+        d = tao_du_lieu()
+        tao_ton(d, luong=50)
+        d.thuoc.ten_thuoc = "=1+1"
+        d.thuoc.save(update_fields=["ten_thuoc"])
+        ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
+        don = dat_hang(
+            d.khach,
+            d.cn,
+            [{"thuoc": d.thuoc, "so_luong": 5}],
+            hinh_thuc_nhan="giao_hang",
+            phuong_thuc_thanh_toan="cod",
+            giao={
+                "ten_nguoi_nhan": "A",
+                "so_dien_thoai": "0901234567",
+                "dia_chi": "Q1",
+                "vi_tri": Point(106.7, 10.77, srid=4326),
+                "khoang_cach_met": 900,
+            },
+        )
+        xac_nhan_don(d.nv, don)
+        # Khách đã trả trước rồi đơn bị hủy sau khi xuất: phiếu bán bị loại qua hoàn kho,
+        # khoản hoàn của chính đơn đó không được trừ thêm lần nữa.
+        ghi_ngay(loai="thu", phuong_thuc="chuyen_khoan", so_tien=10000, don_hang=don)
+        huy_don(d.nv, don, "Khách đổi ý")
+        ghi_ngay(loai="hoan", phuong_thuc="chuyen_khoan", so_tien=10000, don_hang=don, nguoi=d.ql)
+        hom_nay = timezone.localdate()
+        bao_cao = lay_bao_cao(d.ql, hom_nay, hom_nay)
+        self.assertEqual(bao_cao["doanh_thu_gop"], 6000)
+        self.assertEqual(bao_cao["tien_hoan_khach"], 10000)
+        self.assertEqual(bao_cao["tien_hoan_tra_hang"], 0)
+        self.assertEqual(bao_cao["doanh_thu_thuan"], 6000)
+
+        self.client.force_login(d.ql)
+        so = load_workbook(
+            BytesIO(self.client.get(reverse("bao_cao:tong_hop") + "?xuat=xlsx").content)
+        )
+        o_ten = [o for dong in so["Thuốc bán chạy"].iter_rows() for o in dong if o.value == "=1+1"]
+        self.assertTrue(o_ten)
+        self.assertTrue(all(o.data_type == "s" for o in o_ten))

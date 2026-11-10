@@ -42,7 +42,9 @@
       oViDo.value = lat.toFixed(6);
       oKinhDo.value = lng.toFixed(6);
       if (!ghim) {
-        ghim = L.marker([lat, lng], { draggable: true, autoPan: true }).addTo(banDo);
+        const tuyChon = { draggable: true, autoPan: true };
+        if (khung.dataset.bieuTuong === 'nha-thuoc') tuyChon.icon = window.bieuTuongNhaThuoc({ noiBat: true });
+        ghim = L.marker([lat, lng], tuyChon).addTo(banDo);
         ghim.on('dragend', () => {
           const p = ghim.getLatLng();
           datGhim(p.lat, p.lng, true);
@@ -50,6 +52,8 @@
       } else {
         ghim.setLatLng([lat, lng]);
       }
+      const oToaDo = khung.querySelector('[data-toa-do]');
+      if (oToaDo) oToaDo.textContent = `Tọa độ: ${lat.toFixed(6)}, ${lng.toFixed(6)} (WGS84)`;
       if (hoiDiaChi) dienDiaChiTuToaDo(lat, lng);
     };
 

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block vi_tri %}Nhóm quyền{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">HỆ THỐNG</p>
+    <h1>{{ tieu_de }}{% if nhom %}: {{ nhom.ten_nhom_quyen }}{% endif %}</h1>
+  </header>
+  <form method="post" class="form-chinh">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <fieldset class="khoi-trang nhom-form">
+      <legend>Thông tin nhóm</legend>
+      <div class="luoi-form">
+        {% for truong in form %}{% if truong.name != "cac_quyen" %}<div{% if truong.name == "mo_ta" %} class="o-rong"{% endif %}>{% include "components/_o_nhap.html" %}</div>{% endif %}{% endfor %}
+      </div>
+    </fieldset>
+    <div class="ma-tran-quyen" x-data>
+      {{ form.cac_quyen.errors }}
+      {% for ten_nhom, cac_dong in form.cac_nhom_quyen %}
+        <fieldset x-ref="nhom{{ forloop.counter }}">
+          <legend>{{ ten_nhom }}</legend>
+          <div class="dau-nhom">
+            <button type="button" @click="$refs.nhom{{ forloop.counter }}.querySelectorAll('input').forEach(o => o.checked = true)">Chọn hết</button>
+            <button type="button" @click="$refs.nhom{{ forloop.counter }}.querySelectorAll('input').forEach(o => o.checked = false)">Bỏ hết</button>
+          </div>
+          <div class="luoi-quyen">
+            {% for quyen, da_chon in cac_dong %}
+              <label><input type="checkbox" name="cac_quyen" value="{{ quyen.ma }}"{% if da_chon %} checked{% endif %}><span>{{ quyen.nhan }}{% if quyen.mo_ta %}<small class="block">{{ quyen.mo_ta }}</small>{% endif %}</span></label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+    </div>
+    <div class="thanh-cong-cu hanh-dong-form">
+      <button class="nut" type="submit">Lưu nhóm quyền</button>
+      <a class="nut nut-phu" href="{% url 'tai_khoan:nhom_quyen_danh_sach' %}">Quay lại</a>
+    </div>
+  </form>
+{% endblock %}

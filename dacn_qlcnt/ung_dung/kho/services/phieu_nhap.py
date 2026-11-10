@@ -12,7 +12,7 @@ from .giao_dich import doi_ve_co_so, khoa_chi_nhanh, ma_chung_tu, thay_doi_ton
 
 @transaction.atomic
 def nhap_hang(nguoi, chi_nhanh, nha_cung_cap, cac_dong, ghi_chu=""):
-    khoa_chi_nhanh(nguoi, chi_nhanh)
+    khoa_chi_nhanh(nguoi, chi_nhanh, "phieu_nhap.tao")
     if not nha_cung_cap.dang_hoat_dong or not cac_dong:
         raise ValidationError("Cần nhà cung cấp đang hoạt động và ít nhất một dòng nhập.")
     phieu = PhieuNhap.objects.create(

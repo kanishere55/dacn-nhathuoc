@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block tieu_de %}Dự báo lượng bán · Khu quản lý{% endblock %}
 {% block noi_dung %}
   <h1>Dự báo lượng bán theo ATC</h1>
   {% if lan %}
@@ -6,24 +7,35 @@
       <h2>Tổng lượng trong bảy ngày sau ngày gốc</h2>
       <p>Nguồn công khai độc lập · {{ lan.nguon_du_lieu }} · {{ lan.nguon_du_lieu.don_vi_nguon }}</p>
       <p>Mốc kết thúc train {{ lan.ngay_chot_huan_luyen|date:"d/m/Y" }}, validation {{ lan.ngay_chot_xac_thuc|date:"d/m/Y" }}, test {{ lan.ngay_chot_kiem_thu|date:"d/m/Y" }}.</p>
-      <div class="khung-bang">
-        <table>
+      <div class="khung-bang bang-the-di-dong">
+        <table role="table">
           <caption>Kết quả thực nghiệm</caption>
-          <thead><tr><th scope="col">ATC</th><th scope="col">Mô hình</th><th scope="col">MAE validation</th><th scope="col">RMSE validation</th><th scope="col">MAE test</th><th scope="col">RMSE test</th></tr></thead>
-          <tbody>
+          <thead role="rowgroup"><tr role="row"><th scope="col">ATC</th><th scope="col">Mô hình</th><th scope="col">MAE validation</th><th scope="col">RMSE validation</th><th scope="col">MAE test</th><th scope="col">RMSE test</th></tr></thead>
+          <tbody role="rowgroup">
             {% for dong in cac_mo_hinh %}
-              <tr><td>{{ dong.ma_atc_nguon }}</td><td>{{ dong.mo_hinh }}{% if dong.duoc_chon %} · Được chọn{% endif %}</td><td>{{ dong.mae_xac_thuc|floatformat:3 }}</td><td>{{ dong.rmse_xac_thuc|floatformat:3 }}</td><td>{{ dong.mae_kiem_thu|floatformat:3 }}</td><td>{{ dong.rmse_kiem_thu|floatformat:3 }}</td></tr>
+              <tr role="row">
+                <td role="cell" data-nhan="ATC">{{ dong.ma_atc_nguon }}</td>
+                <td role="cell" data-nhan="Mô hình">{{ dong.mo_hinh }}{% if dong.duoc_chon %} · Được chọn{% endif %}</td>
+                <td role="cell" data-nhan="MAE validation">{{ dong.mae_xac_thuc|floatformat:3 }}</td>
+                <td role="cell" data-nhan="RMSE validation">{{ dong.rmse_xac_thuc|floatformat:3 }}</td>
+                <td role="cell" data-nhan="MAE test">{{ dong.mae_kiem_thu|floatformat:3 }}</td>
+                <td role="cell" data-nhan="RMSE test">{{ dong.rmse_kiem_thu|floatformat:3 }}</td>
+              </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      <div class="khung-bang">
-        <table>
+      <div class="khung-bang bang-the-di-dong">
+        <table role="table">
           <caption>Dự báo từ cuối chuỗi quan sát</caption>
-          <thead><tr><th scope="col">ATC</th><th scope="col">Ngày gốc</th><th scope="col">Tổng dự báo 7 ngày</th></tr></thead>
-          <tbody>
+          <thead role="rowgroup"><tr role="row"><th scope="col">ATC</th><th scope="col">Ngày gốc</th><th scope="col">Tổng dự báo 7 ngày</th></tr></thead>
+          <tbody role="rowgroup">
             {% for dong in cac_du_bao %}
-              <tr><td>{{ dong.ket_qua_mo_hinh.ma_atc_nguon }}</td><td>{{ dong.ngay_goc|date:"d/m/Y" }}</td><td>{{ dong.so_luong_du_bao|floatformat:3 }}</td></tr>
+              <tr role="row">
+                <td role="cell" data-nhan="ATC">{{ dong.ket_qua_mo_hinh.ma_atc_nguon }}</td>
+                <td role="cell" data-nhan="Ngày gốc">{{ dong.ngay_goc|date:"d/m/Y" }}</td>
+                <td role="cell" data-nhan="Tổng dự báo 7 ngày">{{ dong.so_luong_du_bao|floatformat:3 }}</td>
+              </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -33,14 +45,22 @@
       <h2>Minh họa nguy cơ thiếu hàng</h2>
       <p>Nhập số giả định theo cùng đơn vị và kỳ dự báo. Hệ thống so sánh tồn sau khi trừ giữ và dự trữ với tổng dự báo.</p>
       <form method="post" class="form-chinh">{% csrf_token %}{{ form.as_p }}<button class="nut">Lưu kịch bản</button></form>
-      <div class="khung-bang">
-        <table>
+      <div class="khung-bang bang-the-di-dong">
+        <table role="table">
           <caption>Kịch bản đã lưu của lần thực nghiệm này</caption>
-          <thead><tr><th scope="col">ATC</th><th scope="col">Tồn</th><th scope="col">Giữ</th><th scope="col">Khả dụng</th><th scope="col">Dự trữ</th><th scope="col">Dự báo</th><th scope="col">Chênh lệch</th></tr></thead>
-          <tbody>
+          <thead role="rowgroup"><tr role="row"><th scope="col">ATC</th><th scope="col">Tồn</th><th scope="col">Giữ</th><th scope="col">Khả dụng</th><th scope="col">Dự trữ</th><th scope="col">Dự báo</th><th scope="col">Chênh lệch</th></tr></thead>
+          <tbody role="rowgroup">
             {% for dong in cac_kich_ban %}
-              <tr><td>{{ dong.du_bao_bay_ngay.ket_qua_mo_hinh.ma_atc_nguon }}</td><td>{{ dong.so_luong_ton }}</td><td>{{ dong.so_luong_dang_giu }}</td><td>{{ dong.kha_dung|floatformat:3 }}</td><td>{{ dong.so_luong_du_tru }}</td><td>{{ dong.du_bao_bay_ngay.so_luong_du_bao|floatformat:3 }}</td><td>{{ dong.chenh_lech|floatformat:3 }} · {% if dong.chenh_lech < 0 %}Có nguy cơ thiếu{% else %}Đủ theo kịch bản{% endif %}</td></tr>
-            {% empty %}<tr><td colspan="7">Chưa có kịch bản.</td></tr>{% endfor %}
+              <tr role="row">
+                <td role="cell" data-nhan="ATC">{{ dong.du_bao_bay_ngay.ket_qua_mo_hinh.ma_atc_nguon }}</td>
+                <td role="cell" data-nhan="Tồn">{{ dong.so_luong_ton }}</td>
+                <td role="cell" data-nhan="Giữ">{{ dong.so_luong_dang_giu }}</td>
+                <td role="cell" data-nhan="Khả dụng">{{ dong.kha_dung|floatformat:3 }}</td>
+                <td role="cell" data-nhan="Dự trữ">{{ dong.so_luong_du_tru }}</td>
+                <td role="cell" data-nhan="Dự báo">{{ dong.du_bao_bay_ngay.so_luong_du_bao|floatformat:3 }}</td>
+                <td role="cell" data-nhan="Chênh lệch">{{ dong.chenh_lech|floatformat:3 }} · {% if dong.chenh_lech < 0 %}Có nguy cơ thiếu{% else %}Đủ theo kịch bản{% endif %}</td>
+              </tr>
+            {% empty %}<tr role="row"><td role="cell" colspan="7">Chưa có kịch bản.</td></tr>{% endfor %}
           </tbody>
         </table>
       </div>

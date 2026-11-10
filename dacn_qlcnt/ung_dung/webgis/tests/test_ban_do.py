@@ -85,7 +85,7 @@ class WebGISTests(TestCase):
         tao_ton(d)
         trang = self.client.get(reverse("webgis:ban_do"), {"thuoc": d.thuoc.ma_thuoc})
         self.assertContains(trang, "vendor/leaflet/leaflet.js")
-        self.assertContains(trang, "Dùng vị trí của tôi")
+        self.assertContains(trang, "Vị trí của tôi")
         self.assertContains(trang, 'list="goi-y-thuoc"')
         self.assertContains(trang, f'value="{d.thuoc.ten_thuoc} · {d.thuoc.ma_thuoc}"')
         self.assertNotContains(trang, 'name="kinh_do"')
@@ -95,7 +95,7 @@ class WebGISTests(TestCase):
             reverse("ban_hang:gio_hang_them", args=[d.thuoc.ma_thuoc]), {"so_luong": 2}
         )
         trang_tu_gio = self.client.get(reverse("webgis:ban_do"), {"tu_gio": "1"})
-        self.assertContains(trang_tu_gio, f'data-url-gio="{reverse("ban_hang:dat_hang")}"')
+        self.assertContains(trang_tu_gio, f'data-url-dat-hang="{reverse("ban_hang:dat_hang")}"')
         self.assertContains(trang_tu_gio, 'data-so-luong="2"')
         phan_hoi = self.client.post(
             reverse("webgis:dat_giu"),
@@ -104,3 +104,27 @@ class WebGISTests(TestCase):
         )
         self.assertEqual(phan_hoi.status_code, 201)
         self.assertContains(self.client.get(phan_hoi.json()["duong_dan"]), "thanh toán")
+
+
+class ChiNhanhGanTests(TestCase):
+    def test_sap_theo_khoang_cach_postgis_va_loc_ban_kinh(self):
+        from ung_dung.kho.tests.du_lieu import tao_du_lieu
+
+        d = tao_du_lieu()
+        url = reverse("webgis:chi_nhanh_gan")
+        tat_ca = self.client.get(url).json()["ket_qua"]
+        self.assertEqual({cn["ma_chi_nhanh"] for cn in tat_ca}, {"CN1", "CN2"})
+        self.assertIsNone(tat_ca[0]["khoang_cach_met"])
+        gan = self.client.get(url, {"vi_do": 10.7801, "kinh_do": 106.7101}).json()["ket_qua"]
+        self.assertEqual([cn["ma_chi_nhanh"] for cn in gan], ["CN2", "CN1"])
+        self.assertLess(gan[0]["khoang_cach_met"], gan[1]["khoang_cach_met"])
+        trong_200m = self.client.get(
+            url, {"vi_do": 10.7801, "kinh_do": 106.7101, "ban_kinh_met": 200}
+        ).json()["ket_qua"]
+        self.assertEqual([cn["ma_chi_nhanh"] for cn in trong_200m], ["CN2"])
+        self.assertEqual(self.client.get(url, {"vi_do": 10.7}).status_code, 400)
+        trang = self.client.get(reverse("webgis:ban_do"))
+        self.assertContains(trang, "Tìm nhà thuốc gần bạn")
+        self.assertIn(
+            d.cn.ten_chi_nhanh, [cn["ten_chi_nhanh"] for cn in trang.context["cac_chi_nhanh"]]
+        )

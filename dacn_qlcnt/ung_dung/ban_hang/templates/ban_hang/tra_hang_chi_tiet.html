@@ -15,14 +15,17 @@
       <section class="khoi-trang khung-bang" aria-labelledby="dong-tra">
         <h2 id="dong-tra">Thuốc trả · {{ yc.get_ly_do_display }}</h2>
         <table>
-          <thead><tr><th>Thuốc</th><th>SL trả</th><th class="o-tien">Đơn giá đã mua</th><th class="o-tien">Thành tiền</th></tr></thead>
+          <thead><tr><th>Thuốc</th><th>SL trả</th><th class="o-tien">Đơn giá đã mua</th><th class="o-tien">Thành tiền</th>{% if yc.trang_thai != "cho_duyet" and yc.trang_thai != "tu_choi" %}<th>Nhập lại kho</th>{% endif %}</tr></thead>
           <tbody>
-            {% for dong in cac_dong %}
+            {% for dong, goi_y in cac_dong %}
               <tr>
                 <td>{{ dong.chi_tiet_don_hang.thuoc.ten_thuoc }}</td>
                 <td>{{ dong.so_luong }} {{ dong.chi_tiet_don_hang.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</td>
                 <td class="o-tien">{{ dong.chi_tiet_don_hang.don_gia|tien }}</td>
                 <td class="o-tien">{% widthratio dong.so_luong 1 dong.chi_tiet_don_hang.don_gia as tt %}{{ tt|tien }}</td>
+                {% if yc.trang_thai != "cho_duyet" and yc.trang_thai != "tu_choi" %}
+                  <td>{{ dong.so_luong_nhap_lai }}{% for pb in dong.cac_phan_bo.all %}<small class="block">Lô {{ pb.phan_bo_phieu_ban.ton_kho.lo_thuoc.ma_lo_thuoc }}: +{{ pb.so_luong }}</small>{% empty %}<small class="block">Không nhập lại (hàng không bán lại)</small>{% endfor %}</td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>
@@ -45,14 +48,31 @@
         <p><strong>{{ yc.don_hang.khach_hang.ho_ten|default:yc.don_hang.khach_hang.ten_dang_nhap }}</strong></p>
         {% if yc.don_hang.so_dien_thoai_nhan %}<p><a href="tel:{{ yc.don_hang.so_dien_thoai_nhan }}">{{ yc.don_hang.so_dien_thoai_nhan }}</a></p>{% endif %}
         {% if yc.don_hang.dia_chi_giao %}<p>{{ yc.don_hang.dia_chi_giao }}</p>{% endif %}
+        <h3>Nhận tiền hoàn qua</h3>
+        <p><strong>{{ yc.get_hinh_thuc_hoan_tien_display }}</strong></p>
+        {% if yc.hinh_thuc_hoan_tien == "chuyen_khoan" %}
+          <dl class="thong-tin-hoan-tien"><div><dt>Ngân hàng</dt><dd>{{ yc.ten_ngan_hang }}</dd></div><div><dt>Số tài khoản</dt><dd>{{ yc.so_tai_khoan }} <button type="button" class="nut-chep" data-sao-chep="{{ yc.so_tai_khoan }}" aria-label="Chép số tài khoản"><i data-lucide="copy" aria-hidden="true"></i></button></dd></div><div><dt>Chủ tài khoản</dt><dd>{{ yc.ten_chu_tai_khoan }}</dd></div></dl>
+        {% elif yc.hinh_thuc_hoan_tien == "momo" %}
+          <dl class="thong-tin-hoan-tien"><div><dt>Số ví MoMo</dt><dd>{{ yc.so_dien_thoai_momo }} <button type="button" class="nut-chep" data-sao-chep="{{ yc.so_dien_thoai_momo }}" aria-label="Chép số ví"><i data-lucide="copy" aria-hidden="true"></i></button></dd></div></dl>
+        {% else %}
+          <p class="ghi-chu-khach">Khách nhận tiền mặt khi mang hàng tới chi nhánh.</p>
+        {% endif %}
         {% if yc.nguoi_xu_ly %}<p class="ghi-chu-khach">Xử lý bởi {{ yc.nguoi_xu_ly.ho_ten|default:yc.nguoi_xu_ly.ten_dang_nhap }} lúc {{ yc.thoi_diem_xu_ly|date:"H:i d/m/Y" }}{% if yc.ghi_chu_xu_ly %} · {{ yc.ghi_chu_xu_ly }}{% endif %}</p>{% endif %}
       </section>
       {% if duoc_xu_ly and yc.trang_thai == "cho_duyet" %}
         <section class="khoi-trang" aria-labelledby="duyet-tra">
           <h2 id="duyet-tra">Xử lý</h2>
-          <p class="ghi-chu-khach">Duyệt sau khi đã nhận lại và kiểm hàng. Hàng trả về chuyển sang khu chờ hủy, không nhập lại tồn bán.</p>
+          <p class="ghi-chu-khach">Duyệt sau khi đã nhận lại và kiểm hàng. Ghi số lượng còn nguyên niêm phong bán lại được: phần này cộng lại vào đúng lô đã xuất cho đơn. Phần hư hỏng, hết hạn không nhập lại tồn bán.</p>
           <form method="post" action="{% url 'ban_hang:tra_hang_xu_ly' yc.pk 'duyet' %}" class="form-chinh form-xu-ly-don">
             {% csrf_token %}
+            <fieldset class="nhap-lai-kho">
+              <legend>Nhập lại kho (bán lại được)</legend>
+              {% for dong, goi_y in cac_dong %}
+                <label>{{ dong.chi_tiet_don_hang.thuoc.ten_thuoc }} <small>(trả {{ dong.so_luong }})</small>
+                  <input type="number" name="nhap_lai_{{ dong.pk }}" min="0" max="{{ dong.so_luong }}" value="{{ goi_y }}" inputmode="numeric">
+                </label>
+              {% endfor %}
+            </fieldset>
             <label>Ghi chú <small>(tùy chọn)</small><input name="ghi_chu" maxlength="500"></label>
             <button class="nut" type="submit">Duyệt yêu cầu</button>
           </form>
@@ -67,7 +87,7 @@
           <h2 id="hoan-tra">Hoàn tiền {{ yc.so_tien_hoan|tien }}</h2>
           <form method="post" action="{% url 'ban_hang:tra_hang_xu_ly' yc.pk 'hoan_tien' %}" class="form-chinh form-xu-ly-don" onsubmit="return confirm('Xác nhận đã hoàn {{ yc.so_tien_hoan|tien }} cho khách?')">
             {% csrf_token %}
-            <label>Hoàn qua<select name="phuong_thuc"><option value="chuyen_khoan">Chuyển khoản</option><option value="tien_mat">Tiền mặt</option><option value="momo">Ví MoMo</option></select></label>
+            <label>Hoàn qua<select name="phuong_thuc"><option value="chuyen_khoan"{% if yc.hinh_thuc_hoan_tien == "chuyen_khoan" %} selected{% endif %}>Chuyển khoản</option><option value="tien_mat"{% if yc.hinh_thuc_hoan_tien == "tai_quay" %} selected{% endif %}>Tiền mặt</option><option value="momo"{% if yc.hinh_thuc_hoan_tien == "momo" %} selected{% endif %}>Ví MoMo</option></select></label>
             <label>Mã giao dịch <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="58" autocomplete="off"></label>
             <button class="nut" type="submit">Đã hoàn tiền cho khách</button>
           </form>

@@ -20,6 +20,11 @@ def _bang(trang, tieu_de, cac_cot, cac_dong, cot_tien=()):
         o.alignment = Alignment(vertical="center")
     for dong in cac_dong:
         trang.append(list(dong))
+        for o in trang[trang.max_row]:
+            # openpyxl coi chuỗi bắt đầu bằng "=" là công thức; dữ liệu người dùng nhập
+            # (tên thuốc...) luôn ghi dạng văn bản để không chạy công thức khi mở file.
+            if isinstance(o.value, str):
+                o.data_type = "s"
         for chi_so in cot_tien:
             trang.cell(trang.max_row, chi_so + 1).number_format = DINH_DANG_TIEN
     trang.append([])
@@ -39,8 +44,9 @@ def xuat_excel(bao_cao, *, tu_ngay, den_ngay, ten_chi_nhanh):
         ["Chỉ tiêu", "Số tiền"],
         [
             ("Doanh thu bán hàng", bao_cao["doanh_thu_gop"]),
-            ("Hoàn tiền cho khách", bao_cao["tien_hoan_khach"]),
+            ("Hoàn tiền trả hàng", bao_cao["tien_hoan_tra_hang"]),
             ("Doanh thu thuần", bao_cao["doanh_thu_thuan"]),
+            ("Tổng đã hoàn cho khách (hủy đơn, trả hàng)", bao_cao["tien_hoan_khach"]),
             ("Phiếu đã hoàn kho (không tính doanh thu)", bao_cao["tien_hoan_kho"]),
         ],
         cot_tien=(1,),

@@ -18,7 +18,8 @@ CHUYEN_HOP_LE = {
     ("dang_giu", "het_han"): {HE_THONG, KHACH, NHAN_SU},
     ("dang_chuan_bi", "dang_giao"): {NHAN_SU},
     ("dang_chuan_bi", "da_huy"): {NHAN_SU},
-    ("dang_giao", "hoan_thanh"): {NHAN_SU},
+    # Chỉ khách xác nhận đã nhận hàng; quá hạn không xác nhận thì hệ thống tự hoàn tất.
+    ("dang_giao", "hoan_thanh"): {KHACH, HE_THONG},
     ("dang_giao", "giao_that_bai"): {NHAN_SU},
 }
 

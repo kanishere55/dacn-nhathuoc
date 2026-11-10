@@ -51,7 +51,7 @@ class TraHangTests(TestCase):
             )
             xac_nhan_don(self.d.nv, self.don)
             giao_cho_van_chuyen(self.d.nv, self.don)
-            xac_nhan_da_giao(self.d.nv, self.don)
+            xac_nhan_da_giao(self.d.khach, self.don)
         self.dong = self.don.cac_dong.get()
 
     def tao(self, so_luong=2, cac_anh=None):
@@ -129,6 +129,7 @@ class TraHangTests(TestCase):
                 "ly_do": "het_han",
                 "mo_ta": "Hạn dùng còn 1 tháng",
                 "cac_anh": [anh_thu("a.png"), anh_thu("b.png")],
+                "hinh_thuc_hoan_tien": "tai_quay",
             },
         )
         yc = YeuCauTraHang.objects.get()
@@ -158,3 +159,147 @@ class TraHangTests(TestCase):
             self.client.get(reverse("ban_hang:tra_hang_danh_sach") + "?trang_thai=da_hoan_tien"),
             yc.ma_yeu_cau_tra_hang,
         )
+
+
+class NhanHangVaNhapLaiKhoTests(TestCase):
+    """Khách xác nhận nhận hàng, tự hoàn tất quá hạn, trả hàng nhập lại đúng lô, nơi nhận tiền."""
+
+    def setUp(self):
+        from ung_dung.kho.models import TonKho
+
+        self.TonKho = TonKho
+        self.d = tao_du_lieu()
+        self.ton = tao_ton(self.d, luong=20)
+        with mock.patch(
+            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
+        ):
+            self.don = dat_hang(
+                self.d.khach,
+                self.d.cn,
+                [{"thuoc": self.d.thuoc, "so_luong": 4}],
+                hinh_thuc_nhan="giao_hang",
+                phuong_thuc_thanh_toan="cod",
+                giao={
+                    "ten_nguoi_nhan": "Khách",
+                    "so_dien_thoai": "0901234567",
+                    "dia_chi": "1 Lê Lợi",
+                    "vi_tri": Point(106.70, 10.77, srid=4326),
+                    "khoang_cach_met": 1000,
+                },
+            )
+            xac_nhan_don(self.d.nv, self.don)
+            giao_cho_van_chuyen(self.d.nv, self.don)
+
+    def _nhan_hang(self):
+        with mock.patch(
+            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
+        ):
+            xac_nhan_da_giao(self.d.khach, self.don)
+
+    def test_nhan_vien_khong_xac_nhan_thay_khach(self):
+        with self.assertRaises(PermissionDenied):
+            xac_nhan_da_giao(self.d.nv, self.don)
+        with self.assertRaises(PermissionDenied):
+            xac_nhan_da_giao(self.d.khac, self.don)
+        self._nhan_hang()
+        self.don.refresh_from_db()
+        self.assertEqual(
+            (self.don.trang_thai, self.don.trang_thai_thanh_toan), ("hoan_thanh", "da_thanh_toan")
+        )
+
+    def test_tu_hoan_tat_sau_3_ngay_khach_khong_xac_nhan(self):
+        from ..services.don_hang import xu_ly_qua_han
+
+        self.assertEqual(xu_ly_qua_han(), 0)
+        LichSuDonHang.objects.filter(don_hang=self.don, den_trang_thai="dang_giao").update(
+            thoi_diem_tao=timezone.now() - timedelta(days=3, minutes=1)
+        )
+        with mock.patch(
+            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
+        ):
+            self.assertEqual(xu_ly_qua_han(), 1)
+        self.don.refresh_from_db()
+        self.assertEqual(self.don.trang_thai, "hoan_thanh")
+        lich_su = LichSuDonHang.objects.filter(don_hang=self.don).order_by("-pk").first()
+        self.assertIsNone(lich_su.nguoi_thuc_hien)
+        self.assertIn("Tự hoàn tất", lich_su.ghi_chu)
+
+    def _tra(self, ly_do, so_luong, hoan_tien=None):
+        return tao_yeu_cau(
+            self.d.khach,
+            self.don,
+            ly_do=ly_do,
+            mo_ta="Giao nhầm thuốc",
+            cac_dong={self.don.cac_dong.get().pk: so_luong},
+            cac_anh=[anh_thu()],
+            hoan_tien=hoan_tien,
+        )
+
+    def test_hang_giao_nham_con_nguyen_duoc_nhap_lai_dung_lo(self):
+        self._nhan_hang()
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
+        yc = self._tra(
+            "sai_san_pham",
+            3,
+            {"hinh_thuc_hoan_tien": "momo", "so_dien_thoai_momo": "0901234567"},
+        )
+        duyet(self.d.ql, yc, "Nhận lại 3 hộp còn tem")
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 19)
+        dong = yc.cac_dong.get()
+        self.assertEqual(dong.so_luong_nhap_lai, 3)
+        self.assertEqual(dong.cac_phan_bo.get().phan_bo_phieu_ban.ton_kho_id, self.ton.pk)
+
+    def test_hang_hu_hong_khong_nhap_lai_va_khong_vuot_so_tra(self):
+        self._nhan_hang()
+        yc = self._tra("hu_hong", 2)
+        dong = yc.cac_dong.get()
+        with self.assertRaises(ValidationError):
+            duyet(self.d.ql, yc, nhap_lai={dong.pk: 3})
+        duyet(self.d.ql, yc)
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
+        self.assertEqual(yc.cac_dong.get().so_luong_nhap_lai, 0)
+
+    def test_thong_tin_nhan_tien_hoan_dung_hinh_thuc(self):
+        self._nhan_hang()
+        with self.assertRaises(ValidationError):
+            self._tra("hu_hong", 1, {"hinh_thuc_hoan_tien": "chuyen_khoan", "ten_ngan_hang": "ACB"})
+        yc = self._tra(
+            "hu_hong",
+            1,
+            {
+                "hinh_thuc_hoan_tien": "chuyen_khoan",
+                "ten_ngan_hang": "Vietcombank",
+                "so_tai_khoan": "0071000123456",
+                "ten_chu_tai_khoan": "NGUYEN VAN A",
+            },
+        )
+        self.assertEqual(yc.get_hinh_thuc_hoan_tien_display(), "Chuyển khoản ngân hàng")
+
+    def test_form_khach_chuan_hoa_tai_khoan_va_hien_anh(self):
+        self._nhan_hang()
+        self.client.force_login(self.d.khach)
+        dong = self.don.cac_dong.get()
+        url = reverse("ban_hang:khach_tra_hang", args=[self.don.pk])
+        trang = self.client.get(url)
+        self.assertContains(trang, "data-xem-truoc")
+        self.assertContains(trang, "Nhận tiền hoàn qua")
+        phan_hoi = self.client.post(
+            url,
+            {
+                f"so_luong_{dong.pk}": 1,
+                "ly_do": "hu_hong",
+                "mo_ta": "Vỉ rách",
+                "cac_anh": [anh_thu()],
+                "hinh_thuc_hoan_tien": "chuyen_khoan",
+                "ten_ngan_hang": "Techcombank",
+                "so_tai_khoan": "1903 1234 5678",
+                "ten_chu_tai_khoan": "Nguyễn Thị Ánh Đào",
+            },
+        )
+        self.assertEqual(phan_hoi.status_code, 302)
+        yc = YeuCauTraHang.objects.get()
+        self.assertEqual(
+            (yc.so_tai_khoan, yc.ten_chu_tai_khoan), ("190312345678", "NGUYEN THI ANH DAO")
+        )
+        chi_tiet = self.client.get(reverse("ban_hang:khach_don_hang_chi_tiet", args=[self.don.pk]))
+        self.assertContains(chi_tiet, reverse("ban_hang:anh_tra_hang", args=[yc.cac_anh.get().pk]))

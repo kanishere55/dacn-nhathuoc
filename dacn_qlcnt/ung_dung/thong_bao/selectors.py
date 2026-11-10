@@ -1,10 +1,10 @@
-from ung_dung.chung.permissions import kiem_tra_vai_tro
+from ung_dung.chung.permissions import kiem_tra_quyen
 
 from .models import NhatKyEmail
 
 
 def lay_nhat_ky_email(nguoi, *, loai_email="", trang_thai="", tim=""):
-    kiem_tra_vai_tro(nguoi, "quan_tri_chuoi")
+    kiem_tra_quyen(nguoi, "email.xem")
     cac_email = NhatKyEmail.objects.select_related("tai_khoan")
     if loai_email:
         cac_email = cac_email.filter(loai_email=loai_email)

@@ -45,9 +45,11 @@ class XuatHuyTests(TestCase):
         d = self.d
         ton = tao_ton(d, "LO-QH", ngay=-3, luong=2)
         dong = [{"lo_thuoc": ton.lo_thuoc, "so_luong": 1}]
-        for nguoi in (d.nv, d.ql2, d.admin):
+        for nguoi in (d.nv, d.ql2):
             with self.assertRaises(PermissionDenied):
                 xuat_huy(nguoi, d.cn, "het_han", dong)
+        # quản trị chuỗi có toàn quyền ở mọi chi nhánh
+        self.assertEqual(xuat_huy(d.admin, d.cn, "het_han", dong).chi_nhanh_id, d.cn.pk)
 
     def test_lap_san_lo_het_han_va_xac_nhan_qua_web(self):
         d = self.d

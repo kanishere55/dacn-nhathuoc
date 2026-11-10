@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block tieu_de %}Nhóm quyền · Khu quản lý{% endblock %}
+{% block vi_tri %}Nhóm quyền{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan">HỆ THỐNG</p>
+    <h1>Nhóm quyền</h1>
+  </header>
+  <p>Mỗi nhóm là một bộ quyền. Gán nhóm cho quản lý hoặc nhân viên ở trang tài khoản, rồi tinh chỉnh riêng từng quyền nếu cần. Quản trị chuỗi luôn có toàn quyền.</p>
+  <div class="thanh-cong-cu">
+    <a class="nut" href="{% url 'tai_khoan:nhom_quyen_tao' %}">Thêm nhóm quyền</a>
+    <a class="nut nut-phu" href="{% url 'tai_khoan:danh_sach' %}">Về danh sách tài khoản</a>
+  </div>
+  <div class="khoi-trang khung-bang">
+    <table>
+      <thead><tr><th>Mã</th><th>Tên nhóm</th><th>Loại</th><th>Số quyền</th><th>Tài khoản dùng</th><th></th></tr></thead>
+      <tbody>
+        {% for nhom in cac_nhom %}
+          <tr>
+            <td>{{ nhom.ma_nhom_quyen }}</td>
+            <td>{{ nhom.ten_nhom_quyen }}{% if nhom.mo_ta %}<small class="block">{{ nhom.mo_ta }}</small>{% endif %}</td>
+            <td>{% if nhom.vai_tro_mac_dinh %}Mặc định của vai trò “{{ nhom.vai_tro_mac_dinh }}”{% else %}Tùy chỉnh{% endif %}</td>
+            <td>{{ nhom.so_quyen }}</td>
+            <td>{{ nhom.so_tai_khoan }}{% if nhom.vai_tro_mac_dinh %} (cộng tài khoản chưa gán nhóm){% endif %}</td>
+            <td class="thanh-cong-cu">
+              <a href="{% url 'tai_khoan:nhom_quyen_sua' nhom.pk %}">Sửa quyền</a>
+              {% if not nhom.vai_tro_mac_dinh %}
+                <form method="post" action="{% url 'tai_khoan:nhom_quyen_xoa' nhom.pk %}" onsubmit="return confirm('Xóa nhóm quyền này?')">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

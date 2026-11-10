@@ -2,9 +2,20 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from ung_dung.chung.truong_form import TruongEmail, TruongMotDong, TruongSoDienThoai
 from ung_dung.chung.van_ban import cat_khoang_trang
+
+from . import quyen as danh_muc_quyen
+from .models import NhomQuyen
+from .services.dang_nhap import (
+    SO_LAN_SAI_TOI_DA,
+    ghi_dang_nhap_sai,
+    thoi_diem_mo_khoa,
+    tim_tai_khoan,
+    xoa_dem_dang_nhap_sai,
+)
 
 MAU_TEN_DANG_NHAP = r"^[A-Za-z0-9._-]{4,30}$"
 # Khung tọa độ lãnh thổ Việt Nam (đất liền và đảo gần bờ) để chặn điểm ghim nhầm.
@@ -52,6 +63,30 @@ class DangNhapForm(AuthenticationForm):
             if tai_khoan:
                 return tai_khoan.ten_dang_nhap
         return dang_nhap
+
+    def clean(self):
+        tai_khoan = tim_tai_khoan(self.cleaned_data.get("username"))
+        if mo_khoa := thoi_diem_mo_khoa(tai_khoan):
+            raise self._loi_khoa(mo_khoa)
+        try:
+            ket_qua = super().clean()
+        except ValidationError:
+            if tai_khoan and self.cleaned_data.get("password"):
+                if mo_khoa := ghi_dang_nhap_sai(tai_khoan):
+                    raise self._loi_khoa(mo_khoa) from None
+            raise
+        if self.user_cache is not None:
+            xoa_dem_dang_nhap_sai(self.user_cache)
+        return ket_qua
+
+    @staticmethod
+    def _loi_khoa(mo_khoa):
+        gio = timezone.localtime(mo_khoa)
+        return ValidationError(
+            f"Nhập sai mật khẩu quá {SO_LAN_SAI_TOI_DA - 1} lần. Tài khoản tạm khóa đăng nhập "
+            f"đến {gio:%H:%M}. Có thể dùng chức năng quên mật khẩu.",
+            code="tam_khoa",
+        )
 
 
 class DangKyForm(KiemHaiMatKhau, forms.Form):
@@ -159,6 +194,10 @@ class DiaChiGiaoHangForm(forms.Form):
         )
 
 
+def _ten_o_quyen(ma):
+    return "quyen__" + ma.replace(".", "__")
+
+
 class TaiKhoanForm(forms.ModelForm):
     ten_dang_nhap = forms.CharField(label="Tên đăng nhập", max_length=150)
     ho_ten = TruongMotDong(label="Họ và tên", max_length=100, required=False)
@@ -170,6 +209,69 @@ class TaiKhoanForm(forms.ModelForm):
         required=False,
         strip=False,
     )
+    nhom_quyen = forms.ModelChoiceField(
+        queryset=NhomQuyen.objects.all(),
+        required=False,
+        label="Chọn nhanh theo nhóm quyền",
+        empty_label="Mặc định theo vai trò",
+        help_text="Chọn nhóm để điền sẵn các quyền bên dưới, sau đó tick thêm hoặc bỏ bớt cho riêng người này.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        from .services.quyen import quyen_co_so, tinh_quyen_hieu_luc
+
+        super().__init__(*args, **kwargs)
+        self.fields["vai_tro"].widget.attrs["x-model"] = "vaiTro"
+        self.fields["nhom_quyen"].widget.attrs["data-nhom-quyen"] = ""
+        tk = self.instance
+        if tk.pk and tk.vai_tro in danh_muc_quyen.MAC_DINH:
+            dang_co = tinh_quyen_hieu_luc(tk)
+            self.quyen_nhom_ban_dau = quyen_co_so(tk.vai_tro, tk.nhom_quyen_id)
+        else:
+            dang_co = self.quyen_nhom_ban_dau = quyen_co_so(danh_muc_quyen.NHAN_VIEN)
+        for quyen in danh_muc_quyen.DANH_SACH_QUYEN:
+            if quyen.chi_quan_tri:
+                continue
+            self.fields[_ten_o_quyen(quyen.ma)] = forms.BooleanField(
+                label=quyen.nhan,
+                required=False,
+                initial=quyen.ma in dang_co,
+                widget=forms.CheckboxInput(attrs={"data-ma-quyen": quyen.ma}),
+            )
+
+    def cac_nhom_quyen_rieng(self):
+        """(tên nhóm, [(quyền, ô tick, có trong nhóm cơ sở)]) để vẽ bảng tick theo module."""
+        return [
+            (
+                nhom,
+                [(q, self[_ten_o_quyen(q.ma)], q.ma in self.quyen_nhom_ban_dau) for q in cac_quyen],
+            )
+            for nhom, cac_quyen in danh_muc_quyen.nhom_theo_module().items()
+        ]
+
+    def quyen_rieng(self):
+        """So quyền được tick với quyền của nhóm: tick thêm thành cho phép, bỏ tick thành chặn.
+
+        Trả mã quyền -> True (cho thêm), False (chặn) hoặc None (giống nhóm).
+        """
+        from .services.quyen import quyen_co_so
+
+        nhom = self.cleaned_data.get("nhom_quyen")
+        co_so = quyen_co_so(self.cleaned_data.get("vai_tro"), nhom.pk if nhom else None)
+        ket_qua = {}
+        for q in danh_muc_quyen.DANH_SACH_QUYEN:
+            if q.chi_quan_tri:
+                continue
+            duoc_tick = bool(self.cleaned_data.get(_ten_o_quyen(q.ma)))
+            ket_qua[q.ma] = None if duoc_tick == (q.ma in co_so) else duoc_tick
+        return ket_qua
+
+    def clean(self):
+        du_lieu = super().clean()
+        # Ô nhóm quyền chỉ hiện cho quản lý/nhân viên; giá trị cũ còn gửi lên khi đổi vai trò thì bỏ đi.
+        if du_lieu.get("vai_tro") not in ("quan_ly_chi_nhanh", "nhan_vien"):
+            du_lieu["nhom_quyen"] = None
+        return du_lieu
 
     def clean_ten_dang_nhap(self):
         return cat_khoang_trang(self.cleaned_data["ten_dang_nhap"])
@@ -191,9 +293,57 @@ class TaiKhoanForm(forms.ModelForm):
             "vai_tro",
             "chi_nhanh",
             "dang_hoat_dong",
+            "nhom_quyen",
         ]
         labels = {
             "vai_tro": "Vai trò",
             "chi_nhanh": "Chi nhánh",
             "dang_hoat_dong": "Đang hoạt động",
         }
+
+
+class NhomQuyenForm(forms.Form):
+    ma_nhom_quyen = forms.RegexField(
+        label="Mã nhóm",
+        regex=r"^[A-Z0-9][A-Z0-9_-]{0,31}$",
+        error_messages={
+            "invalid": "Mã gồm chữ hoa, số, gạch ngang hoặc gạch dưới, tối đa 32 ký tự."
+        },
+        help_text="Ví dụ DUOC-SI-KHO. Không đổi được sau khi tạo.",
+    )
+    ten_nhom_quyen = TruongMotDong(label="Tên nhóm", max_length=100)
+    mo_ta = TruongMotDong(label="Mô tả", max_length=200, required=False)
+    cac_quyen = forms.MultipleChoiceField(
+        label="Quyền của nhóm",
+        required=False,
+        choices=[(q.ma, q.nhan) for q in danh_muc_quyen.DANH_SACH_QUYEN if not q.chi_quan_tri],
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, nhom=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.nhom = nhom
+        if nhom is not None:
+            self.fields["ma_nhom_quyen"].disabled = True
+            self.fields["ma_nhom_quyen"].initial = nhom.ma_nhom_quyen
+            self.fields["ten_nhom_quyen"].initial = nhom.ten_nhom_quyen
+            self.fields["mo_ta"].initial = nhom.mo_ta
+            self.fields["cac_quyen"].initial = list(
+                nhom.cac_quyen.values_list("ma_quyen", flat=True)
+            )
+
+    def clean_ma_nhom_quyen(self):
+        if self.nhom is not None:
+            return self.nhom.ma_nhom_quyen
+        ma = self.cleaned_data["ma_nhom_quyen"]
+        if NhomQuyen.objects.filter(ma_nhom_quyen=ma).exists():
+            raise ValidationError("Mã nhóm đã tồn tại.")
+        return ma
+
+    def cac_nhom_quyen(self):
+        """Quyền gom theo nhóm kèm trạng thái đã chọn, cho template vẽ bảng chọn."""
+        chon = set(self["cac_quyen"].value() or [])
+        return [
+            (nhom, [(q, q.ma in chon) for q in cac_quyen])
+            for nhom, cac_quyen in danh_muc_quyen.nhom_theo_module().items()
+        ]

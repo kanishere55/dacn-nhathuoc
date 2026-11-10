@@ -2,25 +2,50 @@
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
 from django.db.models import OuterRef, Subquery
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 
 from ung_dung.chung.anh import tra_anh
+from ung_dung.chung.loc_danh_sach import BoLoc, OChon, o_khoang_thoi_gian
 from ung_dung.chung.permissions import (
-    NHAN_SU_CHUOI,
+    co_quyen,
     co_vai_tro,
-    la_quan_tri,
+    thay_toan_chuoi,
+    yeu_cau_quyen,
     yeu_cau_vai_tro,
 )
 from ung_dung.danh_muc.models import AnhThuoc
 
 from ..forms import TraHangForm, XuLyTraHangForm
-from ..models import TRANG_THAI_TRA_HANG, AnhTraHang, YeuCauTraHang
+from ..models import LY_DO_TRA_HANG, TRANG_THAI_TRA_HANG, AnhTraHang, YeuCauTraHang
 from ..selectors import lay_don
 from ..services import tra_hang as dich_vu
+
+# Gợi ý khi khách nhập tên ngân hàng; khách vẫn gõ được ngân hàng khác.
+NGAN_HANG_PHO_BIEN = (
+    "Vietcombank",
+    "VietinBank",
+    "BIDV",
+    "Agribank",
+    "Techcombank",
+    "MB Bank",
+    "ACB",
+    "VPBank",
+    "Sacombank",
+    "TPBank",
+    "HDBank",
+    "VIB",
+    "SHB",
+    "OCB",
+    "MSB",
+    "SeABank",
+    "Eximbank",
+    "LPBank",
+    "Nam A Bank",
+    "Bac A Bank",
+)
 
 
 def lay_yeu_cau(nguoi):
@@ -29,9 +54,9 @@ def lay_yeu_cau(nguoi):
     )
     if co_vai_tro(nguoi, "khach_hang"):
         return tap_hop.filter(don_hang__khach_hang=nguoi)
-    if la_quan_tri(nguoi):
+    if thay_toan_chuoi(nguoi):
         return tap_hop
-    if co_vai_tro(nguoi, *NHAN_SU_CHUOI):
+    if co_quyen(nguoi, "tra_hang.xem", "tra_hang.duyet"):
         return tap_hop.filter(don_hang__chi_nhanh_id=nguoi.chi_nhanh_id)
     return tap_hop.none()
 
@@ -65,6 +90,7 @@ def khach_tao(request, ma):
                 mo_ta=form.cleaned_data["mo_ta"],
                 cac_dong=form.cac_dong_tra(),
                 cac_anh=form.cleaned_data["cac_anh"],
+                hoan_tien=form.thong_tin_hoan_tien(),
             )
         except ValidationError as loi:
             form.add_error(None, loi)
@@ -74,7 +100,13 @@ def khach_tao(request, ma):
     return render(
         request,
         "ban_hang/khach/tra_hang.html",
-        {"don": don, "form": form, "han": dich_vu.han_tra_hang(don)},
+        {
+            "don": don,
+            "form": form,
+            "han": dich_vu.han_tra_hang(don),
+            "so_anh_toi_da": dich_vu.SO_ANH_TOI_DA,
+            "cac_ngan_hang": NGAN_HANG_PHO_BIEN,
+        },
     )
 
 
@@ -88,42 +120,51 @@ def anh(request, ma):
     return tra_anh(request, anh_tra, cong_khai=False)
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("tra_hang.xem")
 def danh_sach(request):
-    trang_thai = request.GET.get("trang_thai", "cho_duyet")
-    cac_yeu_cau = lay_yeu_cau(request.user)
-    if trang_thai in dict(TRANG_THAI_TRA_HANG):
-        cac_yeu_cau = cac_yeu_cau.filter(trang_thai=trang_thai)
-    else:
-        trang_thai = ""
-    return render(
+    loc = BoLoc(
         request,
-        "ban_hang/tra_hang_danh_sach.html",
-        {
-            "trang": Paginator(cac_yeu_cau, 25).get_page(request.GET.get("page")),
-            "trang_thai": trang_thai,
-            "cac_trang_thai": TRANG_THAI_TRA_HANG,
-        },
+        cac_cot_tim=(
+            "ma_yeu_cau_tra_hang",
+            "don_hang__ma_don_hang",
+            "don_hang__khach_hang__ten_dang_nhap",
+            "don_hang__khach_hang__ho_ten",
+        ),
+        nhan_tim="Mã yêu cầu, mã đơn, khách",
+        cac_o_chon=[
+            OChon("trang_thai", "Trạng thái", TRANG_THAI_TRA_HANG, "trang_thai"),
+            OChon("ly_do", "Lý do", LY_DO_TRA_HANG, "ly_do"),
+            o_khoang_thoi_gian("thoi_diem_tao", "Gửi trong"),
+        ],
+    )
+    return render(
+        request, "ban_hang/tra_hang_danh_sach.html", loc.ngu_canh(lay_yeu_cau(request.user))
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("tra_hang.xem")
 def chi_tiet(request, ma):
     yeu_cau = get_object_or_404(lay_yeu_cau(request.user), pk=ma)
+    goi_y = dich_vu.so_luong_nhap_lai_goi_y(yeu_cau)
     return render(
         request,
         "ban_hang/tra_hang_chi_tiet.html",
         {
             "yc": yeu_cau,
-            "cac_dong": yeu_cau.cac_dong.select_related("chi_tiet_don_hang__thuoc__don_vi_tinh"),
+            "cac_dong": [
+                (dong, goi_y.get(dong.pk, 0))
+                for dong in yeu_cau.cac_dong.select_related(
+                    "chi_tiet_don_hang__thuoc__don_vi_tinh"
+                ).prefetch_related("cac_phan_bo__phan_bo_phieu_ban__ton_kho__lo_thuoc")
+            ],
             "cac_anh": yeu_cau.cac_anh.only("pk", "thu_tu"),
-            "duoc_xu_ly": co_vai_tro(request.user, "quan_ly_chi_nhanh"),
+            "duoc_xu_ly": co_quyen(request.user, "tra_hang.duyet"),
         },
     )
 
 
 @require_POST
-@yeu_cau_vai_tro("quan_ly_chi_nhanh")
+@yeu_cau_quyen("tra_hang.duyet")
 def xu_ly(request, ma, hanh_dong):
     yeu_cau = get_object_or_404(lay_yeu_cau(request.user), pk=ma)
     form = XuLyTraHangForm(request.POST)
@@ -134,7 +175,13 @@ def xu_ly(request, ma, hanh_dong):
     du_lieu = form.cleaned_data
     try:
         if hanh_dong == "duyet":
-            dich_vu.duyet(request.user, yeu_cau, du_lieu["ghi_chu"])
+            nhap_lai = {}
+            for dong in yeu_cau.cac_dong.all():
+                gia_tri = request.POST.get(f"nhap_lai_{dong.pk}", "0").strip() or "0"
+                if not gia_tri.isdecimal() or len(gia_tri) > 6:
+                    raise ValidationError("Số lượng nhập lại kho phải là số nguyên không âm.")
+                nhap_lai[dong.pk] = int(gia_tri)
+            dich_vu.duyet(request.user, yeu_cau, du_lieu["ghi_chu"], nhap_lai=nhap_lai)
             messages.success(request, "Đã duyệt yêu cầu, hãy hoàn tiền cho khách.")
         elif hanh_dong == "tu_choi":
             dich_vu.tu_choi(request.user, yeu_cau, du_lieu["ghi_chu"])

@@ -7,10 +7,8 @@
     <h1>Yêu cầu hóa đơn công ty</h1>
     <p>Phát hành hóa đơn điện tử trên phần mềm hóa đơn của nhà thuốc, rồi ghi ký hiệu và số hóa đơn vào đây. Khách nhận email báo kết quả.</p>
   </header>
-  <nav class="thanh-cong-cu" aria-label="Lọc trạng thái">
-    <a class="nut{% if trang_thai %} nut-phu{% endif %}" href="?">Tất cả</a>
-    {% for ma, nhan in cac_trang_thai %}<a class="nut{% if trang_thai != ma %} nut-phu{% endif %}" href="?trang_thai={{ ma }}">{{ nhan }}</a>{% endfor %}
-  </nav>
+  {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
+  <div id="vung-danh-sach">
   <div class="khoi-trang khung-bang">
     <table>
       <thead><tr><th>Đơn</th><th>Doanh nghiệp</th><th>Gửi lúc</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
@@ -39,11 +37,6 @@
       </tbody>
     </table>
   </div>
-  {% if trang.has_other_pages %}
-    <nav class="thanh-cong-cu" aria-label="Phân trang">
-      {% if trang.has_previous %}<a class="nut nut-phu" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
-      <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}</span>
-      {% if trang.has_next %}<a class="nut nut-phu" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
-    </nav>
-  {% endif %}
+  {% include "components/_phan_trang.html" %}
+  </div>
 {% endblock %}

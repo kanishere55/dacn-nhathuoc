@@ -410,22 +410,14 @@
     border-color: var(--color-chinh);
   }
 
-  /* Chọn vị trí trên bản đồ */
-  .chon-vi-tri {
-    display: grid;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .chon-vi-tri .ban-do {
-    height: 320px;
-    margin: 0;
-  }
+  /* Chọn vị trí trên bản đồ: bố cục và kích thước ở ban_do.css */
   .tim-vi-tri {
     display: flex;
     gap: 6px;
   }
   .tim-vi-tri input {
     flex: 1;
+    min-width: 0;
   }
   .ket-qua-tim-vi-tri {
     border: 1px solid var(--vien);
@@ -459,7 +451,7 @@
 
   @media (max-width: 860px) {
     .khung-xac-thuc-doi {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     .gioi-thieu-xac-thuc {
       display: none;
@@ -484,7 +476,7 @@
     .hai-cot-form,
     .luoi-dia-chi,
     .bang-thong-tin-tai-khoan {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 }

@@ -1,7 +1,9 @@
 {% extends "khach/base.html" %}
 {% load static %}
 {% block tieu_de %}{{ cua_hang.ten_thuong_hieu }} · Mua thuốc trực tuyến, nhận tại nhà thuốc gần bạn{% endblock %}
-{% block cuoi_trang %}<script defer src="{% static 'chung/js/bang_chuyen.js' %}"></script>{% endblock %}
+{% block css_tuong_tac %}{% endblock %}
+{% block js_tuong_tac %}{% endblock %}
+{% block cuoi_trang %}<script defer src="{% tep_tinh 'chung/js/bang_chuyen.js' %}"></script>{% endblock %}
 {% block noi_dung %}
   <h1 class="sr-only">{{ cua_hang.ten_thuong_hieu }} – mua thuốc trực tuyến, nhận tại nhà thuốc gần bạn</h1>
   {% if cac_banner %}
@@ -14,15 +16,22 @@
               {% if b.mo_ta %}<p>{{ b.mo_ta }}</p>{% endif %}
               <a class="nut nut-hero" href="{{ b.duong_dan }}">{{ b.nhan_nut }}<i data-lucide="arrow-right" aria-hidden="true"></i></a>
             </div>
-            <div class="anh-slide"><img src="{% url 'noi_dung:anh_banner' b.pk %}" width="{{ b.chieu_rong }}" height="{{ b.chieu_cao }}" alt=""{% if not forloop.first %} loading="lazy"{% else %} fetchpriority="high"{% endif %}></div>
+            <div class="anh-slide">
+              {% if not forloop.first %}<template data-anh-banner>{% endif %}
+              <img src="{% url 'noi_dung:anh_banner' b.pk %}" width="{{ b.chieu_rong }}" height="{{ b.chieu_cao }}" alt=""{% if forloop.first %} fetchpriority="high"{% else %} decoding="async"{% endif %}>
+              {% if not forloop.first %}</template>{% endif %}
+            </div>
           </article>
         {% endfor %}
       </div>
       {% if cac_banner|length > 1 %}
-        <button class="nut-slide nut-slide-truoc" type="button" data-truoc aria-label="Banner trước"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
-        <button class="nut-slide nut-slide-sau" type="button" data-sau aria-label="Banner sau"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
-        <div class="cham-slide">
-          {% for b in cac_banner %}<button type="button" data-den="{{ forloop.counter0 }}" aria-label="Xem banner {{ forloop.counter }}: {{ b.tieu_de }}"{% if forloop.first %} aria-current="true"{% endif %}></button>{% endfor %}
+        <button class="nut-slide nut-slide-truoc" type="button" data-truoc aria-label="Banner trước" hidden><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+        <button class="nut-slide nut-slide-sau" type="button" data-sau aria-label="Banner sau" hidden><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <div class="dieu-khien-banner" data-dieu-khien-banner hidden>
+          <div class="cham-slide" role="group" aria-label="Chọn banner">
+            {% for b in cac_banner %}<button type="button" data-den="{{ forloop.counter0 }}" aria-label="Xem banner {{ forloop.counter }}: {{ b.tieu_de }}"{% if forloop.first %} aria-current="true"{% endif %}></button>{% endfor %}
+          </div>
+          <button type="button" class="nut nut-phu nut-dung-banner" data-tam-dung-banner>Tạm dừng</button>
         </div>
       {% endif %}
     </section>

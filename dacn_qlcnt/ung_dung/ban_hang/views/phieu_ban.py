@@ -3,32 +3,31 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from ung_dung.chung.permissions import NHAN_SU_CHI_NHANH, NHAN_SU_CHUOI, co_vai_tro, yeu_cau_vai_tro
+from ung_dung.chung.permissions import co_quyen, yeu_cau_quyen
+from ung_dung.danh_muc.selectors import lay_thuoc_cong_khai
 from ung_dung.kho.forms import DongThuocFormSet
+from ung_dung.kho.views.chung_tu import hien_danh_sach
 
 from ..forms import PhieuBanForm
 from ..hoa_don import du_lieu_hoa_don, ten_tep_pdf, ve_pdf
+from ..models import PhieuBan
 from ..selectors import lay_phieu_ban
 from ..services.phieu_ban import ban_tai_quay
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_ban.xem")
 def danh_sach(request):
-    return render(
+    return hien_danh_sach(
         request,
-        "kho/danh_sach_phieu.html",
-        {
-            "tieu_de": "Bán hàng tại quầy",
-            "cac_phieu": lay_phieu_ban(request.user),
-            "url_tao": (
-                "ban_hang:phieu_ban_tao" if co_vai_tro(request.user, *NHAN_SU_CHI_NHANH) else None
-            ),
-            "url_chi_tiet": "ban_hang:phieu_ban_chi_tiet",
-        },
+        PhieuBan,
+        lay_phieu_ban(request.user),
+        tieu_de="Bán hàng tại quầy",
+        url_tao="ban_hang:phieu_ban_tao" if co_quyen(request.user, "phieu_ban.tao") else None,
+        url_chi_tiet="ban_hang:phieu_ban_chi_tiet",
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHI_NHANH)
+@yeu_cau_quyen("phieu_ban.tao")
 def tao(request):
     form = PhieuBanForm(request.POST or None, nguoi=request.user)
     cac_dong = DongThuocFormSet(request.POST or None)
@@ -48,22 +47,25 @@ def tao(request):
             return redirect("ban_hang:phieu_ban_chi_tiet", ma=phieu.pk)
     return render(
         request,
-        "kho/form_phieu.html",
+        "ban_hang/phieu_ban_form.html",
         {
             "form": form,
             "cac_dong": cac_dong,
-            "tieu_de": "Bán tại quầy · giá đang áp dụng / đơn vị cơ sở",
+            "tieu_de": "Bán tại quầy",
+            "id_thuoc_ke_don": list(
+                lay_thuoc_cong_khai().filter(la_thuoc_ke_don=True).values_list("pk", flat=True)
+            ),
         },
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_ban.xem")
 def chi_tiet(request, ma):
     phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
     return render(request, "ban_hang/phieu_ban.html", {"hd": du_lieu_hoa_don(phieu)})
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_ban.xem")
 def hoa_don_in(request, ma):
     phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
     return render(
@@ -77,7 +79,7 @@ def hoa_don_in(request, ma):
     )
 
 
-@yeu_cau_vai_tro(*NHAN_SU_CHUOI)
+@yeu_cau_quyen("phieu_ban.xem")
 def hoa_don_pdf(request, ma):
     phieu = get_object_or_404(lay_phieu_ban(request.user), pk=ma)
     return tra_pdf(phieu, tai_ve="tai" in request.GET)

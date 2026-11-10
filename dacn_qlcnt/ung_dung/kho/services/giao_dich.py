@@ -14,8 +14,8 @@ def ma_chung_tu(tien_to):
     return tien_to + uuid4().hex[:20].upper()
 
 
-def khoa_chi_nhanh(nguoi, chi_nhanh, *, quan_ly=False):
-    kiem_tra_quyen_ghi_chi_nhanh(nguoi, chi_nhanh, quan_ly=quan_ly)
+def khoa_chi_nhanh(nguoi, chi_nhanh, quyen):
+    kiem_tra_quyen_ghi_chi_nhanh(nguoi, chi_nhanh, quyen)
     return khoa_kho(chi_nhanh)
 
 
@@ -47,8 +47,20 @@ def phan_bo_fefo(chi_nhanh, thuoc, so_luong, *, bo_qua_don=None):
     raise ValidationError(f"Không đủ tồn khả dụng cho {thuoc.ten_thuoc}.")
 
 
+GIOI_HAN_TON = 2147483647  # cột so_luong kiểu INTEGER
+
+
 def thay_doi_ton(ton, chenhlech):
-    ton.so_luong += chenhlech
+    moi = ton.so_luong + chenhlech
+    if moi < 0:
+        raise ValidationError(f"Tồn lô {ton.lo_thuoc.ma_lo_thuoc} không đủ cho thao tác này.")
+    if moi > GIOI_HAN_TON:
+        raise ValidationError(
+            f"Tồn lô {ton.lo_thuoc.ma_lo_thuoc} sau thao tác vượt giới hạn {GIOI_HAN_TON:,}.".replace(
+                ",", "."
+            )
+        )
+    ton.so_luong = moi
     ton.full_clean()
     ton.save(update_fields=["so_luong"])
 
@@ -59,6 +71,6 @@ def doi_ve_co_so(thuoc, so_luong, quy_doi=None):
     if quy_doi and quy_doi.thuoc_id != thuoc.pk:
         raise ValidationError("Bao gói không thuộc thuốc đã chọn.")
     so_luong_co_so = so_luong * (quy_doi.he_so if quy_doi else 1)
-    if so_luong_co_so > 2147483647:
+    if so_luong_co_so > GIOI_HAN_TON:
         raise ValidationError("Số lượng sau quy đổi vượt giới hạn của kho.")
     return so_luong_co_so
