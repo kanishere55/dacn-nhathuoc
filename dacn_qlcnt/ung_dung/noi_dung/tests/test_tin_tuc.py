@@ -1,5 +1,7 @@
 from datetime import timedelta
+from io import StringIO
 
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -65,3 +67,28 @@ class TinTucTests(TestCase):
     def test_nhan_su_chi_nhanh_khong_quan_ly_tin(self):
         self.client.force_login(self.d.ql)
         self.assertEqual(self.client.get(reverse("noi_dung:tin_tuc_danh_sach")).status_code, 403)
+
+
+class TinTucMauTests(TestCase):
+    """Lệnh nap_tin_tuc_mau đăng bài viết mẫu và chạy lại không nhân đôi hay ghi đè."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.d = tao_du_lieu()
+
+    def test_nap_bai_mau_chay_lai_khong_ghi_de(self):
+        call_command("nap_tin_tuc_mau", tac_gia=self.d.admin.ten_dang_nhap, stdout=StringIO())
+        self.assertEqual(TinTuc.objects.count(), 3)
+        bai = TinTuc.objects.order_by("thoi_diem_dang").first()
+        TinTuc.objects.filter(pk=bai.pk).update(tieu_de="Tiêu đề đã sửa")
+        call_command("nap_tin_tuc_mau", tac_gia=self.d.admin.ten_dang_nhap, stdout=StringIO())
+        self.assertEqual(TinTuc.objects.count(), 3)
+        self.assertEqual(TinTuc.objects.get(pk=bai.pk).tieu_de, "Tiêu đề đã sửa")
+        danh_sach = self.client.get(reverse("noi_dung:khach_tin_tuc_danh_sach"))
+        self.assertContains(danh_sach, "kháng thuốc")
+        for tin in TinTuc.objects.all():
+            trang = self.client.get(
+                reverse("noi_dung:khach_tin_tuc_chi_tiet", args=[tin.duong_dan_tin_tuc])
+            )
+            self.assertContains(trang, "Nguồn tham khảo")
+            self.assertNotIn("<script", tin.noi_dung_tin_tuc)
