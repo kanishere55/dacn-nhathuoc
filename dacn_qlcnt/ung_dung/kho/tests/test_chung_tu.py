@@ -57,10 +57,10 @@ class ChungTuKhoTests(TestCase):
         dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 12}])
         dong = {"lo_thuoc": ton.lo_thuoc, "so_luong": 9}
         with self.assertRaises(ValidationError):
-            tra_nha_cung_cap(d.ql, phieu, [dong])
+            tra_nha_cung_cap(d.ql, phieu, [dong], "Vỉ móp khi nhận")
         self.assertFalse(PhieuTraNhaCungCap.objects.exists())
         dong["so_luong"] = 8
-        tra_nha_cung_cap(d.ql, phieu, [dong])
+        tra_nha_cung_cap(d.ql, phieu, [dong], "Vỉ móp khi nhận")
         ton.refresh_from_db()
         self.assertEqual(ton.so_luong, 12)
 
@@ -179,7 +179,7 @@ class ChungTuKhoTests(TestCase):
         self.assertEqual(phan_hoi.status_code, 302)
         self.assertEqual(PhieuDieuChuyen.objects.get().ghi_chu, "Chuyển để bổ sung tồn")
 
-    def test_tra_nha_cung_cap_chap_nhan_ghi_chu_toan_ky_tu_vo_hinh(self):
+    def test_tra_nha_cung_cap_bat_buoc_ly_do_ke_ca_khi_chi_co_ky_tu_vo_hinh(self):
         phieu_nhap = self.nhap_lo(20)
         lo_thuoc_id = TonKho.objects.get(chi_nhanh=self.d.cn).lo_thuoc_id
         self.client.force_login(self.d.ql)
@@ -194,5 +194,16 @@ class ChungTuKhoTests(TestCase):
                 "form-0-so_luong": "7",
             },
         )
-        self.assertEqual(phan_hoi.status_code, 302)
-        self.assertEqual(PhieuTraNhaCungCap.objects.get().ghi_chu, "")
+        self.assertEqual(phan_hoi.status_code, 200)
+        self.assertContains(phan_hoi, "Ghi lý do trả")
+        # Lô đã chọn vẫn được giữ khi trang báo lỗi thiếu lý do.
+        self.assertContains(phan_hoi, f'value="{lo_thuoc_id}" selected')
+        self.assertNotContains(phan_hoi, "Lô này không có trong phiếu nhập đã chọn")
+        self.assertFalse(PhieuTraNhaCungCap.objects.exists())
+        with self.assertRaises(ValidationError):
+            tra_nha_cung_cap(
+                self.d.ql,
+                phieu_nhap,
+                [{"lo_thuoc_id": lo_thuoc_id, "so_luong": 7}],
+                "﻿​",
+            )

@@ -31,11 +31,14 @@ def danh_sach(request):
 @yeu_cau_quyen("phieu_tra.tao")
 def tao(request):
     form = PhieuTraForm(request.POST or None, nguoi=request.user)
-    phieu_nhap = form.cleaned_data["phieu_nhap"] if form.is_bound and form.is_valid() else None
+    dau_phieu_hop_le = form.is_bound and form.is_valid()
+    # Lấy phiếu nhập ngay cả khi trường khác của đầu phiếu lỗi (ví dụ thiếu lý do): danh sách lô
+    # vẫn lọc theo phiếu đã chọn nên lô người dùng đã chọn được giữ lại khi trang báo lỗi.
+    phieu_nhap = form.cleaned_data.get("phieu_nhap") if form.is_bound else None
     cac_dong = DongTraFormSet(
         request.POST or None, form_kwargs={"nguoi": request.user, "phieu_nhap": phieu_nhap}
     )
-    if phieu_nhap and cac_dong.is_valid():
+    if dau_phieu_hop_le and phieu_nhap and cac_dong.is_valid():
         da_nhap = cac_dong_da_nhap(cac_dong)
         try:
             phieu = tra_nha_cung_cap(

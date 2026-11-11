@@ -3,7 +3,7 @@
 {% block noi_dung %}
   <header class="tieu-de-khach">
     <h1>Giỏ hàng</h1>
-    {% if cac_dong %}<p>{{ tom_tat.so_luong }} sản phẩm · Giá đã gồm khuyến mãi đang áp dụng.</p>{% endif %}
+    {% if cac_dong %}<p>{{ cac_dong|length }} sản phẩm · Giá đã gồm khuyến mãi đang áp dụng.</p>{% endif %}
   </header>
   {% if cac_dong %}
     <div class="khung-thanh-toan">

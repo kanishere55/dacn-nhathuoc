@@ -204,7 +204,11 @@ class PhieuTraForm(forms.Form):
     phieu_nhap = ChonPhieuNhap(
         PhieuNhap.objects.none(), label="Trả theo phiếu nhập", empty_label="Chọn phiếu nhập gốc"
     )
-    ghi_chu = forms.CharField(label="Lý do trả", required=False)
+    ghi_chu = forms.CharField(
+        label="Lý do trả",
+        help_text="Ví dụ: giao sai hàm lượng, vỉ móp, lô bị thu hồi theo công văn số…",
+        error_messages={"required": "Ghi lý do trả để đối chiếu với nhà cung cấp."},
+    )
     khoa_yeu_cau = truong_khoa_yeu_cau()
 
     def __init__(self, *args, nguoi, **kwargs):

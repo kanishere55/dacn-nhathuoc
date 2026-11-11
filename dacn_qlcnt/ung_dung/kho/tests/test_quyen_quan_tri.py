@@ -45,7 +45,9 @@ class QuyenQuanTriKhoTests(TestCase):
             with self.subTest(trang=ten):
                 self.assertEqual(self.client.get(reverse(f"kho:{ten}_tao")).status_code, 200)
         dieu_chuyen(d.admin, d.cn2, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
-        tra_nha_cung_cap(d.admin, self.phieu, [{"lo_thuoc": self.ton.lo_thuoc, "so_luong": 2}])
+        tra_nha_cung_cap(
+            d.admin, self.phieu, [{"lo_thuoc": self.ton.lo_thuoc, "so_luong": 2}], "Giao sai lô"
+        )
         kiem_ke(
             d.admin,
             d.cn2,

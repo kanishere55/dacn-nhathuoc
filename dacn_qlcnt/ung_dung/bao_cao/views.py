@@ -14,9 +14,13 @@ from .xuat import xuat_excel
 @require_GET
 @vary_on_headers("HX-Request")
 def tong_hop(request):
+    # Chỉ coi là đã lọc khi URL có trường của bộ lọc; tham số lạ (?utm_source=…, ?v=…) không làm
+    # trang báo "bộ lọc chưa hợp lệ" mà vẫn hiện báo cáo mặc định.
     du_lieu = request.GET.copy()
     du_lieu.pop("xuat", None)
-    form = LocBaoCaoForm(du_lieu or None, nguoi=request.user)
+    if not any(ten in du_lieu for ten in LocBaoCaoForm.base_fields):
+        du_lieu = None
+    form = LocBaoCaoForm(du_lieu, nguoi=request.user)
     tham_so = form.initial if not form.is_bound else form.cleaned_data if form.is_valid() else None
     bao_cao = lay_bao_cao(request.user, **tham_so) if tham_so is not None else None
     if bao_cao is not None and request.GET.get("xuat") == "xlsx":

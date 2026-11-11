@@ -185,6 +185,20 @@ class ChuyenKhoanTests(TestCase):
         thieu = GiaoDichThanhToan.objects.get(don_hang=self.don, trang_thai="thanh_cong")
         self.assertEqual(thieu.so_tien, 1000)
 
+    def test_chuyen_thua_van_xac_nhan_don_va_cho_hoan_phan_thua(self):
+        from ung_dung.thong_bao.models import NhatKyEmail
+
+        self.d.khach.email = "khach-thu@example.com"
+        self.d.khach.save(update_fields=["email"])
+        tong = int(self.don.tong_thanh_toan)
+        self.assertEqual(xu_ly_sepay(self.sepay(so_tien=tong + 5000)), "thua")
+        self.don.refresh_from_db()
+        self.assertEqual(
+            (self.don.trang_thai, self.don.trang_thai_thanh_toan), ("cho_xac_nhan", "cho_hoan_tien")
+        )
+        thu = NhatKyEmail.objects.filter(don_hang=self.don, loai_email="da_nhan_tien").get()
+        self.assertIn("chuyển thừa 5.000 đ", thu.noi_dung_van_ban)
+
     def test_tien_den_sau_han_huy_don_va_cho_hoan(self):
         DonHang.objects.filter(pk=self.don.pk).update(
             thoi_diem_tao=timezone.now() - timedelta(minutes=40),

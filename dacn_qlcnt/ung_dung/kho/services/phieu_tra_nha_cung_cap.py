@@ -62,6 +62,9 @@ def tra_nha_cung_cap(nguoi, phieu_nhap, cac_dong, ghi_chu="", *, khoa_yeu_cau=No
         return da_co
     if not cac_dong:
         raise ValidationError("Phiếu trả cần ít nhất một dòng.")
+    if not cat_khoang_trang(ghi_chu):
+        # Q40: chứng từ xuất trả cần lý do để đối chiếu với nhà cung cấp và khi thanh tra GPP.
+        raise ValidationError("Ghi lý do trả để đối chiếu với nhà cung cấp.")
     phieu = PhieuTraNhaCungCap.objects.create(
         ma_phieu_tra_nha_cung_cap=ma_chung_tu("PT"),
         phieu_nhap=phieu_nhap,

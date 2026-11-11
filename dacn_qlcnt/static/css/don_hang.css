@@ -91,14 +91,19 @@
     justify-content: space-between;
     gap: 12px;
   }
+  /* Nhãn dài (ví dụ "Đã hoàn cho khách (hủy đơn, trả hàng)") được xuống dòng; số tiền luôn
+     nằm trọn một dòng, không bị đẩy ra ngoài khung trên màn hình hẹp. */
   .tom-tat-don dt,
   .bang-tien-don dt {
-    flex-shrink: 0;
+    min-width: 0;
     color: var(--chu-phu);
   }
+  .tom-tat-don dd,
   .bang-tien-don dd {
+    flex-shrink: 0;
     margin: 0;
     text-align: right;
+    white-space: nowrap;
   }
   .tong-cong {
     padding-top: 10px;

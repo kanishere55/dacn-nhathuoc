@@ -93,6 +93,11 @@ TRANG = [
         <h2>Thanh toán</h2>
         <p>Thanh toán khi nhận hàng (COD), chuyển khoản qua mã VietQR hoặc ví MoMo. Đơn trả trước
         được giữ hàng 30 phút trong lúc chờ thanh toán.</p>
+        <h2>Giao không thành công</h2>
+        <p>Người giao không liên lạc được hoặc bạn chưa nhận được hàng, nhà thuốc sẽ gọi để hẹn
+        giao lại. Nếu vẫn không giao được, đơn bị hủy: đơn COD không phát sinh tiền; tiền đã trả
+        trước (gồm phí giao) được hoàn đủ qua kênh bạn đã thanh toán và báo qua email kèm mã giao
+        dịch.</p>
         <blockquote>Thuốc kê đơn không giao qua website. Vui lòng đặt giữ và mang đơn thuốc tới quầy.</blockquote>""",
     ),
     (

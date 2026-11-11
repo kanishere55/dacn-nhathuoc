@@ -47,6 +47,12 @@ class BaoCaoTests(TestCase):
 
 
 class DoanhThuVaExcelTests(TestCase):
+    def test_tham_so_la_tren_url_van_hien_bao_cao_mac_dinh(self):
+        self.client.force_login(tao_du_lieu().ql)
+        tra_ve = self.client.get(reverse("bao_cao:tong_hop"), {"utm_source": "email"})
+        self.assertContains(tra_ve, "Chứng từ trong kỳ")
+        self.assertNotContains(tra_ve, "Bộ lọc chưa hợp lệ")
+
     def test_tru_hoan_kho_hoan_tien_va_xuat_excel(self):
         from io import BytesIO
 
