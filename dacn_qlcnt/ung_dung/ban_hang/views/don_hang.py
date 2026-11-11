@@ -242,7 +242,7 @@ def xu_ly(request, ma, hanh_dong):
         elif hanh_dong == "da_thu_cod":
             dong = da_thu_tien_cod(request.user, don, ly_do)
             messages.success(
-                request, f"Đã ghi nhận nhận {dong.so_tien:,.0f} đ tiền COD.".replace(",", ".")
+                request, f"Đã nhận {dong.so_tien:,.0f} đ tiền COD từ người giao.".replace(",", ".")
             )
         elif hanh_dong == "hoan_tien":
             hoan_tien(

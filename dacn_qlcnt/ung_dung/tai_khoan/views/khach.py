@@ -68,7 +68,9 @@ def _trang_sau_dang_nhap(request, nguoi, quay_lai):
         if hop_le and quay_lai.startswith(quan_ly):
             return redirect(quay_lai)
         return redirect("chung:bang_dieu_khien")
-    if hop_le:
+    # Khách không vào khu quản lý: `next` trỏ tới /quan-ly/ (phiên nhân viên trước đó trên cùng
+    # máy hết hạn) thì về trang chủ thay vì gặp trang 403.
+    if hop_le and not quay_lai.startswith(reverse("chung:bang_dieu_khien")):
         return redirect(quay_lai)
     return redirect("chung:trang_chu")
 
@@ -245,7 +247,9 @@ def quen_ten_dang_nhap(request):
 
 def _trang_khoi_phuc_email(request, ngu_canh):
     phan_hoi = render(request, "tai_khoan/khach/hoan_tac_email.html", ngu_canh)
-    phan_hoi["Referrer-Policy"] = "no-referrer"
+    # Không lộ khóa trong URL cho trang ngoài. Không dùng "no-referrer": khi đó trình duyệt gửi
+    # Origin: null lúc bấm nút khôi phục và kiểm tra CSRF của Django từ chối (lỗi 403).
+    phan_hoi["Referrer-Policy"] = "same-origin"
     return phan_hoi
 
 

@@ -22,7 +22,7 @@ def chay(lenh, moi_truong):
             env=moi_truong,
             stdout=dau_ra,
             stderr=subprocess.STDOUT,
-            timeout=300,
+            timeout=900,  # bộ test đầy đủ đã khoảng 280 giây, 300 giây dễ bị cắt khi máy bận
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
         dau_ra.seek(0)

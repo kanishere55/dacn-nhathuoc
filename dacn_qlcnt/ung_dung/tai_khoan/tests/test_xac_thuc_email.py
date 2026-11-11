@@ -204,6 +204,36 @@ class KhoiPhucTests(TestCase):
         self.assertNotIn("/khoi-phuc-email/", thu_cu.noi_dung_van_ban)
         self.assertNotIn("/khoi-phuc-email/", thu_cu.noi_dung_html)
 
+    def test_lien_ket_khoi_phuc_email_qua_duoc_kiem_tra_csrf_cua_trinh_duyet(self):
+        """`no-referrer` làm trình duyệt gửi Origin: null và Django chặn POST (lỗi 403)."""
+        import re
+
+        from django.test import Client
+
+        self.client.force_login(self.tai_khoan)
+        with self.captureOnCommitCallbacks(execute=True):
+            phan_hoi = self.client.post(
+                reverse("tai_khoan:doi_email"),
+                {"email_moi": "moi@example.com", "mat_khau_hien_tai": MAT_KHAU},
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(phan_hoi.url, {"ma_otp": lay_ma(mail.outbox[0])})
+        duong_dan = re.search(
+            r"https?://[^/\s]+(/tai-khoan/khoi-phuc-email/\S+/)", mail.outbox[-2].body
+        )[1]
+        trinh_duyet = Client(enforce_csrf_checks=True)
+        xem = trinh_duyet.get(duong_dan)
+        self.assertEqual(xem["Referrer-Policy"], "same-origin")
+        with self.captureOnCommitCallbacks(execute=True):
+            gui = trinh_duyet.post(
+                duong_dan,
+                {"csrfmiddlewaretoken": xem.cookies["csrftoken"].value},
+                HTTP_ORIGIN="http://testserver",
+            )
+        self.assertNotEqual(gui.status_code, 403)
+        self.tai_khoan.refresh_from_db()
+        self.assertEqual(self.tai_khoan.email, "khach@example.com")
+
     def test_doi_mat_khau_giu_phien_dang_nhap_va_bao_email(self):
         self.client.force_login(self.tai_khoan)
         moi = "Mat-khau-moi-2027!"

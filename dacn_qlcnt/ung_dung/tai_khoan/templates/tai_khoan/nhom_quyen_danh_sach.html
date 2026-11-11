@@ -25,7 +25,7 @@
             <td class="thanh-cong-cu">
               <a href="{% url 'tai_khoan:nhom_quyen_sua' nhom.pk %}">Sửa quyền</a>
               {% if not nhom.vai_tro_mac_dinh %}
-                <form method="post" action="{% url 'tai_khoan:nhom_quyen_xoa' nhom.pk %}" onsubmit="return confirm('Xóa nhóm quyền này?')">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
+                <form method="post" action="{% url 'tai_khoan:nhom_quyen_xoa' nhom.pk %}" data-xac-nhan-tieu-de="Xóa nhóm quyền?" data-xac-nhan="Nhóm quyền bị xóa không khôi phục được." data-xac-nhan-nut="Xóa nhóm" data-xac-nhan-kieu="nguy-hiem">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
               {% endif %}
             </td>
           </tr>

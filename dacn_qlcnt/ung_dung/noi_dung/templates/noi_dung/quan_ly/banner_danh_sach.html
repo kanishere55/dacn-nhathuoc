@@ -21,7 +21,7 @@
         </div>
         <div class="tac-vu-banner">
           <a class="nut nut-phu" href="{% url 'noi_dung:banner_sua' b.pk %}">Sửa</a>
-          <form method="post" action="{% url 'noi_dung:banner_xoa' b.pk %}" onsubmit="return confirm('Xóa banner này?')">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
+          <form method="post" action="{% url 'noi_dung:banner_xoa' b.pk %}" data-xac-nhan-tieu-de="Xóa banner?" data-xac-nhan="Banner bị xóa khỏi trang chủ và không khôi phục được." data-xac-nhan-nut="Xóa banner" data-xac-nhan-kieu="nguy-hiem">{% csrf_token %}<button class="nut nut-phu" type="submit">Xóa</button></form>
         </div>
       </li>
     {% empty %}

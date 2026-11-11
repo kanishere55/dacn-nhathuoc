@@ -78,6 +78,15 @@ class KhungTaiKhoanTests(TestCase):
         phan_hoi = self.client.post("/tai-khoan/dang-nhap/?next=https://vi-du.com/", du_lieu)
         self.assertRedirects(phan_hoi, "/quan-ly/", fetch_redirect_response=False)
 
+    def test_khach_dang_nhap_voi_next_khu_quan_ly_ve_trang_chu(self):
+        get_user_model().objects.create_user("khach_next", password="Mat-khau-thu-2026!")
+        du_lieu = {"username": "khach_next", "password": "Mat-khau-thu-2026!"}
+        phan_hoi = self.client.post("/tai-khoan/dang-nhap/?next=/quan-ly/", du_lieu)
+        self.assertRedirects(phan_hoi, "/", fetch_redirect_response=False)
+        self.client.logout()
+        phan_hoi = self.client.post("/tai-khoan/dang-nhap/?next=/gio-hang/", du_lieu)
+        self.assertRedirects(phan_hoi, "/gio-hang/", fetch_redirect_response=False)
+
     def test_khong_xac_thuc_tai_khoan_ngung_hoat_dong(self):
         get_user_model().objects.create_user(
             "ngung_hoat_dong", password="Mat-khau-thu!", dang_hoat_dong=False

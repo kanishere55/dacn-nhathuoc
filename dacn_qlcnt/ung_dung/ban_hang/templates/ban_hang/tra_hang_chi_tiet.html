@@ -97,7 +97,7 @@
       {% elif duoc_xu_ly and yc.trang_thai == "da_duyet" %}
         <section class="khoi-trang" aria-labelledby="hoan-tra">
           <h2 id="hoan-tra">Hoàn tiền {{ yc.so_tien_hoan|tien }}</h2>
-          <form method="post" action="{% url 'ban_hang:tra_hang_xu_ly' yc.pk 'hoan_tien' %}" class="form-chinh form-xu-ly-don" onsubmit="return confirm('Xác nhận đã hoàn {{ yc.so_tien_hoan|tien }} cho khách?')">
+          <form method="post" action="{% url 'ban_hang:tra_hang_xu_ly' yc.pk 'hoan_tien' %}" class="form-chinh form-xu-ly-don" data-xac-nhan-tieu-de="Ghi nhận đã hoàn tiền?" data-xac-nhan="Chỉ xác nhận khi đã chuyển {{ yc.so_tien_hoan|tien }} cho khách. Khách sẽ nhận email báo đã hoàn tiền." data-xac-nhan-nut="Đã hoàn tiền">
             {% csrf_token %}
             <label>Hoàn qua<select name="phuong_thuc"><option value="chuyen_khoan"{% if yc.hinh_thuc_hoan_tien == "chuyen_khoan" %} selected{% endif %}>Chuyển khoản</option><option value="tien_mat"{% if yc.hinh_thuc_hoan_tien == "tai_quay" %} selected{% endif %}>Tiền mặt</option><option value="momo"{% if yc.hinh_thuc_hoan_tien == "momo" %} selected{% endif %}>Ví MoMo</option></select></label>
             <label>Mã giao dịch <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="58" autocomplete="off"></label>

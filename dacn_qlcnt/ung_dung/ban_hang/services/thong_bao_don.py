@@ -485,43 +485,6 @@ def bao_da_nhan_tien(don, giao_dich=None):
     _gui_thu_don(don, loai_email="da_nhan_tien", tieu_de=tieu_de, mau="da_nhan_tien", ngu_canh=nc)
 
 
-def bao_cho_hoan_tien(don, so_tien=None, ly_do=""):
-    """Thư "nhà thuốc sẽ hoàn tiền": số tiền chờ hoàn (mặc định phần phải hoàn theo đối soát)
-    và lý do."""
-    if not don.khach_hang.email:
-        return
-    so_tien = _doi_soat(don).phai_hoan if so_tien is None else so_tien
-    nc = _ngu_canh_don(don)
-    thu = _giao_dich(don, "thu")
-    nc.update(
-        the=_the(
-            "Chờ hoàn tiền",
-            "cho",
-            f"Nhà thuốc sẽ hoàn {_tien(so_tien)} cho bạn",
-            "Khi hoàn xong, bạn nhận email kèm kênh hoàn và mã giao dịch để đối chiếu.",
-            ma_gia_tri=don.ma_don_hang,
-        ),
-        ghi_chu=ly_do,
-        nhan_ghi_chu="Lý do",
-        hien_san_pham=False,
-        tieu_de_thong_tin="Khoản chờ hoàn",
-        cac_dong_thong_tin=[("Số tiền", _tien(so_tien))]
-        + ([("Bạn đã thanh toán qua", thu.get_phuong_thuc_display())] if thu else []),
-        nut_chinh=_nut("Xem đơn", url_tuyet_doi("ban_hang:khach_don_hang_chi_tiet", don.pk)),
-    )
-    nc["cac_luu_y"] = [
-        "Nhà thuốc hoàn qua kênh bạn đã thanh toán; cần số tài khoản khác, nhà thuốc sẽ liên hệ.",
-        _cau_lien_he(don),
-    ]
-    _gui_thu_don(
-        don,
-        loai_email="cho_hoan_tien",
-        tieu_de=f"Nhà thuốc sẽ hoàn tiền đơn {don.ma_don_hang}",
-        mau="cho_hoan_tien",
-        ngu_canh=nc,
-    )
-
-
 def bao_hoan_tien(don, giao_dich):
     """Thư "đã hoàn tiền" riêng (không dùng thư đổi trạng thái): số tiền, kênh, mã giao dịch."""
     if not don.khach_hang.email:

@@ -21,7 +21,7 @@
           {% if dia_chi.pk != id_mac_dinh %}
             <form method="post" action="{% url 'tai_khoan:dat_dia_chi_mac_dinh' dia_chi.pk %}">{% csrf_token %}<button type="submit">Đặt làm mặc định</button></form>
           {% endif %}
-          <form method="post" action="{% url 'tai_khoan:xoa_dia_chi' dia_chi.pk %}" onsubmit="return confirm('Xóa địa chỉ này khỏi sổ?')">{% csrf_token %}<button class="nut-xoa" type="submit">Xóa</button></form>
+          <form method="post" action="{% url 'tai_khoan:xoa_dia_chi' dia_chi.pk %}" data-xac-nhan-tieu-de="Xóa địa chỉ?" data-xac-nhan="Địa chỉ bị xóa khỏi sổ; các đơn đã đặt vẫn giữ địa chỉ cũ." data-xac-nhan-nut="Xóa địa chỉ" data-xac-nhan-kieu="nguy-hiem">{% csrf_token %}<button class="nut-xoa" type="submit">Xóa</button></form>
         </div>
       </article>
     {% endfor %}
