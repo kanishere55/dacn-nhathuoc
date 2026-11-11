@@ -10,7 +10,7 @@
     </div>
     <div class="tac-vu-tieu-de">
       <a class="nut nut-phu" href="{% url 'ban_hang:phieu_ban_pdf' hd.phieu.pk %}?tai=1"><i data-lucide="download" aria-hidden="true"></i>Tải PDF</a>
-      <a class="nut" href="{% url 'ban_hang:phieu_ban_in' hd.phieu.pk %}"><i data-lucide="printer" aria-hidden="true"></i>In hóa đơn</a>
+      <a class="nut" href="{% url 'ban_hang:phieu_ban_in' hd.phieu.pk %}"><i data-lucide="printer" aria-hidden="true"></i>In phiếu bán hàng</a>
     </div>
   </header>
   <section class="khoi-trang khung-to-hoa-don">{% include "ban_hang/hoa_don/_to_hoa_don.html" %}</section>

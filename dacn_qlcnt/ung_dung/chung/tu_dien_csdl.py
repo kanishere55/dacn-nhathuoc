@@ -26,6 +26,8 @@ TU_VUNG = frozenset(
     quyen rieng gioi
     phong xong
     hoac the
+    html ip kem
+    kien
     """.split()
 )
 
@@ -49,6 +51,8 @@ DINH_DANH_CO_BOI_CANH = {
     ("yeu_cau_tra_hang", "ten_chu_tai_khoan"),
     # Mã do ngân hàng/cổng thanh toán cấp, chỉ duy nhất trong từng phương thức.
     ("giao_dich_thanh_toan", "ma_tham_chieu"),
+    ("giao_dich_cong_den", "ma_doi_tac"),
+    ("giao_dich_cong_den", "ma_tham_chieu"),
     # Thông tin chép từ đơn thuốc của bác sĩ khi bán thuốc kê đơn.
     ("phieu_ban", "ma_don_thuoc"),
     ("phieu_ban", "ten_nguoi_ke_don"),

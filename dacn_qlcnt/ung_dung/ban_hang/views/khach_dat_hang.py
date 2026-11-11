@@ -1,5 +1,7 @@
 """Trang đặt hàng: chọn nhận tại nhà thuốc hoặc giao tận nơi, chi nhánh, thanh toán."""
 
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.gis.db.models.functions import Distance
@@ -7,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.vary import vary_on_headers
@@ -20,6 +23,7 @@ from ung_dung.thanh_toan.selectors import phuong_thuc_kha_dung
 from ..forms import DatHangForm
 from ..models import PHUONG_THUC_THANH_TOAN
 from ..selectors import lay_dong_gio, lay_gio, tom_tat_gio
+from ..services.dat_hang import GIO_GIU_TAI_QUAY
 from ..services.dat_hang import dat_hang as tao_don
 from ..services.giao_hang import BAN_KINH_GIAO_MET, phuong_an_giao
 from ..services.gio_hang import sua_gio
@@ -39,7 +43,11 @@ def _phuong_an_tai_quay(cac_dong, dia_chi):
             "chi_nhanh": cn,
             "khoang_cach_met": getattr(getattr(cn, "khoang_cach_thang", None), "m", None),
         }
-        for cn in loc_chi_nhanh_du_thuoc(list(cac_chi_nhanh), cac_dong)
+        for cn in loc_chi_nhanh_du_thuoc(
+            list(cac_chi_nhanh),
+            cac_dong,
+            con_han_den=timezone.localdate(timezone.now() + timedelta(hours=GIO_GIU_TAI_QUAY)),
+        )
     ]
 
 
@@ -146,6 +154,7 @@ def dat_hang(request):
                     phuong_thuc_thanh_toan=phuong_thuc,
                     giao=giao,
                     ghi_chu_khach=form.cleaned_data["ghi_chu_khach"],
+                    tong_khach_xac_nhan=form.cleaned_data["tong_da_xem"],
                 )
                 gio.clear()
         except ValidationError as loi:

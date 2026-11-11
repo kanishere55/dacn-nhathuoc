@@ -1,0 +1,21 @@
+{% load thu %}{# Bảng dữ liệu thật (có tiêu đề cột) để trình đọc màn hình đọc đúng; tiền không ngắt dòng. Không dùng ảnh thuốc. #}
+<tr><td class="o" style="padding:24px 32px 0;font-family:Arial,Helvetica,sans-serif;">
+<h2 class="chu" style="margin:0 0 8px;font-size:16px;line-height:22px;font-weight:bold;color:#184436;">Sản phẩm ({{ cac_dong|length }})</h2>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
+<thead><tr>
+<th scope="col" align="left" class="chu-phu vach" style="padding:0 0 8px;border-bottom:1px solid #dce4dc;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;font-weight:normal;color:#5a6a61;">Thuốc</th>
+<th scope="col" align="right" class="chu-phu vach" style="padding:0 0 8px;border-bottom:1px solid #dce4dc;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;font-weight:normal;color:#5a6a61;">Thành tiền</th>
+</tr></thead>
+<tbody>
+{% for dong in cac_dong %}
+<tr>
+<td valign="top" class="vach" style="padding:12px 12px 12px 0;border-bottom:1px solid #edf1ed;font-family:Arial,Helvetica,sans-serif;">
+<span class="chu" style="font-size:15px;line-height:22px;font-weight:bold;color:#25372f;">{{ dong.thuoc.ten_thuoc }}</span>{% if dong.thuoc.la_thuoc_ke_don %} <span class="chu-canh" style="font-size:13px;line-height:18px;font-weight:bold;color:#9f2a22;white-space:nowrap;">· Thuốc kê đơn</span>{% endif %}<br>
+<span class="chu-phu" style="font-size:13px;line-height:20px;color:#5a6a61;">{{ dong.so_luong }} {{ dong.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }} × {{ dong.don_gia|tien_lien }}{% if dong.phan_tram_giam %} · giảm {{ dong.phan_tram_giam }}%{% endif %}</span>
+</td>
+<td valign="top" align="right" class="chu vach" style="padding:12px 0;border-bottom:1px solid #edf1ed;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#25372f;white-space:nowrap;">{{ dong.thanh_tien|tien_lien }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</td></tr>

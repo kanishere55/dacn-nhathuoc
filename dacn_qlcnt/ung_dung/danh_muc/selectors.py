@@ -15,6 +15,7 @@ from django.utils import timezone
 from ung_dung.chung.permissions import thay_toan_chuoi
 
 from .models import (
+    PHAN_TRAM_GIAM_TOI_DA,
     AnhChiNhanh,
     AnhThuoc,
     ChiNhanh,
@@ -120,7 +121,10 @@ def lay_chi_nhanh_cong_khai():
 def khuyen_mai_dang_ap_dung(ngay=None):
     ngay = ngay or timezone.localdate()
     return KhuyenMai.objects.filter(
-        dang_hoat_dong=True, ngay_bat_dau__lte=ngay, ngay_ket_thuc__gte=ngay
+        dang_hoat_dong=True,
+        ngay_bat_dau__lte=ngay,
+        ngay_ket_thuc__gte=ngay,
+        phan_tram_giam__lte=PHAN_TRAM_GIAM_TOI_DA,
     )
 
 
@@ -130,7 +134,9 @@ def them_gia_va_anh(cac_thuoc, ngay=None):
     Đơn giá tính trong SQL bằng cùng quy tắc làm tròn của gia.tinh_don_gia để sắp
     xếp theo giá đúng với giá khách thấy.
     """
-    # Luật Dược cấm quảng cáo thuốc kê đơn tới công chúng: không áp giảm giá cho thuốc kê đơn.
+    # Thuốc kê đơn không được khuyến mại (Nghị định 81/2018/NĐ-CP Điều 5, sửa đổi bởi
+    # Nghị định 239/2026/NĐ-CP; chỉ trừ khuyến mại cho thương nhân kinh doanh thuốc), nên
+    # không áp giảm giá cho thuốc kê đơn.
     khuyen_mai = (
         khuyen_mai_dang_ap_dung(ngay)
         .filter(thuoc=OuterRef("pk"), thuoc__la_thuoc_ke_don=False)

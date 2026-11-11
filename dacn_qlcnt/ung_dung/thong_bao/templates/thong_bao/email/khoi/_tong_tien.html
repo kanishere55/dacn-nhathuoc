@@ -1,0 +1,10 @@
+{% load thu %}{# Tổng tiền: cùng cách tính với bảng tiền trên trang đơn (ban_hang/_bang_tien.html). #}
+<tr><td class="o" style="padding:12px 32px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;">
+<tr><td class="chu-phu" style="padding:4px 0;font-size:14px;line-height:20px;color:#5a6a61;">Tiền hàng</td><td align="right" class="chu" style="padding:4px 0;font-size:14px;line-height:20px;color:#25372f;white-space:nowrap;">{{ don.tien_hang|tien_lien }}</td></tr>
+{% if don.giam_gia_thanh_vien %}<tr><td class="chu-phu" style="padding:4px 0;font-size:14px;line-height:20px;color:#5a6a61;">Ưu đãi thành viên</td><td align="right" class="chu-nhan" style="padding:4px 0;font-size:14px;line-height:20px;color:#136b48;white-space:nowrap;">-{{ don.giam_gia_thanh_vien|tien_lien }}</td></tr>{% endif %}
+{% if don.la_giao_hang %}<tr><td class="chu-phu" style="padding:4px 0;font-size:14px;line-height:20px;color:#5a6a61;">Phí giao hàng{% if don.khoang_cach_met != None %} ({{ don.khoang_cach_met|km }}){% endif %}</td><td align="right" class="chu" style="padding:4px 0;font-size:14px;line-height:20px;color:#25372f;white-space:nowrap;">{{ don.phi_giao_hang|tien_lien }}</td></tr>{% endif %}
+<tr><td class="chu vach" style="padding:12px 0 2px;border-top:1px solid #dce4dc;font-size:16px;line-height:22px;font-weight:bold;color:#25372f;">Tổng thanh toán</td><td align="right" class="chu-nhan vach" style="padding:12px 0 2px;border-top:1px solid #dce4dc;font-size:20px;line-height:26px;font-weight:bold;color:#116b54;white-space:nowrap;">{{ don.tong_thanh_toan|tien_lien }}</td></tr>
+<tr><td colspan="2" class="chu-phu" style="padding:2px 0 0;font-size:13px;line-height:20px;color:#5a6a61;">{{ don.get_phuong_thuc_thanh_toan_display }} · {{ don.get_trang_thai_thanh_toan_display }}</td></tr>
+</table>
+</td></tr>

@@ -35,11 +35,11 @@
   {% if cac_dong.initial_form_count or cac_dong.is_bound %}
     <form method="post" class="form-phieu-kho" data-kiem-ke>
       {% csrf_token %}
-      {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}
+      {{ form.chi_nhanh }}{{ form.chi_nhanh.errors }}{{ form.khoa_yeu_cau }}
       {% if form.non_field_errors %}<div class="thong-bao thong-bao-loi" role="alert">{% for loi in form.non_field_errors %}<p>{{ loi }}</p>{% endfor %}</div>{% endif %}
       <section class="khoi-trang" aria-labelledby="tieu-de-dem">
         <h2 id="tieu-de-dem" class="tieu-de-buoc"><span>2</span>Nhập số đếm thực tế</h2>
-        <p id="huong-dan-kiem-ke" class="mo-ta-bang-dieu-khien">Chỉ nhập ở những lô bạn đã đếm, để trống các lô khác. Nhập 0 nếu đã tìm mà không còn hàng.</p>
+        <p id="huong-dan-kiem-ke" class="mo-ta-bang-dieu-khien">Chỉ nhập ở những lô bạn đã đếm, để trống các lô khác. Nhập 0 nếu đã tìm mà không còn hàng. Số đếm không được nhỏ hơn cột "Đang giữ" (hàng đã giữ cho đơn của khách): giao hoặc hủy các đơn đó trước.</p>
         {{ cac_dong.management_form }}{{ cac_dong.non_form_errors }}
         <div class="khung-bang">
           <table class="bang-kiem-ke">
@@ -47,20 +47,23 @@
               <tr>
                 <th scope="col">Thuốc và lô</th>
                 <th scope="col" class="o-so">Sổ sách</th>
+                <th scope="col" class="o-so">Đang giữ</th>
                 <th scope="col" class="o-so">Đếm thực tế</th>
                 <th scope="col" class="o-so">Chênh lệch</th>
               </tr>
             </thead>
             <tbody>
               {% for dong in cac_dong %}
-                <tr data-dong-kiem-ke>
+                <tr data-dong-kiem-ke{% if dong.errors %} class="co-loi"{% endif %}>
                   <th scope="row">
                     <span id="{{ dong.prefix }}-nhan-lo">{{ dong.nhan_lo }}</span>
+                    {% if dong.can_dem_lai %}<span class="nhan-han gan">Cần đếm lại</span>{% endif %}
                     {{ dong.ton_kho }}{{ dong.so_luong_so_sach }}
                     {% for loi in dong.ton_kho.errors %}<span class="loi-o">{{ loi }}</span>{% endfor %}
                     {% for loi in dong.non_field_errors %}<span class="loi-o">{{ loi }}</span>{% endfor %}
                   </th>
                   <td class="o-so" data-so-sach="{{ dong.so_luong_so_sach.value }}">{{ dong.so_luong_so_sach.value|so_nguyen }}</td>
+                  <td class="o-so">{% if dong.ton.dang_giu %}{{ dong.ton.dang_giu|so_nguyen }}{% else %}<span class="chu-mo">—</span>{% endif %}</td>
                   <td class="o-so o-dem">
                     <label class="sr-only" id="{{ dong.prefix }}-nhan-so-dem" for="{{ dong.so_luong_thuc_te.id_for_label }}">Số lượng đếm thực tế</label>
                     {{ dong.so_luong_thuc_te }}
@@ -74,9 +77,9 @@
         </div>
         {% if trang.paginator.num_pages > 1 %}
           <nav class="phan-trang-kiem-ke" aria-label="Trang lô kiểm kê">
-            {% if trang.has_previous %}<a class="nut nut-phu nut-nho" href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
+            {% if trang.has_previous %}<a class="nut nut-phu nut-nho" data-roi-trang href="{% querystring page=trang.previous_page_number %}">Trang trước</a>{% endif %}
             <span>Trang {{ trang.number }} / {{ trang.paginator.num_pages }}. Lưu các dòng đã đếm trước khi chuyển trang.</span>
-            {% if trang.has_next %}<a class="nut nut-phu nut-nho" href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
+            {% if trang.has_next %}<a class="nut nut-phu nut-nho" data-roi-trang href="{% querystring page=trang.next_page_number %}">Trang sau</a>{% endif %}
           </nav>
         {% endif %}
       </section>
@@ -89,13 +92,13 @@
 
       <div class="thanh-luu-phieu">
         <span data-tom-tat-kiem-ke>Chưa nhập lô nào</span>
-        <button class="nut" type="submit"><i data-lucide="check" aria-hidden="true"></i>Lưu phiếu kiểm kê</button>
+        <button class="nut" type="submit" data-nut-luu><i data-lucide="check" aria-hidden="true"></i>Lưu phiếu kiểm kê</button>
       </div>
     </form>
   {% else %}
     <section class="khoi-trang trang-trong-canh-bao">
       <i data-lucide="clipboard-check" aria-hidden="true"></i>
-      <p>{% if chi_nhanh_da_chon %}Không có lô phù hợp trong kho này.{% else %}Chưa có kho để kiểm kê.{% endif %}</p>
+      <p>{% if not chi_nhanh_da_chon %}Chưa có kho để kiểm kê. Tài khoản cần được gán chi nhánh.{% elif tu_khoa %}Không có lô nào khớp “{{ tu_khoa }}” trong kho này. Thử tìm theo tên thuốc hoặc mã lô khác.{% elif not ca_lo_het %}Kho này không còn lô nào có hàng trên sổ. Tick “Gồm cả lô sổ sách đã về 0” nếu cần ghi hàng tìm thấy của lô đã hết.{% else %}Kho này chưa có lô nào. Lô xuất hiện ở đây sau khi lập phiếu nhập hoặc nhận điều chuyển.{% endif %}</p>
     </section>
   {% endif %}
 {% endblock %}

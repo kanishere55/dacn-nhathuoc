@@ -1,0 +1,36 @@
+{% comment %}
+  Hai thẻ "Giao tới / Nhận tại quầy" và "Chi nhánh": trên máy tính đứng cạnh nhau, trên điện
+  thoại tự xếp dọc (kể cả khi hộp thư bỏ <style>); Outlook dùng bảng ma hai cột.
+  Biến: don, co_ke_don, url_chi_nhanh.
+{% endcomment %}
+<tr><td class="o" style="padding:24px 32px 0;font-size:0;">
+<!--[if mso]><table role="presentation" width="536" cellpadding="0" cellspacing="0" border="0"><tr><td width="268" valign="top"><![endif]-->
+<div class="cot" style="display:inline-block;width:100%;max-width:268px;vertical-align:top;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="cot-trai" style="padding-right:6px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td class="o-nhat" bgcolor="#f7f9f7" style="background-color:#f7f9f7;border:1px solid #e3e9e3;border-radius:10px;padding:14px 16px;font-family:Arial,Helvetica,sans-serif;">
+{% if don.la_giao_hang %}
+<p class="chu-phu" style="margin:0 0 6px;font-size:13px;line-height:18px;font-weight:bold;color:#5a6a61;">Giao tới</p>
+<p class="chu" style="margin:0;font-size:15px;line-height:22px;color:#25372f;"><strong>{{ don.ten_nguoi_nhan }}</strong><br><a href="tel:{{ don.so_dien_thoai_nhan }}" class="chu" style="color:#25372f;text-decoration:none;">{{ don.so_dien_thoai_nhan }}</a><br>{{ don.dia_chi_giao }}</p>
+{% if don.ghi_chu_khach %}<p class="chu-phu" style="margin:8px 0 0;font-size:13px;line-height:19px;color:#5a6a61;">Ghi chú của bạn: {{ don.ghi_chu_khach }}</p>{% endif %}
+{% else %}
+<p class="chu-phu" style="margin:0 0 6px;font-size:13px;line-height:18px;font-weight:bold;color:#5a6a61;">Nhận tại quầy</p>
+<p class="chu" style="margin:0;font-size:15px;line-height:22px;color:#25372f;">{% if don.trang_thai == "dang_giu" %}Giữ hàng đến <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong>. {% endif %}Đọc mã đơn <strong>{{ don.ma_don_hang }}</strong> cho nhân viên và thanh toán tại quầy.</p>
+{% if co_ke_don %}<p class="chu-canh" style="margin:8px 0 0;font-size:14px;line-height:21px;font-weight:bold;color:#9f2a22;">Đơn có thuốc kê đơn: mang theo đơn thuốc còn hạn của bác sĩ.</p>{% endif %}
+{% endif %}
+</td></tr></table>
+</td></tr></table>
+</div>
+<!--[if mso]></td><td width="268" valign="top"><![endif]-->
+<div class="cot" style="display:inline-block;width:100%;max-width:268px;vertical-align:top;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="cot-phai" style="padding-left:6px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td class="o-nhat" bgcolor="#f7f9f7" style="background-color:#f7f9f7;border:1px solid #e3e9e3;border-radius:10px;padding:14px 16px;font-family:Arial,Helvetica,sans-serif;">
+<p class="chu-phu" style="margin:0 0 6px;font-size:13px;line-height:18px;font-weight:bold;color:#5a6a61;">{% if don.la_giao_hang %}Giao từ nhà thuốc{% else %}Nhà thuốc{% endif %}</p>
+<p class="chu" style="margin:0;font-size:15px;line-height:22px;color:#25372f;"><strong>{{ don.chi_nhanh.ten_chi_nhanh }}</strong><br>{{ don.chi_nhanh.dia_chi }}{% if don.chi_nhanh.so_dien_thoai %}<br><a href="tel:{{ don.chi_nhanh.so_dien_thoai }}" class="chu-nhan" style="color:#116b54;font-weight:bold;text-decoration:none;">{{ don.chi_nhanh.so_dien_thoai }}</a>{% endif %}{% if don.chi_nhanh.gio_mo_cua and don.chi_nhanh.gio_dong_cua %}<br><span class="chu-phu" style="font-size:14px;color:#5a6a61;">Mở cửa {{ don.chi_nhanh.gio_mo_cua|time:"H:i" }}–{{ don.chi_nhanh.gio_dong_cua|time:"H:i" }}</span>{% endif %}</p>
+<p style="margin:8px 0 0;font-size:14px;line-height:20px;"><a href="{{ url_chi_nhanh }}" target="_blank" class="chu-nhan" style="color:#116b54;font-weight:bold;text-decoration:underline;">Xem bản đồ và chỉ đường</a></p>
+</td></tr></table>
+</td></tr></table>
+</div>
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr>

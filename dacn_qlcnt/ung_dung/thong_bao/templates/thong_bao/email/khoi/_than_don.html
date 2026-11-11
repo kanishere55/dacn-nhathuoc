@@ -1,0 +1,12 @@
+{% comment %}
+  Thân chung của thư nghiệp vụ (đơn hàng, thanh toán, hoàn tiền, trả hàng, hóa đơn công ty):
+  việc cần làm đặt trước, chi tiết đặt sau. Cờ: hien_nhan_hang, hien_san_pham; ten_tep_hoa_don,
+  cac_dong_tra, cac_dong_thong_tin tùy loại thư.
+{% endcomment %}
+{% include "thong_bao/email/khoi/_the_trang_thai.html" %}
+{% include "thong_bao/email/khoi/_cap_nut.html" %}
+{% include "thong_bao/email/khoi/_bang_thong_tin.html" %}
+{% if ten_tep_hoa_don %}{% include "thong_bao/email/khoi/_dinh_kem_hoa_don.html" %}{% endif %}
+{% if cac_dong_tra %}{% include "thong_bao/email/khoi/_bang_tra_hang.html" %}{% endif %}
+{% if hien_nhan_hang %}{% include "thong_bao/email/khoi/_thong_tin_nhan.html" %}{% endif %}
+{% if hien_san_pham %}{% include "thong_bao/email/khoi/_bang_san_pham.html" %}{% include "thong_bao/email/khoi/_tong_tien.html" %}{% endif %}

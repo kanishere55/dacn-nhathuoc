@@ -10,11 +10,10 @@
     <div class="tieu-de-trang">
       <p class="chu-dan">{% if quan_tri_chuoi %}TOÀN CHUỖI{% else %}{{ chi_nhanh.ten_chi_nhanh|upper }}{% endif %}</p>
       <h1>{% if quan_tri_chuoi %}{{ tieu_de }}{% else %}Chào {{ user.ho_ten|default:user.ten_dang_nhap }}{% endif %}</h1>
-      {% if quan_tri_chuoi %}
-        <p>Theo dõi tồn khả dụng, cảnh báo kho và nhu cầu thuốc ở các chi nhánh.</p>
-      {% else %}
-        <p>Hôm nay {{ hom_nay|date:"l, d/m/Y" }} · {{ chi_nhanh.dia_chi }}</p>
-      {% endif %}
+      <p>
+        {{ hom_nay|date:"l, d/m/Y" }}{% if not quan_tri_chuoi %} · {{ chi_nhanh.dia_chi }}{% endif %} ·
+        {% if so_viec_gap %}<strong class="chu-viec-gap">{{ so_viec_gap }} việc cần làm ngay</strong>{% elif cac_viec %}{{ cac_viec|length }} việc đang chờ{% else %}không có việc tồn{% endif %}
+      </p>
     </div>
     <div class="tac-vu-bang-dieu-khien">
       {% if duoc_xem_bao_cao %}
@@ -25,43 +24,160 @@
       {% endif %}
     </div>
   </header>
-  <dl class="chi-so-bang-dieu-khien chi-so-bam-duoc" aria-label="Số liệu tổng quan">
-    {% if quan_tri_chuoi %}
-      <div><dt><i data-lucide="store" aria-hidden="true"></i>Chi nhánh</dt><dd>{{ so_chi_nhanh }}</dd></div>
-    {% endif %}
-    {% if ban_hom_nay %}
+
+  {% if quan_tri_chuoi and doanh_thu %}
+    <dl class="chi-so-bang-dieu-khien chi-so-bam-duoc" aria-label="Doanh thu bán hàng">
       <div>
-        <dt><i data-lucide="receipt" aria-hidden="true"></i>Bán hôm nay</dt>
-        <dd>{{ ban_hom_nay.doanh_thu|tien }}<small>{{ ban_hom_nay.so_phieu }} phiếu</small></dd>
+        <dt><i data-lucide="receipt" aria-hidden="true"></i>Doanh thu hôm nay</dt>
+        <dd>{{ doanh_thu.tong.hom_nay|tien }}<small>{{ doanh_thu.tong.so_phieu }} phiếu · hôm qua {{ doanh_thu.tong.hom_qua|tien }}</small></dd>
         <a class="lien-ket-o" href="{% url 'ban_hang:phieu_ban_danh_sach' %}?thoi_gian=hom_nay"><span class="sr-only">Xem phiếu bán hôm nay</span></a>
       </div>
-    {% endif %}
-    {% if duoc_xem_kho %}
-      <div class="{% if so_lo_canh_bao %}can-chu-y{% endif %}">
-        <dt><i data-lucide="calendar-clock" aria-hidden="true"></i>Lô cần theo dõi</dt><dd>{{ so_lo_canh_bao }}</dd>
-        <a class="lien-ket-o" href="{% url 'kho:canh_bao' %}"><span class="sr-only">Xem cảnh báo hạn dùng</span></a>
+      <div>
+        <dt><i data-lucide="calendar-range" aria-hidden="true"></i>7 ngày gần đây</dt>
+        <dd>{{ doanh_thu.tong.bay_ngay|tien }}</dd>
+        <a class="lien-ket-o" href="{% url 'ban_hang:phieu_ban_danh_sach' %}?thoi_gian=7_ngay"><span class="sr-only">Xem phiếu bán 7 ngày</span></a>
       </div>
-      <div class="{% if so_canh_bao_ton_thap %}can-chu-y{% endif %}">
-        <dt><i data-lucide="package-minus" aria-hidden="true"></i>Tồn dưới ngưỡng</dt><dd>{{ so_canh_bao_ton_thap }}</dd>
-        <a class="lien-ket-o" href="{% url 'kho:canh_bao' %}#muc-ton_thap"><span class="sr-only">Xem mặt hàng tồn thấp</span></a>
+      <div>
+        <dt><i data-lucide="calendar" aria-hidden="true"></i>Tháng này</dt>
+        <dd>{{ doanh_thu.tong.thang|tien }}</dd>
+        <a class="lien-ket-o" href="{% url 'bao_cao:tong_hop' %}"><span class="sr-only">Xem báo cáo tháng này</span></a>
       </div>
-    {% endif %}
-    {% if duoc_xem_don %}
-      <div class="{% if so_don_cho_nhan %}can-chu-y{% endif %}">
-        <dt><i data-lucide="shopping-basket" aria-hidden="true"></i>Đơn chờ xử lý</dt><dd>{{ so_don_cho_nhan }}</dd>
-        <a class="lien-ket-o" href="{% url 'ban_hang:don_hang_danh_sach' %}"><span class="sr-only">Xem đơn hàng</span></a>
+      <div>
+        <dt><i data-lucide="store" aria-hidden="true"></i>Chi nhánh</dt>
+        <dd>{{ so_chi_nhanh }}</dd>
+        <a class="lien-ket-o" href="{% url 'danh_muc:chi_nhanh_danh_sach' %}"><span class="sr-only">Xem chi nhánh</span></a>
       </div>
+    </dl>
+  {% elif ban_hom_nay %}
+    <p class="ban-hom-nay-gon"><i data-lucide="receipt" aria-hidden="true"></i>Bán hôm nay <strong>{{ ban_hom_nay.doanh_thu|tien }}</strong> · {{ ban_hom_nay.so_phieu }} phiếu · <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_danh_sach' %}?thoi_gian=hom_nay">Xem phiếu bán hôm nay</a></p>
+  {% endif %}
+
+  <section class="khoi-trang muc-bang-dieu-khien hang-viec" aria-labelledby="viec-can-lam">
+    <div class="dau-khoi">
+      <h2 id="viec-can-lam">Việc cần làm</h2>
+      <span class="chu-thich-muc"><span class="cham muc-gap" aria-hidden="true"></span>Cần làm ngay <span class="cham muc-chu_y" aria-hidden="true"></span>Cần xử lý <span class="cham muc-theo_doi" aria-hidden="true"></span>Theo dõi</span>
+    </div>
+    {% if cac_viec %}
+      <ul class="danh-sach-viec">
+        {% for viec in cac_viec %}
+          <li class="viec muc-{{ viec.muc }}" data-viec="{{ viec.ma }}">
+            <span class="so-viec" aria-hidden="true">{{ viec.so }}</span>
+            <div class="noi-dung-viec">
+              <p class="ten-viec"><span class="sr-only">{{ viec.nhan_muc }}: </span><strong>{{ viec.so }} · {{ viec.nhan }}</strong><span class="nhan-muc-viec">{{ viec.nhan_muc }}</span></p>
+              {% if viec.mo_ta %}<p class="mo-ta-viec">{{ viec.mo_ta }}</p>{% endif %}
+              {% if viec.cac_muc %}
+                <ul class="muc-con-viec">
+                  {% for muc in viec.cac_muc %}<li><a class="duong-dan-noi-dung" href="{{ muc.url }}">{{ muc.ten }}</a>{% if muc.phu %}<span> · {{ muc.phu }}</span>{% endif %}</li>{% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+            <a class="nut nut-phu nut-nho" href="{{ viec.url }}">Mở danh sách<span class="sr-only"> {{ viec.nhan|lower }}</span></a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="viec-trong"><i data-lucide="circle-check" aria-hidden="true"></i>Không có việc nào đang chờ. Mọi đơn, yêu cầu và cảnh báo đã được xử lý.</p>
     {% endif %}
-    {% if not quan_tri_chuoi and duoc_chat and not ban_hom_nay %}
-      <div class="{% if so_cuoc_co_tin_moi %}can-chu-y{% endif %}">
-        <dt><i data-lucide="messages-square" aria-hidden="true"></i>Tin nhắn chờ trả lời</dt><dd>{{ so_cuoc_co_tin_moi }}</dd>
-        <a class="lien-ket-o" href="{% url 'tro_chuyen:danh_sach' %}"><span class="sr-only">Mở trò chuyện</span></a>
+    {% if cac_viec_da_xong %}
+      <p class="viec-da-xong"><i data-lucide="check" aria-hidden="true"></i>Đã ổn: {% for viec in cac_viec_da_xong %}{{ viec.nhan|lower }}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>
+    {% endif %}
+  </section>
+
+  {% if quan_tri_chuoi and doanh_thu %}
+    <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="doanh-thu-chi-nhanh">
+      <div class="dau-khoi">
+        <h2 id="doanh-thu-chi-nhanh">Doanh thu theo chi nhánh</h2>
+        <a class="duong-dan-noi-dung" href="{% url 'bao_cao:tong_hop' %}">Mở báo cáo đầy đủ</a>
       </div>
-    {% endif %}
-  </dl>
+      <p class="mo-ta-bang-dieu-khien">Tiền hàng theo phiếu bán, không tính phiếu đã hoàn kho; chưa trừ tiền hoàn do khách trả hàng. Bấm tên chi nhánh để xem báo cáo tháng này.</p>
+      <div class="khung-bang">
+        <table class="bang-doanh-thu">
+          <thead><tr><th scope="col">Chi nhánh</th><th scope="col" class="o-so">Hôm nay</th><th scope="col" class="o-so">So với hôm qua</th><th scope="col" class="o-so">7 ngày</th><th scope="col" class="o-so">Tháng này</th></tr></thead>
+          <tbody>
+            {% for dong in doanh_thu.cac_chi_nhanh %}
+              <tr>
+                <th scope="row"><a class="duong-dan-noi-dung" href="{{ dong.url }}">{{ dong.chi_nhanh.ten_chi_nhanh }}</a><small>{{ dong.so_phieu }} phiếu hôm nay</small></th>
+                <td class="o-so">{{ dong.hom_nay|tien }}</td>
+                <td class="o-so">{% if dong.chenh_lech is None %}<span class="chenh-lech">—</span>{% elif dong.chenh_lech >= 0 %}<span class="chenh-lech tang">+{{ dong.chenh_lech }}%</span>{% else %}<span class="chenh-lech giam">{{ dong.chenh_lech }}%</span>{% endif %}</td>
+                <td class="o-so">{{ dong.bay_ngay|tien }}</td>
+                <td class="o-so">{{ dong.thang|tien }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">Chưa có chi nhánh đang hoạt động.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
   {% if quan_tri_chuoi and duoc_xem_ban_do_nhiet %}
     {% include "webgis/_ban_do_nhiet.html" %}
   {% endif %}
+  <div class="luoi-bang-dieu-khien">
+    {% if duoc_xem_kho %}
+    <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="canh-bao-kho">
+      <div class="dau-khoi">
+        <h2 id="canh-bao-kho">Cảnh báo kho</h2>
+        <a class="duong-dan-noi-dung" href="{% url 'kho:canh_bao' %}">Xem tất cả</a>
+      </div>
+      <h3>Hạn dùng và trạng thái lô</h3>
+      <ul class="danh-sach-bang-dieu-khien">
+        {% for dong in cac_lo_canh_bao %}
+          {% with con=dong.lo_thuoc.ngay_het_han|so_ngay_toi:hom_nay %}
+          <li>
+            <a class="duong-dan-noi-dung" href="{% url 'kho:canh_bao' %}?muc={% if con < 0 %}het_han{% elif not dong.lo_thuoc.duoc_phep_ban %}khoa_ban{% elif con <= 7 %}duoi_7{% else %}duoi_30{% endif %}">{{ dong.lo_thuoc.thuoc.ten_thuoc }} · {{ dong.lo_thuoc.ma_lo_thuoc }}</a>
+            <span>{% if con < 0 %}<span class="nhan-han het">Đã hết hạn</span>{% elif not dong.lo_thuoc.duoc_phep_ban %}<span class="nhan-han khoa">Ngừng bán</span>{% elif con <= 7 %}<span class="nhan-han gan">Còn {{ con }} ngày</span>{% else %}Còn {{ con }} ngày{% endif %} · HSD {{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }}{% if quan_tri_chuoi %} · {{ dong.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
+          </li>
+          {% endwith %}
+        {% empty %}<li>Chưa có cảnh báo về lô.</li>{% endfor %}
+      </ul>
+      <h3>Tồn dưới ngưỡng</h3>
+      <ul class="danh-sach-bang-dieu-khien">
+        {% for chi_nhanh_ton, thuoc in cac_canh_bao_ton_thap %}
+          <li>
+            <a class="duong-dan-noi-dung" href="{% url 'kho:canh_bao' %}?muc=ton_thap">{{ thuoc.ten_thuoc }}</a>
+            <span>Còn {{ thuoc.kha_dung }} {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }} · Ngưỡng {{ thuoc.nguong_canh_bao }}{% if quan_tri_chuoi %} · {{ chi_nhanh_ton.ten_chi_nhanh }}{% endif %}</span>
+          </li>
+        {% empty %}<li>Chưa có cảnh báo tồn thấp.</li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    <div>
+      {% if duoc_xem_don %}
+      <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="don-cho-nhan">
+        <div class="dau-khoi">
+          <h2 id="don-cho-nhan">Đơn đang giữ hàng</h2>
+          <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_danh_sach' %}">Xem tất cả</a>
+        </div>
+        <ul class="danh-sach-bang-dieu-khien">
+          {% for don in cac_don_cho_nhan %}
+            <li>
+              <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a>
+              <span>{{ don.get_trang_thai_display }} · {{ don.khach_hang }} · Hạn {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% if quan_tri_chuoi %} · {{ don.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
+            </li>
+          {% empty %}<li>Không có đơn đang giữ hàng.</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+      {% if not quan_tri_chuoi and duoc_chat %}
+        <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="tin-moi">
+          <div class="dau-khoi">
+            <h2 id="tin-moi">Tin nhắn chờ phản hồi</h2>
+            <a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:danh_sach' %}">Mở trò chuyện</a>
+          </div>
+          <ul class="danh-sach-bang-dieu-khien">
+            {% for phong in cac_cuoc_co_tin_moi %}
+              <li>
+                <a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">{{ phong.khach_hang }}</a>
+                <span>{{ phong.noi_dung_cuoi|truncatechars:96 }} · {{ phong.luc_gui_cuoi|date:"H:i d/m" }}</span>
+              </li>
+            {% empty %}<li>Chưa có tin từ khách cần phản hồi.</li>{% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+    </div>
+  </div>
   {% if quan_tri_chuoi and duoc_xem_du_bao %}
     <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="tom-tat-du-bao">
       <div class="dau-khoi">
@@ -96,68 +212,6 @@
       {% endif %}
     </section>
   {% endif %}
-  <div class="luoi-bang-dieu-khien">
-    {% if duoc_xem_kho %}
-    <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="canh-bao-kho">
-      <div class="dau-khoi">
-        <h2 id="canh-bao-kho">Cảnh báo kho</h2>
-        <a class="duong-dan-noi-dung" href="{% url 'kho:canh_bao' %}">Xem tất cả</a>
-      </div>
-      <h3>Hạn dùng và trạng thái lô</h3>
-      <ul class="danh-sach-bang-dieu-khien">
-        {% for dong in cac_lo_canh_bao %}
-          <li>
-            <strong>{{ dong.lo_thuoc.thuoc.ten_thuoc }} · {{ dong.lo_thuoc.ma_lo_thuoc }}</strong>
-            <span>HSD {{ dong.lo_thuoc.ngay_het_han|date:"d/m/Y" }} · {% with con=dong.lo_thuoc.ngay_het_han|so_ngay_toi:hom_nay %}{% if con < 0 %}đã hết hạn{% else %}còn {{ con }} ngày{% endif %}{% endwith %}{% if not dong.lo_thuoc.duoc_phep_ban %} · Ngừng bán{% endif %}{% if quan_tri_chuoi %} · {{ dong.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
-          </li>
-        {% empty %}<li>Chưa có cảnh báo về lô.</li>{% endfor %}
-      </ul>
-      <h3>Tồn dưới ngưỡng</h3>
-      <ul class="danh-sach-bang-dieu-khien">
-        {% for chi_nhanh_ton, thuoc in cac_canh_bao_ton_thap %}
-          <li>
-            <strong>{{ thuoc.ten_thuoc }}</strong>
-            <span>Còn {{ thuoc.kha_dung }} {{ thuoc.don_vi_tinh.ten_don_vi_tinh|lower }} · Ngưỡng {{ thuoc.nguong_canh_bao }}{% if quan_tri_chuoi %} · {{ chi_nhanh_ton.ten_chi_nhanh }}{% endif %}</span>
-          </li>
-        {% empty %}<li>Chưa có cảnh báo tồn thấp.</li>{% endfor %}
-      </ul>
-    </section>
-    {% endif %}
-    <div>
-      {% if duoc_xem_don %}
-      <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="don-cho-nhan">
-        <div class="dau-khoi">
-          <h2 id="don-cho-nhan">Đơn đang chờ xử lý</h2>
-          <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_danh_sach' %}">Xem tất cả</a>
-        </div>
-        <ul class="danh-sach-bang-dieu-khien">
-          {% for don in cac_don_cho_nhan %}
-            <li>
-              <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a>
-              <span>{{ don.get_trang_thai_display }} · {{ don.khach_hang }} · Hạn {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% if quan_tri_chuoi %} · {{ don.chi_nhanh.ten_chi_nhanh }}{% endif %}</span>
-            </li>
-          {% empty %}<li>Không có đơn đang chờ.</li>{% endfor %}
-        </ul>
-      </section>
-      {% endif %}
-      {% if not quan_tri_chuoi and duoc_chat %}
-        <section class="khoi-trang muc-bang-dieu-khien" aria-labelledby="tin-moi">
-          <div class="dau-khoi">
-            <h2 id="tin-moi">Tin nhắn chờ phản hồi</h2>
-            <a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:danh_sach' %}">Mở trò chuyện</a>
-          </div>
-          <ul class="danh-sach-bang-dieu-khien">
-            {% for phong in cac_cuoc_co_tin_moi %}
-              <li>
-                <a class="duong-dan-noi-dung" href="{% url 'tro_chuyen:chi_tiet' phong.pk %}">{{ phong.khach_hang }}</a>
-                <span>{{ phong.noi_dung_cuoi|truncatechars:96 }} · {{ phong.luc_gui_cuoi|date:"H:i d/m" }}</span>
-              </li>
-            {% empty %}<li>Chưa có tin từ khách cần phản hồi.</li>{% endfor %}
-          </ul>
-        </section>
-      {% endif %}
-    </div>
-  </div>
 {% endblock %}
 {% block cuoi_trang %}
   {% if quan_tri_chuoi %}{% include "webgis/_tai_nguyen_nhiet.html" %}{% endif %}

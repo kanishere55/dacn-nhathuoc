@@ -4,41 +4,62 @@
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: 10px 12px;
-    margin: 0 0 14px;
-    padding: 12px 14px;
-    border: 1px solid var(--vien);
-    border-radius: 12px;
-    background: white;
+    gap: var(--khoang-3);
+    margin: 0 0 var(--khoang-4);
+    padding: var(--khoang-3) var(--khoang-4);
+    border: 1px solid var(--color-vien);
+    border-radius: var(--radius-the);
+    background: var(--color-be-mat);
+    box-shadow: var(--shadow-nho);
   }
   .thanh-loc label {
     display: grid;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--chu-phu);
+    gap: var(--khoang-1);
+    color: var(--color-chu-phu);
+    font-size: var(--text-chu-thich);
+    font-weight: 600;
   }
   .thanh-loc .o-tim {
-    flex: 1 1 220px;
+    flex: 1 1 240px;
   }
   .thanh-loc input[type="search"],
   .thanh-loc select {
-    min-height: 38px;
-    padding: 6px 10px;
-    border: 1px solid var(--vien);
-    border-radius: 8px;
-    background: white;
+    min-height: 42px;
+    padding: 6px var(--khoang-3);
+    border: 1px solid var(--color-vien-o-nhap);
+    border-radius: var(--radius-vua);
+    background: var(--color-be-mat);
     color: var(--color-chu);
-    font-size: 14px;
+    font-size: var(--text-than);
+    font-weight: 400;
   }
   .thanh-loc input[type="search"] {
     width: 100%;
   }
+  .thanh-loc :is(input, select):focus {
+    border-color: var(--color-chinh);
+    box-shadow: 0 0 0 3px rgb(17 107 84 / 0.18);
+    outline: none;
+  }
   .thanh-loc .nut {
-    min-height: 38px;
+    min-height: 42px;
+  }
+  /*
+    Ô chọn có tìm (Choices.js, CSS thư viện nằm ngoài mọi lớp nên chỉ !important mới đè được):
+    cao bằng ô tìm bên cạnh, và "Tất cả" là một lựa chọn thật nên không làm mờ như chữ gợi ý.
+  */
+  .thanh-loc .choices__inner {
+    min-height: 42px !important;
+    padding-block: 6px !important;
+  }
+  .thanh-loc .choices__placeholder {
+    color: var(--color-chu-phu);
+    opacity: 1 !important;
   }
   .htmx-request.thanh-loc,
   .htmx-request .khung-bang {
-    opacity: .7;
+    opacity: 0.65;
+    transition: opacity var(--chuyen-dong);
   }
 
   .phan-trang {
@@ -46,15 +67,15 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    margin: 12px 0 4px;
-    font-size: 13px;
-    color: var(--chu-phu);
+    gap: var(--khoang-3);
+    margin: var(--khoang-4) 0 var(--khoang-1);
+    color: var(--color-chu-phu);
+    font-size: var(--text-phu);
   }
   .phan-trang ul {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--khoang-1);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -63,22 +84,24 @@
   .phan-trang li > span {
     display: inline-grid;
     place-items: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 8px;
-    border: 1px solid var(--vien);
-    border-radius: 8px;
-    background: white;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 var(--khoang-2);
+    border: 1px solid var(--color-vien);
+    border-radius: var(--radius-vua);
+    background: var(--color-be-mat);
     color: var(--color-chu);
+    font-variant-numeric: tabular-nums;
+    transition: border-color var(--chuyen-dong), color var(--chuyen-dong);
   }
   .phan-trang li > a:hover {
     border-color: var(--color-chinh);
-    color: var(--color-chinh);
+    color: var(--color-chinh-dam);
   }
   .phan-trang .dang-chon {
     border-color: var(--color-chinh);
     background: var(--color-chinh);
-    color: white;
+    color: #fff;
     font-weight: 700;
   }
   .phan-trang .dau-ba-cham {
@@ -96,10 +119,10 @@
     place-items: center;
     width: 48px;
     height: 48px;
-    border-radius: 8px;
-    background: #f1f5f1;
+    border-radius: var(--radius-vua);
+    background: var(--color-nen-dam);
     overflow: hidden;
-    color: #9aaba1;
+    color: var(--color-chu-phu);
   }
   .anh-nho img {
     width: 100%;
@@ -123,9 +146,9 @@
   .vung-anh .ghi-nguon {
     display: block;
     margin-top: 4px;
-    font-size: 11px;
+    font-size: var(--text-huy-hieu);
     line-height: 1.3;
-    color: var(--chu-phu);
+    color: var(--color-chu-phu);
     word-break: break-word;
   }
   .xem-truoc-anh {
@@ -138,9 +161,9 @@
   }
   .xem-truoc-anh li {
     position: relative;
-    border: 1px dashed #b9d3c3;
-    border-radius: 10px;
-    background: #f8fbf8;
+    border: 1px dashed var(--color-chinh-vien);
+    border-radius: var(--radius-vua);
+    background: var(--color-chinh-nhat-hon);
     overflow: hidden;
   }
   .xem-truoc-anh img {
@@ -152,7 +175,7 @@
   .xem-truoc-anh span {
     display: block;
     padding: 4px 6px;
-    font-size: 11px;
+    font-size: var(--text-huy-hieu);
     color: var(--chu-phu);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -175,15 +198,15 @@
     place-items: center;
     gap: 4px;
     padding: 16px;
-    border: 2px dashed #b9d3c3;
-    border-radius: 12px;
-    background: #f8fbf8;
+    border: 2px dashed var(--color-chinh-vien);
+    border-radius: var(--radius-the);
+    background: var(--color-chinh-nhat-hon);
     text-align: center;
     cursor: pointer;
   }
   .o-chon-anh.dang-keo {
     border-color: var(--color-chinh);
-    background: #e9f4ec;
+    background: var(--color-chinh-nhat);
   }
   .o-chon-anh input[type="file"] {
     max-width: 100%;
@@ -193,7 +216,7 @@
     font-size: 13px;
   }
   .thong-bao-anh.loi {
-    color: #b42318;
+    color: var(--color-loi);
   }
 
   /* Phân quyền */
@@ -204,9 +227,9 @@
   .ma-tran-quyen fieldset {
     margin: 0;
     padding: 12px 14px;
-    border: 1px solid var(--vien);
-    border-radius: 12px;
-    background: white;
+    border: 1px solid var(--color-vien);
+    border-radius: var(--radius-the);
+    background: var(--color-be-mat);
   }
   /* `.nhom-form legend` đặt float cho legend của khối ngoài; legend lồng nhau phải trở về bình thường,
      nếu không cả bảng quyền bị đẩy ra ngoài khung và rộng 0. */
@@ -292,9 +315,9 @@
     }
     .bang-the-di-dong td[data-nhan]::before {
       content: attr(data-nhan);
-      color: var(--chu-phu);
+      color: var(--color-chu-phu);
       font-weight: 600;
-      font-size: 12px;
+      font-size: var(--text-chu-thich);
     }
   }
   .ma-tran-quyen .dau-nhom {
@@ -302,7 +325,7 @@
     gap: 10px;
     justify-content: flex-end;
     margin: -4px 0 6px;
-    font-size: 12px;
+    font-size: var(--text-chu-thich);
   }
   .ma-tran-quyen .dau-nhom button {
     border: 0;
@@ -325,24 +348,6 @@
   .luoi-quyen input {
     margin-top: 3px;
   }
-  .bang-quyen-rieng td,
-  .bang-quyen-rieng th {
-    vertical-align: middle;
-  }
-  .bang-quyen-rieng .lua-chon-ba label {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-right: 12px;
-    white-space: nowrap;
-  }
-  .nhan-quyen-chan {
-    color: #b42318;
-  }
-  .nhan-quyen-cho {
-    color: var(--color-chinh);
-  }
-
   /* Nội dung trình soạn thảo hiển thị cho khách và trong xem trước */
   .anh-nd-trai {
     float: left;
@@ -374,8 +379,8 @@
     justify-content: space-between;
     gap: 12px;
     padding: 6px 10px;
-    border-radius: 8px;
-    background: #f3f8f4;
+    border-radius: var(--radius-vua);
+    background: var(--color-chinh-nhat-hon);
   }
   .thong-tin-hoan-tien dt {
     color: var(--chu-phu);
@@ -389,8 +394,8 @@
     gap: 8px;
     margin: 0 0 8px;
     padding: 10px 12px;
-    border: 1px solid var(--vien);
-    border-radius: 10px;
+    border: 1px solid var(--color-vien);
+    border-radius: var(--radius-vua);
   }
   .nhap-lai-kho legend {
     padding: 0 6px;
@@ -418,7 +423,7 @@
   .anh-tra-hang-khach img {
     width: 64px;
     height: 64px;
-    border-radius: 8px;
+    border-radius: var(--radius-vua);
     object-fit: cover;
   }
   .nhom-tra-hang legend {
@@ -437,8 +442,8 @@
     display: grid;
     gap: 10px;
     padding: 12px;
-    border-radius: 12px;
-    background: #f3f8f4;
+    border-radius: var(--radius-the);
+    background: var(--color-chinh-nhat-hon);
   }
   @media (min-width: 900px) {
     .dau-phan-quyen {
@@ -454,23 +459,23 @@
     position: relative;
     padding: 8px 10px !important;
     border: 1px solid transparent;
-    border-radius: 10px;
+    border-radius: var(--radius-vua);
     cursor: pointer;
   }
   .o-quyen:hover {
-    background: #f6faf7;
+    background: var(--color-chinh-nhat-hon);
   }
   .o-quyen.khac-nhom {
-    border-color: #f3c78b;
-    background: #fff8ec;
+    border-color: var(--color-canh-bao-vien);
+    background: var(--color-canh-bao-nen);
   }
   .nhan-khac-nhom {
     margin-left: auto;
     padding: 1px 8px;
-    border-radius: 999px;
-    background: #fde7c4;
-    color: #92400e;
-    font-size: 11px;
+    border-radius: var(--radius-tron);
+    background: var(--color-canh-bao-nen);
+    color: var(--color-canh-bao);
+    font-size: var(--text-huy-hieu);
     font-style: normal;
     font-weight: 700;
     white-space: nowrap;

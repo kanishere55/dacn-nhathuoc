@@ -22,6 +22,7 @@
     <p class="trang-thai-dat-hang" data-trang-thai-dat-hang role="status"></p>
     {% partialdef lua_chon inline %}
     <div class="khung-thanh-toan" id="lua-chon-dat-hang">
+    <input type="hidden" name="tong_da_xem" value="{{ tong_thanh_toan|stringformat:'d' }}">
     <div class="cac-buoc-dat-hang">
       {{ form.errors }}
       <section class="the-khach" aria-labelledby="buoc-nhan">
@@ -90,14 +91,14 @@
       </section>
 
       {% if cac_phuong_an %}
-        <section class="the-khach" aria-labelledby="tieu-de-ban-do-dat-hang">
-          <h2 id="tieu-de-ban-do-dat-hang"><i data-lucide="map" aria-hidden="true"></i>{% if hinh_thuc == "giao_hang" %}Lộ trình giao hàng{% else %}Đường đến nhà thuốc{% endif %}</h2>
+        <details class="the-khach chi-tiet-ban-do-dat-hang" data-mo-ban-do-dat-hang>
+          <summary><i data-lucide="map" aria-hidden="true"></i>{% if hinh_thuc == "giao_hang" %}Xem lộ trình giao hàng{% else %}Xem đường đến nhà thuốc{% endif %}</summary>
           {{ du_lieu_ban_do|json_script:"du-lieu-ban-do-dat-hang" }}
           <div class="ban-do ban-do-dat-hang" data-ban-do-dat-hang aria-label="Bản đồ chi nhánh và địa chỉ nhận hàng"></div>
           <p class="tom-tat-lo-trinh" data-tom-tat-lo-trinh role="status">Đang tải lộ trình…</p>
           {% if hinh_thuc != "giao_hang" %}<button type="button" class="nut nut-phu" data-dinh-vi-dat-hang><i data-lucide="locate-fixed" aria-hidden="true"></i>Tính đường từ vị trí hiện tại</button>{% endif %}
           <p class="ghi-chu-khach">Bấm vào biểu tượng nhà thuốc trên bản đồ để đổi chi nhánh.</p>
-        </section>
+        </details>
       {% endif %}
 
       <section class="the-khach" aria-labelledby="buoc-thanh-toan">

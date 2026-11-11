@@ -246,3 +246,245 @@
     color: var(--chu-phu);
   }
 }
+/* Hàng việc trên tổng quan: việc gấp đỏ, cần xử lý vàng, theo dõi xám; luôn kèm chữ, không chỉ dựa vào màu. */
+@layer components {
+  .muc-gap { --mau-viec: #c4452c; --nen-viec: #fdecea; --chu-viec: #a63a24; }
+  .muc-chu_y { --mau-viec: #b7860b; --nen-viec: #fdf7e2; --chu-viec: #7a5a06; }
+  .muc-theo_doi { --mau-viec: #66776e; --nen-viec: #eef2ef; --chu-viec: #45524b; }
+  .chu-viec-gap {
+    color: #a63a24;
+  }
+  .chu-thich-muc {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    color: var(--chu-phu);
+    font-size: 12px;
+  }
+  .chu-thich-muc .cham {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--mau-viec);
+    margin-left: 6px;
+  }
+  .danh-sach-viec {
+    display: grid;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .viec {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--vien);
+    border-left: 4px solid var(--mau-viec);
+    border-radius: 10px;
+    background: #fff;
+  }
+  .so-viec {
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+    border-radius: 9px;
+    background: var(--nen-viec);
+    color: var(--chu-viec);
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ten-viec {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    font-size: 15px;
+  }
+  .nhan-muc-viec {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--nen-viec);
+    color: var(--chu-viec);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .mo-ta-viec {
+    margin-top: 3px;
+    color: var(--chu-phu);
+    font-size: 13px;
+  }
+  .muc-con-viec {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-top: 6px;
+    font-size: 13px;
+  }
+  .muc-con-viec span {
+    color: var(--chu-phu);
+  }
+  .viec > .nut {
+    align-self: center;
+    white-space: nowrap;
+  }
+  .viec-trong,
+  .viec-da-xong,
+  .ban-hom-nay-gon {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--chu-phu);
+  }
+  .viec-trong {
+    padding: 14px;
+    border-radius: 10px;
+    background: #f2f8f4;
+    color: #136b48;
+    font-size: 14px;
+  }
+  .viec-da-xong {
+    margin-top: 12px;
+  }
+  .ban-hom-nay-gon {
+    margin-block: 16px 0;
+    font-size: 14px;
+  }
+  .ban-hom-nay-gon strong {
+    color: var(--color-chu);
+  }
+  :is(.viec-trong, .viec-da-xong, .ban-hom-nay-gon) svg.lucide {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .bang-doanh-thu th small {
+    display: block;
+    color: var(--chu-phu);
+    font-weight: 400;
+    font-size: 12px;
+  }
+  .chenh-lech {
+    font-weight: 600;
+    color: var(--chu-phu);
+  }
+  .chenh-lech.tang {
+    color: #136b48;
+  }
+  .chenh-lech.giam {
+    color: #a63a24;
+  }
+  @media (max-width: 640px) {
+    .viec {
+      grid-template-columns: 44px minmax(0, 1fr);
+    }
+    .viec > .nut {
+      grid-column: 2;
+      justify-self: start;
+    }
+  }
+}
+/* Nhật ký email: lỗi nổi bật, kết quả có màu kèm chữ, xem trước thư như khách nhận. */
+@layer components {
+  .canh-bao-nhat-ky-email {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-block: 16px;
+    padding: 14px 16px;
+    border: 1px solid #f2c4bb;
+    border-left: 4px solid #c4452c;
+    border-radius: 10px;
+    background: #fdf3f1;
+    color: #7c2a1b;
+    font-size: 13px;
+  }
+  .canh-bao-nhat-ky-email strong {
+    font-size: 14px;
+  }
+  .canh-bao-nhat-ky-email svg.lucide {
+    width: 22px;
+    height: 22px;
+  }
+  .nhan-email {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .nhan-email-da_gui { background: #e3f3e9; color: #136b48; }
+  .nhan-email-cho_gui { background: #eef2ef; color: #45524b; }
+  .nhan-email-ket { background: #fff4dc; color: #8a5a00; }
+  .nhan-email-loi { background: #fdecec; color: #9f2a22; }
+  .loi-gui-email {
+    margin-top: 6px;
+    max-width: 48ch;
+    color: #9f2a22;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .bang-nhat-ky-email td small {
+    display: block;
+    color: var(--chu-phu);
+  }
+  .bang-nhat-ky-email tr.dong-email-loi td {
+    background: #fffaf9;
+  }
+  .bang-nhat-ky-email tr.dong-email-loi td:first-child {
+    box-shadow: inset 3px 0 0 #c4452c;
+  }
+  .bang-nhat-ky-email tr.dong-email-ket td:first-child {
+    box-shadow: inset 3px 0 0 #b7860b;
+  }
+  .o-thao-tac-email {
+    white-space: nowrap;
+  }
+  .luoi-chi-tiet-email {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: start;
+    gap: 14px;
+  }
+  .luoi-chi-tiet-email h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .thong-tin-email {
+    display: grid;
+    gap: 8px;
+    margin-block: 12px;
+    font-size: 13px;
+  }
+  .thong-tin-email dt {
+    color: var(--chu-phu);
+  }
+  .xem-truoc-email {
+    display: block;
+    width: 100%;
+    height: min(78dvh, 900px);
+    border: 1px solid var(--vien);
+    border-radius: 10px;
+    background: #f4f6f3;
+  }
+  @media (max-width: 900px) {
+    .luoi-chi-tiet-email {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .canh-bao-nhat-ky-email {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+    .canh-bao-nhat-ky-email .nut {
+      grid-column: 2;
+      justify-self: start;
+    }
+  }
+}

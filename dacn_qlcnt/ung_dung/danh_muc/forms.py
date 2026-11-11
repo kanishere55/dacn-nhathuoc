@@ -56,6 +56,76 @@ NHAN = {
     "ngay_bat_dau": "Từ ngày",
     "ngay_ket_thuc": "Đến ngày",
 }
+MA_GOI_Y = "Tối đa 32 chữ in hoa, số, gạch ngang hoặc gạch dưới; không trùng mục khác."
+# Dòng hướng dẫn ngắn ở đầu từng form danh mục: mục này dùng để làm gì, điều gì cần chú ý.
+HUONG_DAN_FORM = {
+    "thuoc": (
+        "Thông tin thuốc dùng chung cho mọi chi nhánh. Đơn vị cơ sở là đơn vị nhỏ nhất dùng "
+        "để bán và đếm kho; chọn đúng ngay từ đầu vì sau khi tạo không đổi được."
+    ),
+    "quy_doi_bao_goi": (
+        "Khai báo cách đóng gói để nhập và bán theo hộp, vỉ. Thuốc và hệ số không đổi được sau "
+        "khi tạo; cần cách đóng gói khác thì tạo bao gói mới."
+    ),
+    "chi_nhanh": (
+        "Thông tin hiển thị cho khách và dùng để tìm nhà thuốc gần nhất trên bản đồ. Chỉ ngừng "
+        "hoạt động được khi kho đã hết hàng và không còn đơn đang xử lý."
+    ),
+    "don_vi_tinh": "Đơn vị đếm hàng như viên, gói, chai. Mã ngắn viết hoa, ví dụ VIEN.",
+    "nhom_atc": (
+        "Nhóm thuốc theo hệ thống phân loại ATC của WHO, dùng cho bản đồ nhiệt tồn kho và dự báo."
+    ),
+    "nha_cung_cap": "Đơn vị giao hàng cho nhà thuốc; phiếu nhập và phiếu trả hàng gắn với mục này.",
+    "nhan_vien": "Hồ sơ nhân sự gắn với tài khoản đăng nhập của quản lý hoặc nhân viên chi nhánh.",
+    "danh_muc_san_pham": "Nhóm sản phẩm hiển thị trên website để khách duyệt theo nhu cầu.",
+    "khuyen_mai": (
+        "Giảm giá theo phần trăm cho một thuốc trong khoảng ngày; mỗi thuốc chỉ có một đợt đang "
+        "chạy và không áp cho thuốc kê đơn."
+    ),
+}
+# Lời gợi ý dưới từng ô (theo loại danh mục), cho người không quen nghiệp vụ.
+TRO_GIUP = {
+    "thuoc": {
+        "ma_thuoc": MA_GOI_Y,
+        "don_vi_tinh": "Đơn vị nhỏ nhất khi bán và đếm kho, ví dụ viên, gói, chai.",
+        "gia_ban": "Giá một đơn vị cơ sở, áp dụng chung toàn chuỗi.",
+        "nguong_canh_bao": (
+            "Cảnh báo khi lượng còn bán được ở một chi nhánh thấp hơn số này; 0 là không cảnh báo."
+        ),
+        "la_thuoc_ke_don": (
+            "Chỉ bán tại quầy khi có đơn của bác sĩ; không bán giao hàng, không khuyến mãi."
+        ),
+        "dang_hoat_dong": (
+            "Bỏ chọn để ngừng kinh doanh; chỉ ngừng được khi đã hết hàng trong kho và hết đơn "
+            "đang xử lý."
+        ),
+    },
+    "chi_nhanh": {
+        "ma_chi_nhanh": MA_GOI_Y,
+        "dang_hoat_dong": (
+            "Bỏ chọn để ngừng hoạt động; chỉ ngừng được khi kho đã hết hàng và không còn đơn "
+            "đang xử lý."
+        ),
+    },
+    "quy_doi_bao_goi": {
+        "ten_quy_doi_bao_goi": "Ghi như trên bao bì, ví dụ Hộp 10 vỉ x 10 viên.",
+        "he_so": "Số đơn vị cơ sở trong một bao gói, ví dụ hộp 100 viên thì ghi 100.",
+    },
+    "don_vi_tinh": {"ma_don_vi_tinh": MA_GOI_Y},
+    "nhom_atc": {"ma_nhom_atc": "Mã ATC chữ in hoa và số, ví dụ N02BE."},
+    "nha_cung_cap": {"ma_nha_cung_cap": MA_GOI_Y},
+    "nhan_vien": {"ma_nhan_vien": MA_GOI_Y},
+    "danh_muc_san_pham": {"ma_danh_muc_san_pham": MA_GOI_Y},
+    "khuyen_mai": {
+        "ma_khuyen_mai": MA_GOI_Y,
+        "phan_tram_giam": "Phần trăm giảm trên giá bán, áp dụng từ ngày bắt đầu đến hết ngày kết thúc.",
+    },
+}
+# Trường cố định sau khi tạo (Q02): khóa ô ngay trên form thay vì để sửa rồi mới báo lỗi.
+BAT_BIEN = {"thuoc": ("don_vi_tinh",), "quy_doi_bao_goi": ("thuoc", "he_so")}
+GOI_Y_BAT_BIEN = (
+    "Không đổi được sau khi tạo, để số liệu kho đã ghi giữ đúng nghĩa. Cần khác thì tạo mục mới."
+)
 # Cột văn bản được nhập nhiều dòng; cột văn bản khác dùng ô một dòng.
 NHIEU_DONG = {"noi_dung_chi_tiet", "gioi_thieu"}
 # Ô một dòng thường dài, chiếm cả hàng trên form.
@@ -129,6 +199,19 @@ class FormDanhMuc(forms.ModelForm):
                 truong.widget = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
             elif isinstance(truong, forms.TimeField):
                 truong.widget = forms.TimeInput(attrs={"type": "time"}, format="%H:%M")
+        loai = getattr(self, "loai", "")
+        for ten, goi_y in TRO_GIUP.get(loai, {}).items():
+            if ten in self.fields and not self.fields[ten].help_text:
+                self.fields[ten].help_text = goi_y
+        if self.instance.pk:
+            for ten in BAT_BIEN.get(loai, ()):
+                if ten in self.fields:
+                    self.fields[ten].disabled = True
+                    self.fields[ten].help_text = GOI_Y_BAT_BIEN
+
+    @property
+    def huong_dan(self):
+        return HUONG_DAN_FORM.get(getattr(self, "loai", ""), "")
 
     def clean(self):
         du_lieu = super().clean()

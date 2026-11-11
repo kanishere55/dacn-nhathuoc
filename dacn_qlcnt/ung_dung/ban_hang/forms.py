@@ -12,9 +12,11 @@ from .gio_hang import SO_LUONG_TOI_DA
 from .models import (
     HINH_THUC_HOAN_TIEN,
     HINH_THUC_NHAN,
+    KY_HIEU_HOA_DON,
     LY_DO_TRA_HANG,
     MA_SO_THUE,
     PHUONG_THUC_THANH_TOAN,
+    SO_HOA_DON,
 )
 
 PHUONG_THUC_TAI_QUAY = [("tien_mat", "Tiền mặt"), ("chuyen_khoan", "Chuyển khoản")]
@@ -33,6 +35,13 @@ class DonThuocForm(forms.Form):
         max_length=30,
         required=False,
         help_text="Ghi khi đơn có mã liên thông; đơn giấy không mã thì để trống.",
+    )
+    ho_ten_nguoi_benh = TruongMotDong(label="Họ tên người bệnh", max_length=120, required=False)
+    ngay_ke_don = forms.DateField(
+        label="Ngày kê đơn",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        help_text="Ngày ghi trên đơn thuốc, không sau hôm nay.",
     )
 
     def don_thuoc(self):
@@ -79,6 +88,8 @@ class DatHangForm(forms.Form):
         choices=PHUONG_THUC_THANH_TOAN, required=False, widget=forms.RadioSelect
     )
     ghi_chu_khach = TruongMotDong(label="Lời nhắn cho nhà thuốc", max_length=300, required=False)
+    # Tổng tiền khách đang nhìn thấy khi bấm đặt; khác tổng tính lại thì không tạo đơn.
+    tong_da_xem = forms.IntegerField(required=False, min_value=0, widget=forms.HiddenInput)
 
 
 class XuLyDonForm(DonThuocForm):
@@ -87,8 +98,21 @@ class XuLyDonForm(DonThuocForm):
         choices=PHUONG_THUC_TAI_QUAY, required=False, initial="tien_mat"
     )
     ma_tham_chieu = TruongMotDong(label="Mã giao dịch", max_length=64, required=False)
+    so_tien_nhan = forms.IntegerField(
+        label="Số tiền trên sao kê", min_value=1, max_value=10**13, required=False
+    )
     phuong_thuc_hoan = forms.ChoiceField(
         choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
+    )
+    xu_ly_hang_giao = forms.ChoiceField(
+        label="Tình trạng hàng sau giao thất bại",
+        choices=[
+            ("hoan_kho", "Đã kiểm hàng nguyên vẹn, đủ điều kiện nhập lại"),
+            ("da_huy", "Hàng hỏng, đã xử lý hủy"),
+            ("that_lac", "Đã xác nhận thất lạc"),
+            ("theo_lo", "Tình trạng khác nhau theo lô"),
+        ],
+        required=False,
     )
 
     def clean_ma_tham_chieu(self):
@@ -217,6 +241,9 @@ class TraHangForm(forms.Form):
 
 class XuLyTraHangForm(forms.Form):
     ghi_chu = TruongMotDong(label="Ghi chú", max_length=500, required=False)
+    con_niem_phong = forms.BooleanField(
+        label="Hàng nhập lại còn nguyên niêm phong, đã kiểm", required=False
+    )
     phuong_thuc = forms.ChoiceField(
         choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
     )
@@ -248,8 +275,41 @@ class XuLyXuatHoaDonForm(forms.Form):
     trang_thai = forms.ChoiceField(
         label="Kết quả", choices=[("da_xuat", "Đã xuất hóa đơn"), ("tu_choi", "Từ chối")]
     )
-    ghi_chu_xu_ly = TruongMotDong(
-        label="Ký hiệu, số hóa đơn hoặc lý do từ chối",
-        max_length=500,
-        widget=forms.TextInput(attrs={"placeholder": "Ví dụ: Ký hiệu 1C26TAA, số 0000123"}),
+    ky_hieu_hoa_don = TruongMotDong(
+        label="Ký hiệu hóa đơn",
+        max_length=7,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "1C26TAA", "autocomplete": "off"}),
     )
+    so_hoa_don = TruongMotDong(
+        label="Số hóa đơn",
+        max_length=8,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "0000123", "inputmode": "numeric", "autocomplete": "off"}
+        ),
+    )
+    ly_do_tu_choi = TruongMotDong(label="Lý do từ chối", max_length=500, required=False)
+
+    def clean(self):
+        du_lieu = super().clean()
+        if du_lieu.get("trang_thai") == "da_xuat":
+            du_lieu["ky_hieu_hoa_don"] = (du_lieu.get("ky_hieu_hoa_don") or "").upper()
+            if not re.fullmatch(KY_HIEU_HOA_DON, du_lieu["ky_hieu_hoa_don"]):
+                self.add_error(
+                    "ky_hieu_hoa_don", "Ký hiệu gồm 7 ký tự như trên hóa đơn, ví dụ 1C26TAA."
+                )
+            if not re.fullmatch(SO_HOA_DON, du_lieu.get("so_hoa_don") or ""):
+                self.add_error("so_hoa_don", "Số hóa đơn gồm 1 đến 8 chữ số.")
+        elif du_lieu.get("trang_thai") == "tu_choi" and not du_lieu.get("ly_do_tu_choi"):
+            self.add_error("ly_do_tu_choi", "Ghi lý do từ chối để khách nắm được.")
+        return du_lieu
+
+
+class GanTienForm(forms.Form):
+    ma_don_hang = TruongMotDong(label="Mã đơn", max_length=32)
+    ghi_chu = TruongMotDong(label="Ghi chú", max_length=200, required=False)
+
+
+class BoQuaTienForm(forms.Form):
+    ly_do = TruongMotDong(label="Đã xử lý thế nào", max_length=200)

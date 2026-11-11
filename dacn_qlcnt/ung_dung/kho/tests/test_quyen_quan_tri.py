@@ -74,6 +74,9 @@ class QuyenQuanTriKhoTests(TestCase):
         lo = self.ton.lo_thuoc
         url = reverse("kho:lo_thuoc_doi_trang_thai", args=[lo.pk])
         self.assertContains(self.client.get(reverse("kho:lo_thuoc_danh_sach")), url)
-        self.assertEqual(self.client.post(url, {"duoc_phep_ban": "0"}).status_code, 302)
+        self.assertEqual(
+            self.client.post(url, {"duoc_phep_ban": "0", "ly_do": "Nghi lỗi bao bì"}).status_code,
+            302,
+        )
         lo.refresh_from_db()
         self.assertFalse(lo.duoc_phep_ban)

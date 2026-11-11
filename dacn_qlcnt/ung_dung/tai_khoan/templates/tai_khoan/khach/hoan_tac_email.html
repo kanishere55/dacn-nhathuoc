@@ -1,0 +1,22 @@
+{% extends "tai_khoan/khach/_khung_xac_thuc.html" %}
+{% block tieu_de %}Khôi phục email cũ · {{ block.super }}{% endblock %}
+{% block noi_dung_xac_thuc %}
+  <h1>Khôi phục email cũ</h1>
+  {% if loi %}
+    <p class="canh-bao-gui-ma" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i>{{ loi }}</p>
+    <p class="mo-ta-xac-thuc">Cần hỗ trợ lấy lại tài khoản, hãy gọi nhà thuốc hoặc trả lời thư đã nhận.</p>
+    <p><a class="nut nut-phu" href="{% url 'tai_khoan:dang_nhap' %}">Về trang đăng nhập</a></p>
+  {% else %}
+    <p class="mo-ta-xac-thuc">Email đăng nhập của tài khoản vừa bị đổi. Nếu không phải bạn đổi, bấm nút bên dưới để:</p>
+    <ul class="mo-ta-xac-thuc">
+      <li>Đưa tài khoản về lại email <strong>{{ email_che }}</strong>.</li>
+      <li>Thoát mọi phiên đăng nhập và vô hiệu mật khẩu hiện tại.</li>
+      <li>Gửi mã tới email này để bạn đặt mật khẩu mới.</li>
+    </ul>
+    <form method="post" class="form-chinh">
+      {% csrf_token %}
+      <button class="nut" type="submit"><i data-lucide="rotate-ccw" aria-hidden="true"></i>Khôi phục email cũ</button>
+    </form>
+    <p class="phan-cach-xac-thuc">Liên kết dùng được một lần, đến {{ phien.thoi_diem_het_han|date:"H:i d/m/Y" }}.</p>
+  {% endif %}
+{% endblock %}

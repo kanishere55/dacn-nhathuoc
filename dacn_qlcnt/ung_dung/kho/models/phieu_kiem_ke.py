@@ -3,6 +3,8 @@ from django.db.models.functions import Now
 
 from ung_dung.chung.ten_csdl import rang_buoc_so, rang_buoc_van_ban, ten_rang_buoc
 
+from .chung import rang_buoc_khoa_yeu_cau, truong_khoa_yeu_cau
+
 
 class PhieuKiemKe(models.Model):
     id_phieu_kiem_ke = models.BigAutoField(
@@ -19,6 +21,7 @@ class PhieuKiemKe(models.Model):
         db_column="id_chi_nhanh",
         db_comment="Chi nhánh kiểm kê và điều chỉnh ngay khi xác nhận.",
     )
+    khoa_yeu_cau = truong_khoa_yeu_cau()
     nguoi_lap = models.ForeignKey(
         "tai_khoan.TaiKhoan",
         on_delete=models.PROTECT,
@@ -42,6 +45,7 @@ class PhieuKiemKe(models.Model):
         db_table_comment = "Mỗi hàng là một chứng từ đã xác nhận, không sửa hoặc xóa."
         verbose_name = "Mỗi hàng là một chứng từ đã xác nhận, không sửa hoặc xóa."
         constraints = [
+            *rang_buoc_khoa_yeu_cau("phieu_kiem_ke"),
             *rang_buoc_van_ban("phieu_kiem_ke", "ma_phieu_kiem_ke", rong=False, nhieu_dong=False),
             *rang_buoc_van_ban("phieu_kiem_ke", "ghi_chu", rong=True, nhieu_dong=True),
             models.UniqueConstraint(

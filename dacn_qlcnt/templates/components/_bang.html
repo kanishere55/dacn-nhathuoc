@@ -1,1 +1,18 @@
-<div class="khung-bang"><table><caption>{{ chu_thich }}</caption><thead><tr>{% for cot in cac_cot %}<th scope="col">{{ cot }}</th>{% endfor %}</tr></thead><tbody>{% for dong in cac_dong %}<tr>{% for o in dong %}<td>{{ o }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ cac_cot|length }}">Chưa có dữ liệu.</td></tr>{% endfor %}</tbody></table></div>
+{% comment %}
+  Bảng dữ liệu đơn giản. Biến: cac_cot (danh sách tiêu đề), cac_dong (danh sách dòng, mỗi dòng là danh sách ô),
+  chu_thich (tiêu đề bảng cho trình đọc màn hình), cot_so (danh sách số thứ tự cột canh phải, bắt đầu từ 1),
+  chu_rong (câu hiện khi chưa có dòng nào). Kiểu dáng: tiêu đề cột dính, sọc nhẹ, số canh phải (giao_dien.css).
+{% endcomment %}
+<div class="khoi-trang khung-bang">
+  <table>
+    {% if chu_thich %}<caption class="sr-only">{{ chu_thich }}</caption>{% endif %}
+    <thead><tr>{% for cot in cac_cot %}<th scope="col"{% if forloop.counter in cot_so %} class="o-so"{% endif %}>{{ cot }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for dong in cac_dong %}
+        <tr>{% for o in dong %}<td{% if forloop.counter in cot_so %} class="o-so"{% endif %}>{{ o }}</td>{% endfor %}</tr>
+      {% empty %}
+        <tr class="hang-trong"><td colspan="{{ cac_cot|length }}">{{ chu_rong|default:"Chưa có dữ liệu." }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

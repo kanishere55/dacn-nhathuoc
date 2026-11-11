@@ -1,0 +1,10 @@
+{% autoescape off %}{% if dang_hoat_dong %}Tài khoản đã được mở lại{% else %}Tài khoản đang tạm khóa{% endif %}
+
+Xin chào {{ ho_ten|default:ten_dang_nhap }}, tài khoản {{ ten_dang_nhap }} đã được quản trị viên của nhà thuốc {% if dang_hoat_dong %}mở lại{% else %}tạm khóa{% endif %} lúc {{ thoi_diem|date:"H:i d/m/Y" }}.
+{% if not dang_hoat_dong %}Trong thời gian này bạn không đăng nhập được; các đơn đã đặt vẫn được nhà thuốc xử lý.
+{% endif %}{% if nut_chinh %}
+{{ nut_chinh.nhan }}:
+{{ nut_chinh.url }}
+{% endif %}
+Bạn không đề nghị thay đổi này? {% if cua_hang.hotline %}Gọi {{ cua_hang.hotline }} hoặc trả lời thư này.{% else %}Trả lời thư này.{% endif %}
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

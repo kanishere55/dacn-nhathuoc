@@ -1,4 +1,4 @@
-from .lo_thuoc import LoThuoc
+from .lo_thuoc import LichSuDieuKienLo, LoThuoc
 from .phieu_dieu_chuyen import ChiTietPhieuDieuChuyen, PhieuDieuChuyen
 from .phieu_kiem_ke import ChiTietPhieuKiemKe, PhieuKiemKe
 from .phieu_nhap import ChiTietPhieuNhap, PhieuNhap
@@ -13,6 +13,7 @@ __all__ = [
     "ChiTietPhieuTraNhaCungCap",
     "ChiTietPhieuXuatHuy",
     "LOAI_XUAT_HUY",
+    "LichSuDieuKienLo",
     "LoThuoc",
     "PhieuDieuChuyen",
     "PhieuKiemKe",

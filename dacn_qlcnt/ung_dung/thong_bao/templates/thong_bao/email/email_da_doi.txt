@@ -1,7 +1,10 @@
-{% autoescape off %}Xin chào {{ ho_ten|default:ten_dang_nhap }},
+{% autoescape off %}Email đăng nhập vừa được đổi
 
-Email đăng ký của tài khoản {{ ten_dang_nhap }} vừa được đổi sang {{ email_moi_che }} lúc {{ thoi_diem|date:"H:i d/m/Y" }}.
-Nếu không phải bạn, hãy liên hệ nhà thuốc để khóa tài khoản.
+Xin chào {{ ho_ten|default:ten_dang_nhap }}, email của tài khoản {{ ten_dang_nhap }} đã đổi sang {{ email_moi_che }} lúc {{ thoi_diem|date:"H:i d/m/Y" }}{% if boi_quan_tri %} do quản trị viên của nhà thuốc thực hiện{% endif %}.
 
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+Không phải bạn đổi?{% if url_hoan_tac %}
+Khôi phục email cũ (dùng được trong {{ so_ngay_hoan_tac }} ngày):
+{{ url_hoan_tac }}{% endif %}{% if cua_hang.hotline %}
+Hoặc gọi {{ cua_hang.hotline }}{% if cua_hang.gio_lam_viec %} ({{ cua_hang.gio_lam_viec }}){% endif %} để nhà thuốc khóa tài khoản.{% endif %}
+Email này không còn gắn với tài khoản nên chức năng quên mật khẩu sẽ không gửi mã tới đây.
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

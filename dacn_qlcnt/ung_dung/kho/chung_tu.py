@@ -3,6 +3,7 @@
 from decimal import Decimal
 from io import BytesIO
 
+from django.db.models import F, Sum
 from django.utils import timezone
 
 from ung_dung.chung.phong_pdf import dang_ky_phong_pdf
@@ -62,6 +63,8 @@ def du_lieu_chung_tu(phieu):
             ("Chi nhánh nhận", phieu.chi_nhanh.ten_chi_nhanh),
             ("Nhà cung cấp", phieu.nha_cung_cap.ten_nha_cung_cap),
         ]
+        if phieu.so_hoa_don_nha_cung_cap:
+            thong_tin.append(("Hóa đơn nhà cung cấp", phieu.so_hoa_don_nha_cung_cap))
         cot = [*COT_LO, ("Số lượng", True), ("Đơn giá", True), ("Thành tiền", True)]
         hang, tong_tien = [], Decimal(0)
         for dong in _cac_dong(ChiTietPhieuNhap, phieu_nhap=phieu):
@@ -85,11 +88,34 @@ def du_lieu_chung_tu(phieu):
             ("Nhà cung cấp", goc.nha_cung_cap.ten_nha_cung_cap),
             ("Phiếu nhập gốc", goc.ma_phieu_nhap),
         ]
-        cot = [*COT_LO, ("Số lượng", True)]
-        hang = [
-            [*_cot_lo(d), f"{_so(d.so_luong)} {d.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh}"]
-            for d in _cac_dong(ChiTietPhieuTraNhaCungCap, phieu_tra_nha_cung_cap=phieu)
-        ]
+        # Giá trị trả tính theo đơn giá nhập gốc của lô trong phiếu nhập (bình quân nếu một lô
+        # nằm ở nhiều dòng với giá khác nhau), để đối chiếu công nợ với nhà cung cấp.
+        gia_goc = {
+            dong["lo_thuoc"]: dong
+            for dong in ChiTietPhieuNhap.objects.filter(phieu_nhap=goc)
+            .values("lo_thuoc")
+            .annotate(luong=Sum("so_luong"), tien=Sum(F("so_luong") * F("don_gia")))
+        }
+        cot = [*COT_LO, ("Số lượng", True), ("Đơn giá nhập", True), ("Thành tiền", True)]
+        hang, tong_tien = [], Decimal(0)
+        for d in _cac_dong(ChiTietPhieuTraNhaCungCap, phieu_tra_nha_cung_cap=phieu):
+            goc_lo = gia_goc.get(d.lo_thuoc_id)
+            don_gia = (
+                (Decimal(goc_lo["tien"]) / goc_lo["luong"]).quantize(Decimal(1))
+                if goc_lo and goc_lo["luong"]
+                else Decimal(0)
+            )
+            thanh_tien = don_gia * d.so_luong
+            tong_tien += thanh_tien
+            hang.append(
+                [
+                    *_cot_lo(d),
+                    f"{_so(d.so_luong)} {d.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh}",
+                    _tien(don_gia),
+                    _tien(thanh_tien),
+                ]
+            )
+        tong = [("Tổng giá trị trả", _tien(tong_tien))]
         ben_ky = "Đại diện nhà cung cấp"
     elif isinstance(phieu, PhieuDieuChuyen):
         tieu_de, ten = "Phiếu điều chuyển kho", "phieu_dieu_chuyen"
@@ -124,6 +150,7 @@ def du_lieu_chung_tu(phieu):
         thong_tin = [
             ("Chi nhánh", phieu.chi_nhanh.ten_chi_nhanh),
             ("Lý do", phieu.get_loai_xuat_huy_display()),
+            ("Ảnh hưởng tồn kho", "Giảm tồn" if phieu.co_tru_ton else "Hàng đã xuất khỏi tồn"),
         ]
         cot = [*COT_LO, ("Số lượng", True)]
         hang = [

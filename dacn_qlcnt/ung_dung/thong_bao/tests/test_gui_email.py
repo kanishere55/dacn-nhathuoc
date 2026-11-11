@@ -1,10 +1,12 @@
+from datetime import timedelta
 from unittest import mock
 
 from django.core import mail
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from ..models import NhatKyEmail
-from ..services import gui_email
+from ..services import gui_email, gui_lai_thu_ton
 
 
 class GuiEmailTests(TestCase):
@@ -61,3 +63,26 @@ class GuiEmailTests(TestCase):
             self.gui()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(NhatKyEmail.objects.get().trang_thai, "da_gui")
+
+    def test_thu_cu_dang_gui_lai_khong_the_giu_luot_lan_hai(self):
+        with self.captureOnCommitCallbacks(execute=False):
+            thu = gui_email(
+                loai_email="nhac_ten_dang_nhap",
+                email_nhan="nhan@example.com",
+                tieu_de="Tên đăng nhập",
+                mau="nhac_ten_dang_nhap",
+                ngu_canh={"ten_dang_nhap": "thu_nghiem"},
+            )
+        NhatKyEmail.objects.filter(pk=thu.pk).update(
+            thoi_diem_tao=timezone.now() - timedelta(hours=1)
+        )
+
+        def trong_luc_gui(_):
+            self.assertEqual(gui_lai_thu_ton(), (0, 0))
+
+        with mock.patch("ung_dung.thong_bao.services._gui", side_effect=trong_luc_gui) as gui:
+            gui_lai_thu_ton()
+        thu.refresh_from_db()
+        self.assertEqual(gui.call_count, 1)
+        self.assertEqual(thu.so_lan_gui, 2)
+        self.assertIsNotNone(thu.thoi_diem_thu_lai)

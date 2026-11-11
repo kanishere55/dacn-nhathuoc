@@ -8,8 +8,8 @@ from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from ..forms import DongKiemKeFormSet, PhieuKiemKeForm
 from ..models import PhieuKiemKe
-from ..selectors import lay_phieu, lay_ton_kiem_ke
-from ..services.phieu_kiem_ke import kiem_ke
+from ..selectors import lay_phieu, lay_so_du, lay_ton_kiem_ke
+from ..services.phieu_kiem_ke import LoiKiemKe, kiem_ke
 from . import chung_tu
 
 
@@ -48,7 +48,7 @@ def tao(request):
             and gia_tri.isascii()
             and gia_tri.isdecimal()
         }
-        cac_ton = lay_ton_kiem_ke(chi_nhanh).filter(pk__in=cac_ma_ton) if chi_nhanh else ()
+        cac_ton = list(lay_ton_kiem_ke(chi_nhanh).filter(pk__in=cac_ma_ton)) if chi_nhanh else []
     else:
         # Mặc định chỉ kiểm lô còn trên sổ; lô đã về 0 chỉ hiện khi người dùng chọn.
         trang = Paginator(
@@ -58,14 +58,9 @@ def tao(request):
         trang = trang.get_page(request.GET.get("page"))
         cac_ton = list(trang.object_list)
         ban_dau = [{"ton_kho": ton.pk, "so_luong_so_sach": ton.so_luong} for ton in cac_ton]
-    cac_dong = DongKiemKeFormSet(
-        du_lieu,
-        initial=ban_dau,
-        form_kwargs={
-            "nguoi": request.user,
-            "ton_theo_id": {str(ton.pk): ton for ton in cac_ton},
-        },
-    )
+    _gan_dang_giu(chi_nhanh, cac_ton)
+    tham_so_dong = {"nguoi": request.user, "ton_theo_id": {str(ton.pk): ton for ton in cac_ton}}
+    cac_dong = DongKiemKeFormSet(du_lieu, initial=ban_dau, form_kwargs=tham_so_dong)
     if form.is_bound and form.is_valid() and cac_dong.is_valid():
         try:
             phieu = kiem_ke(
@@ -77,6 +72,14 @@ def tao(request):
                     if d.get("so_luong_thuc_te") is not None and not d.get("DELETE")
                 ],
                 form.cleaned_data["ghi_chu"],
+                khoa_yeu_cau=form.cleaned_data["khoa_yeu_cau"],
+            )
+        except LoiKiemKe as loi:
+            cac_dong = _dem_lai_lo_phat_sinh(du_lieu, cac_dong, loi, tham_so_dong)
+            form.add_error(
+                None,
+                f"Phiếu chưa được lưu: {len(loi.loi_theo_ton)} lô cần xem lại (tô đỏ bên dưới). "
+                "Số đã đếm ở các lô khác vẫn giữ nguyên.",
             )
         except ValidationError as loi:
             form.add_error(None, loi)
@@ -95,6 +98,38 @@ def tao(request):
             "ca_lo_het": ca_lo_het,
         },
     )
+
+
+def _gan_dang_giu(chi_nhanh, cac_ton):
+    """Lượng đang giữ cho đơn của từng lô, để cột "Đang giữ" cho biết số đếm tối thiểu."""
+    if not chi_nhanh or not cac_ton:
+        return
+    giu = dict(
+        lay_so_du(chi_nhanh=chi_nhanh)
+        .filter(pk__in=[ton.pk for ton in cac_ton])
+        .values_list("pk", "dang_giu")
+    )
+    for ton in cac_ton:
+        ton.dang_giu = giu.get(ton.pk, 0)
+
+
+def _dem_lai_lo_phat_sinh(du_lieu, cac_dong, loi, tham_so_dong):
+    """Dựng lại bảng sau khi bị từ chối: lô vừa có phát sinh nhận số sổ sách mới và xóa số
+    đếm (Q08: phải đếm lại lô đó); các lô khác giữ nguyên số đã nhập; lỗi gắn vào đúng lô."""
+    du_lieu = du_lieu.copy()
+    for dong in cac_dong.forms:
+        ton = dong.cleaned_data.get("ton_kho")
+        if ton is not None and ton.pk in loi.so_du_moi:
+            du_lieu[f"{dong.prefix}-so_luong_so_sach"] = str(loi.so_du_moi[ton.pk])
+            du_lieu[f"{dong.prefix}-so_luong_thuc_te"] = ""
+    moi = DongKiemKeFormSet(du_lieu, form_kwargs=tham_so_dong)
+    moi.is_valid()
+    for dong in moi.forms:
+        ton = dong.cleaned_data.get("ton_kho")
+        if ton is not None and ton.pk in loi.loi_theo_ton:
+            dong.can_dem_lai = ton.pk in loi.so_du_moi
+            dong.add_error("so_luong_thuc_te", loi.loi_theo_ton[ton.pk])
+    return moi
 
 
 def _phieu(request, ma):

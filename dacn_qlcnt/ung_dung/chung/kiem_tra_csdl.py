@@ -129,12 +129,21 @@ def kiem_bang(con_tro, ket_noi, model, them_loi, them_canh_bao):
         if f.many_to_one and f.db_constraint
     }
     khai_bao = {r.name: r for r in meta.constraints}
-    mong_doi = {pk, *ngoai, *khai_bao}
-    chi_muc = {
-        ten_rang_buoc("chi_muc", bang, f.column)
-        for f in truong.values()
-        if (f.db_index and not f.unique) or getattr(f, "spatial_index", False)
-    } | {idx.name for idx in meta.indexes}
+    duy_nhat_co_dieu_kien = {
+        ten
+        for ten, rang_buoc in khai_bao.items()
+        if getattr(rang_buoc, "condition", None) is not None and hasattr(rang_buoc, "fields")
+    }
+    mong_doi = {pk, *ngoai, *khai_bao} - duy_nhat_co_dieu_kien
+    chi_muc = (
+        {
+            ten_rang_buoc("chi_muc", bang, f.column)
+            for f in truong.values()
+            if (f.db_index and not f.unique) or getattr(f, "spatial_index", False)
+        }
+        | {idx.name for idx in meta.indexes}
+        | duy_nhat_co_dieu_kien
+    )
     checks = defaultdict(list)
     cac_khoa_ngoai = {}
     con_tro.execute(

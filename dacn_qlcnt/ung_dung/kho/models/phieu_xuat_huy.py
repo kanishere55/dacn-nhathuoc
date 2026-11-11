@@ -3,7 +3,13 @@ from django.db.models.functions import Now
 
 from ung_dung.chung.ten_csdl import rang_buoc_so, rang_buoc_van_ban, ten_rang_buoc
 
-LOAI_XUAT_HUY = (("het_han", "Hết hạn dùng"), ("hu_hong", "Hư hỏng, biến chất"))
+from .chung import rang_buoc_khoa_yeu_cau, truong_khoa_yeu_cau
+
+LOAI_XUAT_HUY = (
+    ("het_han", "Hết hạn dùng"),
+    ("hu_hong", "Hư hỏng, biến chất"),
+    ("thu_hoi", "Thu hồi theo thông báo"),
+)
 
 
 class PhieuXuatHuy(models.Model):
@@ -21,6 +27,7 @@ class PhieuXuatHuy(models.Model):
         db_column="id_chi_nhanh",
         db_comment="Chi nhánh có hàng bị hủy.",
     )
+    khoa_yeu_cau = truong_khoa_yeu_cau()
     nguoi_lap = models.ForeignKey(
         "tai_khoan.TaiKhoan",
         on_delete=models.PROTECT,
@@ -30,7 +37,19 @@ class PhieuXuatHuy(models.Model):
     loai_xuat_huy = models.TextField(
         choices=LOAI_XUAT_HUY,
         db_column="loai_xuat_huy",
-        db_comment="het_han: mọi lô đã quá ngày hết hạn; hu_hong: hàng hỏng, vỡ, biến chất.",
+        db_comment=(
+            "het_han: mọi lô đã quá ngày hết hạn; hu_hong: hàng hỏng, vỡ, biến chất; "
+            "thu_hoi: lô đang khóa bán theo thông báo thu hồi, ghi chú ghi số văn bản."
+        ),
+    )
+    co_tru_ton = models.BooleanField(
+        default=True,
+        db_default=True,
+        db_column="co_tru_ton",
+        db_comment=(
+            "TRUE nếu phiếu hủy xuất từ tồn chi nhánh; FALSE nếu hàng đã xuất bán "
+            "và đang để riêng chờ hủy."
+        ),
     )
     ghi_chu = models.TextField(
         db_column="ghi_chu",
@@ -49,6 +68,7 @@ class PhieuXuatHuy(models.Model):
         db_table_comment = "Mỗi hàng là một chứng từ xuất hủy đã xác nhận, không sửa hoặc xóa."
         verbose_name = "phiếu xuất hủy"
         constraints = [
+            *rang_buoc_khoa_yeu_cau("phieu_xuat_huy"),
             *rang_buoc_van_ban("phieu_xuat_huy", "ma_phieu_xuat_huy"),
             *rang_buoc_van_ban("phieu_xuat_huy", "ghi_chu", rong=True, nhieu_dong=True),
             models.CheckConstraint(

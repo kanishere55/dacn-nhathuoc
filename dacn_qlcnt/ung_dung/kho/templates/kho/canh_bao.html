@@ -9,7 +9,20 @@
     <p>Mỗi thẻ là một nhóm việc, xếp từ gấp nhất. Chọn thẻ để xem danh sách, lọc theo chi nhánh hoặc danh mục khi có nhiều dòng.</p>
   </header>
 
-  {% if not tong_canh_bao and not loc.dang_loc %}
+  {% if so_don_can_xu_ly %}
+    <section class="khoi-trang khoi-canh-bao muc-khoa_ban" aria-labelledby="don-can-xu-ly">
+      <h2 id="don-can-xu-ly">{{ so_don_can_xu_ly }} đơn giữ trên lô không thể bán</h2>
+      <p>Mở đơn để kiểm tra lượng còn đáp ứng được. Nếu thiếu hàng, liên hệ khách trước khi hủy hoặc hoàn tiền.</p>
+      <ul class="danh-sach-don-canh-bao">
+        {% for don in don_can_xu_ly %}
+          <li><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a> · {{ don.chi_nhanh.ten_chi_nhanh }}</li>
+        {% endfor %}
+      </ul>
+      {% if so_don_can_xu_ly > 5 %}<a class="nut nut-phu" href="{% url 'ban_hang:don_hang_danh_sach' %}?giu_lo_hong=1">Xem tất cả đơn cần xử lý</a>{% endif %}
+    </section>
+  {% endif %}
+
+  {% if not tong_canh_bao and not loc.dang_loc and not so_don_can_xu_ly %}
     <section class="khoi-trang trang-trong-canh-bao">
       <i data-lucide="circle-check-big" aria-hidden="true"></i>
       <h2>Kho đang ổn</h2>
@@ -34,7 +47,9 @@
             <p>{{ the_dang_mo.huong_dan }}</p>
           </div>
           {% if muc == "het_han" and duoc_xuat_huy and trang.paginator.count %}
-            <a class="nut" href="{% url 'kho:phieu_xuat_huy_tao' %}?loai=het_han"><i data-lucide="trash-2" aria-hidden="true"></i>Lập phiếu xuất hủy</a>
+            <a class="nut" href="{% url 'kho:phieu_xuat_huy_tao' %}?loai=het_han{% if chi_nhanh_dang_loc %}&amp;chi_nhanh={{ chi_nhanh_dang_loc|urlencode }}{% endif %}"><i data-lucide="trash-2" aria-hidden="true"></i>Lập phiếu xuất hủy</a>
+          {% elif muc == "khoa_ban" and duoc_xuat_huy and trang.paginator.count %}
+            <a class="nut nut-phu" href="{% url 'kho:phieu_xuat_huy_tao' %}"><i data-lucide="trash-2" aria-hidden="true"></i>Xuất hủy hàng thu hồi</a>
           {% elif muc == "ton_thap" and duoc_nhap and trang.paginator.count %}
             <a class="nut" href="{% url 'kho:phieu_nhap_tao' %}"><i data-lucide="package-plus" aria-hidden="true"></i>Lập phiếu nhập</a>
           {% endif %}
@@ -76,6 +91,7 @@
                   <th scope="col">Thuốc và lô</th>
                   <th scope="col">Hạn dùng</th>
                   <th scope="col" class="o-so">Đang tồn</th>
+                  {% if muc == "khoa_ban" %}<th scope="col">Lý do khóa</th>{% endif %}
                   {% if nhieu_chi_nhanh %}<th scope="col">Chi nhánh</th>{% endif %}
                   {% if duoc_xem_lo %}<th scope="col"><span class="sr-only">Thao tác</span></th>{% endif %}
                 </tr>
@@ -89,6 +105,13 @@
                       <small class="con-han">{% if dong.so_ngay_con < 0 %}Đã quá {{ dong.so_ngay_qua }} ngày{% elif dong.so_ngay_con == 0 %}Hết hạn hôm nay{% else %}Còn {{ dong.so_ngay_con }} ngày{% endif %}</small>
                     </td>
                     <td class="o-so">{{ dong.so_luong|so_nguyen }} <small>{{ dong.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></td>
+                    {% if muc == "khoa_ban" %}
+                      <td class="o-ly-do-khoa">
+                        {% if dong.ly_do_khoa %}{{ dong.ly_do_khoa|linebreaksbr }}{% else %}<span class="chu-mo">Chưa ghi lý do</span>{% endif %}
+                        {% if dong.so_van_ban_thu_hoi %}<small>Văn bản thu hồi: {{ dong.so_van_ban_thu_hoi }}</small>{% endif %}
+                        {% if dong.thoi_diem_khoa %}<small>Khóa lúc {{ dong.thoi_diem_khoa|date:"H:i d/m/Y" }}</small>{% endif %}
+                      </td>
+                    {% endif %}
                     {% if nhieu_chi_nhanh %}<td class="o-chi-nhanh">{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
                     {% if duoc_xem_lo %}<td class="o-thao-tac"><a href="{% url 'kho:lo_thuoc_danh_sach' %}?tim={{ dong.lo_thuoc.ma_lo_thuoc|urlencode }}">Xem lô</a></td>{% endif %}
                   </tr>

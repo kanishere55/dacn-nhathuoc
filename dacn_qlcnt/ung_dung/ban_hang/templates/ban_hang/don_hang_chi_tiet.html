@@ -12,7 +12,10 @@
   </header>
   {% if tien_trinh %}
     <section class="khoi-trang">{% include "ban_hang/_tien_trinh.html" %}
-      {% if don.con_hieu_luc %}<p class="han-xu-ly">Hạn {% if don.trang_thai == "dang_giu" %}giữ hàng{% elif don.trang_thai == "cho_thanh_toan" %}thanh toán{% else %}xác nhận{% endif %}: <strong>{{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}</strong></p>{% endif %}
+      {% if han %}
+        <p class="han-xu-ly muc-han-{{ han.muc }}" role="status"><i data-lucide="{% if han.muc == 'qua_han' %}alarm-clock-off{% else %}timer{% endif %}" aria-hidden="true"></i><span>Hạn {% if don.trang_thai == "dang_giu" %}giữ hàng{% elif don.trang_thai == "cho_thanh_toan" %}thanh toán{% else %}xác nhận{% endif %} {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}: <strong>{{ han.chu }}</strong>. {{ han.hau_qua }}</span></p>
+        {% if han.muc == "qua_han" and don.trang_thai == "dang_giu" %}<p class="ghi-chu-khach">Hàng của đơn đã được nhả. Nếu khách vẫn muốn mua, <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_tao' %}">lập phiếu bán tại quầy</a> theo giá hiện tại.</p>{% endif %}
+      {% endif %}
     </section>
   {% else %}
     {% include "ban_hang/_ket_thuc_don.html" %}
@@ -42,67 +45,37 @@
       </section>
     </div>
     <div>
+      {% if canh_bao_giu %}
+        <section class="khoi-trang canh-bao-giu" role="alert" aria-labelledby="canh-bao-giu">
+          <h2 id="canh-bao-giu"><i data-lucide="triangle-alert" aria-hidden="true"></i>Lô đang giữ cho đơn có vấn đề</h2>
+          <ul>
+            {% for muc in canh_bao_giu %}
+              <li><strong>{{ muc.thuoc.ten_thuoc }}</strong>: cần {{ muc.can }}, lô {% for ma, ly_do in muc.cac_lo_hong %}{{ ma }} ({{ ly_do }}){% if not forloop.last %}, {% endif %}{% endfor %}.
+                {% if muc.du %}Chi nhánh còn {{ muc.con_ban_duoc }} ở lô khác, hệ thống sẽ dời phần giữ khi xử lý đơn.{% else %}Chi nhánh chỉ còn bán được {{ muc.con_ban_duoc }}: hãy liên hệ khách, điều chuyển hoặc nhập thêm.{% endif %}</li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+      {% if tien.phai_hoan and not duoc_hoan_tien %}
+        <p class="thong-diep-don thong-diep-canh-bao" role="status"><i data-lucide="hand-coins" aria-hidden="true"></i>Đơn đang chờ hoàn {{ tien.phai_hoan|tien }} cho khách. Hãy báo quản lý chi nhánh để hoàn tiền.</p>
+      {% endif %}
       {% if cac_hanh_dong %}
         <section class="khoi-trang khoi-xu-ly-don" aria-labelledby="xu-ly-don">
           <h2 id="xu-ly-don">Việc cần làm</h2>
-          {% if han_tu_hoan_thanh %}
-            <p class="ghi-chu-khach">Đơn hoàn thành khi khách bấm “Đã nhận được hàng”{% if don.phuong_thuc_thanh_toan == "cod" %} (ghi nhận tiền COD người giao đã thu){% endif %}. Nếu khách không xác nhận, hệ thống tự hoàn thành lúc {{ han_tu_hoan_thanh|date:"H:i d/m/Y" }}. Chỉ báo “Giao không thành công” khi không giao được.</p>
+          {% if han_doi_chieu_giao %}
+            <p class="ghi-chu-khach">{% if qua_han_doi_chieu %}<strong>Cần đối chiếu với người giao.</strong> {% endif %}Kiểm tra kết quả giao sau {{ han_doi_chieu_giao|date:"H:i d/m/Y" }} nếu khách chưa xác nhận. Chỉ hoàn tất khi đã giao thực tế{% if don.phuong_thuc_thanh_toan == "cod" %}. Xác nhận tiền COD riêng khi nhà thuốc đã nhận tiền{% endif %}.</p>
           {% endif %}
           {% for hd in cac_hanh_dong %}{% if not hd.phu %}
-            <form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')"{% elif hd.ma == "hoan_tien" %} onsubmit="return confirm('Xác nhận đã hoàn tiền cho khách?')"{% endif %}>
-              {% csrf_token %}
-              {% if hd.can_ly_do %}<label>Lý do<input name="ly_do" required maxlength="300"></label>{% endif %}
-              {% if hd.ma == "xac_nhan_thanh_toan" %}
-                <label>Mã giao dịch trên sao kê <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
-              {% elif hd.ma == "hoan_tien" %}
-                <label>Hoàn qua<select name="phuong_thuc_hoan"><option value="chuyen_khoan">Chuyển khoản</option><option value="tien_mat">Tiền mặt</option>{% if don.phuong_thuc_thanh_toan == "momo" %}<option value="momo" selected>Ví MoMo</option>{% endif %}</select></label>
-                <label>Mã giao dịch hoàn <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
-              {% elif hd.ma == "nhan_tai_quay" %}
-                {% if don.trang_thai_thanh_toan != "da_thanh_toan" %}
-                  <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
-                {% endif %}
-                {% if co_ke_don %}
-                  <fieldset class="nhom-don-thuoc">
-                    <legend>Đơn thuốc của bác sĩ</legend>
-                    <label>Bác sĩ kê đơn<input name="ten_nguoi_ke_don" required maxlength="120" autocomplete="off"></label>
-                    <label>Cơ sở khám bệnh<input name="noi_kham_benh" required maxlength="200" autocomplete="off"></label>
-                    <label>Mã đơn thuốc điện tử <small>(nếu có)</small><input name="ma_don_thuoc" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9\-]{5,29}" autocomplete="off"></label>
-                    <label class="lua-chon-mot-dong"><input type="checkbox" name="da_kiem_tra_don_thuoc" value="on" required> Đã đối chiếu đơn: đúng người bệnh, còn hạn, thuốc và liều khớp</label>
-                  </fieldset>
-                {% endif %}
-              {% endif %}
-              <button class="nut{% if hd.ma == 'huy' or hd.ma == 'giao_that_bai' %} nut-phu{% endif %}" type="submit">{{ hd.nhan }}</button>
-            </form>
+            {% if hd.ma == "nhan_tai_quay" and co_ke_don and not duoc_ban_ke_don %}
+              <p class="thong-diep-don thong-diep-canh-bao"><i data-lucide="shield-alert" aria-hidden="true"></i>Đơn có thuốc kê đơn: cần dược sĩ được giao quyền bán thuốc kê đơn kiểm tra đơn thuốc và giao hàng cho khách.</p>
+            {% else %}
+              {% include "ban_hang/_form_hanh_dong.html" %}
+            {% endif %}
           {% endif %}{% endfor %}
           {% if co_hanh_dong_phu %}
             <details class="hanh-dong-phu">
               <summary>Hủy đơn hoặc báo sự cố</summary>
-              {% for hd in cac_hanh_dong %}{% if hd.phu %}
-            <form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')"{% elif hd.ma == "hoan_tien" %} onsubmit="return confirm('Xác nhận đã hoàn tiền cho khách?')"{% endif %}>
-              {% csrf_token %}
-              {% if hd.can_ly_do %}<label>Lý do<input name="ly_do" required maxlength="300"></label>{% endif %}
-              {% if hd.ma == "xac_nhan_thanh_toan" %}
-                <label>Mã giao dịch trên sao kê <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
-              {% elif hd.ma == "hoan_tien" %}
-                <label>Hoàn qua<select name="phuong_thuc_hoan"><option value="chuyen_khoan">Chuyển khoản</option><option value="tien_mat">Tiền mặt</option>{% if don.phuong_thuc_thanh_toan == "momo" %}<option value="momo" selected>Ví MoMo</option>{% endif %}</select></label>
-                <label>Mã giao dịch hoàn <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
-              {% elif hd.ma == "nhan_tai_quay" %}
-                {% if don.trang_thai_thanh_toan != "da_thanh_toan" %}
-                  <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
-                {% endif %}
-                {% if co_ke_don %}
-                  <fieldset class="nhom-don-thuoc">
-                    <legend>Đơn thuốc của bác sĩ</legend>
-                    <label>Bác sĩ kê đơn<input name="ten_nguoi_ke_don" required maxlength="120" autocomplete="off"></label>
-                    <label>Cơ sở khám bệnh<input name="noi_kham_benh" required maxlength="200" autocomplete="off"></label>
-                    <label>Mã đơn thuốc điện tử <small>(nếu có)</small><input name="ma_don_thuoc" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9\-]{5,29}" autocomplete="off"></label>
-                    <label class="lua-chon-mot-dong"><input type="checkbox" name="da_kiem_tra_don_thuoc" value="on" required> Đã đối chiếu đơn: đúng người bệnh, còn hạn, thuốc và liều khớp</label>
-                  </fieldset>
-                {% endif %}
-              {% endif %}
-              <button class="nut{% if hd.ma == 'huy' or hd.ma == 'giao_that_bai' %} nut-phu{% endif %}" type="submit">{{ hd.nhan }}</button>
-            </form>
-              {% endif %}{% endfor %}
+              {% for hd in cac_hanh_dong %}{% if hd.phu %}{% include "ban_hang/_form_hanh_dong.html" %}{% endif %}{% endfor %}
             </details>
           {% endif %}
         </section>
@@ -121,12 +94,20 @@
         {% if duoc_chat %}
           <p class="form-nhan-khach"><a class="nut nut-phu nut-nho" href="{% url 'tro_chuyen:tu_don_hang' don.pk %}" title="{% if phong_chat %}Mở cuộc trò chuyện với khách, kèm thẻ đơn này{% else %}Gửi tin đầu tiên cho khách, kèm thẻ đơn này{% endif %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn khách về đơn này{% if phong_chat.so_chua_doc %}<span class="so-chua-doc">{{ phong_chat.so_chua_doc }}</span>{% endif %}</a></p>
         {% endif %}
-        {% if phieu_ban %}<p>Phiếu bán: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_chi_tiet' phieu_ban.pk %}">{{ phieu_ban.ma_phieu_ban }}</a> · <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_in' phieu_ban.pk %}">In hóa đơn</a></p>{% endif %}
-        {% if yeu_cau_hoa_don %}<p>Hóa đơn công ty: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:xuat_hoa_don_danh_sach' %}">{{ yeu_cau_hoa_don.ten_cong_ty }}</a> · {{ yeu_cau_hoa_don.get_trang_thai_display }}</p>{% endif %}
+        {% if phieu_ban %}<p>Phiếu bán: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_chi_tiet' phieu_ban.pk %}">{{ phieu_ban.ma_phieu_ban }}</a> · <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_in' phieu_ban.pk %}">In phiếu bán hàng</a></p>{% endif %}
+        {% if yeu_cau_hoa_don %}<p>Hóa đơn công ty: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:xuat_hoa_don_danh_sach' %}">{{ yeu_cau_hoa_don.ten_cong_ty }}</a> · {{ yeu_cau_hoa_don.get_trang_thai_display }}{% if yeu_cau_hoa_don.so_hoa_don %} · {{ yeu_cau_hoa_don.ky_hieu_hoa_don }} số {{ yeu_cau_hoa_don.so_hoa_don }}{% endif %}</p>{% endif %}
       </section>
-      {% if cac_giao_dich %}
+      {% if cac_giao_dich or tien.phai_thu %}
         <section class="khoi-trang" aria-labelledby="thanh-toan-don">
-          <h2 id="thanh-toan-don">Giao dịch thanh toán</h2>
+          <h2 id="thanh-toan-don">Tiền của đơn</h2>
+          <dl class="doi-soat-tien">
+            <div><dt>Phải thu</dt><dd>{{ tien.phai_thu|tien }}</dd></div>
+            <div><dt>Đã thu</dt><dd>{{ tien.da_thu|tien }}</dd></div>
+            {% if tien.con_thieu and tien.da_thu %}<div class="con-thieu"><dt>Còn thiếu</dt><dd>{{ tien.con_thieu|tien }}</dd></div>{% endif %}
+            {% if tien.phai_hoan %}<div class="phai-hoan"><dt>Phải hoàn cho khách</dt><dd>{{ tien.phai_hoan|tien }}</dd></div>{% endif %}
+            {% if cod_cho_doi_soat %}<div class="cho-doi-soat"><dt>COD chờ đối soát</dt><dd>{{ cod_cho_doi_soat.so_tien|tien }}</dd></div>{% endif %}
+          </dl>
+          {% if tien.con_thieu and tien.da_thu and don.trang_thai == "cho_thanh_toan" %}<p class="ghi-chu-khach">Khách chuyển chưa đủ. Liên hệ khách chuyển thêm {{ tien.con_thieu|tien }} đúng nội dung {{ don.ma_don_hang }} trước hạn; quá hạn hệ thống hủy đơn và khoản đã nhận chuyển sang chờ hoàn.</p>{% endif %}
           <ul class="danh-sach-giao-dich">
             {% for gd in cac_giao_dich %}
               <li>

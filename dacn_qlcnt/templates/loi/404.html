@@ -1,3 +1,26 @@
-{% extends "khach/base.html" %}
+{% extends khung_theo_khu|default:"khach/base.html" %}
+{% comment %}Trang 404: nhân sự ở /quan-ly/ thấy trong khung khu quản lý; khách có ô tìm thuốc và nút về trang chủ.{% endcomment %}
 {% block tieu_de %}Không tìm thấy trang{% endblock %}
-{% block noi_dung %}<section class="tieu-de-trang"><h1>Không tìm thấy trang</h1><p>Đường dẫn này không còn tồn tại hoặc chưa được mở.</p><a href="/">Về trang tổng quan</a></section>{% endblock %}
+{% block vi_tri %}Không tìm thấy trang{% endblock %}
+{% block noi_dung %}
+  <section class="trang-loi" aria-labelledby="tieu-de-loi">
+    <span class="ma-loi"><i data-lucide="search-x" aria-hidden="true"></i>Lỗi 404</span>
+    <h1 id="tieu-de-loi">Không tìm thấy trang</h1>
+    <p>Đường dẫn này không còn tồn tại hoặc đã bị gõ sai. Mục bạn tìm có thể đã được đổi tên hoặc ngừng hiển thị.</p>
+    {% if khung_theo_khu == "base.html" %}
+      <div class="nhom-nut">
+        <a class="nut" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Về trang tổng quan</a>
+        <a class="nut nut-vien" href="{% url 'chung:bang_dieu_khien' %}" data-quay-lai><i data-lucide="arrow-left" aria-hidden="true"></i>Quay lại trang trước</a>
+      </div>
+    {% else %}
+      <form role="search" method="get" action="{% url 'danh_muc:khach_thuoc_danh_sach' %}">
+        <label class="sr-only" for="tim-thuoc-404">Tìm thuốc</label>
+        <input type="search" id="tim-thuoc-404" name="q" maxlength="150" placeholder="Thử tìm tên thuốc, ví dụ Panadol">
+        <button class="nut" type="submit">Tìm thuốc</button>
+      </form>
+      <div class="nhom-nut">
+        <a class="nut nut-vien" href="{% url 'chung:trang_chu' %}"><i data-lucide="house" aria-hidden="true"></i>Về trang chủ</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

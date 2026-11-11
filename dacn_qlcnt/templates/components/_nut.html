@@ -1,1 +1,6 @@
-<button type="{{ loai|default:'button' }}" class="nut {{ kieu|default:'' }}"{% if vo_hieu %} disabled{% endif %}>{{ nhan }}</button>
+{% comment %}
+  Nút dùng chung. Biến: nhan, loai (button|submit, mặc định button), kieu (nut-phu | nut-vien | nut-rong |
+  nut-nguy-hiem | nut-nho… ghép được), bieu_tuong (tên biểu tượng Lucide), vo_hieu, ten + gia_tri (name/value),
+  xac_nhan (câu hỏi xác nhận trước khi gửi, xem components/_hop_thoai.html).
+{% endcomment %}
+<button type="{{ loai|default:'button' }}" class="nut {{ kieu|default:'' }}"{% if ten %} name="{{ ten }}" value="{{ gia_tri }}"{% endif %}{% if xac_nhan %} data-xac-nhan="{{ xac_nhan }}"{% endif %}{% if vo_hieu %} disabled{% endif %}>{% if bieu_tuong %}<i data-lucide="{{ bieu_tuong }}" aria-hidden="true"></i>{% endif %}{{ nhan }}</button>

@@ -1,7 +1,12 @@
-{% autoescape off %}Chúng tôi nhận được yêu cầu nhắc tên đăng nhập cho email này.
+{% autoescape off %}Tên đăng nhập của bạn: {{ ten_dang_nhap }}
 
-Tên đăng nhập của bạn: {{ ten_dang_nhap }}
-Đăng nhập: {{ url_website }}/tai-khoan/dang-nhap/
+Nhà thuốc vừa nhận yêu cầu nhắc tên đăng nhập cho email này. Bạn cũng có thể đăng nhập bằng chính email này.
 
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+{{ nut_chinh.nhan }}:
+{{ nut_chinh.url }}
+
+{{ nut_phu.nhan }}:
+{{ nut_phu.url }}
+
+Bạn không yêu cầu? Hãy bỏ qua thư này.
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

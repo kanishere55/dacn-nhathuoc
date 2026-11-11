@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block tieu_de %}{{ email.tieu_de }} · Email hệ thống{% endblock %}
+{% block vi_tri %}Email hệ thống{% endblock %}
+{% block noi_dung %}
+  <header class="tieu-de-trang">
+    <p class="chu-dan"><a href="{% url 'thong_bao:nhat_ky_email' %}">EMAIL HỆ THỐNG</a></p>
+    <h1>{{ email.tieu_de }}</h1>
+    <p>{{ email.get_loai_email_display }} · gửi tới <strong>{{ email.email_nhan }}</strong> · tạo lúc {{ email.thoi_diem_tao|date:"H:i d/m/Y" }}</p>
+  </header>
+  <div class="luoi-chi-tiet-email">
+    <section class="khoi-trang" aria-labelledby="ket-qua-gui">
+      <h2 id="ket-qua-gui">Kết quả gửi</h2>
+      <p>
+        {% if email.trang_thai == "cho_gui" and not ly_do_khong_gui_lai %}
+          <span class="nhan-email nhan-email-ket">Kẹt, chưa gửi</span>
+        {% else %}
+          <span class="nhan-email nhan-email-{{ email.trang_thai }}">{{ email.get_trang_thai_display }}</span>
+        {% endif %}
+        {% if email.thoi_diem_gui %} lúc {{ email.thoi_diem_gui|date:"H:i d/m/Y" }}{% endif %}
+        · đã thử {{ email.so_lan_gui }} lần
+      </p>
+      {% if email.chi_tiet_loi %}<p class="loi-gui-email">{{ email.chi_tiet_loi }}</p>{% endif %}
+      <dl class="thong-tin-email">
+        {% if email.don_hang %}<div><dt>Đơn hàng</dt><dd><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' email.don_hang.pk %}">{{ email.don_hang.ma_don_hang }}</a> · {{ email.don_hang.chi_nhanh.ten_chi_nhanh }}</dd></div>{% endif %}
+        {% if email.tai_khoan %}<div><dt>Tài khoản</dt><dd>{{ email.tai_khoan.ten_dang_nhap }}</dd></div>{% endif %}
+        <div><dt>Tệp đính kèm</dt><dd>{% if email.co_dinh_kem_hoa_don %}Hóa đơn bán lẻ PDF, dựng lại từ phiếu bán khi gửi{% else %}Không có{% endif %}</dd></div>
+      </dl>
+      {% if email.trang_thai != "da_gui" %}
+        {% if ly_do_khong_gui_lai %}
+          <p class="mo-ta-bang-dieu-khien">{{ ly_do_khong_gui_lai }}</p>
+        {% else %}
+          <form method="post" action="{% url 'thong_bao:nhat_ky_email_gui_lai' email.pk %}">
+            {% csrf_token %}<input type="hidden" name="tiep" value="chi_tiet">
+            <button class="nut" type="submit"><i data-lucide="send" aria-hidden="true"></i>Gửi lại thư này</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </section>
+    <section class="khoi-trang" aria-labelledby="xem-thu">
+      <h2 id="xem-thu">Thư khách nhận được</h2>
+      {% if email.noi_dung_html %}
+        <iframe class="xem-truoc-email" title="Bản xem trước thư {{ email.tieu_de }}" sandbox srcdoc="{{ email.noi_dung_html }}"></iframe>
+      {% else %}
+        <p class="mo-ta-bang-dieu-khien">Thư này tạo trước khi hệ thống lưu bản trình bày; xem bản chữ bên dưới.</p>
+      {% endif %}
+      <details{% if not email.noi_dung_html %} open{% endif %}>
+        <summary>Bản chữ thuần (cho hộp thư không hiện hình)</summary>
+        <pre class="noi-dung-email">{{ email.noi_dung_van_ban }}</pre>
+      </details>
+    </section>
+  </div>
+{% endblock %}

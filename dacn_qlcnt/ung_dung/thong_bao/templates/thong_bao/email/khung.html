@@ -1,36 +1,84 @@
-<!doctype html>
-<html lang="vi">
+{% comment %}
+  Khung chung của mọi email. Bố cục bảng rộng tối đa 600px, CSS viết inline (Gmail bỏ <style>
+  ở một số ứng dụng), thêm "bảng ma" 600px cho Outlook trên Windows (bỏ qua max-width).
+  <style> chỉ để tăng cường: màn hình hẹp và chế độ tối. Không dùng ảnh: đầu thư dựng bằng chữ.
+  Biến: tieu_de, tom_tat (dòng xem trước trong hộp thư), cua_hang, ly_do_nhan; khối noi_dung.
+{% endcomment %}<!doctype html>
+<html lang="vi" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ tieu_de }}</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>{{ tieu_de }}</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<style>table,td,th,p,h1,h2,a,span,strong{font-family:Arial,Helvetica,sans-serif !important;}</style>
+<![endif]-->
+<style>
+body{margin:0;padding:0;width:100% !important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}
+a{text-decoration-skip-ink:auto;}
+@media only screen and (max-width:620px){
+.vien-ngoai{padding:12px 8px !important;}
+.o{padding-left:20px !important;padding-right:20px !important;}
+.chu-than{font-size:16px !important;line-height:25px !important;}
+.cot{display:block !important;width:100% !important;max-width:100% !important;}
+.cot-trai{padding-right:0 !important;}
+.cot-phai{padding-left:0 !important;padding-top:12px !important;}
+.an-tren-dien-thoai{display:none !important;}
+}
+</style>
+<style>
+:root{color-scheme:light dark;supported-color-schemes:light dark;}
+@media (prefers-color-scheme:dark){
+.nen{background-color:#0f1714 !important;}
+.the{background-color:#16241f !important;border-color:#2a3a33 !important;}
+.o-nhat{background-color:#1c2d27 !important;border-color:#2a3a33 !important;}
+.chu{color:#e6efe9 !important;}
+.chu-phu{color:#a7b8ae !important;}
+.chu-nhan{color:#7fd6b4 !important;}
+.chu-canh{color:#f4b4ad !important;}
+.vach{border-color:#2a3a33 !important;}
+.buoc-cho{background-color:#2a3a33 !important;}
+.nut-chinh{background-color:#2fa37f !important;}
+.nut-chinh a{color:#06231a !important;}
+.nut-phu{border-color:#7fd6b4 !important;}
+.nut-phu a{color:#7fd6b4 !important;}
+.canh-bao{background-color:#3a2a10 !important;}
+.canh-bao p,.canh-bao a{color:#f5d08a !important;}
+}
+[data-ogsb] .nen{background-color:#0f1714 !important;}
+[data-ogsb] .the{background-color:#16241f !important;}
+[data-ogsb] .o-nhat{background-color:#1c2d27 !important;}
+[data-ogsc] .chu{color:#e6efe9 !important;}
+[data-ogsc] .chu-phu{color:#a7b8ae !important;}
+[data-ogsc] .chu-nhan{color:#7fd6b4 !important;}
+</style>
 </head>
-<body style="margin:0;padding:0;background:#f4f6f3;font-family:Arial,Helvetica,sans-serif;color:#25372f;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f3;padding:24px 12px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #dce4dc;border-radius:12px;">
-          <tr>
-            <td style="padding:20px 28px;border-bottom:1px solid #dce4dc;">
-              <span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border-radius:7px;background:#116b54;color:#ffffff;font-weight:bold;">+</span>
-              <strong style="font-size:16px;vertical-align:middle;margin-left:8px;">{{ ten_thuong_hieu }}</strong>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:26px 28px 8px;font-size:14px;line-height:1.6;">
-              <h1 style="margin:0 0 14px;font-size:20px;line-height:1.35;color:#184436;">{% block tieu_de_noi_dung %}{{ tieu_de }}{% endblock %}</h1>
-              {% block noi_dung %}{% endblock %}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:18px 28px 24px;font-size:12px;line-height:1.5;color:#66776e;">
-              Email này được gửi tự động từ {{ ten_thuong_hieu }}, vui lòng không trả lời.<br>
-              Nếu bạn không thực hiện thao tác này, hãy bỏ qua email hoặc đổi mật khẩu ngay.
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<body class="nen" style="margin:0;padding:0;background-color:#f4f6f3;">
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">{{ tom_tat }}</div>
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;&#847;&zwnj;&nbsp;&#8199;&shy;</div>
+<div role="article" aria-roledescription="email" aria-label="{{ tieu_de }}" lang="vi" dir="ltr" class="nen" style="background-color:#f4f6f3;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f6f3" class="nen" style="width:100%;background-color:#f4f6f3;">
+<tr><td align="center" class="vien-ngoai" style="padding:24px 12px;">
+<!--[if mso]><table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+{% include "thong_bao/email/khoi/_dau_thu.html" %}
+<tr><td>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" class="the" style="width:100%;background-color:#ffffff;border:1px solid #dce4dc;border-radius:12px;">
+{% block noi_dung %}{% endblock %}
+<tr><td style="height:28px;font-size:28px;line-height:28px;mso-line-height-rule:exactly;">&nbsp;</td></tr>
+</table>
+</td></tr>
+{% include "thong_bao/email/khoi/_chan_thu.html" %}
+</table>
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr>
+</table>
+</div>
 </body>
 </html>

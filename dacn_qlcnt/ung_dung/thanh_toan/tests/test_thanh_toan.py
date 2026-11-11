@@ -20,7 +20,7 @@ from ung_dung.ban_hang.services.phieu_ban import ban_tai_quay
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 
 from .. import momo, vietqr
-from ..models import GiaoDichThanhToan
+from ..models import GiaoDichCongDen, GiaoDichThanhToan
 from ..selectors import phuong_thuc_kha_dung
 from ..services.cong import hoan_tien, xac_nhan_tay, xu_ly_ket_qua_momo, xu_ly_sepay
 
@@ -71,7 +71,7 @@ class VietQRTests(TestCase):
 class ChuyenKhoanTests(TestCase):
     def setUp(self):
         self.d = tao_du_lieu()
-        tao_ton(self.d, luong=20)
+        tao_ton(self.d, ngay=60, luong=20)
         self.don = dat_hang(
             self.d.khach,
             self.d.cn,
@@ -143,29 +143,54 @@ class ChuyenKhoanTests(TestCase):
     def test_ma_don_ngan_va_tim_duoc_trong_noi_dung_ngan_hang(self):
         self.assertRegex(self.don.ma_don_hang, r"^DH\d{6}[2-9A-HJKMNP-Z]{5}$")
         noi_dung = f"MBVCB.8842.{self.don.ma_don_hang.lower()}.CT tu 0123 toi 0456"
-        self.assertEqual(xu_ly_sepay(self.sepay(noi_dung=noi_dung)), "da_ghi")
+        self.assertEqual(xu_ly_sepay(self.sepay(noi_dung=noi_dung)), "xac_nhan")
         self.don.refresh_from_db()
         self.assertEqual(self.don.trang_thai, "cho_xac_nhan")
 
     def test_tien_ra_hoac_khong_co_ma_don_bi_bo_qua(self):
         self.assertEqual(xu_ly_sepay(self.sepay(loai="out")), "bo_qua")
-        self.assertEqual(xu_ly_sepay(self.sepay(noi_dung="chuyen tien an trua")), "khong_khop")
+        self.assertEqual(
+            xu_ly_sepay(self.sepay(ma="1002", noi_dung="chuyen tien an trua")), "khong_khop"
+        )
         self.don.refresh_from_db()
         self.assertEqual(self.don.trang_thai, "cho_thanh_toan")
 
+    def test_doi_soat_khoan_chua_khop_theo_quyen_toan_chuoi(self):
+        self.assertEqual(xu_ly_sepay(self.sepay(noi_dung="Không có mã đơn")), "khong_khop")
+        dong = GiaoDichCongDen.objects.get()
+        danh_sach = reverse("thanh_toan:tien_chua_khop")
+        gan = reverse("thanh_toan:gan_tien", args=[dong.pk])
+        self.client.force_login(self.d.ql)
+        self.assertEqual(self.client.get(danh_sach).status_code, 403)
+        self.assertEqual(
+            self.client.post(gan, {"ma_don_hang": self.don.ma_don_hang}).status_code, 403
+        )
+        self.client.force_login(self.d.admin)
+        self.assertContains(self.client.get(danh_sach), "Không có mã đơn")
+        for _ in range(2):
+            self.assertRedirects(
+                self.client.post(gan, {"ma_don_hang": self.don.ma_don_hang}), danh_sach
+            )
+        dong.refresh_from_db()
+        self.assertEqual(dong.trang_thai, "da_khop")
+        self.assertEqual(dong.giao_dich_thanh_toan.don_hang_id, self.don.pk)
+        self.assertEqual(
+            GiaoDichThanhToan.objects.filter(don_hang=self.don, trang_thai="thanh_cong").count(), 1
+        )
+
     def test_chuyen_thieu_giu_don_cho_thanh_toan(self):
-        self.assertEqual(xu_ly_sepay(self.sepay(so_tien=1000)), "da_ghi")
+        self.assertEqual(xu_ly_sepay(self.sepay(so_tien=1000)), "thieu")
         self.don.refresh_from_db()
         self.assertEqual(self.don.trang_thai, "cho_thanh_toan")
         thieu = GiaoDichThanhToan.objects.get(don_hang=self.don, trang_thai="thanh_cong")
-        self.assertIn("thiếu", thieu.ghi_chu)
+        self.assertEqual(thieu.so_tien, 1000)
 
     def test_tien_den_sau_han_huy_don_va_cho_hoan(self):
         DonHang.objects.filter(pk=self.don.pk).update(
             thoi_diem_tao=timezone.now() - timedelta(minutes=40),
             thoi_diem_het_giu=timezone.now() - timedelta(minutes=10),
         )
-        self.assertEqual(xu_ly_sepay(self.sepay()), "da_ghi")
+        self.assertEqual(xu_ly_sepay(self.sepay()), "huy_cho_hoan")
         self.don.refresh_from_db()
         self.assertEqual(
             (self.don.trang_thai, self.don.trang_thai_thanh_toan), ("da_huy", "cho_hoan_tien")
@@ -189,11 +214,11 @@ class ChuyenKhoanTests(TestCase):
     def test_nhan_vien_xac_nhan_tay_dung_chi_nhanh(self):
         with self.assertRaises(PermissionDenied):
             xac_nhan_tay(self.d.ql2, self.don, "FT2")
-        xac_nhan_tay(self.d.nv, self.don, "FT2")
+        xac_nhan_tay(self.d.ql, self.don, "FT2")
         self.don.refresh_from_db()
         self.assertEqual(self.don.trang_thai, "cho_xac_nhan")
         with self.assertRaises(ValidationError):
-            xac_nhan_tay(self.d.nv, self.don, "FT3")
+            xac_nhan_tay(self.d.ql, self.don, "FT3")
 
     def test_trang_thai_htmx_chuyen_trang_khi_da_tra(self):
         self.client.force_login(self.d.khach)
@@ -207,7 +232,7 @@ class ChuyenKhoanTests(TestCase):
 class MoMoTests(TestCase):
     def setUp(self):
         self.d = tao_du_lieu()
-        tao_ton(self.d, luong=20)
+        tao_ton(self.d, ngay=60, luong=20)
         self.don = dat_hang(
             self.d.khach,
             self.d.cn,
@@ -277,7 +302,7 @@ class MoMoTests(TestCase):
 class TaiQuayVaCodTests(TestCase):
     def setUp(self):
         self.d = tao_du_lieu()
-        tao_ton(self.d, luong=20)
+        tao_ton(self.d, ngay=60, luong=20)
 
     def test_ban_truc_tiep_ghi_khoan_thu(self):
         phieu = ban_tai_quay(
@@ -321,7 +346,7 @@ class ThuocKeDonTests(TestCase):
         self.d = tao_du_lieu()
         self.d.thuoc.la_thuoc_ke_don = True
         self.d.thuoc.save()
-        tao_ton(self.d, luong=20)
+        tao_ton(self.d, ngay=60, luong=20)
         self.dong = [{"thuoc": self.d.thuoc, "so_luong": 1}]
 
     def test_bat_buoc_ghi_bac_si_va_co_so(self):
@@ -337,9 +362,9 @@ class ThuocKeDonTests(TestCase):
             },
         ):
             with self.subTest(thieu=thieu), self.assertRaises(ValidationError):
-                ban_tai_quay(self.d.nv, self.d.cn, self.dong, don_thuoc=thieu)
+                ban_tai_quay(self.d.ql, self.d.cn, self.dong, don_thuoc=thieu)
         phieu = ban_tai_quay(
-            self.d.nv,
+            self.d.ql,
             self.d.cn,
             self.dong,
             don_thuoc={
@@ -347,6 +372,8 @@ class ThuocKeDonTests(TestCase):
                 "ten_nguoi_ke_don": "  BS.  Trần An ",
                 "noi_kham_benh": "Bệnh viện Chợ Rẫy",
                 "ma_don_thuoc": "79001ab12cd3-c",
+                "ho_ten_nguoi_benh": "Nguyễn Văn An",
+                "ngay_ke_don": timezone.localdate(),
             },
         )
         self.assertEqual(

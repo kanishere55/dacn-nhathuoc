@@ -12,6 +12,7 @@ from PIL import Image
 
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 from ung_dung.thanh_toan.models import GiaoDichThanhToan
+from ung_dung.thanh_toan.services.cong import da_thu_tien_cod
 from ung_dung.thong_bao.models import NhatKyEmail
 
 from ..models import LichSuDonHang, YeuCauTraHang
@@ -31,10 +32,8 @@ class TraHangTests(TestCase):
         self.d = tao_du_lieu()
         self.d.khach.email = "khach@example.com"
         self.d.khach.save()
-        tao_ton(self.d, luong=20)
-        with mock.patch(
-            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
-        ):
+        tao_ton(self.d, ngay=60, luong=20)
+        with mock.patch("ung_dung.ban_hang.services.thong_bao_don.tep_hoa_don", return_value=None):
             self.don = dat_hang(
                 self.d.khach,
                 self.d.cn,
@@ -52,6 +51,7 @@ class TraHangTests(TestCase):
             xac_nhan_don(self.d.nv, self.don)
             giao_cho_van_chuyen(self.d.nv, self.don)
             xac_nhan_da_giao(self.d.khach, self.don)
+        da_thu_tien_cod(self.d.ql, self.don)
         self.dong = self.don.cac_dong.get()
 
     def tao(self, so_luong=2, cac_anh=None):
@@ -75,11 +75,11 @@ class TraHangTests(TestCase):
         with self.assertRaises(PermissionDenied):
             duyet(self.d.ql2, yc)
         duyet(self.d.ql, yc, "Đã nhận lại hộp móp")
-        hoan_tien_tra_hang(self.d.ql, yc, phuong_thuc="chuyen_khoan", ma_tham_chieu="FT77")
+        hoan_tien_tra_hang(self.d.ql, yc, phuong_thuc="tien_mat")
         yc.refresh_from_db()
         self.assertEqual(yc.trang_thai, "da_hoan_tien")
         hoan = GiaoDichThanhToan.objects.get(don_hang=self.don, loai_giao_dich="hoan")
-        self.assertEqual((hoan.so_tien, hoan.ma_tham_chieu), (4000, "tra-FT77"))
+        self.assertEqual((hoan.so_tien, hoan.ma_tham_chieu), (4000, None))
         self.don.refresh_from_db()
         self.assertEqual(self.don.trang_thai_thanh_toan, "da_thanh_toan")  # mới hoàn một phần
         # Còn trả được 2 hộp; trả nốt thì tiền hoàn không vượt phần đã thu còn lại.
@@ -148,7 +148,14 @@ class TraHangTests(TestCase):
         self.assertEqual(self.client.get(url_anh).status_code, 200)
         chi_tiet = reverse("ban_hang:tra_hang_chi_tiet", args=[yc.pk])
         self.assertContains(self.client.get(chi_tiet), "Duyệt yêu cầu")
-        self.client.post(reverse("ban_hang:tra_hang_xu_ly", args=[yc.pk, "duyet"]), {"ghi_chu": ""})
+        dong = yc.cac_dong.get()
+        from ..services.tra_hang import cac_lo_da_xuat
+
+        ma_phan_bo = cac_lo_da_xuat(yc)[dong.pk][0]["phan_bo"].pk
+        self.client.post(
+            reverse("ban_hang:tra_hang_xu_ly", args=[yc.pk, "duyet"]),
+            {f"cho_huy_{dong.pk}_{ma_phan_bo}": "1"},
+        )
         self.client.post(
             reverse("ban_hang:tra_hang_xu_ly", args=[yc.pk, "hoan_tien"]),
             {"phuong_thuc": "tien_mat"},
@@ -169,10 +176,8 @@ class NhanHangVaNhapLaiKhoTests(TestCase):
 
         self.TonKho = TonKho
         self.d = tao_du_lieu()
-        self.ton = tao_ton(self.d, luong=20)
-        with mock.patch(
-            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
-        ):
+        self.ton = tao_ton(self.d, ngay=60, luong=20)
+        with mock.patch("ung_dung.ban_hang.services.thong_bao_don.tep_hoa_don", return_value=None):
             self.don = dat_hang(
                 self.d.khach,
                 self.d.cn,
@@ -191,9 +196,7 @@ class NhanHangVaNhapLaiKhoTests(TestCase):
             giao_cho_van_chuyen(self.d.nv, self.don)
 
     def _nhan_hang(self):
-        with mock.patch(
-            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
-        ):
+        with mock.patch("ung_dung.ban_hang.services.thong_bao_don.tep_hoa_don", return_value=None):
             xac_nhan_da_giao(self.d.khach, self.don)
 
     def test_nhan_vien_khong_xac_nhan_thay_khach(self):
@@ -204,25 +207,85 @@ class NhanHangVaNhapLaiKhoTests(TestCase):
         self._nhan_hang()
         self.don.refresh_from_db()
         self.assertEqual(
-            (self.don.trang_thai, self.don.trang_thai_thanh_toan), ("hoan_thanh", "da_thanh_toan")
+            (self.don.trang_thai, self.don.trang_thai_thanh_toan), ("hoan_thanh", "chua_thanh_toan")
         )
 
-    def test_tu_hoan_tat_sau_3_ngay_khach_khong_xac_nhan(self):
-        from ..services.don_hang import xu_ly_qua_han
+    def test_bao_giao_that_bai_hang_hong_khong_tru_ton_lan_hai(self):
+        from ung_dung.kho.models import PhieuXuatHuy
 
-        self.assertEqual(xu_ly_qua_han(), 0)
+        url = reverse("ban_hang:don_hang_xu_ly", args=[self.don.pk, "giao_that_bai"])
+        self.client.force_login(self.d.nv)
+        du_lieu = {"ly_do": "Đơn vị giao làm hỏng hàng", "xu_ly_hang_giao": "da_huy"}
+        self.client.post(url, du_lieu)
+        self.assertFalse(PhieuXuatHuy.objects.exists())
+        self.client.force_login(self.d.ql)
+        self.client.post(url, du_lieu)
+        self.client.post(url, du_lieu)
+        self.don.refresh_from_db()
+        self.assertEqual(self.don.trang_thai, "giao_that_bai")
+        phieu = PhieuXuatHuy.objects.get()
+        self.assertFalse(phieu.co_tru_ton)
+        self.assertEqual(phieu.chitietphieuxuathuy_set.get().so_luong, 4)
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
+
+    def test_giao_that_bai_phan_lo_hoan_huy_that_lac(self):
+        from ung_dung.bao_cao.selectors import lay_bao_cao
+        from ung_dung.kho.models import PhieuXuatHuy
+
+        from ..models import ChiTietPhieuHoanKho
+        from ..selectors import lay_lo_da_xuat
+
+        self.client.force_login(self.d.ql)
+        url = reverse("ban_hang:don_hang_xu_ly", args=[self.don.pk, "giao_that_bai"])
+        pb = lay_lo_da_xuat(self.don).get()
+        du_lieu = {
+            "ly_do": "Đơn không giao được",
+            "xu_ly_hang_giao": "theo_lo",
+            f"hoan_kho_{pb.pk}": "2",
+            f"da_huy_{pb.pk}": "1",
+        }
+        self.client.post(url, du_lieu)
+        self.don.refresh_from_db()
+        self.assertEqual(self.don.trang_thai, "dang_giao")
+        self.assertFalse(PhieuXuatHuy.objects.exists())
+        self.client.post(url, {**du_lieu, f"that_lac_{pb.pk}": "1"})
+        self.don.refresh_from_db()
+        self.assertEqual(self.don.trang_thai, "giao_that_bai")
+        self.assertEqual(ChiTietPhieuHoanKho.objects.get().so_luong, 2)
+        self.assertEqual(PhieuXuatHuy.objects.get().chitietphieuxuathuy_set.get().so_luong, 1)
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 18)
+        self.assertIn("Thất lạc", self.don.cac_lich_su.latest("pk").ghi_chu)
+        ngay = timezone.localdate()
+        self.assertEqual(lay_bao_cao(self.d.ql, ngay, ngay)["doanh_thu_thuan"], 0)
+
+    def test_qua_ba_ngay_van_can_xac_nhan_giao_thuc_te(self):
+        from ..services.don_hang import xac_nhan_giao_thanh_cong, xu_ly_qua_han
+
         LichSuDonHang.objects.filter(don_hang=self.don, den_trang_thai="dang_giao").update(
             thoi_diem_tao=timezone.now() - timedelta(days=3, minutes=1)
         )
-        with mock.patch(
-            "ung_dung.ban_hang.services.thong_bao_don._hoa_don_dinh_kem", return_value=()
-        ):
-            self.assertEqual(xu_ly_qua_han(), 1)
+        self.assertEqual(xu_ly_qua_han(), 0)
+        self.don.refresh_from_db()
+        self.assertEqual(self.don.trang_thai, "dang_giao")
+        with self.assertRaises(ValidationError):
+            xac_nhan_giao_thanh_cong(self.d.nv, self.don, "")
+        xac_nhan_giao_thanh_cong(self.d.nv, self.don, "Biên nhận thử GN-01")
         self.don.refresh_from_db()
         self.assertEqual(self.don.trang_thai, "hoan_thanh")
-        lich_su = LichSuDonHang.objects.filter(don_hang=self.don).order_by("-pk").first()
-        self.assertIsNone(lich_su.nguoi_thuc_hien)
-        self.assertIn("Tự hoàn tất", lich_su.ghi_chu)
+        self.assertIn("GN-01", LichSuDonHang.objects.filter(don_hang=self.don).latest("pk").ghi_chu)
+
+    def test_nut_doi_chieu_giao_chi_hien_khi_don_dang_giao(self):
+        from ..services.don_hang import xac_nhan_giao_thanh_cong
+        from ..views.don_hang import cac_hanh_dong
+
+        ma = lambda: {h["ma"] for h in cac_hanh_dong(self.don, self.d.nv)}  # noqa: E731
+        self.don.refresh_from_db()
+        self.assertIn("xac_nhan_giao_thanh_cong", ma())
+        # Đơn giữ tại quầy hoàn thành bằng "Khách đã nhận", không qua đối chiếu giao nhận.
+        self.don.trang_thai = "dang_giu"
+        self.assertNotIn("xac_nhan_giao_thanh_cong", ma())
+        with self.assertRaises(ValidationError):
+            xac_nhan_giao_thanh_cong(self.d.nv, self.don, "GN-02")
 
     def _tra(self, ly_do, so_luong, hoan_tien=None):
         return tao_yeu_cau(
@@ -235,7 +298,7 @@ class NhanHangVaNhapLaiKhoTests(TestCase):
             hoan_tien=hoan_tien,
         )
 
-    def test_hang_giao_nham_con_nguyen_duoc_nhap_lai_dung_lo(self):
+    def test_hang_giao_nham_duoc_cach_ly_va_huy_theo_lo(self):
         self._nhan_hang()
         self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
         yc = self._tra(
@@ -244,17 +307,28 @@ class NhanHangVaNhapLaiKhoTests(TestCase):
             {"hinh_thuc_hoan_tien": "momo", "so_dien_thoai_momo": "0901234567"},
         )
         duyet(self.d.ql, yc, "Nhận lại 3 hộp còn tem")
-        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 19)
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
         dong = yc.cac_dong.get()
-        self.assertEqual(dong.so_luong_nhap_lai, 3)
-        self.assertEqual(dong.cac_phan_bo.get().phan_bo_phieu_ban.ton_kho_id, self.ton.pk)
+        self.assertEqual(dong.so_luong_nhap_lai, 0)
+        cho_huy = dong.cac_hang_cho_huy.get()
+        self.assertEqual(cho_huy.phan_bo_phieu_ban.ton_kho_id, self.ton.pk)
+        self.client.force_login(self.d.ql)
+        url = reverse("ban_hang:tra_hang_huy", args=[yc.pk])
+        self.assertEqual(self.client.post(url).status_code, 302)
+        cho_huy.refresh_from_db()
+        self.assertEqual(cho_huy.trang_thai, "da_huy")
+        self.assertEqual(cho_huy.phieu_xuat_huy.chitietphieuxuathuy_set.get().so_luong, 3)
+        self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
 
     def test_hang_hu_hong_khong_nhap_lai_va_khong_vuot_so_tra(self):
         self._nhan_hang()
         yc = self._tra("hu_hong", 2)
         dong = yc.cac_dong.get()
+        from ..services.tra_hang import cac_lo_da_xuat
+
+        ma_phan_bo = cac_lo_da_xuat(yc)[dong.pk][0]["phan_bo"].pk
         with self.assertRaises(ValidationError):
-            duyet(self.d.ql, yc, nhap_lai={dong.pk: 3})
+            duyet(self.d.ql, yc, phan_lo={(dong.pk, ma_phan_bo): 3})
         duyet(self.d.ql, yc)
         self.assertEqual(self.TonKho.objects.get(pk=self.ton.pk).so_luong, 16)
         self.assertEqual(yc.cac_dong.get().so_luong_nhap_lai, 0)

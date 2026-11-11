@@ -1,13 +1,2 @@
-{% autoescape off %}Xin chào {{ ho_ten }},
-
-Yêu cầu trả hàng {{ yeu_cau.ma_yeu_cau_tra_hang }} của đơn {{ don.ma_don_hang }}: {{ yeu_cau.get_trang_thai_display }}.
-{{ loi_nhan }}
-{% if yeu_cau.ghi_chu_xu_ly %}Ghi chú của nhà thuốc: {{ yeu_cau.ghi_chu_xu_ly }}
-{% endif %}
-{% for dong in cac_dong_tra %}- {{ dong.chi_tiet_don_hang.thuoc.ten_thuoc }}: {{ dong.so_luong }}
-{% endfor %}{% if yeu_cau.trang_thai != "tu_choi" %}Số tiền hoàn: {{ yeu_cau.so_tien_hoan|tien }}
-{% endif %}
-Xem đơn: {{ url_don }}
-
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+{% autoescape off %}{% include "thong_bao/email/khoi/_than_don.txt" %}
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

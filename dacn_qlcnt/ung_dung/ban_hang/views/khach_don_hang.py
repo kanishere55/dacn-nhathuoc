@@ -11,10 +11,10 @@ from ..forms import XuLyDonForm, YeuCauXuatHoaDonForm
 from ..hoa_don import du_lieu_hoa_don
 from ..models import TRANG_THAI_DON, PhieuBan, YeuCauXuatHoaDon
 from ..selectors import lay_chi_tiet_don, lay_don, lay_lich_su
-from ..services.don_hang import han_tu_hoan_thanh, huy_don, xac_nhan_da_giao
+from ..services.don_hang import huy_don, xac_nhan_da_giao
 from ..services.tra_hang import han_tra_hang, ly_do_khong_tra_duoc
 from ..services.trang_thai import CHUYEN_HOP_LE, KHACH
-from ..services.xuat_hoa_don import gui_yeu_cau_xuat_hoa_don
+from ..services.xuat_hoa_don import gui_yeu_cau_xuat_hoa_don, ly_do_khong_yeu_cau_duoc
 from .phieu_ban import tra_pdf
 
 NHOM_TRANG_THAI = {
@@ -84,7 +84,12 @@ def _trang_chi_tiet(request, don, form_hoa_don_cong_ty=None):
         )
     )
     yeu_cau_hoa_don = YeuCauXuatHoaDon.objects.filter(don_hang=don).first()
-    if form_hoa_don_cong_ty is None and not yeu_cau_hoa_don and don.trang_thai == "hoan_thanh":
+    if (
+        form_hoa_don_cong_ty is None
+        and not yeu_cau_hoa_don
+        and not don.qua_han_giu
+        and ly_do_khong_yeu_cau_duoc(don) is None
+    ):
         form_hoa_don_cong_ty = YeuCauXuatHoaDonForm(
             initial={"email_nhan_hoa_don": request.user.email}
         )
@@ -104,7 +109,6 @@ def _trang_chi_tiet(request, don, form_hoa_don_cong_ty=None):
             "form_huy": XuLyDonForm(),
             "cac_yeu_cau_tra": don.cac_yeu_cau_tra_hang.prefetch_related("cac_anh"),
             "duoc_xac_nhan_nhan_hang": don.trang_thai == "dang_giao",
-            "han_tu_hoan_thanh": han_tu_hoan_thanh(don) if don.trang_thai == "dang_giao" else None,
             "duoc_tra_hang": ly_do_khong_tra_duoc(don) is None,
             "han_tra_hang": han_tra_hang(don),
             "co_hoa_don": don.trang_thai == "hoan_thanh"

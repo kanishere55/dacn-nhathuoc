@@ -108,7 +108,7 @@ class DanhGiaThuocTests(TestCase):
         from ..models import DanhGiaThuoc
 
         d = tao_du_lieu()
-        tao_ton(d, luong=20)
+        tao_ton(d, ngay=60, luong=20)
         url = reverse("danh_muc:khach_danh_gia_thuoc", args=[d.thuoc.ma_thuoc])
         self.client.force_login(d.khach)
         self.client.post(url, {"so_sao": 5, "noi_dung": "Tốt"})

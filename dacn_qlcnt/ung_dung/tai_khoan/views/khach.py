@@ -8,11 +8,13 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 
 from ung_dung.chung.duong_dan import la_duong_dan_noi_bo
 from ung_dung.chung.permissions import NHAN_SU_CHUOI, co_vai_tro
 
+from ..dia_chi_ip import lay_dia_chi_ip
 from ..forms import DangKyForm, DangNhapForm, DatLaiMatKhauForm, EmailForm, MaOTPForm
 from ..services import xac_thuc
 from ..services.xac_thuc import GIAY_CHO_GUI_LAI, che_email
@@ -100,7 +102,7 @@ def dang_ky(request):
             ten: gia_tri for ten, gia_tri in form.cleaned_data.items() if ten != "nhap_lai_mat_khau"
         }
         try:
-            phien = xac_thuc.bat_dau_dang_ky(**du_lieu)
+            phien = xac_thuc.bat_dau_dang_ky(**du_lieu, dia_chi_ip=lay_dia_chi_ip(request))
         except ValidationError as loi:
             form.add_error(None, loi)
         else:
@@ -127,7 +129,16 @@ def xac_thuc_dang_ky(request, ma):
     return render(
         request,
         "tai_khoan/khach/nhap_ma.html",
-        ngu_canh_nhap_ma(phien, form, tieu_de="Xác thực email", nut="Hoàn tất đăng ký"),
+        ngu_canh_nhap_ma(
+            phien,
+            form,
+            tieu_de="Xác thực email",
+            nut="Hoàn tất đăng ký",
+            ghi_chu=(
+                "Nhập mã 6 chữ số vừa gửi tới email của bạn (hiệu lực 10 phút). Nếu email này "
+                "đã có tài khoản, thư gửi tới sẽ hướng dẫn đăng nhập thay vì gửi mã."
+            ),
+        ),
     )
 
 
@@ -161,7 +172,9 @@ def quen_mat_khau(request):
     form = EmailForm(request.POST if request.method == "POST" else None)
     if form.is_bound and form.is_valid():
         try:
-            phien = xac_thuc.bat_dau_quen_mat_khau(form.cleaned_data["email"])
+            phien = xac_thuc.bat_dau_quen_mat_khau(
+                form.cleaned_data["email"], dia_chi_ip=lay_dia_chi_ip(request)
+            )
         except ValidationError as loi:
             form.add_error(None, loi)
         else:
@@ -228,3 +241,47 @@ def quen_ten_dang_nhap(request):
             "nut": "Gửi tên đăng nhập",
         },
     )
+
+
+def _trang_khoi_phuc_email(request, ngu_canh):
+    phan_hoi = render(request, "tai_khoan/khach/hoan_tac_email.html", ngu_canh)
+    phan_hoi["Referrer-Policy"] = "no-referrer"
+    return phan_hoi
+
+
+@never_cache
+@require_http_methods(["GET", "POST"])
+def hoan_tac_doi_email(request, ma, khoa):
+    """Liên kết trong thư gửi email cũ: xem xác nhận (GET), khôi phục email cũ (POST).
+
+    GET không đổi gì để máy quét liên kết của hộp thư không tự kích hoạt.
+    """
+    try:
+        phien = xac_thuc.kiem_lien_ket_hoan_tac(ma, khoa)
+    except ValidationError as loi:
+        return _trang_khoi_phuc_email(request, {"loi": " ".join(loi.messages)})
+    if request.method == "GET":
+        return _trang_khoi_phuc_email(
+            request, {"phien": phien, "email_che": che_email(phien.email)}
+        )
+    try:
+        tai_khoan = xac_thuc.hoan_tac_doi_email(ma, khoa)
+    except ValidationError as loi:
+        return _trang_khoi_phuc_email(request, {"loi": " ".join(loi.messages)})
+    logout(request)
+    try:
+        phien_moi = xac_thuc.bat_dau_quen_mat_khau(tai_khoan.email, lay_dia_chi_ip(request))
+    except ValidationError:
+        messages.success(
+            request,
+            "Đã khôi phục email cũ và thoát mọi phiên đăng nhập. Hãy dùng “Quên mật khẩu” "
+            "để đặt mật khẩu mới.",
+        )
+        return redirect("tai_khoan:quen_mat_khau")
+    ghi_phien(request, phien_moi)
+    messages.success(
+        request,
+        f"Đã khôi phục email {che_email(tai_khoan.email)} và thoát mọi phiên đăng nhập. "
+        "Mã đặt mật khẩu mới đã được gửi tới email này.",
+    )
+    return redirect("tai_khoan:dat_lai_mat_khau", ma=phien_moi.ma_phien_xac_thuc)

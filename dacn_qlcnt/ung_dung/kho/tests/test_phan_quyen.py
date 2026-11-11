@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -20,7 +22,7 @@ class PhamViChiNhanhTests(TestCase):
             "thuoc": d.thuoc,
             "so_luong": 10,
             "ma_lo_thuoc": "LO-CHUNG",
-            "ngay_het_han": timezone.localdate(),
+            "ngay_het_han": (timezone.localdate() + timedelta(days=1)),
             "don_gia": 1000,
         }
         cua_minh = nhap_hang(d.nv, d.cn, d.ncc, [dong])
@@ -46,7 +48,7 @@ class PhamViChiNhanhTests(TestCase):
             "form-0-thuoc": self.d.thuoc.pk,
             "form-0-so_luong": "3",
             "form-0-ma_lo_thuoc": "LO-GIA-MAO",
-            "form-0-ngay_het_han": timezone.localdate().isoformat(),
+            "form-0-ngay_het_han": (timezone.localdate() + timedelta(days=90)).isoformat(),
             "form-0-don_gia": "1000",
         }
         phan_hoi = self.client.post(reverse("kho:phieu_nhap_tao"), du_lieu)

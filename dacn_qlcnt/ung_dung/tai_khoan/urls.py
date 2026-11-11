@@ -12,6 +12,11 @@ urlpatterns = [
     path("tai-khoan/quen-mat-khau/", khach.quen_mat_khau, name="quen_mat_khau"),
     path("tai-khoan/quen-mat-khau/<uuid:ma>/", khach.dat_lai_mat_khau, name="dat_lai_mat_khau"),
     path("tai-khoan/quen-ten-dang-nhap/", khach.quen_ten_dang_nhap, name="quen_ten_dang_nhap"),
+    path(
+        "tai-khoan/khoi-phuc-email/<uuid:ma>/<str:khoa>/",
+        khach.hoan_tac_doi_email,
+        name="hoan_tac_doi_email",
+    ),
     path("tai-khoan-cua-toi/", ho_so.cua_toi, name="cua_toi"),
     path("tai-khoan-cua-toi/thong-tin/", ho_so.thong_tin, name="thong_tin"),
     path("tai-khoan-cua-toi/mat-khau/", ho_so.doi_mat_khau, name="doi_mat_khau"),

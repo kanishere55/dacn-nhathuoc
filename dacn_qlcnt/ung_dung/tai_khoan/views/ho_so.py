@@ -10,6 +10,7 @@ from ung_dung.ban_hang.thanh_vien import CAC_HANG, hang_cua
 from ung_dung.chung.duong_dan import quay_lai
 from ung_dung.chung.permissions import MOI_VAI_TRO, co_vai_tro, yeu_cau_vai_tro
 
+from ..dia_chi_ip import lay_dia_chi_ip
 from ..forms import DiaChiGiaoHangForm, DoiEmailForm, DoiMatKhauForm, HoSoForm, MaOTPForm
 from ..selectors import cac_dia_chi_cua, lay_dia_chi_cua
 from ..services import dia_chi_giao_hang, ho_so, xac_thuc
@@ -82,7 +83,10 @@ def doi_email(request):
     if form.is_bound and form.is_valid():
         try:
             phien = xac_thuc.bat_dau_doi_email(
-                request.user, form.cleaned_data["email_moi"], form.cleaned_data["mat_khau_hien_tai"]
+                request.user,
+                form.cleaned_data["email_moi"],
+                form.cleaned_data["mat_khau_hien_tai"],
+                dia_chi_ip=lay_dia_chi_ip(request),
             )
         except ValidationError as loi:
             form.add_error(None, loi)

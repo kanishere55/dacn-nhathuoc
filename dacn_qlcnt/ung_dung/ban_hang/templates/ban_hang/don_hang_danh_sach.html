@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load don_hang %}
 {% block tieu_de %}Đơn hàng · Khu quản lý{% endblock %}
 {% block vi_tri %}Đơn hàng{% endblock %}
 {% block noi_dung %}
@@ -6,12 +7,19 @@
     <p class="chu-dan">BÁN HÀNG</p>
     <h1>Đơn hàng</h1>
     <p>Đơn giao tận nơi và đơn đặt giữ nhận tại quầy của {% if user.vai_tro == "quan_tri_chuoi" %}toàn chuỗi{% else %}chi nhánh{% endif %}.</p>
+    {% if duoc_xem_tien_chua_khop %}<p><a class="duong-dan-noi-dung" href="{% url 'thanh_toan:tien_chua_khop' %}">Tiền chuyển khoản chưa khớp đơn</a></p>{% endif %}
   </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" giu_trang_thai=trang_thai %}
+  {% if loc_lo_hong %}
+    <p class="khoi-trang">Đang xem đơn giữ trên lô hết hạn hoặc bị khóa bán. <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_danh_sach' %}">Xóa lọc</a></p>
+  {% endif %}
   <div id="vung-danh-sach">
   <nav class="tab-quan-ly" aria-label="Lọc theo trạng thái">
     <a href="{% querystring trang_thai=None page=None %}"{% if not trang_thai %} aria-current="page"{% endif %}>Tất cả <span>{{ tong_so }}</span></a>
     {% for ma, nhan, so in cac_trang_thai %}{% if so %}<a href="{% querystring trang_thai=ma page=None %}"{% if trang_thai == ma %} aria-current="page"{% endif %}>{{ nhan }} <span>{{ so }}</span></a>{% endif %}{% endfor %}
+  </nav>
+  <nav class="tab-quan-ly tab-viec-tien" aria-label="Việc về tiền">
+    {% for ma, nhan, so in cac_loc_tien %}<a href="{% if loc_tien == ma %}{% querystring tien=None page=None %}{% else %}{% querystring tien=ma page=None %}{% endif %}"{% if loc_tien == ma %} aria-current="page"{% endif %}>{{ nhan }} <span>{{ so }}</span></a>{% endfor %}
   </nav>
   <div class="khoi-trang khung-bang bang-the-di-dong">
     <table role="table" aria-label="Danh sách đơn hàng">
@@ -25,7 +33,7 @@
             <td role="cell" data-nhan="Hình thức"><span>{{ don.get_hinh_thuc_nhan_display }}<br><small>{{ don.get_phuong_thuc_thanh_toan_display }}</small></span></td>
             {% if user.vai_tro == "quan_tri_chuoi" %}<td role="cell" data-nhan="Chi nhánh">{{ don.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
             <td role="cell" class="o-tien" data-nhan="Tổng">{{ don.tong_thanh_toan|tien }}</td>
-            <td role="cell" data-nhan="Trạng thái">{% include "ban_hang/_nhan_don.html" %}</td>
+            <td role="cell" data-nhan="Trạng thái">{% include "ban_hang/_nhan_don.html" %}{% with han=don|han_don %}{% if han %}<small class="han-xu-ly muc-han-{{ han.muc }}">{{ han.chu }}</small>{% endif %}{% endwith %}</td>
           </tr>
         {% empty %}
           <tr role="row"><td role="cell" colspan="{% if user.vai_tro == 'quan_tri_chuoi' %}7{% else %}6{% endif %}">Không có đơn phù hợp bộ lọc.</td></tr>

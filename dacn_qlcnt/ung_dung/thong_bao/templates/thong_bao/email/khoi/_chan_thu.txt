@@ -1,0 +1,7 @@
+
+--
+{{ cua_hang.ten_thuong_hieu }}{% if cua_hang.hotline %}
+Hotline: {{ cua_hang.hotline }}{% if cua_hang.gio_lam_viec %} ({{ cua_hang.gio_lam_viec }}){% endif %}{% endif %}{% if cua_hang.email_lien_he %}
+Email: {{ cua_hang.email_lien_he }}{% endif %}{% if cua_hang.dia_chi_tru_so %}
+{{ cua_hang.dia_chi_tru_so }}{% endif %}
+{{ ly_do_nhan }}

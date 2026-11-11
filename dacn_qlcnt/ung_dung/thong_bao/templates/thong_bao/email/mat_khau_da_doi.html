@@ -1,6 +1,10 @@
 {% extends "thong_bao/email/khung.html" %}
 {% block noi_dung %}
-  <p style="margin:0 0 12px;">Xin chào {{ ho_ten|default:ten_dang_nhap }},</p>
-  <p style="margin:0 0 12px;">Mật khẩu của tài khoản <strong>{{ ten_dang_nhap }}</strong> vừa được {{ cach_doi }} lúc {{ thoi_diem|date:"H:i d/m/Y" }}.</p>
-  <p style="margin:0 0 12px;">Nếu không phải bạn, hãy dùng chức năng quên mật khẩu để lấy lại tài khoản ngay: <a href="{{ url_website }}/tai-khoan/quen-mat-khau/" style="color:#116b54;">{{ url_website }}/tai-khoan/quen-mat-khau/</a></p>
+{% include "thong_bao/email/khoi/_tieu_de.html" with tieu_de_lon="Mật khẩu vừa được đổi" %}
+<tr><td class="o" style="padding:0 32px;font-family:Arial,Helvetica,sans-serif;">
+<p class="chu chu-than" style="margin:12px 0 0;font-size:15px;line-height:24px;color:#25372f;">Xin chào {{ ho_ten|default:ten_dang_nhap }}, mật khẩu của tài khoản <strong>{{ ten_dang_nhap }}</strong> vừa được {{ cach_doi }} lúc <strong>{{ thoi_diem|date:"H:i d/m/Y" }}</strong>.</p>
+{% if boi_quan_tri %}<p class="chu chu-than" style="margin:12px 0 0;font-size:15px;line-height:24px;color:#25372f;">Thay đổi này do quản trị viên của nhà thuốc thực hiện theo đề nghị hỗ trợ. Hãy đăng nhập bằng mật khẩu được cung cấp rồi đổi sang mật khẩu của riêng bạn.</p>{% endif %}
+</td></tr>
+{% include "thong_bao/email/khoi/_cap_nut.html" %}
+{% if boi_quan_tri %}{% include "thong_bao/email/khoi/_canh_bao.html" with loai="quan_tri" %}{% else %}{% include "thong_bao/email/khoi/_canh_bao.html" with loai="mat_khau" %}{% endif %}
 {% endblock %}

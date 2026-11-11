@@ -41,7 +41,7 @@
               </tr>
             {% endwith %}
           {% empty %}
-            <tr><td colspan="6">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc.{% else %}Kho chưa có lô nào còn hàng.{% endif %}</td></tr>
+            <tr><td colspan="6">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc. Bỏ bớt điều kiện lọc để xem thêm.{% else %}Kho chưa có lô nào còn hàng. Hàng vào kho khi lập phiếu nhập hoặc nhận điều chuyển.{% if duoc_nhap %} <a class="duong-dan-noi-dung" href="{% url 'kho:phieu_nhap_tao' %}">Lập phiếu nhập</a>{% endif %}{% endif %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

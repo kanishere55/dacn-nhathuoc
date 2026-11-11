@@ -1,39 +1,61 @@
 {% extends "khung_trang.html" %}
-{% block tieu_de %}Nhà thuốc · Mua thuốc trực tuyến, nhận tại nhà thuốc{% endblock %}
+{% comment %}
+  Khung website khách. Đầu trang: thương hiệu, ô tìm thuốc (mọi trang), giỏ hàng có số món, menu tài khoản
+  (có Đăng xuất ở mọi cỡ màn hình). Menu tài khoản dùng <details> nên mở được cả khi chưa tải JS.
+  Dải menu chính nằm dưới đầu trang và cuộn đi cùng trang; đầu trang thì dính (điện thoại chỉ giữ ô tìm).
+{% endcomment %}
+{% block tieu_de %}{{ cua_hang.ten_thuong_hieu|default:"Nhà thuốc" }} · Mua thuốc trực tuyến, nhận tại nhà thuốc{% endblock %}
 {% block giao_dien %}
   <div class="khung-khach">
     <header class="dau-trang-khach">
-      <div class="thanh-nhan-thuoc">
-        <div class="be-rong-khach"><span><i data-lucide="truck" aria-hidden="true"></i> Giao tận nơi trong bán kính 15 km</span><span><i data-lucide="store" aria-hidden="true"></i> Đặt trước, nhận tại nhà thuốc trong 24 giờ</span></div>
-      </div>
       <div class="be-rong-khach thanh-khach">
         <a class="thuong-hieu" href="{% url 'chung:trang_chu' %}">
           <span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span>
           <span>{{ cua_hang.ten_thuong_hieu }}{% if cua_hang.khau_hieu %}<small>{{ cua_hang.khau_hieu }}</small>{% endif %}</span>
         </a>
+        <form class="o-tim-dau-trang" role="search" method="get" action="{% url 'danh_muc:khach_thuoc_danh_sach' %}" aria-label="Tìm thuốc">
+          <i data-lucide="search" aria-hidden="true"></i>
+          <label class="sr-only" for="tim-thuoc-dau-trang">Tìm thuốc theo tên hoặc hoạt chất</label>
+          <input type="search" id="tim-thuoc-dau-trang" name="q" maxlength="150" autocomplete="off" enterkeyhint="search"
+                 placeholder="Tìm thuốc: tên thuốc hoặc hoạt chất"{% if request.resolver_match.view_name == 'danh_muc:khach_thuoc_danh_sach' %} value="{{ request.GET.q }}"{% endif %}>
+          <button class="nut" type="submit">Tìm</button>
+        </form>
+        <div class="tac-vu-khach">
+          {% if not noi_bo %}
+            <a class="nut-gio" href="{% url 'ban_hang:gio_hang' %}" aria-label="Giỏ hàng, {{ so_mon_gio }} sản phẩm"{% if request.resolver_match.view_name == 'ban_hang:gio_hang' %} aria-current="page"{% endif %}><i data-lucide="shopping-cart" aria-hidden="true"></i><span class="chu-nut">Giỏ hàng</span>{% if so_mon_gio %}<span class="so-gio" aria-hidden="true">{{ so_mon_gio }}</span>{% endif %}</a>
+          {% endif %}
+          {% if noi_bo %}
+            <a class="nut nut-phu" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i><span class="chu-nut">Khu quản lý</span></a>
+          {% elif user.is_authenticated %}
+            <details class="menu-nguoi-dung" data-menu-tha>
+              <summary class="nut nut-phu nut-tai-khoan" aria-label="Tài khoản của tôi"><i data-lucide="user-round" aria-hidden="true"></i><span class="ten-ngan">{{ user.ho_ten|default:user.ten_dang_nhap|truncatewords:3 }}</span><i class="mui-ten" data-lucide="chevron-down" aria-hidden="true"></i></summary>
+              <div class="hop-menu-nguoi-dung">
+                <p class="chu-menu"><strong>{{ user.ho_ten|default:user.ten_dang_nhap }}</strong>{% if user.email %}<small>{{ user.email }}</small>{% endif %}</p>
+                <a href="{% url 'tai_khoan:cua_toi' %}"><i data-lucide="layout-grid" aria-hidden="true"></i>Tài khoản của tôi</a>
+                <a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}"><i data-lucide="package" aria-hidden="true"></i>Đơn của tôi</a>
+                <a href="{% url 'tai_khoan:so_dia_chi' %}"><i data-lucide="map-pin" aria-hidden="true"></i>Sổ địa chỉ</a>
+                <a href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Hỏi dược sĩ<span class="huy-hieu" data-dem-chat{% if not so_tin_chua_doc %} hidden{% endif %}>{{ so_tin_chua_doc }}</span></a>
+                <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">{% csrf_token %}<button type="submit"><i data-lucide="log-out" aria-hidden="true"></i>Đăng xuất</button></form>
+              </div>
+            </details>
+          {% else %}
+            <a class="nut nut-phu nut-tai-khoan" href="{% url 'tai_khoan:dang_nhap' %}" aria-label="Đăng nhập"><i data-lucide="user-round" aria-hidden="true"></i><span class="chu-nut">Đăng nhập</span></a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+    <div class="thanh-menu-khach">
+      <div class="be-rong-khach">
         <nav class="menu-khach" aria-label="Điều hướng website khách">
           {% for muc in menu_khach %}
             <a href="{{ muc.duong_dan }}"{% if muc.dang_chon %} aria-current="page"{% endif %}>{{ muc.nhan }}</a>
           {% endfor %}
         </nav>
-        <div class="tac-vu-khach">
-          {% if not noi_bo %}
-            <a class="nut-gio" href="{% url 'ban_hang:gio_hang' %}" aria-label="Giỏ hàng, {{ so_mon_gio }} sản phẩm"{% if request.resolver_match.view_name == 'ban_hang:gio_hang' %} aria-current="page"{% endif %}><i data-lucide="shopping-cart" aria-hidden="true"></i>{% if so_mon_gio %}<span class="so-gio">{{ so_mon_gio }}</span>{% endif %}</a>
-          {% endif %}
-          {% if noi_bo %}
-            <a class="nut nut-phu" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Khu quản lý</a>
-          {% elif user.is_authenticated %}
-            <a class="nut nut-phu nut-tai-khoan" href="{% url 'tai_khoan:cua_toi' %}" aria-label="Tài khoản"><i data-lucide="user-round" aria-hidden="true"></i><span>Tài khoản</span></a>
-          {% else %}
-            <a class="nut nut-phu nut-tai-khoan" href="{% url 'tai_khoan:dang_nhap' %}" aria-label="Đăng nhập"><i data-lucide="user-round" aria-hidden="true"></i><span>Đăng nhập</span></a>
-          {% endif %}
-        </div>
+        {% if cua_hang.hotline %}<p class="lien-he-nhanh"><i data-lucide="phone" aria-hidden="true"></i><span>Cần tư vấn? Gọi <a href="tel:{{ cua_hang.hotline }}">{{ cua_hang.hotline }}</a>{% if cua_hang.gio_lam_viec %} ({{ cua_hang.gio_lam_viec }}){% endif %}</span></p>{% endif %}
       </div>
-    </header>
+    </div>
     <main class="noi-dung-khach" id="noi-dung" tabindex="-1">
-      {% for message in messages %}
-        <p class="thong-bao{% if message.level_tag == 'error' %} thong-bao-loi{% endif %}" role="status">{{ message }}</p>
-      {% endfor %}
+      {% include "components/_thong_bao.html" %}
       {% block noi_dung %}{% endblock %}
     </main>
     <footer class="chan-trang-khach">
@@ -42,7 +64,7 @@
           <strong class="ten-chan-trang">{{ cua_hang.ten_thuong_hieu }}</strong>
           {% if cua_hang.khau_hieu %}<p>{{ cua_hang.khau_hieu }}</p>{% endif %}
           <ul>
-            {% if cua_hang.hotline %}<li><i data-lucide="phone" aria-hidden="true"></i><a href="tel:{{ cua_hang.hotline }}">{{ cua_hang.hotline }}</a>{% if cua_hang.gio_lam_viec %} · {{ cua_hang.gio_lam_viec }}{% endif %}</li>{% endif %}
+            {% if cua_hang.hotline %}<li><i data-lucide="phone" aria-hidden="true"></i><span><a href="tel:{{ cua_hang.hotline }}">{{ cua_hang.hotline }}</a>{% if cua_hang.gio_lam_viec %} · {{ cua_hang.gio_lam_viec }}{% endif %}</span></li>{% endif %}
             {% if cua_hang.email_lien_he %}<li><i data-lucide="mail" aria-hidden="true"></i><a href="mailto:{{ cua_hang.email_lien_he }}">{{ cua_hang.email_lien_he }}</a></li>{% endif %}
             {% if cua_hang.dia_chi_tru_so %}<li><i data-lucide="building-2" aria-hidden="true"></i><span>{{ cua_hang.dia_chi_tru_so }}</span></li>{% endif %}
           </ul>
@@ -92,4 +114,3 @@
     {% endif %}
   </div>
 {% endblock %}
-

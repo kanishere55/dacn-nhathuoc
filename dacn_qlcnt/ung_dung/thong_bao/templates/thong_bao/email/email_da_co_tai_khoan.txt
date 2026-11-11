@@ -1,0 +1,12 @@
+{% autoescape off %}Email này đã có tài khoản
+
+Có người vừa dùng email này để đăng ký tài khoản mới tại {{ cua_hang.ten_thuong_hieu }} lúc {{ thoi_diem|date:"H:i d/m/Y" }}. Email đã gắn với tài khoản {{ ten_dang_nhap }} nên nhà thuốc không tạo thêm tài khoản và không gửi mã đăng ký.
+
+{{ nut_chinh.nhan }}:
+{{ nut_chinh.url }}
+
+{{ nut_phu.nhan }}:
+{{ nut_phu.url }}
+
+Bạn không đăng ký? Hãy bỏ qua thư này, tài khoản không thay đổi gì.
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

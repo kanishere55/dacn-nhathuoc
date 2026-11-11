@@ -1,10 +1,4 @@
 {% extends "thong_bao/email/khung.html" %}
 {% block noi_dung %}
-  <p style="margin:0 0 12px;">Xin chào {{ ho_ten }},</p>
-  <p style="margin:0 0 12px;">Đơn <strong>{{ don.ma_don_hang }}</strong> vừa chuyển sang trạng thái <strong style="color:#116b54;">{{ nhan_trang_thai }}</strong>.</p>
-  {% if loi_nhan %}<p style="margin:0 0 12px;">{{ loi_nhan }}</p>{% endif %}
-  {% if ghi_chu %}<p style="margin:0 0 12px;padding:10px 12px;background:#f4f6f3;border-radius:7px;">Ghi chú: {{ ghi_chu }}</p>{% endif %}
-  {% if don.trang_thai_thanh_toan == "cho_hoan_tien" %}<p style="margin:0 0 12px;">Đơn đã được thanh toán trước nên nhà thuốc sẽ hoàn tiền cho bạn.</p>{% endif %}
-  {% include "thong_bao/email/_bang_don.html" %}
-  <p style="margin:18px 0;"><a href="{{ url_don }}" style="display:inline-block;padding:11px 18px;border-radius:7px;background:#116b54;color:#ffffff;text-decoration:none;font-weight:bold;">Xem đơn</a></p>
+{% include "thong_bao/email/khoi/_than_don.html" %}
 {% endblock %}

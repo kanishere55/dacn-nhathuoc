@@ -5,7 +5,7 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">KHO</p>
     <h1>Lô thuốc</h1>
-    <p>Mỗi lô có mã lô và hạn dùng riêng. Khóa bán một lô khi nghi hàng lỗi hoặc bị thu hồi; khi bán, hệ thống bỏ qua lô bị khóa.</p>
+    <p>Mỗi lô có mã lô và hạn dùng riêng. Khóa bán một lô khi nghi hàng lỗi, chờ kiểm nghiệm hoặc có thông báo thu hồi: lô bị khóa ở mọi chi nhánh, khi bán hệ thống bỏ qua lô này. Mỗi lần khóa hoặc mở đều lưu người làm, thời điểm và lý do.</p>
   </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
   <div id="vung-danh-sach">
@@ -22,6 +22,7 @@
         </thead>
         <tbody>
           {% for lo in trang %}
+            {% with cac_lan=lo.cac_lich_su_dieu_kien.all %}
             <tr>
               <th scope="row">{{ lo.thuoc.ten_thuoc }}<small>{{ lo.thuoc.ma_thuoc }}</small></th>
               <td>
@@ -33,18 +34,51 @@
                 </small>
               </td>
               <td class="o-so">{% if lo.tong_ton %}{{ lo.tong_ton|so_nguyen }}{% else %}<span class="chu-mo">0</span>{% endif %}</td>
-              <td>{% if lo.duoc_phep_ban %}<span class="nhan-co-khong co">Được bán</span>{% else %}<span class="nhan-han khoa">Đang khóa bán</span>{% endif %}</td>
+              <td class="o-dieu-kien-lo">
+                {% if lo.duoc_phep_ban %}<span class="nhan-co-khong co">Được bán</span>{% else %}<span class="nhan-han khoa">Đang khóa bán</span>{% endif %}
+                {% with lan_cuoi=cac_lan.0 %}
+                  {% if lan_cuoi %}
+                    <small class="ly-do-lo">
+                      {% if lan_cuoi.ly_do %}{{ lan_cuoi.ly_do }}{% endif %}
+                      {% if lan_cuoi.so_van_ban_thu_hoi %} · Văn bản {{ lan_cuoi.so_van_ban_thu_hoi }}{% endif %}
+                      <span class="chu-mo">— {{ lan_cuoi.nguoi_thuc_hien.ho_ten|default:lan_cuoi.nguoi_thuc_hien.ten_dang_nhap|default:"chưa rõ người" }}, {{ lan_cuoi.thoi_diem_tao|date:"H:i d/m/Y" }}</span>
+                    </small>
+                  {% endif %}
+                {% endwith %}
+                {% if cac_lan|length > 1 %}
+                  <details class="lich-su-lo">
+                    <summary>Lịch sử {{ cac_lan|length }} lần</summary>
+                    <ol>
+                      {% for lan in cac_lan %}
+                        <li><strong>{{ lan.duoc_phep_ban|yesno:"Mở bán,Khóa bán" }}</strong> {{ lan.thoi_diem_tao|date:"H:i d/m/Y" }} · {{ lan.nguoi_thuc_hien.ho_ten|default:lan.nguoi_thuc_hien.ten_dang_nhap|default:"chưa rõ người" }}{% if lan.ly_do %}: {{ lan.ly_do }}{% endif %}{% if lan.so_van_ban_thu_hoi %} (văn bản {{ lan.so_van_ban_thu_hoi }}){% endif %}</li>
+                      {% endfor %}
+                    </ol>
+                  </details>
+                {% endif %}
+              </td>
               {% if duoc_sua %}
                 <td class="o-thao-tac">
-                  <form method="post" action="{% url 'kho:lo_thuoc_doi_trang_thai' lo.pk %}"{% if lo.duoc_phep_ban %} onsubmit="return confirm('Khóa bán lô {{ lo.ma_lo_thuoc|escapejs }}? Nhân viên sẽ không bán được lô này.')"{% endif %}>
-                    {% csrf_token %}
-                    <button class="nut nut-phu nut-nho" name="duoc_phep_ban" value="{{ lo.duoc_phep_ban|yesno:'0,1' }}">{{ lo.duoc_phep_ban|yesno:"Khóa bán,Mở bán lại" }}</button>
-                  </form>
+                  <details class="doi-dieu-kien-lo">
+                    <summary class="nut nut-phu nut-nho">{{ lo.duoc_phep_ban|yesno:"Khóa bán,Mở bán lại" }}</summary>
+                    <form method="post" action="{% url 'kho:lo_thuoc_doi_trang_thai' lo.pk %}" class="form-doi-dieu-kien-lo">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <input type="hidden" name="duoc_phep_ban" value="{{ lo.duoc_phep_ban|yesno:'0,1' }}">
+                      <label for="ly-do-{{ lo.pk }}">{% if lo.duoc_phep_ban %}Lý do khóa (bắt buộc){% else %}Lý do mở bán lại <span class="chu-tuy-chon">(nên ghi)</span>{% endif %}</label>
+                      <textarea id="ly-do-{{ lo.pk }}" name="ly_do" rows="2"{% if lo.duoc_phep_ban %} required{% endif %} placeholder="{% if lo.duoc_phep_ban %}Ví dụ: Cục Quản lý Dược thông báo thu hồi lô này{% else %}Ví dụ: kết quả kiểm nghiệm đạt{% endif %}"></textarea>
+                      {% if lo.duoc_phep_ban %}
+                        <label for="van-ban-{{ lo.pk }}">Số văn bản thu hồi <span class="chu-tuy-chon">(nếu có)</span></label>
+                        <input id="van-ban-{{ lo.pk }}" name="so_van_ban_thu_hoi" maxlength="100">
+                      {% endif %}
+                      <button class="nut nut-nho" type="submit">{% if lo.duoc_phep_ban %}Khóa bán ở mọi chi nhánh{% else %}Mở bán lại{% endif %}</button>
+                    </form>
+                  </details>
                 </td>
               {% endif %}
             </tr>
+            {% endwith %}
           {% empty %}
-            <tr><td colspan="5">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc.{% else %}Không có lô nào còn hàng.{% endif %}</td></tr>
+            <tr><td colspan="5">{% if loc.dang_loc %}Không có lô phù hợp bộ lọc. Bỏ bớt điều kiện lọc để xem thêm.{% else %}Chưa có lô nào còn hàng. Lô được tạo khi lập phiếu nhập.{% endif %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

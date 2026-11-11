@@ -112,10 +112,20 @@
     };
   }
 
-  let huyBanDo = khoiTao();
+  let huyBanDo = null;
+  let moBanDo = false;
+  form.addEventListener('toggle', (e) => {
+    if (!e.target.matches('[data-mo-ban-do-dat-hang]') || !e.target.isConnected) return;
+    moBanDo = e.target.open;
+    if (moBanDo) {
+      huyBanDo ||= khoiTao();
+    }
+  }, true);
   form.addEventListener('htmx:afterSwap', (e) => {
     if (e.detail.target.id !== 'lua-chon-dat-hang') return;
     huyBanDo?.();
-    huyBanDo = khoiTao();
+    huyBanDo = null;
+    const chiTiet = form.querySelector('[data-mo-ban-do-dat-hang]');
+    if (chiTiet && moBanDo) chiTiet.open = true;
   });
 })();

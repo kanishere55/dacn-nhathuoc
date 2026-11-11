@@ -4,8 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#116b54">
   <meta name="htmx-config" content='{"historyCacheSize":0,"allowEval":false,"includeIndicatorStyles":false}'>
-  <title>{% if so_tin_chua_doc and not nhung %}({{ so_tin_chua_doc }}) {% endif %}{% block tieu_de %}Nhà thuốc{% endblock %}</title>
+  <title>{% if so_tin_chua_doc and not nhung %}({{ so_tin_chua_doc }}) {% endif %}{% block tieu_de %}{{ cua_hang.ten_thuong_hieu|default:"Nhà thuốc" }}{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'bieu_tuong.svg' %}">
   {% block css_tuong_tac %}<link rel="stylesheet" href="{% static 'vendor/choices/choices.min.css' %}">{% endblock %}
   <link rel="stylesheet" href="{% url_css_giao_dien %}">
@@ -25,6 +26,7 @@
   {% if nhan_dien %}
     <div class="nhan-dien-trang" role="note">{{ nhan_dien.url }} · {{ nhan_dien.view }} · {% ten_template %}</div>
   {% endif %}
+  {% include "components/_hop_thoai.html" %}
   {% block cuoi_trang %}{% endblock %}
   {% if bat_thong_bao and not nhung %}<script defer src="{% tep_tinh 'chung/js/thong_bao.js' %}"></script>{% endif %}
 </body>

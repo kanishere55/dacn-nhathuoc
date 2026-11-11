@@ -1,0 +1,61 @@
+<form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} onsubmit="return confirm('Hủy đơn {{ don.ma_don_hang }}?')"{% elif hd.ma == "hoan_tien" %} onsubmit="return confirm('Xác nhận đã hoàn {{ tien.phai_hoan|tien }} cho khách?')"{% elif hd.ma == "da_thu_cod" %} onsubmit="return confirm('Xác nhận đã nhận {{ cod_cho_doi_soat.so_tien|tien }} tiền COD của đơn {{ don.ma_don_hang }}?')"{% endif %}>
+  {% csrf_token %}
+  {% if hd.can_ly_do %}<label>{% if hd.ma == "xac_nhan_giao_thanh_cong" %}Mã giao nhận hoặc căn cứ xác nhận{% else %}Lý do{% endif %}<input name="ly_do" required maxlength="300"></label>{% endif %}
+  {% if hd.ma == "xac_nhan_thanh_toan" %}
+    <p class="ghi-chu-khach">Tìm trong sao kê khoản có nội dung <strong>{{ don.ma_don_hang }}</strong>. Còn thiếu <strong>{{ tien.con_thieu|tien }}</strong>.</p>
+    <label>Mã giao dịch trên sao kê<input name="ma_tham_chieu" required maxlength="64" autocomplete="off" placeholder="Ví dụ FT26315123456"></label>
+    <label>Số tiền trên sao kê <small>(để trống nếu đúng {{ tien.con_thieu|tien }})</small><input name="so_tien_nhan" type="number" min="1" step="1" inputmode="numeric"></label>
+  {% elif hd.ma == "hoan_tien" %}
+    <p class="ghi-chu-khach">Số tiền phải hoàn: <strong>{{ tien.phai_hoan|tien }}</strong>. Hoàn về đúng tài khoản hoặc ví khách đã dùng để trả.</p>
+    <label>Hoàn qua<select name="phuong_thuc_hoan"><option value="chuyen_khoan">Chuyển khoản</option><option value="tien_mat">Tiền mặt</option>{% if don.phuong_thuc_thanh_toan == "momo" %}<option value="momo" selected>Ví MoMo</option>{% endif %}</select></label>
+    <label>Mã giao dịch hoàn <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
+  {% elif hd.ma == "da_thu_cod" %}
+    <p class="ghi-chu-khach">Người giao đã thu <strong>{{ cod_cho_doi_soat.so_tien|tien }}</strong> của khách. Bấm khi đã nhận đủ tiền người giao nộp lại.</p>
+    <label>Ghi chú <small>(tùy chọn)</small><input name="ly_do" maxlength="300" placeholder="Ví dụ: anh Nam nộp lúc 17:30"></label>
+  {% elif hd.ma == "giao_that_bai" %}
+    <div class="form-chinh" x-data="{ cachXuLy: '' }">
+    <label>Kết quả xử lý hàng
+      <select name="xu_ly_hang_giao" x-model="cachXuLy" required>
+        <option value="">Chọn sau khi đã kiểm tra</option>
+        <option value="hoan_kho">Đã kiểm hàng nguyên vẹn, đủ điều kiện nhập lại</option>
+        {% if duoc_huy_hang %}<option value="da_huy">Hàng hỏng, đã xử lý hủy</option>{% endif %}
+        <option value="that_lac">Đã xác nhận thất lạc</option>
+        <option value="theo_lo">Tình trạng khác nhau theo lô</option>
+      </select>
+    </label>
+    <p class="ghi-chu-khach">Chỉ chọn nhập lại sau khi hàng đã về kho và đủ điều kiện bán. Chờ đơn vị giao xác minh nếu tình trạng hàng chưa rõ.</p>
+    <fieldset x-show="cachXuLy === 'theo_lo'">
+      <legend>Đối chiếu đủ lượng đã xuất theo lô</legend>
+      {% for dong in cac_lo_da_xuat %}
+        <div class="khoi-lo-tra">
+          <strong>{{ dong.chi_tiet_phieu_ban.ten_thuoc_luc_ban }} · lô {{ dong.ton_kho.lo_thuoc.ma_lo_thuoc }} · đã xuất {{ dong.so_luong }}</strong>
+          <div class="luoi-so-luong-giao">
+            <label>Nhập lại<input name="hoan_kho_{{ dong.pk }}" type="number" min="0" max="{{ dong.so_luong }}" value="0"></label>
+            {% if duoc_huy_hang %}<label>Đã hủy<input name="da_huy_{{ dong.pk }}" type="number" min="0" max="{{ dong.so_luong }}" value="0"></label>{% endif %}
+            <label>Thất lạc<input name="that_lac_{{ dong.pk }}" type="number" min="0" max="{{ dong.so_luong }}" value="0"></label>
+          </div>
+        </div>
+      {% endfor %}
+    </fieldset>
+    </div>
+  {% elif hd.ma == "nhan_tai_quay" %}
+    {% if tien.con_thieu %}
+      <p class="ghi-chu-khach">Thu của khách: <strong>{{ tien.con_thieu|tien }}</strong>{% if tien.da_thu %} (đã chuyển trước {{ tien.da_thu|tien }}){% endif %}.</p>
+      <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
+    {% else %}
+      <p class="ghi-chu-khach">Khách đã trả đủ trước, không thu thêm.</p>
+    {% endif %}
+    {% if co_ke_don %}
+      <fieldset class="nhom-don-thuoc">
+        <legend>Đơn thuốc của bác sĩ</legend>
+        <label>Họ tên người bệnh<input name="ho_ten_nguoi_benh" required maxlength="120" autocomplete="off"></label>
+        <label>Ngày kê đơn<input name="ngay_ke_don" type="date" required max="{% now 'Y-m-d' %}"></label>
+        <label>Bác sĩ kê đơn<input name="ten_nguoi_ke_don" required maxlength="120" autocomplete="off"></label>
+        <label>Cơ sở khám bệnh<input name="noi_kham_benh" required maxlength="200" autocomplete="off"></label>
+        <label>Mã đơn thuốc điện tử <small>(nếu có)</small><input name="ma_don_thuoc" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9\-]{5,29}" autocomplete="off"></label>
+        <label class="lua-chon-mot-dong"><input type="checkbox" name="da_kiem_tra_don_thuoc" value="on" required> Đã đối chiếu đơn: đúng người bệnh, còn hạn, thuốc và liều khớp</label>
+      </fieldset>
+    {% endif %}
+  {% endif %}
+  <button class="nut{% if hd.ma == 'huy' or hd.ma == 'giao_that_bai' %} nut-phu{% endif %}" type="submit">{{ hd.nhan }}</button>
+</form>

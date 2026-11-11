@@ -5,49 +5,59 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">THÔNG BÁO</p>
     <h1>Email hệ thống</h1>
-    <p>Mọi email website đã gửi: mã xác thực (đã che mã), thông báo tài khoản và đơn hàng, kèm kết quả từ máy chủ SMTP.</p>
+    <p>Mọi thư website đã gửi cho khách: mã xác thực (đã che mã), thông báo tài khoản, đơn hàng, trả hàng và hóa đơn{% if not toan_chuoi %} của chi nhánh bạn{% endif %}, kèm kết quả gửi.</p>
   </header>
-  <form method="get" class="thanh-cong-cu khoi-trang">
-    <label>Loại
-      <select name="loai_email">
-        <option value="">Tất cả</option>
-        {% for ma, nhan in cac_loai %}<option value="{{ ma }}"{% if bo_loc.loai_email == ma %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
-      </select>
-    </label>
-    <label>Trạng thái
-      <select name="trang_thai">
-        <option value="">Tất cả</option>
-        {% for ma, nhan in cac_trang_thai %}<option value="{{ ma }}"{% if bo_loc.trang_thai == ma %} selected{% endif %}>{{ nhan }}</option>{% endfor %}
-      </select>
-    </label>
-    <label>Người nhận <input type="search" name="tim" value="{{ bo_loc.tim }}" placeholder="email"></label>
-    <button class="nut" type="submit">Lọc</button>
-  </form>
+  {% if dem.loi or dem.ket %}
+    <div class="canh-bao-nhat-ky-email" role="alert">
+      <i data-lucide="mail-warning" aria-hidden="true"></i>
+      <div>
+        <strong>{% if dem.loi %}{{ dem.loi }} thư gửi lỗi{% endif %}{% if dem.loi and dem.ket %} · {% endif %}{% if dem.ket %}{{ dem.ket }} thư kẹt ở “Chờ gửi”{% endif %}</strong>
+        <p>Khách chưa nhận được những thư này. Đọc dòng lỗi màu đỏ để biết nguyên nhân (thường là mật khẩu ứng dụng Gmail trong tệp .env hết hiệu lực hoặc mất mạng), sửa xong thì bấm “Gửi lại” ở từng thư.</p>
+      </div>
+      <a class="nut nut-phu" href="?trang_thai=can_gui_lai">Xem thư cần gửi lại</a>
+    </div>
+  {% endif %}
+  {% include "components/_thanh_loc.html" with vung="vung-danh-sach" %}
+  <div id="vung-danh-sach">
   <div class="khoi-trang khung-bang">
-    <table>
-      <thead><tr><th>Thời điểm</th><th>Loại</th><th>Người nhận</th><th>Tiêu đề</th><th>Kết quả</th></tr></thead>
+    <table class="bang-nhat-ky-email">
+      <thead><tr><th>Thời điểm</th><th>Thư</th><th>Người nhận</th><th>Kết quả</th><th><span class="sr-only">Thao tác</span></th></tr></thead>
       <tbody>
         {% for email in trang %}
-          <tr>
+          <tr class="{% if email.trang_thai == 'loi' %}dong-email-loi{% elif not email.ly_do_khong_gui_lai_luc_nay and email.trang_thai == 'cho_gui' %}dong-email-ket{% endif %}">
             <td>{{ email.thoi_diem_tao|date:"H:i d/m/Y" }}</td>
-            <td>{{ email.get_loai_email_display }}</td>
+            <td>
+              <a class="duong-dan-noi-dung" href="{% url 'thong_bao:nhat_ky_email_chi_tiet' email.pk %}">{{ email.tieu_de }}</a>
+              <small>{{ email.get_loai_email_display }}{% if email.co_dinh_kem_hoa_don %} · kèm hóa đơn PDF{% endif %}{% if email.don_hang %} · đơn {{ email.don_hang.ma_don_hang }}{% if toan_chuoi %} ({{ email.don_hang.chi_nhanh.ten_chi_nhanh }}){% endif %}{% endif %}</small>
+            </td>
             <td>{{ email.email_nhan }}</td>
             <td>
-              <details><summary>{{ email.tieu_de }}</summary><pre class="noi-dung-email">{{ email.noi_dung_van_ban }}</pre></details>
+              {% if email.trang_thai == "cho_gui" and not email.ly_do_khong_gui_lai_luc_nay %}
+                <span class="nhan-email nhan-email-ket">Kẹt, chưa gửi</span>
+              {% else %}
+                <span class="nhan-email nhan-email-{{ email.trang_thai }}">{{ email.get_trang_thai_display }}</span>
+              {% endif %}
+              {% if email.so_lan_gui > 1 %}<small>Đã thử {{ email.so_lan_gui }} lần</small>{% endif %}
+              {% if email.chi_tiet_loi %}<p class="loi-gui-email">{{ email.chi_tiet_loi }}</p>{% endif %}
             </td>
-            <td>{% include "components/_nhan_trang_thai.html" with nhan=email.get_trang_thai_display %}{% if email.chi_tiet_loi %}<br><small>{{ email.chi_tiet_loi }}</small>{% endif %}</td>
+            <td class="o-thao-tac-email">
+              {% if email.trang_thai != "da_gui" %}
+                {% if email.ly_do_khong_gui_lai_luc_nay %}
+                  <small title="{{ email.ly_do_khong_gui_lai_luc_nay }}">Không gửi lại được</small>
+                {% else %}
+                  <form method="post" action="{% url 'thong_bao:nhat_ky_email_gui_lai' email.pk %}">
+                    {% csrf_token %}<button class="nut nut-nho" type="submit"><i data-lucide="send" aria-hidden="true"></i>Gửi lại</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="5">Chưa có email nào.</td></tr>
+          <tr><td colspan="5">Không có thư nào khớp bộ lọc.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% if trang.has_other_pages %}
-    <nav class="thanh-cong-cu" aria-label="Phân trang">
-      {% if trang.has_previous %}<a class="nut nut-phu" href="?{% for k, v in bo_loc.items %}{{ k }}={{ v|urlencode }}&{% endfor %}trang={{ trang.previous_page_number }}">Trang trước</a>{% endif %}
-      <span>Trang {{ trang.number }}/{{ trang.paginator.num_pages }}</span>
-      {% if trang.has_next %}<a class="nut nut-phu" href="?{% for k, v in bo_loc.items %}{{ k }}={{ v|urlencode }}&{% endfor %}trang={{ trang.next_page_number }}">Trang sau</a>{% endif %}
-    </nav>
-  {% endif %}
+  {% include "components/_phan_trang.html" %}
+  </div>
 {% endblock %}

@@ -65,10 +65,12 @@ def xuat_excel(bao_cao, *, tu_ngay, den_ngay, ten_chi_nhanh):
         [
             ("Phiếu nhập", bao_cao["so_phieu_nhap"]),
             ("Phiếu bán", bao_cao["so_phieu_ban"]),
-            ("Đơn hàng", bao_cao["so_don_giu"]),
+            ("Đơn hàng mới (kể cả đã hủy, hết hạn)", bao_cao["so_don_giu"]),
             ("Trả nhà cung cấp", bao_cao["so_phieu_tra"]),
             ("Điều chuyển", bao_cao["so_phieu_chuyen"]),
             ("Kiểm kê", bao_cao["so_phieu_kiem_ke"]),
+            ("Xuất hủy", bao_cao["so_phieu_xuat_huy"]),
+            ("Hoàn kho (đơn hủy, giao thất bại)", bao_cao["so_phieu_hoan_kho"]),
         ],
     )
     ban_chay = so.create_sheet("Thuốc bán chạy")
@@ -91,26 +93,15 @@ def xuat_excel(bao_cao, *, tu_ngay, den_ngay, ten_chi_nhanh):
     kho = so.create_sheet("Biến động kho")
     _bang(
         kho,
-        "Biến động trong kỳ theo đơn vị cơ sở",
-        ["Đơn vị", "Nhập", "Bán", "Trả NCC", "Chuyển đi", "Chuyển đến", "Điều chỉnh", "Khả dụng"],
+        "Nhập – xuất – tồn trong kỳ theo đơn vị cơ sở",
+        ["Đơn vị", *(nhan for _, nhan in bao_cao["cot_bien_dong"])],
+        [(don_vi, *cac_so) for don_vi, cac_so in bao_cao["bang_bien_dong"]],
+    )
+    kho.append(
         [
-            (
-                don_vi,
-                *(
-                    d.get(k, 0) or 0
-                    for k in (
-                        "nhap",
-                        "ban",
-                        "tra",
-                        "chuyen_di",
-                        "chuyen_den",
-                        "dieu_chinh",
-                        "kha_dung",
-                    )
-                ),
-            )
-            for don_vi, d in bao_cao["cac_luong"]
-        ],
+            "Tồn đầu kỳ + nhập, chuyển đến, hoàn kho, nhập lại, điều chỉnh − bán, chuyển đi, "
+            "trả NCC, xuất hủy = tồn cuối kỳ. Khả dụng hiện tại là số tại lúc xuất tệp."
+        ]
     )
     for trang in so.worksheets:
         for chi_so, cot in enumerate(trang.columns, start=1):

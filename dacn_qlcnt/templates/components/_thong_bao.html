@@ -1,0 +1,33 @@
+{% comment %}
+  Thông báo sau thao tác (django.contrib.messages), dùng chung cho khu quản lý và website khách.
+  Lỗi và cảnh báo: role="alert" để trình đọc màn hình đọc ngay, có biểu tượng và chữ dẫn riêng nên
+  không chỉ dựa vào màu (WCAG 2.2 SC 1.4.1, 4.1.3). Thành công và thông tin: role="status".
+  Nút X chỉ ẩn thông báo trên màn hình (giao_dien.js), không gửi gì lên máy chủ.
+{% endcomment %}
+{% for message in messages %}
+  {% if message.level_tag == "error" %}
+    <div class="thong-bao thong-bao-loi" role="alert" data-thong-bao>
+      <i data-lucide="circle-x" aria-hidden="true"></i>
+      <div class="noi-dung-thong-bao"><strong>Chưa thực hiện được:</strong> {{ message }}</div>
+      <button type="button" class="dong-thong-bao" data-dong-thong-bao aria-label="Ẩn thông báo này"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+  {% elif message.level_tag == "warning" %}
+    <div class="thong-bao thong-bao-canh-bao" role="alert" data-thong-bao>
+      <i data-lucide="triangle-alert" aria-hidden="true"></i>
+      <div class="noi-dung-thong-bao"><strong>Lưu ý:</strong> {{ message }}</div>
+      <button type="button" class="dong-thong-bao" data-dong-thong-bao aria-label="Ẩn thông báo này"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+  {% elif message.level_tag == "success" %}
+    <div class="thong-bao thong-bao-thanh-cong" role="status" data-thong-bao>
+      <i data-lucide="circle-check" aria-hidden="true"></i>
+      <div class="noi-dung-thong-bao">{{ message }}</div>
+      <button type="button" class="dong-thong-bao" data-dong-thong-bao aria-label="Ẩn thông báo này"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+  {% else %}
+    <div class="thong-bao thong-bao-thong-tin" role="status" data-thong-bao>
+      <i data-lucide="info" aria-hidden="true"></i>
+      <div class="noi-dung-thong-bao">{{ message }}</div>
+      <button type="button" class="dong-thong-bao" data-dong-thong-bao aria-label="Ẩn thông báo này"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+  {% endif %}
+{% endfor %}

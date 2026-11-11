@@ -22,6 +22,7 @@ quan_ly = [
     path("don-hang/<int:ma>/<slug:hanh_dong>/", don_hang.xu_ly, name="don_hang_xu_ly"),
     path("tra-hang/", tra_hang.danh_sach, name="tra_hang_danh_sach"),
     path("tra-hang/<int:ma>/", tra_hang.chi_tiet, name="tra_hang_chi_tiet"),
+    path("tra-hang/<int:ma>/ghi-huy/", tra_hang.ghi_huy, name="tra_hang_huy"),
     path("tra-hang/<int:ma>/<slug:hanh_dong>/", tra_hang.xu_ly, name="tra_hang_xu_ly"),
     path("hoa-don-cong-ty/", xuat_hoa_don.danh_sach, name="xuat_hoa_don_danh_sach"),
     path("hoa-don-cong-ty/<int:ma>/xu-ly/", xuat_hoa_don.xu_ly, name="xuat_hoa_don_xu_ly"),

@@ -3,6 +3,8 @@ from django.db.models.functions import Now
 
 from ung_dung.chung.ten_csdl import rang_buoc_so, rang_buoc_van_ban, ten_rang_buoc
 
+from .chung import rang_buoc_khoa_yeu_cau, truong_khoa_yeu_cau
+
 
 class PhieuNhap(models.Model):
     id_phieu_nhap = models.BigAutoField(
@@ -25,6 +27,16 @@ class PhieuNhap(models.Model):
         db_column="id_nha_cung_cap",
         db_comment="Đối tác giao hàng.",
     )
+    so_hoa_don_nha_cung_cap = models.TextField(
+        db_column="so_hoa_don_nha_cung_cap",
+        db_comment=(
+            "Ký hiệu và số hóa đơn nhà cung cấp giao kèm hàng, để đối chiếu chứng từ mua; "
+            "rỗng khi chưa có hóa đơn. Văn bản một dòng."
+        ),
+        blank=True,
+        db_default="",
+    )
+    khoa_yeu_cau = truong_khoa_yeu_cau()
     nguoi_lap = models.ForeignKey(
         "tai_khoan.TaiKhoan",
         on_delete=models.PROTECT,
@@ -50,6 +62,10 @@ class PhieuNhap(models.Model):
         constraints = [
             *rang_buoc_van_ban("phieu_nhap", "ma_phieu_nhap", rong=False, nhieu_dong=False),
             *rang_buoc_van_ban("phieu_nhap", "ghi_chu", rong=True, nhieu_dong=True),
+            *rang_buoc_van_ban(
+                "phieu_nhap", "so_hoa_don_nha_cung_cap", rong=True, nhan="so_hoa_don"
+            ),
+            *rang_buoc_khoa_yeu_cau("phieu_nhap"),
             models.UniqueConstraint(
                 fields=["ma_phieu_nhap"],
                 name=ten_rang_buoc("duy_nhat", "phieu_nhap", *["ma_phieu_nhap"]),

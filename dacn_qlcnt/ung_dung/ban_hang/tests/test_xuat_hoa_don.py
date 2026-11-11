@@ -28,14 +28,15 @@ class XuatHoaDonTests(TestCase):
     def hoan_thanh(self):
         DonHang.objects.filter(pk=self.don.pk).update(trang_thai="hoan_thanh")
 
-    def test_chi_chu_don_da_hoan_thanh_moi_gui_mot_lan(self):
-        with self.assertRaises(ValidationError):
-            gui_yeu_cau_xuat_hoa_don(self.d.khach, self.don, CONG_TY)
-        self.hoan_thanh()
+    def test_chi_chu_don_gui_duoc_mot_lan(self):
         with self.assertRaises(PermissionDenied):
             gui_yeu_cau_xuat_hoa_don(self.d.khac, self.don, CONG_TY)
         yeu_cau = gui_yeu_cau_xuat_hoa_don(self.d.khach, self.don, CONG_TY)
         self.assertEqual(yeu_cau.email_nhan_hoa_don, "ketoan@congty.vn")
+        with self.assertRaisesMessage(ValidationError, "Chờ xác nhận khách đã nhận hàng"):
+            xu_ly_yeu_cau_xuat_hoa_don(
+                self.d.nv, yeu_cau, "da_xuat", ky_hieu_hoa_don="1C26TAA", so_hoa_don="1"
+            )
         with self.assertRaises(ValidationError):
             gui_yeu_cau_xuat_hoa_don(self.d.khach, self.don, CONG_TY)
 
@@ -43,17 +44,23 @@ class XuatHoaDonTests(TestCase):
         self.hoan_thanh()
         yeu_cau = gui_yeu_cau_xuat_hoa_don(self.d.khach, self.don, CONG_TY)
         with self.assertRaises(PermissionDenied):
-            xu_ly_yeu_cau_xuat_hoa_don(self.d.ql2, yeu_cau, "da_xuat", "Số 0000001")
+            xu_ly_yeu_cau_xuat_hoa_don(
+                self.d.ql2, yeu_cau, "da_xuat", ky_hieu_hoa_don="1C26TAA", so_hoa_don="0000001"
+            )
         with self.assertRaises(ValidationError):
-            xu_ly_yeu_cau_xuat_hoa_don(self.d.nv, yeu_cau, "da_xuat", "  ")
+            xu_ly_yeu_cau_xuat_hoa_don(self.d.nv, yeu_cau, "da_xuat", ky_hieu_hoa_don=" ")
         with self.captureOnCommitCallbacks(execute=True):
-            xu_ly_yeu_cau_xuat_hoa_don(self.d.nv, yeu_cau, "da_xuat", "Ký hiệu 1C26TAA, số 0000001")
+            xu_ly_yeu_cau_xuat_hoa_don(
+                self.d.nv, yeu_cau, "da_xuat", ky_hieu_hoa_don="1C26TAA", so_hoa_don="0000001"
+            )
         yeu_cau.refresh_from_db()
         self.assertEqual((yeu_cau.trang_thai, yeu_cau.nguoi_xu_ly), ("da_xuat", self.d.nv))
         self.assertTrue(NhatKyEmail.objects.filter(loai_email="xuat_hoa_don").exists())
         self.assertEqual(mail.outbox[-1].to, ["ketoan@congty.vn"])
         with self.assertRaises(ValidationError):
-            xu_ly_yeu_cau_xuat_hoa_don(self.d.nv, yeu_cau, "tu_choi", "Sai mã số thuế")
+            xu_ly_yeu_cau_xuat_hoa_don(
+                self.d.nv, yeu_cau, "tu_choi", ly_do_tu_choi="Sai mã số thuế"
+            )
 
     def test_form_khach_va_trang_nhan_vien(self):
         self.hoan_thanh()

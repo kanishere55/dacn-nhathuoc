@@ -111,11 +111,9 @@ class DangKyTests(TestCase):
     def test_trung_ten_hoac_email(self):
         get_user_model().objects.create_user("an.nguyen", MAT_KHAU, email="khac@example.com")
         self.assertContains(self.dang_ky(), "Tên đăng nhập đã được sử dụng")
-        self.assertContains(
-            self.dang_ky(ten_dang_nhap="ten_khac", email="khac@example.com"),
-            "Email đã được dùng",
-        )
-        self.assertFalse(PhienXacThuc.objects.exists())
+        phan_hoi = self.dang_ky(ten_dang_nhap="ten_khac", email="khac@example.com")
+        self.assertEqual(phan_hoi.status_code, 302)
+        self.assertNotIn("Email đã được dùng", phan_hoi.content.decode())
 
     def test_gioi_han_nam_phien_moi_gio(self):
         for so in range(5):
@@ -198,8 +196,13 @@ class KhoiPhucTests(TestCase):
             self.client.post(phan_hoi.url, {"ma_otp": lay_ma(mail.outbox[0])})
         self.tai_khoan.refresh_from_db()
         self.assertEqual(self.tai_khoan.email, "moi@example.com")
-        self.assertEqual(mail.outbox[-1].to, ["khach@example.com"])
-        self.assertIn("mo*@example.com", mail.outbox[-1].body)
+        self.assertEqual(mail.outbox[-1].to, ["moi@example.com"])
+        self.assertEqual(mail.outbox[-2].to, ["khach@example.com"])
+        self.assertIn("mo*@example.com", mail.outbox[-2].body)
+        self.assertIn("/khoi-phuc-email/", mail.outbox[-2].body)
+        thu_cu = NhatKyEmail.objects.get(loai_email="email_da_doi")
+        self.assertNotIn("/khoi-phuc-email/", thu_cu.noi_dung_van_ban)
+        self.assertNotIn("/khoi-phuc-email/", thu_cu.noi_dung_html)
 
     def test_doi_mat_khau_giu_phien_dang_nhap_va_bao_email(self):
         self.client.force_login(self.tai_khoan)

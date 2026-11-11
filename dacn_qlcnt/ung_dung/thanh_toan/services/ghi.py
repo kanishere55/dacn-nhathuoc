@@ -1,5 +1,6 @@
 """Ghi giao dịch thu/hoàn; không gọi service đơn hàng để tránh phụ thuộc vòng."""
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from ung_dung.kho.services.giao_dich import ma_chung_tu
@@ -30,6 +31,8 @@ def ghi_ngay(
     ghi_chu="",
 ):
     """Giao dịch đã hoàn tất ngay: tiền mặt, COD, chuyển khoản tại quầy, hoàn tiền."""
+    if nguoi is None and (loai == "hoan" or phuong_thuc in ("tien_mat", "cod")):
+        raise ValidationError("Cần nhân sự xác nhận đã thu hoặc hoàn tiền.")
     return GiaoDichThanhToan.objects.create(
         ma_giao_dich_thanh_toan=ma_chung_tu("GD"),
         don_hang=don_hang,

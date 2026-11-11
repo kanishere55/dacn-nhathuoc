@@ -27,7 +27,7 @@
             <td><form method="post" action="{% url url_doi_hien_thi dg.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="nut nut-phu" type="submit">{% if dg.dang_hien_thi %}Ẩn{% else %}Hiện lại{% endif %}</button></form></td>
           </tr>
         {% empty %}
-          <tr><td colspan="6">Không có đánh giá phù hợp bộ lọc.</td></tr>
+          <tr><td colspan="6">{% if loc.dang_loc %}Không có đánh giá phù hợp bộ lọc. Bỏ bớt điều kiện lọc để xem thêm.{% else %}Chưa có đánh giá nào. Đánh giá khách gửi sẽ hiện ở đây để bạn ẩn hoặc hiện lại.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

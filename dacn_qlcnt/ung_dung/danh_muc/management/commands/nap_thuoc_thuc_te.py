@@ -2,6 +2,8 @@
 
 Chạy lại được: chỉ thêm thứ còn thiếu, giữ nguyên thuốc và danh mục đã sửa trong khu quản lý.
 Không tạo ảnh: ảnh thật có giấy phép mở nạp riêng bằng `manage.py nap_anh_that`.
+Không sửa lịch sử kho (Q02, Q06): thuốc đã có lô thì không đổi đơn vị cơ sở (thuốc mô phỏng khác
+đơn vị được cho ngừng và tạo thuốc thật mới), lô đã nằm trên chứng từ thì không đổi mã lô.
     python manage.py nap_thuoc_thuc_te [--ghi-de]
 """
 
@@ -13,7 +15,15 @@ from django.db import transaction
 from django.db.models import ProtectedError
 from django.utils import timezone
 
-from ung_dung.kho.models import LoThuoc, TonKho
+from ung_dung.kho.models import (
+    ChiTietPhieuDieuChuyen,
+    ChiTietPhieuKiemKe,
+    ChiTietPhieuNhap,
+    ChiTietPhieuTraNhaCungCap,
+    ChiTietPhieuXuatHuy,
+    LoThuoc,
+    TonKho,
+)
 from ung_dung.kho.services.phieu_nhap import nhap_hang
 from ung_dung.tai_khoan.models import TaiKhoan
 
@@ -102,14 +112,26 @@ class Command(BaseCommand):
                 cac_thuoc.append(thuoc)
                 continue
             doi_tu_mo_phong = False
+            don_vi = DonViTinh.objects.get(ma_don_vi_tinh=sp["don_vi"])
             if thuoc is None and sp["ma_cu"]:
                 thuoc = Thuoc.objects.filter(ma_thuoc=sp["ma_cu"]).first()
                 doi_tu_mo_phong = thuoc is not None
+                if doi_tu_mo_phong and self._khong_doi_duoc_don_vi(thuoc, don_vi):
+                    self._ngung_thuoc_mo_phong(thuoc, sp)
+                    thuoc, doi_tu_mo_phong = None, False
+            if thuoc is not None and self._khong_doi_duoc_don_vi(thuoc, don_vi):
+                # --ghi-de trên thuốc đã có lô: giữ đơn vị cũ, số lượng cũ vẫn đúng nghĩa.
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Giữ đơn vị {thuoc.don_vi_tinh} của {thuoc.ma_thuoc}: thuốc đã có lô trong kho."
+                    )
+                )
+                don_vi = thuoc.don_vi_tinh
             thuoc = thuoc or Thuoc()
             thuoc.ma_thuoc = sp["ma"]
             thuoc.ten_thuoc = sp["ten"]
             thuoc.nhom_atc = NhomATC.objects.get(ma_nhom_atc=sp["atc"])
-            thuoc.don_vi_tinh = DonViTinh.objects.get(ma_don_vi_tinh=sp["don_vi"])
+            thuoc.don_vi_tinh = don_vi
             thuoc.danh_muc_san_pham = cac_danh_muc[sp["danh_muc"]]
             thuoc.la_thuoc_ke_don = sp["ke_don"]
             thuoc.ham_luong = sp["ham_luong"]
@@ -138,9 +160,43 @@ class Command(BaseCommand):
             cac_thuoc.append(thuoc)
         return cac_thuoc
 
+    @staticmethod
+    def _khong_doi_duoc_don_vi(thuoc, don_vi):
+        return thuoc.don_vi_tinh_id != don_vi.pk and LoThuoc.objects.filter(thuoc=thuoc).exists()
+
+    def _ngung_thuoc_mo_phong(self, thuoc, sp):
+        """Thuốc mô phỏng đã có tồn theo đơn vị khác: giữ nguyên để chứng từ cũ đúng nghĩa,
+        đổi mã sang MP-NGUNG-... cho ngừng kinh doanh; thuốc thật được tạo mới."""
+        thuoc.ma_thuoc = "MP-NGUNG-" + sp["ma_cu"].removeprefix("MP-T-")
+        thuoc.dang_hoat_dong = False
+        thuoc.full_clean()
+        thuoc.save(update_fields=["ma_thuoc", "dang_hoat_dong"])
+        self.stdout.write(
+            f"Giữ {thuoc.ten_thuoc} (đơn vị {thuoc.don_vi_tinh}) thành {thuoc.ma_thuoc}, ngừng kinh "
+            f"doanh; tạo mới {sp['ten']} đơn vị {sp['don_vi']}."
+        )
+
     def _ma_lo(self):
-        """Lô của dữ liệu mô phỏng mang mã MP-...: đổi sang dạng số lô in trên bao bì."""
-        for lo in LoThuoc.objects.filter(ma_lo_thuoc__startswith="MP-").order_by("pk"):
+        """Lô của dữ liệu mô phỏng mang mã MP-...: đổi sang dạng số lô in trên bao bì.
+
+        Chỉ đổi lô chưa có trong kho và chưa nằm trên chứng từ nào; mã lô đã in trên phiếu
+        nhập, phiếu bán... được giữ nguyên (CSDL cũng chặn bằng trigger chan_doi_ma_lo).
+        """
+        da_dung = set()
+        for model in (
+            ChiTietPhieuNhap,
+            ChiTietPhieuDieuChuyen,
+            ChiTietPhieuKiemKe,
+            ChiTietPhieuXuatHuy,
+            ChiTietPhieuTraNhaCungCap,
+        ):
+            da_dung.update(model.objects.values_list("lo_thuoc_id", flat=True))
+        da_dung.update(TonKho.objects.values_list("lo_thuoc_id", flat=True))
+        for lo in (
+            LoThuoc.objects.filter(ma_lo_thuoc__startswith="MP-")
+            .exclude(pk__in=da_dung)
+            .order_by("pk")
+        ):
             nam_sx = lo.ngay_het_han.replace(year=lo.ngay_het_han.year - 2)
             lo.ma_lo_thuoc = f"{nam_sx:%y%m}{lo.pk % 1000:03d}"
             lo.save(update_fields=["ma_lo_thuoc"])

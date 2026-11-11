@@ -1,3 +1,34 @@
-{% extends "khach/base.html" %}
-{% block tieu_de %}Không có quyền truy cập{% endblock %}
-{% block noi_dung %}<section class="tieu-de-trang"><h1>Không có quyền truy cập</h1><p>Bạn không có quyền thực hiện yêu cầu này.</p><a href="/">Về trang tổng quan</a></section>{% endblock %}
+{% extends khung_theo_khu|default:"khach/base.html" %}
+{% comment %}
+  Trang 403. Nhân sự đang ở /quan-ly/ thấy trang trong khung khu quản lý (khung_theo_khu do
+  ung_dung/chung/dieu_huong.py chọn), các trường hợp khác dùng khung website khách.
+  Django truyền lý do từ chối vào biến exception (lời tiếng Việt do service đặt khi ném PermissionDenied).
+{% endcomment %}
+{% block tieu_de %}Chưa được phép mở trang này{% endblock %}
+{% block vi_tri %}Chưa được phép{% endblock %}
+{% block noi_dung %}
+  <section class="trang-loi" aria-labelledby="tieu-de-loi">
+    <span class="ma-loi"><i data-lucide="lock" aria-hidden="true"></i>Không có quyền truy cập</span>
+    <h1 id="tieu-de-loi">Bạn chưa được phép mở trang này</h1>
+    {% if exception %}<p class="ly-do-loi"><strong>Lý do:</strong> {{ exception }}</p>{% endif %}
+    {% if khung_theo_khu == "base.html" %}
+      <p>Tài khoản của bạn chưa được cấp quyền cho chức năng này. Nếu công việc cần, hãy nhờ quản trị chuỗi cấp thêm quyền trong mục Hệ thống › Nhóm quyền.</p>
+      <div class="nhom-nut">
+        <a class="nut" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Về trang tổng quan</a>
+        <a class="nut nut-vien" href="{% url 'chung:bang_dieu_khien' %}" data-quay-lai><i data-lucide="arrow-left" aria-hidden="true"></i>Quay lại trang trước</a>
+      </div>
+    {% elif noi_bo %}
+      <p>Trang này dành cho khách mua hàng. Tài khoản nhân viên làm việc trong khu quản lý.</p>
+      <div class="nhom-nut">
+        <a class="nut" href="{% url 'chung:bang_dieu_khien' %}"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Vào khu quản lý</a>
+        <a class="nut nut-vien" href="{% url 'chung:trang_chu' %}">Về trang chủ</a>
+      </div>
+    {% else %}
+      <p>{% if request.path|slice:":9" == "/quan-ly/" %}Trang này chỉ dành cho nhân viên nhà thuốc.{% else %}Trang này không thuộc tài khoản đang đăng nhập.{% endif %} Bạn có thể quay về trang chủ để tiếp tục mua thuốc.</p>
+      <div class="nhom-nut">
+        <a class="nut" href="{% url 'chung:trang_chu' %}"><i data-lucide="house" aria-hidden="true"></i>Về trang chủ</a>
+        <a class="nut nut-vien" href="{% url 'chung:trang_chu' %}" data-quay-lai><i data-lucide="arrow-left" aria-hidden="true"></i>Quay lại trang trước</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

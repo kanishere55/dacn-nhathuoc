@@ -1,16 +1,28 @@
-{% comment %}Một dòng hàng của phiếu kho; dùng cho dòng có sẵn và mẫu dòng mới (__prefix__).{% endcomment %}
+{% comment %}Một dòng hàng của phiếu kho; dùng cho dòng có sẵn và mẫu dòng mới (__prefix__).
+Ô "Vẫn nhận lô cận hạn" nằm trong ô hạn dùng, chỉ hiện khi lô còn ít ngày (JS) hoặc khi máy chủ báo lỗi.
+Ô data-goi-y nhận câu gợi ý do dong_phieu.js tính (quy đổi, tồn còn dùng được, còn trả được).{% endcomment %}
 {% with da_bo=dong.DELETE.value %}
 <tr class="dong-hang{% if dong.errors and not da_bo %} co-loi{% endif %}" data-dong{% if da_bo %} hidden{% endif %}>
   <td class="o-stt" data-stt aria-hidden="true"></td>
   {% for truong in dong.visible_fields %}
-    {% if truong.name != "DELETE" %}
-      <td data-nhan="{{ truong.label }}">
+    {% if truong.name != "DELETE" and truong.name != "nhan_lo_can_han" %}
+      <td data-nhan="{{ truong.label }}" data-o="{{ truong.name }}">
         <label class="sr-only" for="{{ truong.id_for_label }}">{{ truong.label }}</label>
         {{ truong }}
+        {% if truong.name == "ngay_het_han" %}
+          {% with xac_nhan=dong.nhan_lo_can_han %}
+            <label class="xac-nhan-can-han" data-xac-nhan-can-han{% if not xac_nhan.errors and not xac_nhan.value %} hidden{% endif %}>
+              {{ xac_nhan }} {{ xac_nhan.label }}
+            </label>
+            {% if xac_nhan.errors and not da_bo %}<span class="loi-o">{{ xac_nhan.errors|join:" " }}</span>{% endif %}
+          {% endwith %}
+        {% endif %}
+        <small class="goi-y-o" data-goi-y="{{ truong.name }}" aria-live="polite"></small>
         {% if truong.errors and not da_bo %}<span class="loi-o">{{ truong.errors|join:" " }}</span>{% endif %}
       </td>
     {% endif %}
   {% endfor %}
+  {% if co_thanh_tien %}<td class="o-so o-thanh-tien" data-thanh-tien data-nhan="Thành tiền">–</td>{% endif %}
   <td class="o-bo">
     {% for truong in dong.hidden_fields %}{{ truong }}{% endfor %}
     {% if dong.DELETE %}<span hidden>{{ dong.DELETE }}</span>{% endif %}

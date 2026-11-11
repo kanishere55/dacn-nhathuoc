@@ -1,0 +1,17 @@
+{# Bảng "nhãn – giá trị" (số tiền, kênh, mã giao dịch...). Biến: cac_dong_thong_tin = [(nhãn, giá trị)], tieu_de_thong_tin. #}
+{% if cac_dong_thong_tin %}
+<tr><td class="o" style="padding:20px 32px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td class="o-nhat" bgcolor="#f7f9f7" style="background-color:#f7f9f7;border:1px solid #e3e9e3;border-radius:10px;padding:6px 16px;font-family:Arial,Helvetica,sans-serif;">
+{% if tieu_de_thong_tin %}<p class="chu-phu" style="margin:8px 0 2px;font-size:13px;line-height:18px;font-weight:bold;color:#5a6a61;">{{ tieu_de_thong_tin }}</p>{% endif %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+{% for nhan, gia_tri in cac_dong_thong_tin %}
+<tr>
+<td valign="top" class="chu-phu{% if not forloop.first %} vach{% endif %}" style="padding:8px 12px 8px 0;{% if not forloop.first %}border-top:1px solid #e3e9e3;{% endif %}font-size:14px;line-height:21px;color:#5a6a61;">{{ nhan }}</td>
+<td valign="top" align="right" class="chu{% if not forloop.first %} vach{% endif %}" style="padding:8px 0;{% if not forloop.first %}border-top:1px solid #e3e9e3;{% endif %}font-size:14px;line-height:21px;font-weight:bold;color:#25372f;">{{ gia_tri }}</td>
+</tr>
+{% endfor %}
+</table>
+</td></tr></table>
+</td></tr>
+{% endif %}

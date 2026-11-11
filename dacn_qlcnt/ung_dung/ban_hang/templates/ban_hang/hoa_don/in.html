@@ -1,12 +1,12 @@
 {% extends "khung_trang.html" %}
-{% block tieu_de %}Hóa đơn {{ hd.phieu.ma_phieu_ban }}{% endblock %}
+{% block tieu_de %}{{ hd.tieu_de }} {{ hd.phieu.ma_phieu_ban }}{% endblock %}
 {% block giao_dien %}
   <div class="trang-in-hoa-don">
-    <nav class="thanh-in-hoa-don" aria-label="Thao tác hóa đơn">
+    <nav class="thanh-in-hoa-don" aria-label="Thao tác phiếu bán hàng">
       <a class="nut nut-phu" href="{{ url_quay_lai }}"><i data-lucide="arrow-left" aria-hidden="true"></i>Quay lại</a>
       <span class="khoang-trong"></span>
       <a class="nut nut-phu" href="{{ url_pdf }}?tai=1"><i data-lucide="download" aria-hidden="true"></i>Tải PDF</a>
-      <button class="nut" type="button" onclick="window.print()"><i data-lucide="printer" aria-hidden="true"></i>In hóa đơn</button>
+      <button class="nut" type="button" onclick="window.print()"><i data-lucide="printer" aria-hidden="true"></i>In phiếu bán hàng</button>
     </nav>
     <main id="noi-dung" tabindex="-1">{% include "ban_hang/hoa_don/_to_hoa_don.html" %}</main>
   </div>

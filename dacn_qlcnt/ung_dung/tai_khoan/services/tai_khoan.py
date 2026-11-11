@@ -2,11 +2,14 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, transaction
+from django.utils import timezone
 
 from ung_dung.chung.permissions import kiem_tra_quyen
 from ung_dung.chung.van_ban import cat_khoang_trang
+from ung_dung.thong_bao.services import gui_email, url_tuyet_doi
 
 from .quyen import ghi_quyen_rieng
+from .xac_thuc import bao_doi_mat_khau, bao_email_da_doi
 
 
 def tao_tai_khoan_ky_thuat(
@@ -42,11 +45,16 @@ def tao_tai_khoan_ky_thuat(
 
 @transaction.atomic
 def luu_tai_khoan(nguoi, du_lieu, doi_tuong=None):
-    """Quản trị chuỗi tạo hoặc sửa tài khoản; email do quản trị nhập coi là đã xác thực."""
+    """Quản trị chuỗi tạo hoặc sửa tài khoản; email do quản trị nhập coi là đã xác thực.
+
+    Sửa tài khoản đã có thì báo chủ tài khoản qua email: đổi email (báo email cũ), đặt mật
+    khẩu mới, khóa hoặc mở lại tài khoản.
+    """
     kiem_tra_quyen(nguoi, "tai_khoan.sua")
     model = get_user_model()
     tai_khoan = model.objects.select_for_update().get(pk=doi_tuong.pk) if doi_tuong else model()
     email_cu = tai_khoan.email
+    dang_hoat_dong_cu = tai_khoan.dang_hoat_dong
     for ten in ("ten_dang_nhap", "vai_tro", "chi_nhanh", "dang_hoat_dong", "ho_ten", "nhom_quyen"):
         if ten in du_lieu:
             setattr(tai_khoan, ten, du_lieu[ten])
@@ -74,4 +82,41 @@ def luu_tai_khoan(nguoi, du_lieu, doi_tuong=None):
     if "quyen_rieng" in du_lieu:
         # Vai trò không dùng nhóm quyền (quản trị, khách) thì xóa sạch quyền riêng.
         ghi_quyen_rieng(tai_khoan, du_lieu["quyen_rieng"] if la_noi_bo_ngoai_quan_tri else {})
+    if doi_tuong is not None:
+        _bao_thay_doi_cua_quan_tri(tai_khoan, email_cu, dang_hoat_dong_cu, bool(mat_khau))
     return tai_khoan
+
+
+def _bao_thay_doi_cua_quan_tri(tai_khoan, email_cu, dang_hoat_dong_cu, da_dat_mat_khau):
+    if email_cu and tai_khoan.email != email_cu:
+        bao_email_da_doi(tai_khoan, email_cu, boi_quan_tri=True)
+    if da_dat_mat_khau:
+        bao_doi_mat_khau(tai_khoan, "đặt lại bởi quản trị viên", boi_quan_tri=True)
+    if tai_khoan.dang_hoat_dong != dang_hoat_dong_cu and tai_khoan.email:
+        bao_trang_thai_tai_khoan(tai_khoan)
+
+
+def bao_trang_thai_tai_khoan(tai_khoan):
+    """Báo chủ tài khoản khi quản trị khóa hoặc mở lại tài khoản."""
+    mo = tai_khoan.dang_hoat_dong
+    gui_email(
+        loai_email="trang_thai_tai_khoan",
+        email_nhan=tai_khoan.email,
+        tai_khoan=tai_khoan,
+        tieu_de="Tài khoản đã được mở lại" if mo else "Tài khoản của bạn đang tạm khóa",
+        tom_tat=(
+            "Bạn đăng nhập và dùng lại bình thường."
+            if mo
+            else "Bạn tạm thời không đăng nhập được. Gọi nhà thuốc nếu cần hỗ trợ."
+        ),
+        mau="trang_thai_tai_khoan",
+        ngu_canh={
+            "ho_ten": tai_khoan.ho_ten,
+            "ten_dang_nhap": tai_khoan.ten_dang_nhap,
+            "dang_hoat_dong": mo,
+            "thoi_diem": timezone.localtime(),
+            "nut_chinh": (
+                {"nhan": "Đăng nhập", "url": url_tuyet_doi("tai_khoan:dang_nhap")} if mo else None
+            ),
+        },
+    )

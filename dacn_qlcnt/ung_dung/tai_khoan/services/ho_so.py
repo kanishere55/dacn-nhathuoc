@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from ung_dung.thong_bao.services import gui_email
+from ung_dung.thong_bao.services import gui_email, url_tuyet_doi
 
 from .xac_thuc import bao_doi_mat_khau
 
@@ -29,12 +29,17 @@ def cap_nhat_ho_so(nguoi, *, ho_ten, so_dien_thoai):
             email_nhan=tai_khoan.email,
             tai_khoan=tai_khoan,
             tieu_de="Hồ sơ tài khoản vừa được cập nhật",
+            tom_tat=f"Đã đổi {', '.join(cac_muc_doi)}. Không phải bạn? Đặt lại mật khẩu ngay.",
             mau="ho_so_da_doi",
             ngu_canh={
                 "ho_ten": tai_khoan.ho_ten,
                 "ten_dang_nhap": tai_khoan.ten_dang_nhap,
                 "cac_muc_doi": cac_muc_doi,
                 "thoi_diem": timezone.localtime(),
+                "nut_chinh": {
+                    "nhan": "Xem hồ sơ",
+                    "url": url_tuyet_doi("tai_khoan:thong_tin"),
+                },
             },
         )
     return tai_khoan

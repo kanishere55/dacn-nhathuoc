@@ -1,18 +1,28 @@
 {% extends "khung_trang.html" %}
+{% comment %}
+  Khung khu quản lý: thanh bên nhóm theo việc (menu sinh ở ung_dung/chung/dieu_huong.py theo quyền),
+  thanh trên có vị trí trang, chi nhánh đang làm việc, người dùng và nút Đăng xuất.
+  Dưới 900px thanh bên thành ngăn kéo trượt, mở bằng nút Menu, đóng bằng lớp phủ, nút X hoặc phím Esc.
+{% endcomment %}
 {% block tieu_de %}{% if tieu_de %}{{ tieu_de }} · {% endif %}{{ cua_hang.ten_thuong_hieu }} · Khu quản lý{% endblock %}
 {% block giao_dien %}
-  <div class="khung-ung-dung" x-data="{ moMenu: false }">
-    <aside class="thanh-ben" :class="{ 'dang-mo': moMenu }" aria-label="Điều hướng chính">
-      <a class="thuong-hieu" href="{% url 'chung:bang_dieu_khien' %}"><span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span><span>{{ cua_hang.ten_thuong_hieu }}<small>Khu quản lý</small></span></a>
+  <div class="khung-ung-dung" x-data="{ moMenu: false }" @resize.window="if (window.innerWidth > 900) moMenu = false" @keydown.escape.window="if (moMenu) { moMenu = false; $nextTick(() => $refs.nutMenu.focus()) }">
+    <aside class="thanh-ben" id="thanh-ben" :class="{ 'dang-mo': moMenu }" aria-label="Điều hướng chính">
+      <div class="dau-thanh-ben">
+        <a class="thuong-hieu" href="{% url 'chung:bang_dieu_khien' %}"><span class="bieu-tuong-hieu"><i data-lucide="cross" aria-hidden="true"></i></span><span>{{ cua_hang.ten_thuong_hieu }}<small>Khu quản lý</small></span></a>
+        <button class="nut-dong-menu" type="button" x-ref="nutDong" @click="moMenu = false; $nextTick(() => $refs.nutMenu.focus())" aria-label="Đóng menu"><i data-lucide="x" aria-hidden="true"></i></button>
+      </div>
       {% block menu_chinh %}
         <nav class="menu-phan-he" aria-label="Khu quản lý">
           {% for nhom in menu_nhom %}
             {% if nhom.nhan %}
               <details class="nhom-menu"{% if nhom.mo_san %} open{% endif %}>
                 <summary class="nhan-menu">{{ nhom.nhan }}<i data-lucide="chevron-down" aria-hidden="true"></i></summary>
-                {% for muc in nhom.cac_muc %}
-                  {% include "components/_muc_menu.html" with duong_dan=muc.duong_dan nhan=muc.nhan bieu_tuong=muc.bieu_tuong dang_chon=muc.dang_chon so=muc.so co_dem=muc.co_dem only %}
-                {% endfor %}
+                <div class="cac-muc-menu">
+                  {% for muc in nhom.cac_muc %}
+                    {% include "components/_muc_menu.html" with duong_dan=muc.duong_dan nhan=muc.nhan bieu_tuong=muc.bieu_tuong dang_chon=muc.dang_chon so=muc.so co_dem=muc.co_dem only %}
+                  {% endfor %}
+                </div>
               </details>
             {% else %}
               {% for muc in nhom.cac_muc %}
@@ -22,32 +32,41 @@
           {% endfor %}
         </nav>
       {% endblock %}
-      <div class="chan-menu"><i data-lucide="shield-check" aria-hidden="true"></i><span>Quản lý tập trung<br><small>Thống nhất giữa các chi nhánh</small></span></div>
     </aside>
-    <div class="vung-chinh">
+    <div class="lop-phu-menu" x-show="moMenu" x-cloak @click="moMenu = false; $nextTick(() => $refs.nutMenu.focus())" aria-hidden="true"></div>
+    <div class="vung-chinh" :inert="moMenu">
       <header class="dau-trang">
-        <div class="flex items-center gap-3">
-          <button class="nut-menu" @click="moMenu = !moMenu" :aria-expanded="moMenu" aria-label="Đóng mở điều hướng"><i data-lucide="menu" aria-hidden="true"></i></button>
-          <span class="duong-dan">Khu quản lý <span>/</span> {% block vi_tri %}Nghiệp vụ{% endblock %}</span>
+        <div class="ben-trai-dau-trang">
+          <button class="nut-menu" type="button" x-ref="nutMenu" @click="moMenu = true; $nextTick(() => $refs.nutDong.focus())" :aria-expanded="moMenu.toString()" aria-controls="thanh-ben" aria-label="Mở menu"><i data-lucide="menu" aria-hidden="true"></i></button>
+          <nav class="duong-dan" aria-label="Vị trí trang">
+            {% if nhom_dang_chon %}<span>{{ nhom_dang_chon }}</span><i data-lucide="chevron-right" aria-hidden="true"></i>{% endif %}
+            <strong>{% block vi_tri %}Nghiệp vụ{% endblock %}</strong>
+          </nav>
         </div>
         <div class="tac-vu-dau-trang">
-          <a class="lien-ket-website" href="{% url 'chung:trang_chu' %}" target="_blank" rel="noopener"><i data-lucide="external-link" aria-hidden="true"></i><span>Website</span></a>
           {% if user.is_authenticated %}
-            <a class="the-nguoi-dung" href="{% url 'tai_khoan:thong_tin' %}" title="Thông tin tài khoản">
-              <span class="anh-dai-dien">{{ user.ho_ten|default:user.ten_dang_nhap|slice:":1" }}</span>
-              <span class="ten-nguoi-dung"><strong>{{ user.ho_ten|default:user.ten_dang_nhap }}</strong><small>{{ user.get_vai_tro_display }}{% if user.chi_nhanh %} · {{ user.chi_nhanh.ten_chi_nhanh }}{% endif %}</small></span>
+            {% if user.vai_tro == "quan_tri_chuoi" %}
+              <span class="chip-chi-nhanh" title="Phạm vi làm việc: mọi chi nhánh"><i data-lucide="network" aria-hidden="true"></i><span>Toàn chuỗi</span></span>
+            {% elif user.chi_nhanh %}
+              <span class="chip-chi-nhanh" title="Chi nhánh đang làm việc: {{ user.chi_nhanh.ten_chi_nhanh }}"><i data-lucide="store" aria-hidden="true"></i><span>{{ user.chi_nhanh.ten_chi_nhanh }}</span></span>
+            {% endif %}
+          {% endif %}
+          <a class="lien-ket-website" href="{% url 'chung:trang_chu' %}" target="_blank" rel="noopener" title="Mở website bán hàng ở thẻ mới"><i data-lucide="external-link" aria-hidden="true"></i><span>Xem website</span></a>
+          {% if user.is_authenticated %}
+            <a class="the-nguoi-dung" href="{% url 'tai_khoan:thong_tin' %}" title="Thông tin tài khoản của bạn">
+              <span class="anh-nguoi-dung" aria-hidden="true">{{ user.ho_ten|default:user.ten_dang_nhap|slice:":1"|upper }}</span>
+              <span class="ten-nguoi-dung"><strong>{{ user.ho_ten|default:user.ten_dang_nhap }}</strong><small>{{ user.get_vai_tro_display }}</small></span>
             </a>
-            <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">{% csrf_token %}<button class="nut-dang-xuat" type="submit" title="Đăng xuất" aria-label="Đăng xuất"><i data-lucide="log-out" aria-hidden="true"></i></button></form>
+            <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">{% csrf_token %}<button class="nut-dang-xuat" type="submit" aria-label="Đăng xuất"><i data-lucide="log-out" aria-hidden="true"></i><span>Đăng xuất</span></button></form>
           {% else %}
             <a class="nut nut-phu" href="{% url 'tai_khoan:dang_nhap' %}">Đăng nhập</a>
           {% endif %}
         </div>
       </header>
       <main id="noi-dung" tabindex="-1">
-        {% for message in messages %}<p class="thong-bao" role="status">{{ message }}</p>{% endfor %}
+        {% include "components/_thong_bao.html" %}
         {% block noi_dung %}{% endblock %}
       </main>
-      <footer class="cuoi-trang">Hệ thống quản lý chuỗi nhà thuốc</footer>
     </div>
   </div>
 {% endblock %}

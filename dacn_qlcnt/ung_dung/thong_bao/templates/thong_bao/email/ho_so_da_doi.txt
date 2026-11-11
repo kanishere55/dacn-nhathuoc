@@ -1,6 +1,10 @@
-{% autoescape off %}Xin chào {{ ho_ten|default:ten_dang_nhap }},
+{% autoescape off %}Hồ sơ tài khoản vừa được cập nhật
 
-Thông tin hồ sơ của tài khoản {{ ten_dang_nhap }} vừa được cập nhật lúc {{ thoi_diem|date:"H:i d/m/Y" }}: {{ cac_muc_doi|join:", " }}.
+Xin chào {{ ho_ten|default:ten_dang_nhap }}, thông tin của tài khoản {{ ten_dang_nhap }} vừa được cập nhật lúc {{ thoi_diem|date:"H:i d/m/Y" }}: {{ cac_muc_doi|join:", " }}.
 
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+{{ nut_chinh.nhan }}:
+{{ nut_chinh.url }}
+
+Không phải bạn? Đặt lại mật khẩu ngay:
+{{ url_quen_mat_khau }}
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

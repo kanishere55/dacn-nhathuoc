@@ -39,37 +39,128 @@ def lay_so_du(*, nguoi=None, chi_nhanh=None, bo_qua_don=None):
     return tap_hop
 
 
-def dieu_kien_lo_hop_le():
+def dieu_kien_lo_hop_le(con_han_den=None):
+    """Lô bán được hôm nay (Q04: còn hiệu lực hết ngày hết hạn theo giờ Việt Nam).
+
+    `con_han_den`: ngày lô phải còn hạn tới, ví dụ ngày hết giữ của đơn hoặc ngày tối thiểu
+    của đơn giao hàng; không truyền thì chỉ cần còn hạn hôm nay.
+    """
+    hom_nay = timezone.localdate()
     return Q(
-        lo_thuoc__ngay_het_han__gte=timezone.localdate(),
+        lo_thuoc__ngay_het_han__gte=max(hom_nay, con_han_den or hom_nay),
         lo_thuoc__duoc_phep_ban=True,
         lo_thuoc__thuoc__dang_hoat_dong=True,
         chi_nhanh__dang_hoat_dong=True,
     )
 
 
-def lay_ton_kha_dung(**tham_so):
-    return lay_so_du(**tham_so).filter(dieu_kien_lo_hop_le())
+def lay_ton_kha_dung(*, con_han_den=None, **tham_so):
+    return lay_so_du(**tham_so).filter(dieu_kien_lo_hop_le(con_han_den))
 
 
-def loc_chi_nhanh_du_thuoc(cac_chi_nhanh, cac_dong):
+def lay_giu_mo_coi(*, chi_nhanh=None, cac_chi_nhanh=None, bo_qua_don=None):
+    """{(id chi nhánh, id thuốc): lượng} đơn còn hiệu lực đang giữ trên lô không bán được nữa.
+
+    Lô hết hạn sau khi đặt hoặc bị khóa bán thì lay_ton_kha_dung loại cả lô, nên phần giữ
+    trên lô đó không còn chắn lô khác. Đơn vẫn được hứa đủ hàng (Q03), vì vậy lượng này
+    được trừ thêm vào tổng bán được của các lô hợp lệ cùng thuốc tại chi nhánh cho tới khi
+    phần giữ được phân bổ lại (ban_hang.services.giu_hang).
+    """
+    if not apps.is_installed("ung_dung.ban_hang"):
+        return {}
+    from ung_dung.ban_hang.models import TRANG_THAI_GIU
+
+    PhanBoDonHang = apps.get_model("ban_hang", "PhanBoDonHang")
+    hom_nay = timezone.localdate()
+    tap_hop = PhanBoDonHang.objects.filter(
+        chi_tiet_don_hang__don_hang__trang_thai__in=TRANG_THAI_GIU,
+        chi_tiet_don_hang__don_hang__thoi_diem_het_giu__gt=timezone.now(),
+        ton_kho__lo_thuoc__thuoc__dang_hoat_dong=True,
+        ton_kho__chi_nhanh__dang_hoat_dong=True,
+    ).filter(
+        Q(ton_kho__lo_thuoc__ngay_het_han__lt=hom_nay) | Q(ton_kho__lo_thuoc__duoc_phep_ban=False)
+    )
+    if chi_nhanh is not None:
+        tap_hop = tap_hop.filter(ton_kho__chi_nhanh=chi_nhanh)
+    if cac_chi_nhanh is not None:
+        tap_hop = tap_hop.filter(ton_kho__chi_nhanh__in=cac_chi_nhanh)
+    if bo_qua_don:
+        tap_hop = tap_hop.exclude(chi_tiet_don_hang__don_hang=bo_qua_don)
+    return {
+        (dong["ton_kho__chi_nhanh_id"], dong["ton_kho__lo_thuoc__thuoc_id"]): dong["tong"]
+        for dong in tap_hop.order_by()
+        .values("ton_kho__chi_nhanh_id", "ton_kho__lo_thuoc__thuoc_id")
+        .annotate(tong=Sum("so_luong"))
+    }
+
+
+def luong_ban_duoc(cac_chi_nhanh, cac_thuoc, *, con_han_den=None, bo_qua_don=None):
+    """{(id chi nhánh, id thuốc): lượng còn bán được} sau khi trừ cả phần giữ mồ côi.
+
+    Lượng lấy được từ các lô đạt `con_han_den` không vượt tổng của mọi lô bán được hôm nay
+    trừ phần giữ mồ côi, để đơn giao (cần lô xa hạn) không lấy mất hàng đã hứa cho đơn khác.
+    """
+
+    def tong(con_han):
+        return {
+            (dong["chi_nhanh_id"], dong["lo_thuoc__thuoc_id"]): dong["luong"]
+            for dong in lay_ton_kha_dung(con_han_den=con_han, bo_qua_don=bo_qua_don)
+            .filter(chi_nhanh__in=cac_chi_nhanh, lo_thuoc__thuoc_id__in=cac_thuoc, kha_dung__gt=0)
+            .order_by()
+            .values("chi_nhanh_id", "lo_thuoc__thuoc_id")
+            .annotate(luong=Sum("kha_dung"))
+        }
+
+    hom_nay = tong(None)
+    du_han = tong(con_han_den) if con_han_den else hom_nay
+    mo_coi = lay_giu_mo_coi(cac_chi_nhanh=cac_chi_nhanh, bo_qua_don=bo_qua_don)
+    return {
+        khoa: max(min(du_han.get(khoa, 0), luong - mo_coi.get(khoa, 0)), 0)
+        for khoa, luong in hom_nay.items()
+    }
+
+
+def _nhu_cau(cac_dong):
     nhu_cau = {}
     for dong in cac_dong:
         ma = dong["thuoc"].pk
         nhu_cau[ma] = nhu_cau.get(ma, 0) + dong["so_luong"]
-    so_du = (
-        lay_ton_kha_dung()
-        .filter(chi_nhanh__in=cac_chi_nhanh, lo_thuoc__thuoc_id__in=nhu_cau)
-        .order_by()
-        .values("chi_nhanh_id", "lo_thuoc__thuoc_id")
-        .annotate(luong=Sum("kha_dung"))
-    )
-    bang = {(dong["chi_nhanh_id"], dong["lo_thuoc__thuoc_id"]): dong["luong"] for dong in so_du}
+    return nhu_cau
+
+
+def loc_chi_nhanh_du_thuoc(cac_chi_nhanh, cac_dong, *, con_han_den=None):
+    """Chi nhánh còn đủ toàn bộ đơn; `con_han_den` giống mốc dùng khi giữ hàng thật."""
+    nhu_cau = _nhu_cau(cac_dong)
+    bang = luong_ban_duoc(cac_chi_nhanh, nhu_cau, con_han_den=con_han_den)
     return [
         cn
         for cn in cac_chi_nhanh
         if all(bang.get((cn.pk, ma), 0) >= luong for ma, luong in nhu_cau.items())
     ]
+
+
+def thuoc_thieu(cac_chi_nhanh, cac_dong, *, con_han_den=None):
+    """Thuốc không chi nhánh nào đủ: [{thuoc, can, nhieu_nhat, chi_nhanh}], để báo khách."""
+    nhu_cau = _nhu_cau(cac_dong)
+    bang = luong_ban_duoc(cac_chi_nhanh, nhu_cau, con_han_den=con_han_den)
+    theo_ma = {dong["thuoc"].pk: dong["thuoc"] for dong in cac_dong}
+    ket_qua = []
+    for ma, can in nhu_cau.items():
+        tot_nhat = max(
+            ((bang.get((cn.pk, ma), 0), cn) for cn in cac_chi_nhanh),
+            key=lambda cap: cap[0],
+            default=(0, None),
+        )
+        if tot_nhat[0] < can:
+            ket_qua.append(
+                {
+                    "thuoc": theo_ma[ma],
+                    "can": can,
+                    "nhieu_nhat": tot_nhat[0],
+                    "chi_nhanh": tot_nhat[1],
+                }
+            )
+    return ket_qua
 
 
 def lay_bang_ton(nguoi):

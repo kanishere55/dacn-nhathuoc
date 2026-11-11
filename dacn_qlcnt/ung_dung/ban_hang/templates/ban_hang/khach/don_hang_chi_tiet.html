@@ -15,7 +15,7 @@
     {% elif duoc_xac_nhan_nhan_hang %}
       <div class="thong-diep-don thong-diep-hanh-dong">
         <i data-lucide="package-check" aria-hidden="true"></i>
-        <span>Đơn đang được giao. Khi đã nhận đủ thuốc, hãy bấm <strong>Đã nhận được hàng</strong>{% if don.phuong_thuc_thanh_toan == "cod" %} sau khi trả tiền cho người giao{% endif %}. Nếu bạn không bấm, đơn tự hoàn tất lúc <strong>{{ han_tu_hoan_thanh|date:"H:i d/m/Y" }}</strong>. Hạn trả hàng 7 ngày tính từ khi đơn hoàn tất.</span>
+        <span>Đơn đang được giao. Khi đã nhận đủ thuốc, hãy bấm <strong>Đã nhận được hàng</strong>{% if don.phuong_thuc_thanh_toan == "cod" %} sau khi trả tiền cho người giao{% endif %}. Hạn trả hàng 7 ngày tính từ khi đơn hoàn tất.</span>
         <form method="post" action="{% url 'ban_hang:khach_don_hang_da_nhan' don.pk %}" onsubmit="return confirm('Xác nhận bạn đã nhận đủ hàng của đơn {{ don.ma_don_hang }}?')">
           {% csrf_token %}<button class="nut" type="submit"><i data-lucide="check" aria-hidden="true"></i>Đã nhận được hàng</button>
         </form>

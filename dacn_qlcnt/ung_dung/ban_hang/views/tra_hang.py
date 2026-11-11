@@ -145,20 +145,26 @@ def danh_sach(request):
 @yeu_cau_quyen("tra_hang.xem")
 def chi_tiet(request, ma):
     yeu_cau = get_object_or_404(lay_yeu_cau(request.user), pk=ma)
-    goi_y = dich_vu.so_luong_nhap_lai_goi_y(yeu_cau)
+    cac_lo = dich_vu.cac_lo_da_xuat(yeu_cau) if yeu_cau.trang_thai == "cho_duyet" else {}
     return render(
         request,
         "ban_hang/tra_hang_chi_tiet.html",
         {
             "yc": yeu_cau,
             "cac_dong": [
-                (dong, goi_y.get(dong.pk, 0))
+                (dong, cac_lo.get(dong.pk, []))
                 for dong in yeu_cau.cac_dong.select_related(
                     "chi_tiet_don_hang__thuoc__don_vi_tinh"
-                ).prefetch_related("cac_phan_bo__phan_bo_phieu_ban__ton_kho__lo_thuoc")
+                ).prefetch_related(
+                    "cac_phan_bo__phan_bo_phieu_ban__ton_kho__lo_thuoc",
+                    "cac_hang_cho_huy__phan_bo_phieu_ban__ton_kho__lo_thuoc",
+                    "cac_hang_cho_huy__phieu_xuat_huy",
+                )
             ],
             "cac_anh": yeu_cau.cac_anh.only("pk", "thu_tu"),
             "duoc_xu_ly": co_quyen(request.user, "tra_hang.duyet"),
+            "duoc_huy": co_quyen(request.user, "xuat_huy.tao")
+            and yeu_cau.cac_dong.filter(cac_hang_cho_huy__trang_thai="cho_huy").exists(),
         },
     )
 
@@ -175,14 +181,17 @@ def xu_ly(request, ma, hanh_dong):
     du_lieu = form.cleaned_data
     try:
         if hanh_dong == "duyet":
-            nhap_lai = {}
-            for dong in yeu_cau.cac_dong.all():
-                gia_tri = request.POST.get(f"nhap_lai_{dong.pk}", "0").strip() or "0"
-                if not gia_tri.isdecimal() or len(gia_tri) > 6:
-                    raise ValidationError("Số lượng nhập lại kho phải là số nguyên không âm.")
-                nhap_lai[dong.pk] = int(gia_tri)
-            dich_vu.duyet(request.user, yeu_cau, du_lieu["ghi_chu"], nhap_lai=nhap_lai)
-            messages.success(request, "Đã duyệt yêu cầu, hãy hoàn tiền cho khách.")
+            phan_lo = {}
+            for ma_dong, cac_lo in dich_vu.cac_lo_da_xuat(yeu_cau).items():
+                for muc in cac_lo:
+                    ma_lo = muc["phan_bo"].pk
+                    gia_tri = request.POST.get(f"cho_huy_{ma_dong}_{ma_lo}", "").strip() or "0"
+                    if not gia_tri.isdecimal() or len(gia_tri) > 10:
+                        raise ValidationError("Số lượng theo lô phải là số nguyên không âm.")
+                    if int(gia_tri):
+                        phan_lo[(ma_dong, ma_lo)] = int(gia_tri)
+            dich_vu.duyet(request.user, yeu_cau, du_lieu["ghi_chu"], phan_lo=phan_lo)
+            messages.success(request, "Đã duyệt. Để riêng hàng trả và thực hiện hoàn tiền.")
         elif hanh_dong == "tu_choi":
             dich_vu.tu_choi(request.user, yeu_cau, du_lieu["ghi_chu"])
             messages.success(request, "Đã từ chối yêu cầu.")
@@ -198,4 +207,17 @@ def xu_ly(request, ma, hanh_dong):
             raise Http404
     except ValidationError as loi:
         messages.error(request, " ".join(loi.messages))
+    return redirect("ban_hang:tra_hang_chi_tiet", ma=ma)
+
+
+@require_POST
+@yeu_cau_quyen("xuat_huy.tao")
+def ghi_huy(request, ma):
+    yeu_cau = get_object_or_404(lay_yeu_cau(request.user), pk=ma)
+    try:
+        phieu = dich_vu.lap_phieu_huy_hang_tra(request.user, yeu_cau)
+    except ValidationError as loi:
+        messages.error(request, " ".join(loi.messages))
+        return redirect("ban_hang:tra_hang_chi_tiet", ma=ma)
+    messages.success(request, f"Đã lập phiếu {phieu.ma_phieu_xuat_huy} cho hàng khách trả.")
     return redirect("ban_hang:tra_hang_chi_tiet", ma=ma)

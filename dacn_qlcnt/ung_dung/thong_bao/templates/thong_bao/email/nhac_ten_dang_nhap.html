@@ -1,7 +1,11 @@
 {% extends "thong_bao/email/khung.html" %}
 {% block noi_dung %}
-  <p style="margin:0 0 12px;">Chúng tôi nhận được yêu cầu nhắc tên đăng nhập cho email này.</p>
-  <p style="margin:0 0 8px;">Tên đăng nhập của bạn:</p>
-  <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#116b54;">{{ ten_dang_nhap }}</p>
-  <p style="margin:18px 0;"><a href="{{ url_website }}/tai-khoan/dang-nhap/" style="display:inline-block;padding:11px 18px;border-radius:7px;background:#116b54;color:#ffffff;text-decoration:none;font-weight:bold;">Đăng nhập</a></p>
+{% include "thong_bao/email/khoi/_tieu_de.html" with tieu_de_lon="Tên đăng nhập của bạn" %}
+<tr><td class="o" style="padding:0 32px;font-family:Arial,Helvetica,sans-serif;">
+<p class="chu chu-than" style="margin:12px 0 0;font-size:15px;line-height:24px;color:#25372f;">Nhà thuốc vừa nhận yêu cầu nhắc tên đăng nhập cho email này. Tên đăng nhập của bạn là:</p>
+<p class="chu-nhan" style="margin:10px 0 0;font-size:20px;line-height:28px;font-weight:bold;color:#116b54;">{{ ten_dang_nhap }}</p>
+<p class="chu-phu" style="margin:8px 0 0;font-size:14px;line-height:21px;color:#5a6a61;">Bạn cũng có thể đăng nhập bằng chính email này.</p>
+</td></tr>
+{% include "thong_bao/email/khoi/_cap_nut.html" %}
+{% include "thong_bao/email/khoi/_canh_bao.html" with loai="ma_otp" %}
 {% endblock %}

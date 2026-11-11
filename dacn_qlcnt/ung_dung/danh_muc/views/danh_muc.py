@@ -72,6 +72,25 @@ def hien_danh_sach(request, loai):
     )
 
 
+def _gan_loi_trung(form, loi):
+    """Lỗi UNIQUE của CSDL gắn vào đúng ô bị trùng (tên ràng buộc: duy_nhat__bảng__cột...)."""
+    rang_buoc = getattr(getattr(loi.__cause__, "diag", None), "constraint_name", "") or ""
+    cac_cot = rang_buoc.split("__")[2:] if rang_buoc.startswith("duy_nhat__") else []
+    model = form._meta.model
+    theo_cot = {truong.column: truong.name for truong in model._meta.fields}
+    cac_o = [theo_cot.get(cot) for cot in cac_cot if theo_cot.get(cot) in form.fields]
+    if cac_o:
+        nhan = form.fields[cac_o[-1]].label
+        form.add_error(
+            cac_o[-1],
+            f"{nhan} này đã có ở một mục khác"
+            + (" cùng thuốc" if len(cac_cot) > 1 else "")
+            + "; hãy dùng giá trị khác.",
+        )
+    else:
+        form.add_error(None, "Dữ liệu trùng với một mục đã có hoặc vừa bị người khác thay đổi.")
+
+
 def hien_form(request, loai, ma=None):
     doi_tuong = get_object_or_404(lay_danh_muc(request.user, loai), pk=ma) if ma else None
     form = lay_form(loai)(request.POST or None, instance=doi_tuong)
@@ -80,8 +99,8 @@ def hien_form(request, loai, ma=None):
             da_luu = luu_danh_muc(request.user, loai, form.cleaned_data, doi_tuong)
         except ValidationError as loi:
             form.add_error(None, loi)
-        except IntegrityError:
-            form.add_error(None, "Mã trùng hoặc dữ liệu đã được thay đổi.")
+        except IntegrityError as loi:
+            _gan_loi_trung(form, loi)
         else:
             if not doi_tuong and loai in CO_ANH:
                 messages.success(request, "Đã tạo. Hãy thêm ảnh cho mục này ở phần bên dưới.")

@@ -1,6 +1,7 @@
 import datetime
 
 from django.contrib.gis.db.models import PointField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Now
@@ -586,6 +587,9 @@ class AnhNoiDung(AnhCSDL):
         constraints = rang_buoc_anh("anh_noi_dung")
 
 
+PHAN_TRAM_GIAM_TOI_DA = 50
+
+
 class KhuyenMai(models.Model):
     id_khuyen_mai = models.BigAutoField(
         primary_key=True,
@@ -606,9 +610,15 @@ class KhuyenMai(models.Model):
         db_column="id_thuoc",
         db_comment="Thuốc được giảm giá.",
     )
+    # Nghị định 81/2018/NĐ-CP Điều 7 (sửa đổi bởi Nghị định 128/2024/NĐ-CP): mức giảm của
+    # khuyến mại giảm giá không vượt 50% giá ngay trước thời gian khuyến mại.
     phan_tram_giam = models.SmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(PHAN_TRAM_GIAM_TOI_DA)],
         db_column="phan_tram_giam",
-        db_comment="Phần trăm giảm trên giá bán, từ 1 đến 90.",
+        db_comment=(
+            "Phần trăm giảm trên giá bán. Chương trình mới giới hạn từ 1 đến 50; "
+            "giá trị 51 đến 90 chỉ giữ cho bản ghi cũ."
+        ),
     )
     ngay_bat_dau = models.DateField(
         db_column="ngay_bat_dau", db_comment="Ngày đầu áp dụng, tính theo giờ Việt Nam."

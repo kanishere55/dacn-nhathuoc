@@ -17,8 +17,16 @@ LOAI_EMAIL = [
     ("don_hang_cap_nhat", "Cập nhật trạng thái đơn"),
     ("tra_hang", "Yêu cầu trả hàng"),
     ("xuat_hoa_don", "Yêu cầu xuất hóa đơn"),
+    ("da_nhan_tien", "Đã nhận tiền"),
+    ("cho_hoan_tien", "Chờ hoàn tiền"),
+    ("hoan_tien", "Đã hoàn tiền"),
+    ("email_da_co_tai_khoan", "Đăng ký bằng email đã có tài khoản"),
+    ("trang_thai_tai_khoan", "Khóa hoặc mở lại tài khoản"),
 ]
 TRANG_THAI = [("cho_gui", "Chờ gửi"), ("da_gui", "Đã gửi"), ("loi", "Gửi lỗi")]
+# Bản lưu bỏ mã xác thực và liên kết khôi phục dùng một lần.
+LOAI_KHONG_GUI_LAI = ("ma_xac_thuc", "email_da_doi")
+SO_LAN_GUI_TOI_DA = 5
 
 
 class NhatKyEmail(models.Model):
@@ -55,6 +63,42 @@ class NhatKyEmail(models.Model):
             "trước khi lưu."
         ),
     )
+    noi_dung_html = models.TextField(
+        null=True,
+        blank=True,
+        db_column="noi_dung_html",
+        db_comment=(
+            "Bản HTML đúng như đã gửi (mã OTP đã che) để xem lại và gửi lại; NULL với thư "
+            "tạo trước khi hệ thống lưu bản HTML."
+        ),
+    )
+    don_hang = models.ForeignKey(
+        "ban_hang.DonHang",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        db_column="id_don_hang",
+        db_comment=(
+            "Đơn hàng mà thư nói tới; dùng giới hạn nhật ký theo chi nhánh và dựng lại hóa "
+            "đơn khi gửi lại. NULL với thư tài khoản."
+        ),
+    )
+    co_dinh_kem_hoa_don = models.BooleanField(
+        default=False,
+        db_default=False,
+        db_column="co_dinh_kem_hoa_don",
+        db_comment=(
+            "TRUE khi thư kèm hóa đơn bán lẻ PDF của đơn; tệp dựng từ phiếu bán lúc gửi, "
+            "không lưu tệp."
+        ),
+    )
+    so_lan_gui = models.SmallIntegerField(
+        default=1,
+        db_default=1,
+        db_column="so_lan_gui",
+        db_comment="Số lần đã thử gửi thư, gồm lần đầu và các lần gửi lại; từ 1 đến 5.",
+    )
     trang_thai = models.TextField(
         choices=TRANG_THAI,
         db_default="cho_gui",
@@ -78,6 +122,12 @@ class NhatKyEmail(models.Model):
         db_column="thoi_diem_gui",
         db_comment="Thời điểm máy chủ SMTP nhận email; NULL khi chưa gửi được.",
     )
+    thoi_diem_thu_lai = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_column="thoi_diem_thu_lai",
+        db_comment="Thời điểm giữ lượt gửi lại gần nhất; NULL nếu thư mới thử gửi lần đầu.",
+    )
 
     class Meta:
         db_table = BANG
@@ -88,7 +138,11 @@ class NhatKyEmail(models.Model):
         indexes = [
             models.Index(
                 fields=["thoi_diem_tao"], name=ten_rang_buoc("chi_muc", BANG, "thoi_diem_tao")
-            )
+            ),
+            models.Index(
+                fields=["trang_thai", "thoi_diem_tao"],
+                name=ten_rang_buoc("chi_muc", BANG, "trang_thai", "thoi_diem_tao"),
+            ),
         ]
         constraints = [
             models.CheckConstraint(
@@ -102,6 +156,15 @@ class NhatKyEmail(models.Model):
             *rang_buoc_van_ban(BANG, "email_nhan", dinh_dang=EMAIL),
             *rang_buoc_van_ban(BANG, "tieu_de"),
             *rang_buoc_van_ban(BANG, "noi_dung_van_ban", nhieu_dong=True),
+            *rang_buoc_van_ban(BANG, "noi_dung_html", nhieu_dong=True),
+            models.CheckConstraint(
+                condition=Q(co_dinh_kem_hoa_don=False) | Q(don_hang__isnull=False),
+                name=ten_rang_buoc("kiem_tra", BANG, "dinh_kem_can_don_hang"),
+            ),
+            models.CheckConstraint(
+                condition=Q(so_lan_gui__gte=1, so_lan_gui__lte=SO_LAN_GUI_TOI_DA),
+                name=ten_rang_buoc("kiem_tra", BANG, "so_lan_gui_hop_le"),
+            ),
             *rang_buoc_van_ban(BANG, "chi_tiet_loi", rong=True),
             models.CheckConstraint(
                 condition=(
@@ -119,3 +182,19 @@ class NhatKyEmail(models.Model):
 
     def __str__(self):
         return f"{self.get_loai_email_display()} → {self.email_nhan}"
+
+    @property
+    def ly_do_khong_gui_lai(self):
+        """Câu giải thích vì sao thư này không gửi lại được; rỗng khi gửi lại được."""
+        if self.loai_email == "ma_xac_thuc":
+            return (
+                "Thư mã xác thực không gửi lại được vì hệ thống không lưu mã. "
+                "Người dùng bấm “Gửi lại mã” trên trang nhập mã để nhận mã mới."
+            )
+        if self.loai_email == "email_da_doi":
+            return "Thư bảo mật không gửi lại được từ nhật ký vì liên kết khôi phục đã được ẩn."
+        if not self.noi_dung_html:
+            return "Thư tạo trước khi hệ thống lưu bản trình bày nên không gửi lại được."
+        if self.so_lan_gui >= SO_LAN_GUI_TOI_DA:
+            return f"Đã thử gửi {SO_LAN_GUI_TOI_DA} lần. Kiểm tra cấu hình thư trước khi thử tiếp."
+        return ""

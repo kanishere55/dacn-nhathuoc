@@ -79,22 +79,127 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Hiện dần các khối khi cuộn tới (trang khách); tắt khi người dùng chọn giảm chuyển động.
+// Nút X trên thông báo sau thao tác (components/_thong_bao.html): ẩn thông báo, không gửi gì lên máy chủ.
+document.addEventListener('click', (suKien) => {
+  const nut = suKien.target.closest('[data-dong-thong-bao]');
+  if (nut) nut.closest('[data-thong-bao]')?.remove();
+});
+
+// Menu thả xuống dạng <details data-menu-tha> (menu tài khoản khách): đóng khi bấm ra ngoài hoặc nhấn Esc.
+document.addEventListener('click', (suKien) => {
+  document.querySelectorAll('details[data-menu-tha][open]').forEach((menu) => {
+    if (!menu.contains(suKien.target)) menu.open = false;
+  });
+});
+document.addEventListener('keydown', (suKien) => {
+  if (suKien.key !== 'Escape') return;
+  document.querySelectorAll('details[data-menu-tha][open]').forEach((menu) => {
+    menu.open = false;
+    menu.querySelector('summary')?.focus();
+  });
+});
+
+// Liên kết data-quay-lai: về trang trước trong cùng website; không có trang trước thì đi theo href.
+document.addEventListener('click', (suKien) => {
+  const lienKet = suKien.target.closest('a[data-quay-lai]');
+  if (!lienKet || window.history.length < 2) return;
+  try {
+    if (new URL(document.referrer).origin !== window.location.origin) return;
+  } catch (_) {
+    return;
+  }
+  suKien.preventDefault();
+  window.history.back();
+});
+
+// Hộp thoại xác nhận dùng chung (components/_hop_thoai.html) cho form hoặc nút có data-xac-nhan.
+// Chặn ở pha bắt (capture) nên chạy trước HTMX và mọi xử lý gửi form khác; đồng ý thì gửi lại đúng nút đã bấm.
 (() => {
-  if (!('IntersectionObserver' in window)) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const cacKhoi = document.querySelectorAll('.noi-dung-khach .muc-khach, .noi-dung-khach .luoi-thuoc-khach > *');
-  if (!cacKhoi.length) return;
-  document.documentElement.classList.add('hieu-ung-cuon');
-  const quanSat = new IntersectionObserver((cacMuc) => {
-    cacMuc.forEach((muc) => {
-      if (!muc.isIntersecting) return;
-      muc.target.classList.add('da-hien');
-      quanSat.unobserve(muc.target);
+  const hop = document.getElementById('hop-thoai-xac-nhan');
+  if (!hop || typeof hop.showModal !== 'function') return; // Trình duyệt quá cũ: form gửi thẳng như trước.
+  const tieuDe = hop.querySelector('[data-tieu-de]');
+  const noiDung = hop.querySelector('[data-noi-dung]');
+  const nutDongY = hop.querySelector('[data-nut-dong-y]');
+  const nutHuy = hop.querySelector('[data-nut-huy]');
+  let dangCho = null;
+
+  document.addEventListener('submit', (suKien) => {
+    const form = suKien.target;
+    if (!(form instanceof HTMLFormElement) || form.method === 'dialog') return;
+    const nut = suKien.submitter;
+    const nguon = nut?.hasAttribute('data-xac-nhan') ? nut : form;
+    const cauHoi = nguon.getAttribute('data-xac-nhan');
+    if (!cauHoi) return;
+    if (form.dataset.daXacNhan === '1') {
+      delete form.dataset.daXacNhan;
+      return;
+    }
+    suKien.preventDefault();
+    suKien.stopPropagation();
+    dangCho = { form, nut };
+    tieuDe.textContent = nguon.dataset.xacNhanTieuDe || 'Xác nhận thao tác';
+    noiDung.textContent = cauHoi;
+    nutDongY.textContent = nguon.dataset.xacNhanNut || nut?.textContent.trim() || nut?.value || 'Đồng ý';
+    const nguyHiem = nguon.dataset.xacNhanKieu === 'nguy-hiem';
+    hop.dataset.kieu = nguyHiem ? 'nguy-hiem' : 'thuong';
+    nutDongY.classList.toggle('nut-nguy-hiem', nguyHiem);
+    hop.returnValue = '';
+    hop.showModal();
+    nutHuy.focus();
+  }, true);
+
+  hop.addEventListener('close', () => {
+    const cho = dangCho;
+    dangCho = null;
+    if (!cho || hop.returnValue !== 'dong-y') {
+      cho?.nut?.focus();
+      return;
+    }
+    cho.form.dataset.daXacNhan = '1';
+    const nut = cho.nut && cho.nut.form === cho.form ? cho.nut : null;
+    if (typeof cho.form.requestSubmit === 'function') cho.form.requestSubmit(nut);
+    else cho.form.submit();
+  });
+})();
+
+// Chống gửi trùng cho form data-gui-mot-lan: sau khi gửi, nút đã bấm hiện vòng xoay và mọi nút gửi bị khóa.
+// Mở lại khi HTMX trả kết quả, khi quay lại trang bằng nút Back, hoặc sau 15 giây (ví dụ form tải tệp về máy).
+(() => {
+  const khoa = (form, nut, bat) => {
+    form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]').forEach((n) => {
+      n.disabled = bat;
     });
-  }, { rootMargin: '0px 0px -40px 0px', threshold: 0.05 });
-  cacKhoi.forEach((khoi, i) => {
-    khoi.style.setProperty('--tre', `${(i % 4) * 60}ms`);
-    quanSat.observe(khoi);
+    if (nut) {
+      if (bat) nut.setAttribute('aria-busy', 'true');
+      else nut.removeAttribute('aria-busy');
+    }
+    if (bat) form.dataset.dangGui = '1';
+    else delete form.dataset.dangGui;
+  };
+  document.addEventListener('submit', (suKien) => {
+    const form = suKien.target;
+    if (!(form instanceof HTMLFormElement) || !form.matches('[data-gui-mot-lan]')) return;
+    if (form.dataset.dangGui === '1') {
+      suKien.preventDefault();
+      return;
+    }
+    const nut = suKien.submitter;
+    const laHtmx = form.matches('[hx-post], [hx-put], [hx-get], [data-hx-post]');
+    // Đợi mọi xử lý khác chạy xong: form bị chặn (kiểm tra lỗi) thì không khóa nút.
+    setTimeout(() => {
+      if (suKien.defaultPrevented && !laHtmx) return;
+      khoa(form, nut, true);
+      form._moLai = setTimeout(() => khoa(form, nut, false), 15000);
+    }, 0);
+  });
+  const moLaiTatCa = () => {
+    document.querySelectorAll('form[data-dang-gui="1"]').forEach((form) => {
+      clearTimeout(form._moLai);
+      khoa(form, form.querySelector('[aria-busy="true"]'), false);
+    });
+  };
+  document.addEventListener('htmx:afterRequest', moLaiTatCa);
+  window.addEventListener('pageshow', (suKien) => {
+    if (suKien.persisted) moLaiTatCa();
   });
 })();

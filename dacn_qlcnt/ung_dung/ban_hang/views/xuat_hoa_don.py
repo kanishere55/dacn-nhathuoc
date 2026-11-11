@@ -47,8 +47,6 @@ def danh_sach(request):
         {
             **loc.ngu_canh(lay_yeu_cau_xuat_hoa_don(request.user)),
             "duoc_xu_ly": co_quyen(request.user, "hoa_don_cong_ty.xu_ly"),
-            # Mỗi dòng có một form; bỏ id tự sinh để không trùng id trên trang.
-            "form_xu_ly": XuLyXuatHoaDonForm(auto_id=False),
         },
     )
 
@@ -59,14 +57,17 @@ def xu_ly(request, ma):
     yeu_cau = get_object_or_404(lay_yeu_cau_xuat_hoa_don(request.user), pk=ma)
     form = XuLyXuatHoaDonForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Chọn kết quả và ghi số hóa đơn hoặc lý do từ chối.")
+        for loi in form.errors.values():
+            messages.error(request, " ".join(loi))
         return redirect("ban_hang:xuat_hoa_don_danh_sach")
     try:
         xu_ly_yeu_cau_xuat_hoa_don(
             request.user,
             yeu_cau,
             form.cleaned_data["trang_thai"],
-            form.cleaned_data["ghi_chu_xu_ly"],
+            ky_hieu_hoa_don=form.cleaned_data["ky_hieu_hoa_don"],
+            so_hoa_don=form.cleaned_data["so_hoa_don"],
+            ly_do_tu_choi=form.cleaned_data["ly_do_tu_choi"],
         )
     except ValidationError as loi:
         messages.error(request, " ".join(loi.messages))

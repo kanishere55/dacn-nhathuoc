@@ -1,7 +1,9 @@
-"""Hóa đơn bán lẻ của phiếu bán: dữ liệu chung cho trang in, PDF và email.
+"""Phiếu bán hàng (chứng từ nội bộ) của phiếu bán: dữ liệu chung cho trang in, PDF và email.
 
-Đây là chứng từ bán hàng nội bộ của nhà thuốc, không thay thế hóa đơn điện tử theo
-Nghị định 123/2020/NĐ-CP (sửa đổi bởi Nghị định 70/2025/NĐ-CP).
+Đây là chứng từ bán hàng nội bộ của nhà thuốc, không phải hóa đơn điện tử. Theo Nghị định
+123/2020/NĐ-CP (sửa đổi bởi Nghị định 70/2025/NĐ-CP), người bán lập hóa đơn cho mỗi lần bán
+tại thời điểm giao hàng, không chờ khách yêu cầu; hóa đơn điện tử phát hành trên phần mềm
+hóa đơn của nhà thuốc. Khi đơn có hóa đơn công ty đã xuất, chứng từ ghi ký hiệu và số.
 """
 
 from collections import OrderedDict
@@ -16,13 +18,14 @@ from ung_dung.chung.phong_pdf import dang_ky_phong_pdf
 from ung_dung.thanh_toan.models import GiaoDichThanhToan
 from ung_dung.thong_bao.services import ten_thuong_hieu
 
-from .models import ChiTietPhieuBan, PhanBoPhieuBan, PhieuBan, PhieuHoanKho
+from .models import ChiTietPhieuBan, PhanBoPhieuBan, PhieuBan, PhieuHoanKho, YeuCauXuatHoaDon
 
 CHU_SO = ("không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
 TEN_NHOM = ("", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ")
+TIEU_DE_CHUNG_TU = "Phiếu bán hàng"
 GHI_CHU_PHAP_LY = (
-    "Chứng từ bán hàng nội bộ của nhà thuốc, không thay thế hóa đơn điện tử. "
-    "Cần hóa đơn điện tử, vui lòng liên hệ nhà thuốc."
+    "Phiếu bán hàng là chứng từ nội bộ của nhà thuốc, không phải hóa đơn điện tử. "
+    "Hóa đơn điện tử được nhà thuốc lập cho mỗi lần bán theo quy định về hóa đơn, chứng từ."
 )
 
 
@@ -147,6 +150,13 @@ def du_lieu_hoa_don(phieu):
     cac_khoan = list(giao_dich.order_by("thoi_diem_hoan_tat", "pk"))
     da_thu = sum((k.so_tien for k in cac_khoan if k.loai_giao_dich == "thu"), Decimal(0))
     da_hoan = sum((k.so_tien for k in cac_khoan if k.loai_giao_dich == "hoan"), Decimal(0))
+    cod_cho_doi_soat = (
+        don.cac_giao_dich.filter(loai_giao_dich="thu", phuong_thuc="cod", trang_thai="cho")
+        .values_list("so_tien", flat=True)
+        .first()
+        if don and don.trang_thai == "hoan_thanh"
+        else None
+    )
     return {
         "phieu": phieu,
         "don": don,
@@ -160,10 +170,21 @@ def du_lieu_hoa_don(phieu):
         "tong": tong,
         "bang_chu": doc_tien(tong["tong"]),
         "cac_khoan": cac_khoan,
-        "con_phai_thu": Decimal(0) if da_hoan else max(tong["tong"] - da_thu, Decimal(0)),
+        "con_phai_thu": (
+            Decimal(0)
+            if da_hoan or (don and don.trang_thai in ("da_huy", "het_han", "giao_that_bai"))
+            else max(tong["tong"] - da_thu - (cod_cho_doi_soat or 0), Decimal(0))
+        ),
+        "cod_cho_doi_soat": cod_cho_doi_soat,
         "da_hoan": da_hoan,
         "da_hoan_kho": PhieuHoanKho.objects.filter(phieu_ban=phieu).exists(),
         "ghi_chu_phap_ly": GHI_CHU_PHAP_LY,
+        "tieu_de": TIEU_DE_CHUNG_TU,
+        "hoa_don_cong_ty": (
+            YeuCauXuatHoaDon.objects.filter(don_hang=don, trang_thai="da_xuat").first()
+            if don
+            else None
+        ),
     }
 
 
@@ -215,7 +236,7 @@ def ve_pdf(du_lieu):
         rightMargin=16 * mm,
         topMargin=14 * mm,
         bottomMargin=14 * mm,
-        title=f"Hóa đơn {phieu.ma_phieu_ban}",
+        title=f"{TIEU_DE_CHUNG_TU} {phieu.ma_phieu_ban}",
         author=du_lieu["ten_thuong_hieu"],
     )
     rong = A4[0] - 32 * mm
@@ -231,7 +252,7 @@ def ve_pdf(du_lieu):
                     p(lien_he, nho),
                 ],
                 [
-                    p("HÓA ĐƠN BÁN LẺ", tieu_de),
+                    p(TIEU_DE_CHUNG_TU.upper(), tieu_de),
                     p(f"Số: {phieu.ma_phieu_ban}", phai),
                     p(du_lieu["thoi_diem"].strftime("Ngày %d/%m/%Y lúc %H:%M"), phai),
                 ],
@@ -343,13 +364,30 @@ def ve_pdf(du_lieu):
         )
     if du_lieu["con_phai_thu"]:
         noi_dung.append(p(f"Còn phải thu: {_tien(du_lieu['con_phai_thu'])}", dam))
+    if du_lieu["cod_cho_doi_soat"]:
+        noi_dung.append(p(f"Thu hộ khi giao: {_tien(du_lieu['cod_cho_doi_soat'])}.", nho))
     if phieu.da_kiem_tra_don_thuoc:
         noi_dung += [
             Spacer(1, 3 * mm),
             p(
                 f"Bán theo đơn của {phieu.ten_nguoi_ke_don}, {phieu.noi_kham_benh}"
+                + (
+                    f", kê ngày {phieu.ngay_ke_don:%d/%m/%Y} cho {phieu.ho_ten_nguoi_benh}"
+                    if phieu.ngay_ke_don
+                    else ""
+                )
                 + (f", mã đơn {phieu.ma_don_thuoc}" if phieu.ma_don_thuoc else "")
                 + ".",
+                nho,
+            ),
+        ]
+    hoa_don = du_lieu["hoa_don_cong_ty"]
+    if hoa_don:
+        noi_dung += [
+            Spacer(1, 3 * mm),
+            p(
+                f"Đã xuất hóa đơn điện tử ký hiệu {hoa_don.ky_hieu_hoa_don}, số "
+                f"{hoa_don.so_hoa_don} cho {hoa_don.ten_cong_ty} (MST {hoa_don.ma_so_thue}).",
                 nho,
             ),
         ]

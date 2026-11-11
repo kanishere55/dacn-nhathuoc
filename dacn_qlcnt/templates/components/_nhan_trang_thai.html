@@ -1,1 +1,6 @@
-<span class="nhan-trang-thai">{{ nhan }}</span>
+{% comment %}
+  Nhãn trạng thái. Biến: nhan (chữ hiện), muc (một trong: thanh-cong, canh-bao, loi, thong-tin, trung-tinh;
+  mặc định trung-tinh). Gợi ý nhóm nghĩa: việc nhà thuốc cần làm → canh-bao; chờ bên khác → thong-tin;
+  đã xong → thanh-cong; đã hủy/đóng → trung-tinh; thất bại → loi. Màu chỉ là tín hiệu phụ: chữ phải tự nói rõ.
+{% endcomment %}
+<span class="nhan-trang-thai nhan-{{ muc|default:'trung-tinh' }}">{{ nhan }}</span>

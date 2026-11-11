@@ -1,1 +1,25 @@
-<dialog id="{{ ma_hop_thoai }}" aria-labelledby="{{ ma_hop_thoai }}-tieu-de"><h2 id="{{ ma_hop_thoai }}-tieu-de">{{ tieu_de }}</h2><p>{{ thong_diep }}</p><form method="dialog">{% include "components/_nut.html" with loai="submit" nhan="Đóng" %}</form></dialog>
+{% comment %}
+  Hộp thoại xác nhận dùng chung cho thao tác không hoàn tác (CB-07). khung_trang.html đặt sẵn một hộp
+  trên mọi trang; giao_dien.js mở hộp khi gửi form (hoặc bấm nút) có thuộc tính:
+    data-xac-nhan="Câu hỏi, nêu rõ hậu quả"            (bắt buộc)
+    data-xac-nhan-tieu-de="Lưu phiếu nhập?"             (tùy chọn, mặc định "Xác nhận thao tác")
+    data-xac-nhan-nut="Lưu phiếu"                       (tùy chọn, mặc định lấy chữ trên nút đã bấm)
+    data-xac-nhan-kieu="nguy-hiem"                      (tùy chọn: nút đỏ, biểu tượng cảnh báo)
+  Bấm "Quay lại kiểm tra" hoặc Esc thì không gửi gì. Tắt JS thì form gửi thẳng như cũ.
+  Biến khi include: ma_hop_thoai, tieu_de, thong_diep, nhan_dong_y (đều có mặc định).
+{% endcomment %}
+{% with ma=ma_hop_thoai|default:"hop-thoai-xac-nhan" %}
+<dialog class="hop-thoai" id="{{ ma }}" aria-labelledby="{{ ma }}-tieu-de" aria-describedby="{{ ma }}-noi-dung" data-hop-thoai-xac-nhan>
+  <form method="dialog">
+    <div class="than-hop-thoai">
+      <span class="bieu-tuong-hop-thoai" aria-hidden="true"><i data-lucide="circle-help" data-khi="thuong"></i><i data-lucide="triangle-alert" data-khi="nguy-hiem"></i></span>
+      <h2 id="{{ ma }}-tieu-de" data-tieu-de>{{ tieu_de|default:"Xác nhận thao tác" }}</h2>
+      <p id="{{ ma }}-noi-dung" data-noi-dung>{{ thong_diep }}</p>
+    </div>
+    <div class="chan-hop-thoai">
+      <button class="nut nut-vien" type="submit" value="huy" data-nut-huy>Quay lại kiểm tra</button>
+      <button class="nut" type="submit" value="dong-y" data-nut-dong-y>{{ nhan_dong_y|default:"Đồng ý" }}</button>
+    </div>
+  </form>
+</dialog>
+{% endwith %}

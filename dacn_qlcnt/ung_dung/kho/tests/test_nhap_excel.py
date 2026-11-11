@@ -52,7 +52,7 @@ class NhapExcelTests(TestCase):
         _, cac_loi = doc_tep_nhap(
             tep_xlsx(
                 ["KHONG-CO", "LO-A", date(2030, 1, 1), 1, "", 1],
-                ["THUOC1", "lo a", date(2030, 1, 1), 1, "", 1],
+                ["THUOC1", "LO/A", date(2030, 1, 1), 1, "", 1],
                 ["THUOC1", "LO-C", date(2030, 1, 1), 1.5, "", 1],
             )
         )

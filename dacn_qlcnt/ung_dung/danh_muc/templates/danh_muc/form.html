@@ -13,10 +13,15 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">DANH MỤC</p>
     <h1>{% if doi_tuong %}Sửa {{ tieu_de|lower }}: {{ doi_tuong }}{% else %}Thêm {{ tieu_de|lower }}{% endif %}</h1>
+    {% if form.huong_dan %}<p>{{ form.huong_dan }}</p>{% endif %}
   </header>
   <form method="post" class="form-chinh form-danh-muc">
     {% csrf_token %}
-    {{ form.non_field_errors }}
+    {% if form.non_field_errors %}
+      <div class="thong-bao thong-bao-loi" role="alert">{% for loi in form.non_field_errors %}<p>{{ loi }}</p>{% endfor %}</div>
+    {% elif form.errors %}
+      <div class="thong-bao thong-bao-loi" role="alert"><p>Chưa lưu được: xem lời nhắc màu đỏ ở các ô bên dưới.</p></div>
+    {% endif %}
     {% for tieu_de_nhom, cac_truong in form.cac_nhom %}
       <fieldset class="khoi-trang nhom-form">
         {% if tieu_de_nhom %}<legend>{{ tieu_de_nhom }}</legend>{% endif %}

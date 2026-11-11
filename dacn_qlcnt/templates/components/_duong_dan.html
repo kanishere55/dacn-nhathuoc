@@ -1,0 +1,11 @@
+{% comment %}
+  Đường dẫn vị trí trong trang (breadcrumb). Biến: cac_muc — danh sách cặp (nhãn, url); mục cuối là trang
+  hiện tại, url để trống. Ví dụ view truyền: [("Đơn hàng", reverse(...)), (don.ma_don_hang, "")].
+{% endcomment %}
+<nav class="duong-dan-trang" aria-label="Đường dẫn trang">
+  <ol>
+    {% for nhan, url in cac_muc %}
+      <li>{% if url and not forloop.last %}<a href="{{ url }}">{{ nhan }}</a>{% else %}<span>{{ nhan }}</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</nav>

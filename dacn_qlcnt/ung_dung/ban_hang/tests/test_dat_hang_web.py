@@ -5,6 +5,7 @@ from unittest import mock
 from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 from ung_dung.tai_khoan.models import DiaChiGiaoHang
@@ -22,7 +23,7 @@ def quang_duong(met):
 class DatHangWebTests(TestCase):
     def setUp(self):
         self.d = tao_du_lieu()
-        tao_ton(self.d, luong=30)
+        tao_ton(self.d, ngay=60, luong=30)
         self.client.force_login(self.d.khach)
         self.dia_chi = DiaChiGiaoHang.objects.create(
             tai_khoan=self.d.khach,
@@ -137,7 +138,7 @@ class DatHangWebTests(TestCase):
         don = DonHang.objects.get()
         self.assertEqual((don.hinh_thuc_nhan, don.trang_thai), ("nhan_tai_quay", "dang_giu"))
 
-        self.client.force_login(self.d.nv)
+        self.client.force_login(self.d.ql)
         url = reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "nhan_tai_quay"])
         trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
         self.assertContains(trang, "Bác sĩ kê đơn")
@@ -149,6 +150,8 @@ class DatHangWebTests(TestCase):
                 "da_kiem_tra_don_thuoc": "on",
                 "ten_nguoi_ke_don": "BS. Lê Minh",
                 "noi_kham_benh": "Bệnh viện Nhân dân 115",
+                "ho_ten_nguoi_benh": "Nguyễn Văn An",
+                "ngay_ke_don": timezone.localdate().isoformat(),
                 "phuong_thuc_thanh_toan": "chuyen_khoan",
             },
         )
@@ -168,6 +171,21 @@ class DatHangWebTests(TestCase):
         )
         self.assertContains(phan_hoi, "Chi nhánh đã chọn không còn đáp ứng")
         self.assertFalse(DonHang.objects.exists())
+
+    def test_tong_tien_doi_phai_xac_nhan_lai(self):
+        self.them_gio(1)
+        lua_chon = {"hinh_thuc_nhan": "nhan_tai_quay", "chi_nhanh": self.d.cn.pk}
+        url = reverse("ban_hang:dat_hang")
+        self.assertContains(self.client.get(url, lua_chon), 'name="tong_da_xem" value="2000"')
+        self.d.thuoc.gia_ban = 2500
+        self.d.thuoc.save(update_fields=["gia_ban"])
+        phan_hoi = self.client.post(url, {**lua_chon, "tong_da_xem": 2000})
+        self.assertContains(phan_hoi, "Tổng tiền vừa thay đổi")
+        self.assertContains(phan_hoi, 'name="tong_da_xem" value="2500"')
+        self.assertFalse(DonHang.objects.exists())
+        self.assertTrue(self.client.session.get("gio_hang"))
+        self.assertEqual(self.client.post(url, {**lua_chon, "tong_da_xem": 2500}).status_code, 302)
+        self.assertEqual(DonHang.objects.get().tong_thanh_toan, 2500)
 
     def test_khach_huy_don_dang_giu_va_lich_su(self):
         self.them_gio(1)
@@ -212,13 +230,17 @@ class DatHangWebTests(TestCase):
         don.refresh_from_db()
         self.assertEqual(don.trang_thai, "dang_giao")
         trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
-        self.assertContains(trang, "hệ thống tự hoàn thành lúc")
+        self.assertContains(trang, "Kiểm tra kết quả giao sau")
         self.client.force_login(self.d.khach)
         trang = self.client.get(reverse("ban_hang:khach_don_hang_chi_tiet", args=[don.pk]))
         self.assertContains(trang, "Đã nhận được hàng")
         self.client.post(reverse("ban_hang:khach_don_hang_da_nhan", args=[don.pk]))
         don.refresh_from_db()
         self.assertEqual(don.trang_thai, "hoan_thanh")
+        self.assertEqual(don.trang_thai_thanh_toan, "chua_thanh_toan")
+        self.client.force_login(self.d.ql)
+        self.client.post(reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "da_thu_cod"]))
+        don.refresh_from_db()
         self.assertEqual(don.trang_thai_thanh_toan, "da_thanh_toan")
         # Nhân viên chi nhánh khác không thấy đơn.
         self.client.force_login(self.d.ql2)
@@ -279,6 +301,8 @@ class HoaDonTests(TestCase):
         phan_hoi = self.client.get(url)
         self.assertContains(phan_hoi, "Hai mươi lăm nghìn đồng")
         self.assertContains(phan_hoi, "Lô L01")
+        self.assertContains(phan_hoi, "Thu hộ khi giao")
+        self.assertNotContains(phan_hoi, "Còn phải thu")
         pdf = self.client.get(reverse("ban_hang:khach_hoa_don_pdf", args=[don.pk]) + "?tai=1")
         self.assertEqual(pdf["Content-Type"], "application/pdf")
         self.assertIn("attachment", pdf["Content-Disposition"])
@@ -315,16 +339,18 @@ class HangThanhVienTests(TestCase):
         DonHang.objects.filter(pk=cu.pk).update(
             trang_thai="hoan_thanh", tien_hang=3_200_000, tong_thanh_toan=3_200_000
         )
+        cu.cac_dong.update(gia_niem_yet=3_200_000, don_gia=3_200_000)
         hang = hang_cua(d.khach)
         self.assertEqual((hang["ten"], hang["phan_tram"], hang["hang_sau"]), ("Bạc", 3, "Vàng"))
         don = dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 100}])
         self.assertEqual(
             (don.tien_hang, don.giam_gia_thanh_vien, don.tong_thanh_toan), (200000, 6000, 194000)
         )
+        self.client.force_login(d.khach)
+        self.assertContains(self.client.get(reverse("tai_khoan:cua_toi")), "Bạc")
         d.thuoc.la_thuoc_ke_don = True
         d.thuoc.save()
         don_ke_don = dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 10}])
+        self.assertEqual(hang_cua(d.khach)["ten"], "Thành viên")
         self.assertEqual(don_ke_don.giam_gia_thanh_vien, 0)
-        self.client.force_login(d.khach)
-        self.assertContains(self.client.get(reverse("tai_khoan:cua_toi")), "Bạc")
         self.assertTrue(LichSuDonHang.objects.exists() and timezone.now())

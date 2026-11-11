@@ -1,12 +1,22 @@
+import re
+
 from django.db.models import Case, Count, DecimalField, F, IntegerField, Q, Sum, When
 from django.db.models.functions import Now
+from django.utils import timezone
 
 from ung_dung.chung.permissions import thay_toan_chuoi
 from ung_dung.danh_muc.models import Thuoc
 from ung_dung.danh_muc.selectors import them_gia_va_anh
 
 from .gio_hang import KHOA_GIO
-from .models import TRANG_THAI_GIU, ChiTietPhieuBan, DonHang, PhieuBan, YeuCauXuatHoaDon
+from .models import (
+    TRANG_THAI_GIU,
+    ChiTietPhieuBan,
+    DonHang,
+    PhanBoPhieuBan,
+    PhieuBan,
+    YeuCauXuatHoaDon,
+)
 
 
 def lay_gio(phien):
@@ -48,6 +58,29 @@ def tom_tat_gio(cac_dong):
     }
 
 
+def chuan_hoa_so_dien_thoai(chuoi):
+    """'+84 912 345 678' hoặc '0912.345.678' thành '0912345678'; chuỗi khác giữ nguyên."""
+    gon = re.sub(r"[\s.()-]", "", chuoi or "")
+    if re.fullmatch(r"\+?84[0-9]{8,10}", gon):
+        gon = "0" + gon.lstrip("+")[2:]
+    return gon if re.fullmatch(r"[0-9]{3,11}", gon) else chuoi
+
+
+def tim_don(tap_hop, tu_khoa):
+    """Tìm đơn theo mã, tên khách, SĐT người nhận hoặc SĐT tài khoản khách.
+
+    Đơn nhận tại quầy không có SĐT người nhận nên phải tìm cả SĐT của tài khoản khách.
+    """
+    so = chuan_hoa_so_dien_thoai(tu_khoa)
+    return tap_hop.filter(
+        Q(ma_don_hang__icontains=tu_khoa)
+        | Q(khach_hang__ten_dang_nhap__icontains=tu_khoa)
+        | Q(khach_hang__ho_ten__icontains=tu_khoa)
+        | Q(so_dien_thoai_nhan__icontains=so)
+        | Q(khach_hang__so_dien_thoai__icontains=so)
+    )
+
+
 def lay_don(nguoi, *, trang_thai="", hinh_thuc_nhan="", tim=""):
     tap_hop = (
         DonHang.objects.select_related("chi_nhanh", "khach_hang")
@@ -70,13 +103,63 @@ def lay_don(nguoi, *, trang_thai="", hinh_thuc_nhan="", tim=""):
     if hinh_thuc_nhan:
         tap_hop = tap_hop.filter(hinh_thuc_nhan=hinh_thuc_nhan)
     if tim:
-        tap_hop = tap_hop.filter(
-            Q(ma_don_hang__icontains=tim)
-            | Q(khach_hang__ten_dang_nhap__icontains=tim)
-            | Q(khach_hang__ho_ten__icontains=tim)
-            | Q(so_dien_thoai_nhan__icontains=tim)
-        )
+        tap_hop = tim_don(tap_hop, tim)
     return tap_hop
+
+
+def don_cho_doi_soat_cod(tap_hop):
+    """Đơn COD đã giao xong nhưng nhà thuốc chưa nhận tiền từ người giao."""
+    return tap_hop.filter(
+        cac_giao_dich__phuong_thuc="cod", cac_giao_dich__trang_thai="cho"
+    ).distinct()
+
+
+def don_cho_hoan_tien(tap_hop):
+    return tap_hop.filter(trang_thai_thanh_toan="cho_hoan_tien")
+
+
+# (giờ còn lại tối đa, mức) theo thứ tự; đơn chờ thanh toán chỉ có 30 phút nên ngưỡng ngắn hơn.
+MUC_GAP = {
+    "cho_thanh_toan": ((10 / 60, "gap"), (0.5, "sap_het")),
+    "mac_dinh": ((1, "gap"), (6, "sap_het")),
+}
+HAU_QUA_QUA_HAN = {
+    "dang_giu": "Quá hạn, hệ thống tự chuyển đơn sang hết hạn và nhả hàng cho khách khác.",
+    "cho_thanh_toan": "Quá hạn, hệ thống tự hủy đơn và nhả hàng; tiền tới sau sẽ chờ hoàn.",
+    "cho_xac_nhan": "Quá hạn, hệ thống tự hủy đơn và nhả hàng.",
+}
+
+
+def _doc_thoi_luong(giay):
+    phut = max(int(giay // 60), 0)
+    gio, phut = divmod(phut, 60)
+    ngay, gio = divmod(gio, 24)
+    cac_phan = [f"{ngay} ngày"] * bool(ngay) + [f"{gio} giờ"] * bool(gio)
+    if not ngay:
+        cac_phan.append(f"{phut} phút")
+    return " ".join(cac_phan)
+
+
+def thong_tin_han(don, bay_gio=None):
+    """Hạn xử lý của đơn đang giữ hàng: chữ "còn 2 giờ 15 phút", mức gấp và hậu quả.
+
+    Trả None khi đơn không còn ở trạng thái có hạn giữ.
+    """
+    if don.trang_thai not in TRANG_THAI_GIU:
+        return None
+    bay_gio = bay_gio or timezone.now()
+    giay = (don.thoi_diem_het_giu - bay_gio).total_seconds()
+    hau_qua = HAU_QUA_QUA_HAN.get(don.trang_thai, "")
+    if don.trang_thai == "cho_xac_nhan" and don.phuong_thuc_thanh_toan != "cod":
+        hau_qua = "Quá hạn, hệ thống tự hủy đơn, nhả hàng và nhà thuốc phải hoàn tiền cho khách."
+    if giay <= 0:
+        return {"chu": f"đã quá hạn {_doc_thoi_luong(-giay)}", "muc": "qua_han", "hau_qua": hau_qua}
+    muc = "binh_thuong"
+    for gio_toi_da, ten in MUC_GAP.get(don.trang_thai, MUC_GAP["mac_dinh"]):
+        if giay <= gio_toi_da * 3600:
+            muc = ten
+            break
+    return {"chu": f"còn {_doc_thoi_luong(giay)}", "muc": muc, "hau_qua": hau_qua}
 
 
 def dem_don_theo_trang_thai(nguoi):
@@ -91,6 +174,14 @@ def dem_don_theo_trang_thai(nguoi):
 
 def lay_chi_tiet_don(don):
     return don.cac_dong.select_related("thuoc__don_vi_tinh").order_by("pk")
+
+
+def lay_lo_da_xuat(don):
+    return (
+        PhanBoPhieuBan.objects.filter(chi_tiet_phieu_ban__phieu_ban__don_hang=don)
+        .select_related("chi_tiet_phieu_ban", "ton_kho__lo_thuoc")
+        .order_by("pk")
+    )
 
 
 def lay_lich_su(don):
@@ -183,13 +274,15 @@ def du_lieu_quay_ban(cac_chi_nhanh):
 
 
 def lay_phieu_ban_danh_sach(nguoi):
-    """Phiếu bán kèm số mặt hàng, tổng tiền và cách khách trả, cho trang danh sách."""
+    """Phiếu bán kèm số mặt hàng, tổng tiền hàng sau ưu đãi thành viên và cách khách trả."""
     from django.db.models import CharField, ExpressionWrapper, OuterRef, Subquery, Value
 
     from ung_dung.thanh_toan.models import PHUONG_THUC, GiaoDichThanhToan
 
     dong = ChiTietPhieuBan.objects.filter(phieu_ban=OuterRef("pk")).order_by().values("phieu_ban")
-    tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
+    tien = ExpressionWrapper(
+        F("so_luong") * F("don_gia") - F("giam_gia_phan_bo"), output_field=DecimalField()
+    )
     phuong_thuc = GiaoDichThanhToan.objects.filter(
         phieu_ban=OuterRef("pk"), loai_giao_dich="thu"
     ).values("phuong_thuc")[:1]

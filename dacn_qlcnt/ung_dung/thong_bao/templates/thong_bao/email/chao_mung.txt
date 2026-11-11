@@ -1,7 +1,11 @@
-{% autoescape off %}Xin chào {{ ho_ten }},
+{% autoescape off %}Tài khoản của bạn đã sẵn sàng
 
-Tài khoản {{ ten_dang_nhap }} đã được tạo và xác thực email.
-Mở tài khoản của tôi: {{ url_website }}/tai-khoan-cua-toi/
+Xin chào {{ ho_ten }}, tài khoản {{ ten_dang_nhap }} đã được tạo và xác thực email.
+Từ nay bạn có thể tra cứu thuốc, đặt giữ nhận tại quầy hoặc đặt giao tận nơi, theo dõi đơn và trò chuyện với dược sĩ.
 
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+{{ nut_chinh.nhan }}:
+{{ nut_chinh.url }}
+
+Không phải bạn tạo tài khoản? Đặt lại mật khẩu tại:
+{{ url_quen_mat_khau }}
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

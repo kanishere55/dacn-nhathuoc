@@ -349,6 +349,7 @@ class PhienXacThuc(models.Model):
 
     BANG = "phien_xac_thuc"
     SO_PHUT_HIEU_LUC = 10
+    SO_NGAY_HOAN_TAC_EMAIL = 7
     SO_LAN_NHAP_SAI_TOI_DA = 5
     SO_LAN_GUI_TOI_DA = 5
 
@@ -356,6 +357,7 @@ class PhienXacThuc(models.Model):
         DANG_KY = "dang_ky", "Đăng ký tài khoản"
         QUEN_MAT_KHAU = "quen_mat_khau", "Đặt lại mật khẩu"
         DOI_EMAIL = "doi_email", "Đổi email"
+        HOAN_TAC_EMAIL = "hoan_tac_email", "Khôi phục email cũ sau khi bị đổi"
 
     id_phien_xac_thuc = models.BigAutoField(
         primary_key=True,
@@ -370,7 +372,10 @@ class PhienXacThuc(models.Model):
     loai_xac_thuc = models.TextField(
         choices=LoaiXacThuc.choices,
         db_column="loai_xac_thuc",
-        db_comment="Mục đích của mã: dang_ky, quen_mat_khau hoặc doi_email.",
+        db_comment=(
+            "Mục đích của phiên: dang_ky, quen_mat_khau, doi_email (mã OTP) hoặc "
+            "hoan_tac_email (liên kết gửi email cũ để khôi phục khi email bị đổi)."
+        ),
     )
     email = models.TextField(
         db_column="email",
@@ -414,7 +419,10 @@ class PhienXacThuc(models.Model):
     )
     bam_otp = models.TextField(
         db_column="bam_otp",
-        db_comment="HMAC-SHA256 hệ thập lục phân của mã OTP sáu chữ số, khóa là SECRET_KEY.",
+        db_comment=(
+            "HMAC-SHA256 hệ thập lục phân của mã OTP sáu chữ số, hoặc của khóa ngẫu nhiên "
+            "trong liên kết khôi phục email; khóa HMAC là SECRET_KEY."
+        ),
     )
     so_lan_nhap_sai = models.SmallIntegerField(
         db_default=0,
@@ -432,7 +440,10 @@ class PhienXacThuc(models.Model):
     )
     thoi_diem_het_han = models.DateTimeField(
         db_column="thoi_diem_het_han",
-        db_comment="Sau thời điểm này mã hết hiệu lực, bằng lần gửi cuối cộng 10 phút.",
+        db_comment=(
+            "Sau thời điểm này mã hết hiệu lực: lần gửi cuối cộng 10 phút; liên kết khôi "
+            "phục email cộng 7 ngày."
+        ),
     )
     thoi_diem_su_dung = models.DateTimeField(
         null=True,
@@ -445,6 +456,15 @@ class PhienXacThuc(models.Model):
         db_column="thoi_diem_tao",
         db_comment="Thời điểm phiên được tạo; dùng giới hạn số phiên mỗi giờ.",
     )
+    dia_chi_ip = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        db_column="dia_chi_ip",
+        db_comment=(
+            "Địa chỉ IP của trình duyệt yêu cầu mã; dùng giới hạn số phiên mỗi giờ theo IP. "
+            "NULL với phiên tạo trước khi ghi IP hoặc do hệ thống tạo."
+        ),
+    )
 
     class Meta:
         db_table = "phien_xac_thuc"
@@ -455,7 +475,11 @@ class PhienXacThuc(models.Model):
             models.Index(
                 fields=["email", "thoi_diem_tao"],
                 name=ten_rang_buoc("chi_muc", "phien_xac_thuc", "email", "thoi_diem_tao"),
-            )
+            ),
+            models.Index(
+                fields=["dia_chi_ip", "thoi_diem_tao"],
+                name=ten_rang_buoc("chi_muc", "phien_xac_thuc", "dia_chi_ip", "thoi_diem_tao"),
+            ),
         ]
         constraints = [
             *rang_buoc_van_ban("phien_xac_thuc", "ma_phien_xac_thuc", dinh_dang=MA_UUID),
@@ -464,7 +488,9 @@ class PhienXacThuc(models.Model):
                 name=ten_rang_buoc("duy_nhat", "phien_xac_thuc", "ma_phien_xac_thuc"),
             ),
             models.CheckConstraint(
-                condition=Q(loai_xac_thuc__in=["dang_ky", "quen_mat_khau", "doi_email"]),
+                condition=Q(
+                    loai_xac_thuc__in=["dang_ky", "quen_mat_khau", "doi_email", "hoan_tac_email"]
+                ),
                 name=ten_rang_buoc("kiem_tra", "phien_xac_thuc", "loai_xac_thuc_hop_le"),
             ),
             *rang_buoc_van_ban("phien_xac_thuc", "email", dinh_dang=EMAIL),
@@ -504,6 +530,10 @@ class PhienXacThuc(models.Model):
             models.CheckConstraint(
                 condition=~Q(loai_xac_thuc="doi_email") | Q(tai_khoan__isnull=False),
                 name=ten_rang_buoc("kiem_tra", "phien_xac_thuc", "doi_email_can_tai_khoan"),
+            ),
+            models.CheckConstraint(
+                condition=~Q(loai_xac_thuc="hoan_tac_email") | Q(tai_khoan__isnull=False),
+                name=ten_rang_buoc("kiem_tra", "phien_xac_thuc", "hoan_tac_email_can_tai_khoan"),
             ),
             models.CheckConstraint(
                 condition=Q(so_lan_nhap_sai__gte=0, so_lan_nhap_sai__lte=5),

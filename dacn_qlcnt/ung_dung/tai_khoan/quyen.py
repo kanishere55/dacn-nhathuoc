@@ -80,9 +80,19 @@ DANH_SACH_QUYEN = [
         "Bán hàng",
         ("phieu_ban.xem", "Xem phiếu bán tại quầy"),
         ("phieu_ban.tao", "Bán hàng tại quầy"),
+        (
+            "thuoc_ke_don.ban",
+            "Bán và giao đơn có thuốc kê đơn",
+            "Giao cho dược sĩ: kiểm tra đơn thuốc, ghi bác sĩ, người bệnh, ngày kê đơn.",
+        ),
         ("don_hang.xem", "Xem đơn hàng trực tuyến"),
         ("don_hang.xu_ly", "Xác nhận, giao, hoàn thành, hủy đơn"),
         ("don_hang.hoan_tien", "Ghi nhận hoàn tiền"),
+        (
+            "thanh_toan.xac_nhan",
+            "Xác nhận tiền đã nhận",
+            "Ghi nhận chuyển khoản theo sao kê, đã thu tiền COD, gán tiền chưa khớp vào đơn.",
+        ),
         ("tra_hang.xem", "Xem yêu cầu trả hàng"),
         ("tra_hang.duyet", "Duyệt hoặc từ chối trả hàng"),
         ("hoa_don_cong_ty.xem", "Xem yêu cầu hóa đơn công ty"),
@@ -151,6 +161,10 @@ _THEM_CHO_QUAN_LY = {
     "don_hang.hoan_tien",
     "tra_hang.duyet",
     "bao_cao.xem",
+    # Quản lý chi nhánh (dược sĩ phụ trách chuyên môn) mặc định bán được thuốc kê đơn;
+    # nhân viên là dược sĩ được cấp riêng bằng quyền riêng hoặc nhóm quyền.
+    "thuoc_ke_don.ban",
+    "thanh_toan.xac_nhan",
 }
 MAC_DINH = {
     NHAN_VIEN: frozenset(_XEM_CHUNG),

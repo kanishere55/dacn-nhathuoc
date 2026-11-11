@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import cong, khach
+from .views import cong, doi_soat, khach
 
 app_name = "thanh_toan"
 urlpatterns = [
@@ -11,4 +11,14 @@ urlpatterns = [
     path("thanh-toan/momo/quay-ve/", khach.momo_quay_ve, name="momo_quay_ve"),
     path("thanh-toan/momo/ipn/", cong.momo_ipn, name="momo_ipn"),
     path("thanh-toan/sepay/webhook/", cong.sepay_webhook, name="sepay_webhook"),
+    path("quan-ly/doi-soat-tien/", doi_soat.danh_sach, name="tien_chua_khop"),
+    path(
+        "quan-ly/doi-soat-tien/<int:ma>/gan/", doi_soat.xu_ly, {"hanh_dong": "gan"}, name="gan_tien"
+    ),
+    path(
+        "quan-ly/doi-soat-tien/<int:ma>/bo-qua/",
+        doi_soat.xu_ly,
+        {"hanh_dong": "bo-qua"},
+        name="bo_qua_tien",
+    ),
 ]

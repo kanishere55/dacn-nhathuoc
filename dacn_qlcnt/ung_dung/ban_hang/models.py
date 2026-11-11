@@ -1,7 +1,9 @@
+from zoneinfo import ZoneInfo
+
 from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import F, Q
-from django.db.models.functions import Now
+from django.db.models.functions import Now, TruncDate
 
 from ung_dung.chung.anh import AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
@@ -116,7 +118,11 @@ class DonHang(models.Model):
         default="chua_thanh_toan",
         db_default="chua_thanh_toan",
         db_column="trang_thai_thanh_toan",
-        db_comment="Kết quả thanh toán do service ghi khi nhận hoặc hoàn tiền.",
+        db_comment=(
+            "Kết quả đối soát tiền của đơn, service tính lại sau mỗi lần thu hoặc hoàn: "
+            "chua_thanh_toan (chưa thu đủ), da_thanh_toan (đã thu đủ), cho_hoan_tien (đã thu "
+            "nhiều hơn số phải thu, kể cả đơn hủy còn tiền), da_hoan_tien (đã hoàn hết)."
+        ),
     )
     thoi_diem_tao = models.DateTimeField(
         db_column="thoi_diem_tao",
@@ -264,6 +270,16 @@ class DonHang(models.Model):
             ),
             *rang_buoc_van_ban("don_hang", "dia_chi_giao", rong=True),
             *rang_buoc_van_ban("don_hang", "ghi_chu_khach", rong=True),
+            # Tổ hợp bất biến giữa trạng thái đơn và thanh toán (thứ tự chuyển ở tầng service).
+            models.CheckConstraint(
+                condition=~Q(phuong_thuc_thanh_toan="cod", trang_thai="cho_thanh_toan"),
+                name=ten_rang_buoc("kiem_tra", "don_hang", "cod_khong_cho_thanh_toan"),
+            ),
+            models.CheckConstraint(
+                condition=~Q(trang_thai="cho_thanh_toan")
+                | Q(trang_thai_thanh_toan="chua_thanh_toan"),
+                name=ten_rang_buoc("kiem_tra", "don_hang", "cho_thanh_toan_thi_chua_thu"),
+            ),
         ]
 
     def __str__(self):
@@ -306,6 +322,13 @@ class ChiTietDonHang(models.Model):
         db_comment="Phần trăm khuyến mãi áp dụng lúc đặt, 0 khi không có.",
     )
     don_gia = _tien("don_gia", "Giá một đơn vị cơ sở sau khuyến mãi lúc đặt", default=0)
+    giam_gia_phan_bo = _tien(
+        "giam_gia_phan_bo",
+        "Phần giảm theo hạng thành viên của đơn phân bổ cho dòng theo tỷ lệ thành tiền, phần lẻ "
+        "dồn vào dòng cuối; dòng thuốc kê đơn luôn 0. Tổng các dòng bằng giam_gia_thanh_vien",
+        default=0,
+        db_default=0,
+    )
 
     class Meta:
         db_table = "chi_tiet_don_hang"
@@ -316,6 +339,11 @@ class ChiTietDonHang(models.Model):
             *rang_buoc_so("chi_tiet_don_hang", "so_luong", duong=True, tien=False),
             *rang_buoc_so("chi_tiet_don_hang", "gia_niem_yet", tien=True),
             *rang_buoc_so("chi_tiet_don_hang", "don_gia", tien=True),
+            *rang_buoc_so("chi_tiet_don_hang", "giam_gia_phan_bo", tien=True),
+            models.CheckConstraint(
+                condition=Q(giam_gia_phan_bo__lte=F("so_luong") * F("don_gia")),
+                name=ten_rang_buoc("kiem_tra", "chi_tiet_don_hang", "giam_khong_vuot_thanh_tien"),
+            ),
             models.CheckConstraint(
                 condition=Q(phan_tram_giam__gte=0, phan_tram_giam__lte=90)
                 & Q(don_gia__lte=F("gia_niem_yet")),
@@ -330,6 +358,11 @@ class ChiTietDonHang(models.Model):
     @property
     def thanh_tien(self):
         return self.don_gia * self.so_luong
+
+    @property
+    def thuc_tra(self):
+        """Số tiền khách thực trả cho dòng: thành tiền trừ phần ưu đãi thành viên của dòng."""
+        return self.thanh_tien - self.giam_gia_phan_bo
 
 
 class PhanBoDonHang(models.Model):
@@ -511,6 +544,25 @@ class PhieuBan(models.Model):
         db_default="",
         blank=True,
     )
+    ngay_ke_don = models.DateField(
+        null=True,
+        blank=True,
+        db_column="ngay_ke_don",
+        db_comment=(
+            "Ngày bác sĩ kê đơn, không sau ngày bán; NULL khi phiếu không có thuốc kê đơn và ở "
+            "phiếu lập trước khi bổ sung cột. Service bắt buộc ghi với phiếu mới có thuốc kê đơn."
+        ),
+    )
+    ho_ten_nguoi_benh = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="ho_ten_nguoi_benh",
+        db_comment=(
+            "Họ tên người bệnh ghi trên đơn thuốc, đi cùng ngày kê đơn; rỗng khi không có "
+            "thuốc kê đơn hoặc phiếu lập trước khi bổ sung cột."
+        ),
+    )
     thoi_diem_tao = models.DateTimeField(
         db_column="thoi_diem_tao",
         db_comment="Thời điểm hệ thống ghi nhận nghiệp vụ.",
@@ -544,7 +596,8 @@ class PhieuBan(models.Model):
             ),
             *rang_buoc_van_ban("phieu_ban", "ten_nguoi_ke_don", rong=True, nhan="nguoi_ke_don"),
             *rang_buoc_van_ban("phieu_ban", "noi_kham_benh", rong=True),
-            # Đã kiểm tra đơn thì phải ghi người kê và nơi kê; chưa kiểm tra thì để trống cả ba.
+            *rang_buoc_van_ban("phieu_ban", "ho_ten_nguoi_benh", rong=True),
+            # Đã kiểm tra đơn thì phải ghi người kê và nơi kê; chưa kiểm tra thì để trống hết.
             models.CheckConstraint(
                 condition=(
                     Q(da_kiem_tra_don_thuoc=True) & ~Q(ten_nguoi_ke_don="") & ~Q(noi_kham_benh="")
@@ -554,8 +607,23 @@ class PhieuBan(models.Model):
                     ten_nguoi_ke_don="",
                     noi_kham_benh="",
                     ma_don_thuoc__isnull=True,
+                    ngay_ke_don__isnull=True,
+                    ho_ten_nguoi_benh="",
                 ),
                 name=ten_rang_buoc("kiem_tra", "phieu_ban", "don_thuoc_du_thong_tin"),
+            ),
+            # Ngày kê đơn và người bệnh đi cùng nhau; đơn không thể kê sau ngày bán.
+            models.CheckConstraint(
+                condition=Q(ngay_ke_don__isnull=True, ho_ten_nguoi_benh="")
+                | (Q(ngay_ke_don__isnull=False) & ~Q(ho_ten_nguoi_benh="")),
+                name=ten_rang_buoc("kiem_tra", "phieu_ban", "ngay_ke_don_co_nguoi_benh"),
+            ),
+            models.CheckConstraint(
+                condition=Q(ngay_ke_don__isnull=True)
+                | Q(
+                    ngay_ke_don__lte=TruncDate("thoi_diem_tao", tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))
+                ),
+                name=ten_rang_buoc("kiem_tra", "phieu_ban", "ngay_ke_don_khong_sau_ngay_ban"),
             ),
         ]
 
@@ -597,6 +665,13 @@ class ChiTietPhieuBan(models.Model):
         max_digits=14,
         decimal_places=0,
     )
+    giam_gia_phan_bo = _tien(
+        "giam_gia_phan_bo",
+        "Ưu đãi thành viên của dòng chép từ dòng đơn khi xuất kho cho đơn; 0 khi bán trực tiếp. "
+        "Doanh thu dòng sau ưu đãi bằng so_luong nhân don_gia trừ cột này",
+        default=0,
+        db_default=0,
+    )
 
     class Meta:
         db_table = "chi_tiet_phieu_ban"
@@ -611,6 +686,11 @@ class ChiTietPhieuBan(models.Model):
             ),
             *rang_buoc_so("chi_tiet_phieu_ban", "so_luong", duong=True, tien=False),
             *rang_buoc_so("chi_tiet_phieu_ban", "don_gia", duong=False, tien=True),
+            *rang_buoc_so("chi_tiet_phieu_ban", "giam_gia_phan_bo", tien=True),
+            models.CheckConstraint(
+                condition=Q(giam_gia_phan_bo__lte=F("so_luong") * F("don_gia")),
+                name=ten_rang_buoc("kiem_tra", "chi_tiet_phieu_ban", "giam_khong_vuot_thanh_tien"),
+            ),
         ]
 
 
@@ -993,8 +1073,8 @@ class ChiTietTraHang(models.Model):
         db_default=0,
         db_column="so_luong_nhap_lai",
         db_comment=(
-            "Phần hàng trả còn nguyên niêm phong được nhập lại tồn bán; quản lý ghi khi duyệt, "
-            "phần còn lại không bán lại. 0 khi chờ duyệt."
+            "Lượng từng nhập lại từ yêu cầu cũ. Yêu cầu mới đưa hàng trả vào khu chờ hủy; "
+            "giá trị bằng 0."
         ),
     )
 
@@ -1062,6 +1142,83 @@ class PhanBoTraHang(models.Model):
         ]
 
 
+TRANG_THAI_HANG_TRA_CHO_HUY = [("cho_huy", "Chờ hủy"), ("da_huy", "Đã lập phiếu hủy")]
+
+
+class HangTraChoHuy(models.Model):
+    """Hàng khách trả không được bán lại: giữ theo lô đã xuất để lập phiếu xuất hủy."""
+
+    id_hang_tra_cho_huy = models.BigAutoField(
+        primary_key=True,
+        db_column="id_hang_tra_cho_huy",
+        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
+    )
+    chi_tiet_tra_hang = models.ForeignKey(
+        "ban_hang.ChiTietTraHang",
+        on_delete=models.PROTECT,
+        related_name="cac_hang_cho_huy",
+        db_index=False,
+        db_column="id_chi_tiet_tra_hang",
+        db_comment="Dòng trả có phần hàng không bán lại được.",
+    )
+    phan_bo_phieu_ban = models.ForeignKey(
+        "ban_hang.PhanBoPhieuBan",
+        on_delete=models.PROTECT,
+        db_column="id_phan_bo_phieu_ban",
+        db_comment="Lượng đã xuất từ một lô khi bán đơn; cho biết lô và chi nhánh của hàng trả.",
+    )
+    so_luong = models.IntegerField(
+        db_column="so_luong",
+        db_comment="Lượng cơ sở chờ hủy; đã trừ khỏi tồn từ lúc bán nên không trừ tồn lần nữa.",
+    )
+    trang_thai = models.TextField(
+        choices=TRANG_THAI_HANG_TRA_CHO_HUY,
+        default="cho_huy",
+        db_default="cho_huy",
+        db_column="trang_thai",
+        db_comment="cho_huy: đang để riêng ở khu chờ xử lý; da_huy: đã có phiếu xuất hủy.",
+    )
+    phieu_xuat_huy = models.ForeignKey(
+        "kho.PhieuXuatHuy",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        db_column="id_phieu_xuat_huy",
+        db_comment="Phiếu xuất hủy ghi nhận việc hủy; NULL khi còn chờ hủy.",
+    )
+    thoi_diem_tao = models.DateTimeField(
+        db_default=Now(), db_column="thoi_diem_tao", db_comment="Thời điểm quản lý duyệt trả hàng."
+    )
+
+    class Meta:
+        db_table = "hang_tra_cho_huy"
+        db_table_comment = (
+            "Mỗi hàng là lượng hàng khách trả của một lô không nhập lại tồn bán, chờ lập phiếu "
+            "xuất hủy."
+        )
+        verbose_name = "hàng trả chờ hủy"
+        ordering = ["id_hang_tra_cho_huy"]
+        constraints = [
+            *rang_buoc_so("hang_tra_cho_huy", "so_luong", duong=True),
+            models.UniqueConstraint(
+                fields=["chi_tiet_tra_hang", "phan_bo_phieu_ban"],
+                name=ten_rang_buoc(
+                    "duy_nhat", "hang_tra_cho_huy", "id_chi_tiet_tra_hang", "id_phan_bo_phieu_ban"
+                ),
+            ),
+            models.CheckConstraint(
+                condition=Q(trang_thai__in=_ma(TRANG_THAI_HANG_TRA_CHO_HUY)),
+                name=ten_rang_buoc("kiem_tra", "hang_tra_cho_huy", "trang_thai_hop_le"),
+            ),
+            models.CheckConstraint(
+                condition=Q(trang_thai="cho_huy", phieu_xuat_huy__isnull=True)
+                | Q(trang_thai="da_huy", phieu_xuat_huy__isnull=False),
+                name=ten_rang_buoc("kiem_tra", "hang_tra_cho_huy", "phieu_huy_dung_trang_thai"),
+            ),
+        ]
+
+
 class AnhTraHang(AnhCSDL):
     id_anh_tra_hang = models.BigAutoField(
         primary_key=True,
@@ -1098,6 +1255,11 @@ TRANG_THAI_XUAT_HOA_DON = [
 ]
 # Mã số thuế doanh nghiệp 10 chữ số; đơn vị phụ thuộc thêm "-" và 3 chữ số.
 MA_SO_THUE = r"^[0-9]{10}(-[0-9]{3})?$"
+# Ký hiệu mẫu số (1 chữ số) và ký hiệu hóa đơn 6 ký tự theo Thông tư 32/2025/TT-BTC:
+# C/K (có mã hoặc không mã của cơ quan thuế), 2 số cuối năm, 1 chữ loại, 2 chữ do người bán đặt.
+KY_HIEU_HOA_DON = r"^[1-9][CK][0-9]{2}[A-Z]{3}$"
+# Số hóa đơn tối đa 8 chữ số (Nghị định 123/2020/NĐ-CP Điều 10).
+SO_HOA_DON = r"^[0-9]{1,8}$"
 
 
 class YeuCauXuatHoaDon(models.Model):
@@ -1111,7 +1273,10 @@ class YeuCauXuatHoaDon(models.Model):
         on_delete=models.PROTECT,
         db_index=False,
         db_column="id_don_hang",
-        db_comment="Đơn đã hoàn thành cần hóa đơn đứng tên doanh nghiệp; mỗi đơn một yêu cầu.",
+        db_comment=(
+            "Đơn cần hóa đơn đứng tên doanh nghiệp, gửi từ lúc đặt tới hết tháng nhận hàng; "
+            "mỗi đơn một yêu cầu."
+        ),
     )
     ten_cong_ty = models.TextField(
         db_column="ten_cong_ty", db_comment="Tên doanh nghiệp theo đăng ký thuế; một dòng."
@@ -1139,7 +1304,34 @@ class YeuCauXuatHoaDon(models.Model):
         db_default="",
         blank=True,
         db_column="ghi_chu_xu_ly",
-        db_comment="Ký hiệu, số hóa đơn đã phát hành hoặc lý do từ chối; rỗng khi chờ xử lý.",
+        db_comment=(
+            "Câu tóm tắt kết quả gửi khách (ký hiệu và số hóa đơn, hoặc lý do từ chối); "
+            "rỗng khi chờ xử lý."
+        ),
+    )
+    ky_hieu_hoa_don = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="ky_hieu_hoa_don",
+        db_comment=(
+            "Ký hiệu mẫu số và ký hiệu hóa đơn điện tử đã phát hành, ví dụ 1C26TAA; "
+            "rỗng khi chưa xuất hoặc yêu cầu cũ chỉ có ghi chú."
+        ),
+    )
+    so_hoa_don = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="so_hoa_don",
+        db_comment="Số hóa đơn điện tử, 1 đến 8 chữ số; rỗng khi chưa xuất hoặc yêu cầu cũ.",
+    )
+    ly_do_tu_choi = models.TextField(
+        default="",
+        db_default="",
+        blank=True,
+        db_column="ly_do_tu_choi",
+        db_comment="Lý do không xuất hóa đơn công ty; chỉ có khi từ chối.",
     )
     nguoi_xu_ly = models.ForeignKey(
         "tai_khoan.TaiKhoan",
@@ -1197,6 +1389,44 @@ class YeuCauXuatHoaDon(models.Model):
                     )
                 ),
                 name=ten_rang_buoc("kiem_tra", "yeu_cau_xuat_hoa_don", "xu_ly_dung_trang_thai"),
+            ),
+            *rang_buoc_van_ban(
+                "yeu_cau_xuat_hoa_don",
+                "ky_hieu_hoa_don",
+                rong=True,
+                dinh_dang=f"^({KY_HIEU_HOA_DON[1:-1]})?$",
+            ),
+            *rang_buoc_van_ban(
+                "yeu_cau_xuat_hoa_don",
+                "so_hoa_don",
+                rong=True,
+                dinh_dang=f"^({SO_HOA_DON[1:-1]})?$",
+            ),
+            *rang_buoc_van_ban("yeu_cau_xuat_hoa_don", "ly_do_tu_choi", rong=True, nhieu_dong=True),
+            # Yêu cầu cũ có thể chỉ có ghi chú. Khi ghi kết quả mới, service yêu cầu đủ cả cặp.
+            models.CheckConstraint(
+                condition=Q(
+                    trang_thai="cho_xu_ly", ky_hieu_hoa_don="", so_hoa_don="", ly_do_tu_choi=""
+                )
+                | (
+                    Q(trang_thai="da_xuat", ly_do_tu_choi="")
+                    & (
+                        Q(ky_hieu_hoa_don="", so_hoa_don="")
+                        | (~Q(ky_hieu_hoa_don="") & ~Q(so_hoa_don=""))
+                    )
+                )
+                | (
+                    Q(trang_thai="tu_choi", ky_hieu_hoa_don="", so_hoa_don="")
+                    & ~Q(ly_do_tu_choi="")
+                ),
+                name=ten_rang_buoc("kiem_tra", "yeu_cau_xuat_hoa_don", "ket_qua_dung_trang_thai"),
+            ),
+            models.UniqueConstraint(
+                fields=["ky_hieu_hoa_don", "so_hoa_don"],
+                condition=Q(trang_thai="da_xuat") & ~Q(ky_hieu_hoa_don=""),
+                name=ten_rang_buoc(
+                    "duy_nhat", "yeu_cau_xuat_hoa_don", "ky_hieu_hoa_don", "so_hoa_don"
+                ),
             ),
         ]
 

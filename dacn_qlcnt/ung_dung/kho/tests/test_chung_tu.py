@@ -102,7 +102,7 @@ class ChungTuKhoTests(TestCase):
         }
         lo_da_dem.so_luong = 9
         lo_da_dem.save(update_fields=["so_luong"])
-        self.assertContains(self.client.post(url, du_lieu), "số dư đã thay đổi")
+        self.assertContains(self.client.post(url, du_lieu), "cần xem lại")
         self.assertFalse(PhieuKiemKe.objects.exists())
 
         du_lieu["form-0-so_luong_so_sach"] = 9

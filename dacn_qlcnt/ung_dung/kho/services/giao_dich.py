@@ -8,7 +8,7 @@ from ung_dung.chung.permissions import kiem_tra_quyen_ghi_chi_nhanh
 from ung_dung.danh_muc.models import ChiNhanh
 
 from ..models import TonKho
-from ..selectors import lay_ton_kha_dung
+from ..selectors import lay_ton_kha_dung, luong_ban_duoc
 
 # Bảng chữ Crockford base32: bỏ I, L, O, U để đọc qua điện thoại không nhầm với 1, 0, V.
 CHU_MA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
@@ -38,13 +38,38 @@ def khoa_kho(chi_nhanh, *, cho_phep_ngung=False):
     return chi_nhanh
 
 
-def phan_bo_fefo(chi_nhanh, thuoc, so_luong, *, bo_qua_don=None):
+def _so(luong):
+    return f"{luong:,}".replace(",", ".")
+
+
+def phan_bo_fefo(chi_nhanh, thuoc, so_luong, *, bo_qua_don=None, con_han_den=None):
+    """Chọn lô theo FEFO (hết hạn trước xuất trước) cho `so_luong` đơn vị cơ sở.
+
+    `con_han_den`: chỉ lấy lô còn hạn tới ngày này (giữ hàng tới hết hạn giữ, đơn giao cần
+    lô xa hạn). Tổng lấy được không vượt lượng bán được của mọi lô trừ phần giữ mồ côi của
+    đơn khác (xem lay_giu_mo_coi), để không lấy mất hàng đã hứa.
+    """
     if isinstance(so_luong, bool) or not isinstance(so_luong, int) or so_luong <= 0:
         raise ValidationError("Số lượng phải là số nguyên dương.")
+    con_ban_duoc = luong_ban_duoc(
+        [chi_nhanh], [thuoc.pk], con_han_den=con_han_den, bo_qua_don=bo_qua_don
+    ).get((chi_nhanh.pk, thuoc.pk), 0)
+    if con_ban_duoc < so_luong:
+        don_vi = getattr(getattr(thuoc, "don_vi_tinh", None), "ten_don_vi_tinh", "").lower()
+        han = (
+            f" (chỉ tính lô còn hạn đến {con_han_den:%d/%m/%Y})"
+            if con_han_den and con_han_den > timezone.localdate()
+            else ""
+        )
+        don_vi = f" {don_vi}" if don_vi else ""
+        raise ValidationError(
+            f"Không đủ hàng cho {thuoc.ten_thuoc}: cần {_so(so_luong)}{don_vi}, "
+            f"chi nhánh chỉ còn bán được {_so(con_ban_duoc)}{han}."
+        )
     con_lai = so_luong
     phan_bo = []
     for ton in (
-        lay_ton_kha_dung(chi_nhanh=chi_nhanh, bo_qua_don=bo_qua_don)
+        lay_ton_kha_dung(chi_nhanh=chi_nhanh, bo_qua_don=bo_qua_don, con_han_den=con_han_den)
         .filter(lo_thuoc__thuoc=thuoc, kha_dung__gt=0)
         .order_by("lo_thuoc__ngay_het_han", "lo_thuoc_id")
     ):
@@ -53,7 +78,7 @@ def phan_bo_fefo(chi_nhanh, thuoc, so_luong, *, bo_qua_don=None):
         con_lai -= lay
         if not con_lai:
             return phan_bo
-    raise ValidationError(f"Không đủ tồn khả dụng cho {thuoc.ten_thuoc}.")
+    raise ValidationError(f"Không đủ hàng cho {thuoc.ten_thuoc}.")
 
 
 GIOI_HAN_TON = 2147483647  # cột so_luong kiểu INTEGER

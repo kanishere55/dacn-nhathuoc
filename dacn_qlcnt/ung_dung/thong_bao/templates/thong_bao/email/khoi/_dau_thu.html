@@ -1,0 +1,20 @@
+{# Đầu thư: dấu "+" là ô bảng có màu nền, không phải ảnh, nên Outlook chặn ảnh vẫn hiện; tên và khẩu hiệu lấy từ CSDL. #}
+<tr><td style="padding:0 4px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td width="34" valign="middle" style="width:34px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="34" height="34" align="center" valign="middle" bgcolor="#116b54" aria-hidden="true" style="width:34px;height:34px;background-color:#116b54;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:24px;line-height:34px;font-weight:bold;color:#ffffff;mso-line-height-rule:exactly;">+</td>
+</tr></table>
+</td>
+<td valign="middle" style="padding-left:10px;font-family:Arial,Helvetica,sans-serif;">
+<a href="{{ url_trang_chu }}" target="_blank" class="chu" style="font-size:17px;line-height:22px;font-weight:bold;color:#184436;text-decoration:none;">{{ cua_hang.ten_thuong_hieu }}</a>{% if cua_hang.khau_hieu %}<br><span class="chu-phu" style="font-size:13px;line-height:18px;color:#5a6a61;">{{ cua_hang.khau_hieu }}</span>{% endif %}
+</td>
+{% if cua_hang.hotline %}
+<td align="right" valign="middle" class="an-tren-dien-thoai" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#5a6a61;white-space:nowrap;">
+<span class="chu-phu" style="color:#5a6a61;">Hotline</span><br><a href="tel:{{ cua_hang.hotline }}" class="chu-nhan" style="color:#116b54;font-weight:bold;text-decoration:none;">{{ cua_hang.hotline }}</a>
+</td>
+{% endif %}
+</tr>
+</table>
+</td></tr>

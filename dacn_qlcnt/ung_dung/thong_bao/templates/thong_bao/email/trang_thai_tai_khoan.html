@@ -1,0 +1,14 @@
+{% extends "thong_bao/email/khung.html" %}
+{% block noi_dung %}
+{% if dang_hoat_dong %}{% include "thong_bao/email/khoi/_tieu_de.html" with tieu_de_lon="Tài khoản đã được mở lại" %}{% else %}{% include "thong_bao/email/khoi/_tieu_de.html" with tieu_de_lon="Tài khoản đang tạm khóa" %}{% endif %}
+<tr><td class="o" style="padding:0 32px;font-family:Arial,Helvetica,sans-serif;">
+{% if dang_hoat_dong %}
+<p class="chu chu-than" style="margin:12px 0 0;font-size:15px;line-height:24px;color:#25372f;">Xin chào {{ ho_ten|default:ten_dang_nhap }}, tài khoản <strong>{{ ten_dang_nhap }}</strong> đã được quản trị viên của nhà thuốc mở lại lúc <strong>{{ thoi_diem|date:"H:i d/m/Y" }}</strong>. Bạn đăng nhập và dùng lại bình thường.</p>
+{% else %}
+<p class="chu chu-than" style="margin:12px 0 0;font-size:15px;line-height:24px;color:#25372f;">Xin chào {{ ho_ten|default:ten_dang_nhap }}, tài khoản <strong>{{ ten_dang_nhap }}</strong> đã bị quản trị viên của nhà thuốc tạm khóa lúc <strong>{{ thoi_diem|date:"H:i d/m/Y" }}</strong>. Trong thời gian này bạn không đăng nhập được; các đơn đã đặt vẫn được nhà thuốc xử lý.</p>
+<p class="chu chu-than" style="margin:12px 0 0;font-size:15px;line-height:24px;color:#25372f;">Cần biết lý do hoặc muốn mở lại, {% if cua_hang.hotline %}gọi <a href="tel:{{ cua_hang.hotline }}" class="chu-nhan" style="color:#116b54;font-weight:bold;text-decoration:none;">{{ cua_hang.hotline }}</a> hoặc {% endif %}trả lời thư này.</p>
+{% endif %}
+</td></tr>
+{% include "thong_bao/email/khoi/_cap_nut.html" %}
+{% include "thong_bao/email/khoi/_canh_bao.html" with loai="quan_tri" %}
+{% endblock %}

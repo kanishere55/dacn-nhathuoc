@@ -1,12 +1,2 @@
-{% autoescape off %}Xin chào {{ ho_ten }},
-
-Nhà thuốc đã nhận đơn {{ don.ma_don_hang }} lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }}.
-{% if don.la_giao_hang %}Giao tới: {{ don.ten_nguoi_nhan }} - {{ don.so_dien_thoai_nhan }}, {{ don.dia_chi_giao }}{% else %}Nhận tại: {{ don.chi_nhanh.ten_chi_nhanh }}, {{ don.chi_nhanh.dia_chi }}. Giữ hàng đến {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}.{% endif %}
-{% for dong in cac_dong %}
-- {{ dong.thuoc.ten_thuoc }}: {{ dong.so_luong }} x {{ dong.don_gia|tien }} = {{ dong.thanh_tien|tien }}{% endfor %}
-
-Tổng thanh toán: {{ don.tong_thanh_toan|tien }} ({{ don.get_phuong_thuc_thanh_toan_display }})
-Theo dõi đơn: {{ url_don }}
-
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+{% autoescape off %}{% include "thong_bao/email/khoi/_than_don.txt" %}
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

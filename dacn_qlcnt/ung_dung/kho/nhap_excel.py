@@ -17,6 +17,8 @@ from openpyxl.utils.exceptions import InvalidFileException
 from ung_dung.chung.ten_csdl import MA_NGHIEP_VU
 from ung_dung.danh_muc.models import QuyDoiBaoGoi, Thuoc
 
+from .quy_tac import chuan_hoa_ma_lo, loi_han_dung
+
 SO_DONG_TOI_DA = 50
 COT = (
     ("ma_thuoc", "Mã thuốc"),
@@ -54,10 +56,16 @@ def _doc_ngay(gia_tri):
 def _doc_so_nguyen(gia_tri, ten, *, duong):
     if isinstance(gia_tri, bool):
         raise ValueError(f"{ten} phải là số")
-    # Ô số giữ nguyên giá trị; ô chữ kiểu "12.000" bỏ dấu phân cách hàng nghìn.
+    # Ô số giữ nguyên giá trị; ô chữ kiểu "12.000" bỏ dấu chấm ngăn hàng nghìn. Dấu phẩy là dấu
+    # thập phân theo cách viết Việt Nam ("1,5"), không tự bỏ để khỏi đọc nhầm thành 15.
     van_ban = str(gia_tri) if isinstance(gia_tri, int | float | Decimal) else str(gia_tri or "")
     if not isinstance(gia_tri, int | float | Decimal):
-        van_ban = van_ban.strip().replace(".", "").replace(",", "").replace(" ", "")
+        van_ban = van_ban.strip().replace(" ", "")
+        if "," in van_ban:
+            raise ValueError(
+                f"{ten} phải là số nguyên, không dùng dấu phẩy (ví dụ 12000 hoặc 12.000)"
+            )
+        van_ban = van_ban.replace(".", "")
     try:
         so = Decimal(van_ban)
     except InvalidOperation:
@@ -87,6 +95,8 @@ def doc_tep_nhap(tep):
             raise LoiTepExcel("Tệp thiếu cột: " + ", ".join(thieu) + ".")
         cac_thuoc = {t.ma_thuoc: t for t in Thuoc.objects.filter(dang_hoat_dong=True)}
         cac_dong, cac_loi = [], []
+        # (thuốc, mã lô) -> (số dòng Excel, hạn) để báo cùng một lô ghi hai hạn khác nhau.
+        da_gap = {}
         for so_dong, hang in enumerate(cac_hang, start=2):
             o = {ma: hang[i] if i < len(hang) else None for ma, i in vi_tri.items()}
             if all(gia_tri in (None, "") for gia_tri in o.values()):
@@ -94,7 +104,15 @@ def doc_tep_nhap(tep):
             if len(cac_dong) + len(cac_loi) >= SO_DONG_TOI_DA:
                 raise LoiTepExcel(f"Một phiếu nhập tối đa {SO_DONG_TOI_DA} dòng.")
             try:
-                cac_dong.append(_doc_dong(o, cac_thuoc))
+                dong = _doc_dong(o, cac_thuoc)
+                khoa = (dong["thuoc"], dong["ma_lo_thuoc"])
+                truoc = da_gap.setdefault(khoa, (so_dong, dong["ngay_het_han"]))
+                if truoc[1] != dong["ngay_het_han"]:
+                    raise ValueError(
+                        f"lô {dong['ma_lo_thuoc']} đã có ở dòng {truoc[0]} với hạn khác; "
+                        "một lô chỉ có một hạn dùng"
+                    )
+                cac_dong.append(dong)
             except ValueError as loi:
                 cac_loi.append(f"Dòng {so_dong}: {loi}.")
     finally:
@@ -109,10 +127,21 @@ def _doc_dong(o, cac_thuoc):
     thuoc = cac_thuoc.get(ma_thuoc)
     if not thuoc:
         raise ValueError(f"không có thuốc đang kinh doanh mã {ma_thuoc or '(trống)'}")
-    ma_lo = str(o["ma_lo_thuoc"] or "").strip()
+    if isinstance(o["ma_lo_thuoc"], int | float | Decimal) and not isinstance(
+        o["ma_lo_thuoc"], bool
+    ):
+        # Ô kiểu số làm Excel bỏ số 0 ở đầu (010322 thành 10322): không đoán, bắt sửa tệp.
+        raise ValueError(
+            "ô Mã lô đang là kiểu số nên Excel có thể đã bỏ số 0 ở đầu; hãy định dạng cột Mã lô "
+            "là Văn bản (Text) rồi gõ lại đúng mã in trên bao bì"
+        )
+    ma_lo = chuan_hoa_ma_lo(o["ma_lo_thuoc"])
     if not re.fullmatch(MA_NGHIEP_VU, ma_lo):
-        raise ValueError("mã lô gồm tối đa 32 chữ hoa, số, gạch ngang hoặc gạch dưới")
+        raise ValueError("mã lô gồm tối đa 32 chữ in hoa, số, gạch ngang hoặc gạch dưới")
     ngay_het_han = _doc_ngay(o["ngay_het_han"])
+    loi_han = loi_han_dung(ngay_het_han)
+    if loi_han:
+        raise ValueError(loi_han[0].lower() + loi_han[1:].rstrip("."))
     so_luong = _doc_so_nguyen(o["so_luong"], "số lượng", duong=True)
     don_gia = _doc_so_nguyen(o["don_gia"], "giá nhập", duong=False)
     quy_doi = None
@@ -146,6 +175,10 @@ def tao_tep_mau():
         o.font, o.fill = dam, nen
     for cot, rong in zip("ABCDEF", (14, 16, 15, 11, 12, 24), strict=True):
         nhap.column_dimensions[cot].width = rong
+    # Cột Mã lô để dạng văn bản, giữ số 0 ở đầu mã (010322); cột hạn hiện ngày/tháng/năm.
+    for hang in range(2, SO_DONG_TOI_DA + 2):
+        nhap.cell(hang, 2).number_format = "@"
+        nhap.cell(hang, 3).number_format = "DD/MM/YYYY"
     tra_cuu = so.create_sheet("Mã thuốc")
     tra_cuu.append(["Mã thuốc", "Tên thuốc", "Đơn vị cơ sở", "Bao gói (hệ số)"])
     for o in tra_cuu[1]:

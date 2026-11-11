@@ -1,8 +1,7 @@
-{% autoescape off %}Xin chào {{ ho_ten|default:"bạn" }},
+{% autoescape off %}Mã xác thực để {{ muc_dich }}: {% if an_bi_mat %}******{% else %}{{ ma_otp }}{% endif %}
 
-Mã xác thực để {{ muc_dich }} là: {% if an_bi_mat %}******{% else %}{{ ma_otp }}{% endif %}
+Xin chào {{ ho_ten|default:"bạn" }},
+{% if het_han %}Mã hết hạn lúc {{ het_han|date:"H:i d/m/Y" }} ({{ so_phut }} phút){% else %}Mã có hiệu lực trong {{ so_phut }} phút{% endif %} và chỉ dùng được một lần.
 
-Mã có hiệu lực trong {{ so_phut }} phút và chỉ dùng được một lần. Không chia sẻ mã này với bất kỳ ai.
-
-{{ ten_thuong_hieu }}
-{% endautoescape %}
+Bạn không yêu cầu? Hãy bỏ qua thư này, tài khoản không thay đổi gì. Không đọc mã cho bất kỳ ai, kể cả người tự xưng là nhân viên nhà thuốc.
+{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

@@ -1,0 +1,10 @@
+{% comment %}
+  Trạng thái rỗng có hướng dẫn việc tiếp theo. Biến: tieu_de, mo_ta, bieu_tuong (Lucide, mặc định "inbox"),
+  duong_dan + nhan_hanh_dong (nút đi tiếp, tùy chọn), cap_tieu_de (h2 hoặc h3, mặc định h2).
+{% endcomment %}
+<div class="trang-thai-rong">
+  <span class="bieu-tuong-rong" aria-hidden="true"><i data-lucide="{{ bieu_tuong|default:'inbox' }}"></i></span>
+  {% if cap_tieu_de == "h3" %}<h3>{{ tieu_de }}</h3>{% else %}<h2>{{ tieu_de }}</h2>{% endif %}
+  {% if mo_ta %}<p>{{ mo_ta }}</p>{% endif %}
+  {% if duong_dan and nhan_hanh_dong %}<a class="nut" href="{{ duong_dan }}">{{ nhan_hanh_dong }}</a>{% endif %}
+</div>

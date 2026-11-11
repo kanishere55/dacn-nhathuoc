@@ -59,7 +59,7 @@ class DoanhThuVaExcelTests(TestCase):
         from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
 
         d = tao_du_lieu()
-        tao_ton(d, luong=50)
+        tao_ton(d, ngay=60, luong=50)
         ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
         don = dat_hang(
             d.khach,
@@ -99,7 +99,7 @@ class DoanhThuVaExcelTests(TestCase):
         from ung_dung.thanh_toan.services.ghi import ghi_ngay
 
         d = tao_du_lieu()
-        tao_ton(d, luong=50)
+        tao_ton(d, ngay=60, luong=50)
         d.thuoc.ten_thuoc = "=1+1"
         d.thuoc.save(update_fields=["ten_thuoc"])
         ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 3}])
@@ -146,7 +146,7 @@ class BieuDoBaoCaoTests(TestCase):
         from ung_dung.ban_hang.models import PhieuBan
 
         d = tao_du_lieu()
-        tao_ton(d, luong=50)
+        tao_ton(d, ngay=60, luong=50)
         hom_nay = timezone.localdate()
         cu = ban_tai_quay(d.nv, d.cn, [{"thuoc": d.thuoc, "so_luong": 2}])
         PhieuBan.objects.filter(pk=cu.pk).update(thoi_diem_tao=timezone.now() - timedelta(days=7))
