@@ -38,15 +38,85 @@ def _goi(duong_dan, tham_so):
         raise ValidationError("Chưa kết nối được dịch vụ tìm địa chỉ, hãy thử lại.") from loi
 
 
-def tim_dia_chi(tu_khoa):
-    ket_qua = _goi(
-        "search",
-        {"q": tu_khoa, "format": "jsonv2", "countrycodes": "vn", "limit": 6},
+SO_LAN_THU_GAN_DUNG = 2
+NOI_KHUNG_DO = 0.35  # nới khung quanh các chi nhánh, khoảng 35–40 km
+
+
+def _vung_uu_tien():
+    """Khung bao các chi nhánh đang hoạt động (kinh độ trái, vĩ độ trên, kinh độ phải, vĩ độ dưới).
+
+    Nominatim chỉ dùng khung này để xếp kết quả trong vùng phục vụ lên trước (không loại kết quả
+    ngoài khung). Chuỗi chưa có chi nhánh thì không gửi khung.
+    """
+    from ung_dung.danh_muc.models import ChiNhanh
+
+    cac_diem = [
+        cn.vi_tri
+        for cn in ChiNhanh.objects.filter(dang_hoat_dong=True, vi_tri__isnull=False).only("vi_tri")
+    ]
+    if not cac_diem:
+        return ""
+    kinh_do = [d.x for d in cac_diem]
+    vi_do = [d.y for d in cac_diem]
+    return ",".join(
+        f"{so:.4f}"
+        for so in (
+            min(kinh_do) - NOI_KHUNG_DO,
+            max(vi_do) + NOI_KHUNG_DO,
+            max(kinh_do) + NOI_KHUNG_DO,
+            min(vi_do) - NOI_KHUNG_DO,
+        )
     )
+
+
+def _cac_cach_viet_gon(tu_khoa):
+    """Các cách viết ngắn dần của một địa chỉ, dùng khi tìm nguyên văn không ra.
+
+    Dữ liệu bản đồ ghi tên phường, xã hiện hành, trong khi người dùng hay gõ số nhà kèm tên
+    phường cũ ("45 Lê Lợi, Bến Nghé"). Bỏ dần phần sau dấu phẩy cuối, rồi bỏ số nhà, thì vẫn
+    tìm được con đường để người dùng kéo ghim tới đúng nhà.
+    """
+    cac_phan = [phan.strip() for phan in tu_khoa.split(",") if phan.strip()]
+    da_co = {tu_khoa.strip().lower()}
+    while len(cac_phan) > 1:
+        cac_phan = cac_phan[:-1]
+        ung_vien = ", ".join(cac_phan)
+        if len(ung_vien) >= 3 and ung_vien.lower() not in da_co:
+            da_co.add(ung_vien.lower())
+            yield ung_vien
+    dau, _, con_lai = (cac_phan[0] if cac_phan else "").partition(" ")
+    if any(ky_tu.isdigit() for ky_tu in dau) and len(con_lai.strip()) >= 3:
+        if con_lai.strip().lower() not in da_co:
+            yield con_lai.strip()
+
+
+def _tim(tu_khoa, vung):
+    tham_so = {"q": tu_khoa, "format": "jsonv2", "countrycodes": "vn", "limit": 6}
+    if vung:
+        tham_so["viewbox"] = vung
     return [
         {"dia_chi": muc["display_name"], "vi_do": float(muc["lat"]), "kinh_do": float(muc["lon"])}
-        for muc in ket_qua
+        for muc in _goi("search", tham_so)
     ]
+
+
+def tim_dia_chi(tu_khoa):
+    """Trả (danh sách kết quả, gần đúng hay không).
+
+    Tìm nguyên văn trước. Không có kết quả thì thử tối đa SO_LAN_THU_GAN_DUNG cách viết gọn
+    hơn; kết quả khi đó chỉ gần đúng (thường là con đường), nơi gọi phải nói rõ với người dùng.
+    """
+    vung = _vung_uu_tien()
+    ket_qua = _tim(tu_khoa, vung)
+    if ket_qua:
+        return ket_qua, False
+    for so, ung_vien in enumerate(_cac_cach_viet_gon(tu_khoa)):
+        if so >= SO_LAN_THU_GAN_DUNG:
+            break
+        ket_qua = _tim(ung_vien, vung)
+        if ket_qua:
+            return ket_qua, True
+    return [], False
 
 
 def dia_chi_tu_toa_do(vi_do, kinh_do):

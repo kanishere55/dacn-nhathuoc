@@ -80,7 +80,8 @@ def tim_dia_chi_api(request):
     form = TimDiaChiSerializer(data=request.query_params)
     form.is_valid(raise_exception=True)
     try:
-        return Response({"ket_qua": tim_dia_chi(form.validated_data["q"])})
+        ket_qua, gan_dung = tim_dia_chi(form.validated_data["q"])
+        return Response({"ket_qua": ket_qua, "gan_dung": gan_dung})
     except ValidationError as loi:
         return Response({"loi": loi.messages}, status=503)
 

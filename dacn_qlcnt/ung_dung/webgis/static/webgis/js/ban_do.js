@@ -204,8 +204,8 @@
       const phanHoi = await fetch(`${khung.dataset.urlTimDiaChi}?q=${encodeURIComponent(tuKhoa)}`, { headers: { Accept: 'application/json' } });
       const duLieu = await phanHoi.json();
       if (!phanHoi.ok) throw new Error((duLieu.loi || []).join(' '));
-      if (!duLieu.ket_qua.length) { baoViTri.textContent = 'Không thấy địa chỉ phù hợp. Thêm phường, quận hoặc bấm lên bản đồ.'; return; }
-      baoViTri.textContent = 'Chọn một kết quả:';
+      if (!duLieu.ket_qua.length) { baoViTri.textContent = 'Không thấy địa chỉ phù hợp. Hãy thử chỉ gõ tên đường, hoặc bấm lên bản đồ.'; return; }
+      baoViTri.textContent = duLieu.gan_dung ? 'Chưa thấy đúng số nhà này. Chọn con đường gần đúng:' : 'Chọn một kết quả:';
       duLieu.ket_qua.forEach((muc) => {
         const nut = chu('button', '', muc.dia_chi);
         nut.type = 'button';
