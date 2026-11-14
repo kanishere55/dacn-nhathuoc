@@ -31,6 +31,8 @@
   }
   .cot-ban {
     display: grid;
+    /* Cột co được theo ô lưới: không có dòng này, bảng giỏ đẩy cột rộng ra và chui dưới thẻ thanh toán. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
     min-width: 0;
   }
@@ -142,6 +144,7 @@
   }
   .gio-quay {
     padding: 8px 20px;
+    overflow-x: auto;
   }
   .bang-gio-quay {
     width: 100%;
@@ -161,6 +164,23 @@
   }
   .bang-gio-quay .o-so {
     text-align: right;
+    white-space: nowrap;
+  }
+  .bang-gio-quay tbody th {
+    min-width: 132px;
+  }
+  /* Màn hình laptop 1280–1366 px: thu gọn khoảng đệm để cả năm cột nằm trong thẻ, không cuộn ngang. */
+  @media (max-width: 1400px) {
+    .gio-quay {
+      padding: 8px 12px;
+    }
+    .bang-gio-quay th,
+    .bang-gio-quay td {
+      padding: 12px 5px;
+    }
+    .bang-gio-quay select {
+      max-width: 104px;
+    }
   }
   .bang-gio-quay tbody th small {
     display: block;
@@ -171,7 +191,9 @@
     border-bottom: 0;
   }
   .bang-gio-quay select {
-    max-width: 180px;
+    width: 100%;
+    min-width: 84px;
+    max-width: 150px;
     padding: 6px 8px;
     border: 1px solid var(--vien);
     border-radius: 8px;
@@ -388,7 +410,7 @@
     text-align: center;
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1240px) {
     .quay-ban { grid-template-columns: minmax(0, 1fr); }
     .cot-thanh-toan { position: static; }
   }
