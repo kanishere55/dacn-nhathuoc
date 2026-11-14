@@ -161,7 +161,7 @@ class DongNhapForm(DongThuocForm):
             self.add_error(
                 "nhan_lo_can_han",
                 f"Lô chỉ còn {so_ngay_con_han(ngay)} ngày (dưới {SO_NGAY_CAN_HAN} ngày). "
-                "Tick “Vẫn nhận lô cận hạn” nếu đã kiểm tra và đồng ý nhận.",
+                "Đánh dấu “Vẫn nhận lô cận hạn” nếu đã kiểm tra và đồng ý nhận.",
             )
         return du_lieu
 

@@ -161,7 +161,7 @@ class DoiEmailForm(forms.Form):
 
 class DiaChiGiaoHangForm(forms.Form):
     ten_nguoi_nhan = TruongHoTen(label="Người nhận")
-    so_dien_thoai = TruongSoDienThoai(label="Số điện thoại người nhận")
+    so_dien_thoai = TruongSoDienThoai(label="Số điện thoại")
     dia_chi = TruongMotDong(
         label="Địa chỉ",
         max_length=300,

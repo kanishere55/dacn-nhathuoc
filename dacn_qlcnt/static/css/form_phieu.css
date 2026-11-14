@@ -125,6 +125,14 @@
   .bang-dong-phieu input[type="date"] {
     min-width: 140px;
   }
+  /* Mã lô in trên bao bì thường 8–16 ký tự: đủ rộng để đọc lại cả mã sau khi gõ. */
+  .bang-dong-phieu input[name$="ma_lo_thuoc"] {
+    min-width: 132px;
+  }
+  .bang-dong-phieu td:has(> input[name$="don_gia"]) input,
+  .bang-dong-phieu input[name$="don_gia"] {
+    min-width: 110px;
+  }
   .bang-dong-phieu thead .o-stt {
     padding-top: 8px !important;
   }

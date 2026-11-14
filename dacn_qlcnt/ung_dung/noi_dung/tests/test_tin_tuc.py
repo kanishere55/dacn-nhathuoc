@@ -76,6 +76,14 @@ class TinTucMauTests(TestCase):
     def setUpTestData(cls):
         cls.d = tao_du_lieu()
 
+    def test_khong_truyen_tac_gia_thi_lay_quan_tri_chuoi_dang_hoat_dong(self):
+        """README gọi lệnh không kèm --tac-gia: người viết là quản trị chuỗi đầu tiên."""
+        call_command("nap_tin_tuc_mau", stdout=StringIO())
+        self.assertEqual(TinTuc.objects.count(), 3)
+        self.assertEqual(
+            set(TinTuc.objects.values_list("nguoi_viet", flat=True)), {self.d.admin.pk}
+        )
+
     def test_nap_bai_mau_chay_lai_khong_ghi_de(self):
         call_command("nap_tin_tuc_mau", tac_gia=self.d.admin.ten_dang_nhap, stdout=StringIO())
         self.assertEqual(TinTuc.objects.count(), 3)

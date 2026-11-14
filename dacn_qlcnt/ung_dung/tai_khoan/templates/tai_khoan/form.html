@@ -34,7 +34,7 @@
             <a class="nut nut-phu" href="{% url 'tai_khoan:nhom_quyen_danh_sach' %}" target="_blank" rel="noopener"><i data-lucide="shield-check" aria-hidden="true"></i>Quản lý nhóm quyền</a>
           </div>
         </div>
-        <p class="ghi-chu-khach">Tick để cấp quyền, bỏ tick để thu hồi. Quyền khác với nhóm đã chọn được đánh dấu <span class="nhan-khac-nhom">khác nhóm</span> và lưu thành quyền riêng của người này.</p>
+        <p class="ghi-chu-khach">Đánh dấu để cấp quyền, bỏ dấu để thu hồi. Quyền khác với nhóm đã chọn được đánh dấu <span class="nhan-khac-nhom">khác nhóm</span> và lưu thành quyền riêng của người này.</p>
         <div class="ma-tran-quyen">
           {% for ten_nhom, cac_dong in form.cac_nhom_quyen_rieng %}
             <fieldset data-nhom-module>

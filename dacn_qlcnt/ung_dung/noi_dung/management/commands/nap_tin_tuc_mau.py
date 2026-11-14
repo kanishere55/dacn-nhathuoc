@@ -29,7 +29,7 @@ class Command(BaseCommand):
             tac_gia = nguoi_dung.objects.filter(ten_dang_nhap=options["tac_gia"]).first()
         else:
             tac_gia = (
-                nguoi_dung.objects.filter(vai_tro="quan_tri_chuoi", is_active=True)
+                nguoi_dung.objects.filter(vai_tro="quan_tri_chuoi", dang_hoat_dong=True)
                 .order_by("pk")
                 .first()
             )

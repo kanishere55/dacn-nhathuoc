@@ -63,7 +63,7 @@
           <li class="viec muc-{{ viec.muc }}" data-viec="{{ viec.ma }}">
             <span class="so-viec" aria-hidden="true">{{ viec.so }}</span>
             <div class="noi-dung-viec">
-              <p class="ten-viec"><span class="sr-only">{{ viec.nhan_muc }}: </span><strong>{{ viec.so }} · {{ viec.nhan }}</strong><span class="nhan-muc-viec">{{ viec.nhan_muc }}</span></p>
+              <p class="ten-viec"><span class="sr-only">{{ viec.nhan_muc }}: </span><strong><span class="sr-only">{{ viec.so }} </span>{{ viec.nhan }}</strong><span class="nhan-muc-viec">{{ viec.nhan_muc }}</span></p>
               {% if viec.mo_ta %}<p class="mo-ta-viec">{{ viec.mo_ta }}</p>{% endif %}
               {% if viec.cac_muc %}
                 <ul class="muc-con-viec">
