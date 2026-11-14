@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
@@ -27,10 +28,22 @@ THAM_SO = {
     },
     "sarimax": {"order": (1, 0, 0), "seasonal_order": (1, 0, 0, 7), "trend": "c"},
 }
+# Biến ngoại sinh của SARIMAX: hai cặp sin/cos theo ngày trong năm (chu kỳ 365,25 ngày) để mô
+# tả mùa vụ theo năm của nhu cầu thuốc (mùa lạnh, mùa mưa). Đây là giá trị lịch, biết trước
+# cho mọi ngày tương lai nên dùng được khi dự báo mà không lộ thông tin của tương lai. Phần
+# mùa vụ tuần vẫn do thành phần seasonal (chu kỳ 7) đảm nhận.
+SO_CAP_FOURIER_NAM = 2
+CHU_KY_NAM = 365.25
 CAU_HINH_SARIMAX = (
     THAM_SO["sarimax"],
     {"order": (1, 0, 0), "seasonal_order": (0, 0, 0, 0), "trend": "c"},
     {"order": (1, 0, 0), "seasonal_order": (1, 0, 0, 7), "trend": "n"},
+    {
+        "order": (1, 0, 0),
+        "seasonal_order": (1, 0, 0, 7),
+        "trend": "c",
+        "ngoai_sinh": "fourier_nam",
+    },
 )
 CAC_LOP = {
     "hoi_quy_tuyen_tinh": LinearRegression,
@@ -44,9 +57,26 @@ class KhongHoiTu(ValueError):
     pass
 
 
+def bien_ngoai_sinh(cac_ngay):
+    """Ma trận (số ngày × 2·SO_CAP_FOURIER_NAM) các số hạng Fourier theo ngày trong năm."""
+    ngay_trong_nam = pd.DatetimeIndex(cac_ngay).dayofyear.to_numpy(dtype=float)
+    cot = []
+    for bac in range(1, SO_CAP_FOURIER_NAM + 1):
+        goc = 2 * np.pi * bac * ngay_trong_nam / CHU_KY_NAM
+        cot += [np.sin(goc), np.cos(goc)]
+    return np.column_stack(cot)
+
+
 def du_doan_sarimax(chuoi, ngay_fit_cuoi, cac_ngay_goc, tham_so):
+    tham_so = dict(tham_so)
+    co_ngoai_sinh = tham_so.pop("ngoai_sinh", None) == "fourier_nam"
+    ngoai_sinh = bien_ngoai_sinh(chuoi.index) if co_ngoai_sinh else None
     vi_tri_cuoi = chuoi.index.get_loc(ngay_fit_cuoi)
-    fit = SARIMAX(chuoi.iloc[: vi_tri_cuoi + 1].to_numpy(), **tham_so).fit(disp=False, maxiter=200)
+    fit = SARIMAX(
+        chuoi.iloc[: vi_tri_cuoi + 1].to_numpy(),
+        exog=ngoai_sinh[: vi_tri_cuoi + 1] if co_ngoai_sinh else None,
+        **tham_so,
+    ).fit(disp=False, maxiter=200)
     if not fit.mle_retvals.get("converged"):
         raise KhongHoiTu(f"SARIMAX không hội tụ trên tập kết thúc {ngay_fit_cuoi.date()}.")
     ket_qua = []
@@ -55,9 +85,18 @@ def du_doan_sarimax(chuoi, ngay_fit_cuoi, cac_ngay_goc, tham_so):
         if vi_tri < vi_tri_cuoi:
             raise ValueError("Ngày gốc dự báo đứng trước dữ liệu đã fit.")
         if vi_tri > vi_tri_cuoi:
-            fit = fit.extend(chuoi.iloc[vi_tri_cuoi + 1 : vi_tri + 1].to_numpy())
+            fit = fit.extend(
+                chuoi.iloc[vi_tri_cuoi + 1 : vi_tri + 1].to_numpy(),
+                exog=ngoai_sinh[vi_tri_cuoi + 1 : vi_tri + 1] if co_ngoai_sinh else None,
+            )
             vi_tri_cuoi = vi_tri
-        ket_qua.append(fit.forecast(SO_NGAY_DU_BAO).sum())
+        # Bảy ngày cần dự báo có thể vượt cuối chuỗi: tính số hạng Fourier từ ngày lịch.
+        sap_toi = (
+            bien_ngoai_sinh(pd.date_range(ngay + pd.Timedelta(days=1), periods=SO_NGAY_DU_BAO))
+            if co_ngoai_sinh
+            else None
+        )
+        ket_qua.append(fit.forecast(SO_NGAY_DU_BAO, exog=sap_toi).sum())
     return np.asarray(ket_qua)
 
 

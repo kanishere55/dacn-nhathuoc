@@ -219,8 +219,9 @@
         <section>
           <h3>Cấu hình SARIMAX được chọn</h3>
           <ul>
-            {% for nhom in cac_nhom %}<li>{{ nhom.ma }}: order {{ nhom.sarimax.order|join:", " }} · mùa vụ {{ nhom.sarimax.seasonal_order|join:", " }} · trend {{ nhom.sarimax.trend }}</li>{% endfor %}
+            {% for nhom in cac_nhom %}<li>{{ nhom.ma }}: order {{ nhom.sarimax.order|join:", " }} · mùa vụ {{ nhom.sarimax.seasonal_order|join:", " }} · trend {{ nhom.sarimax.trend }}{% if nhom.sarimax.ngoai_sinh %} · biến ngoại sinh: Fourier theo năm{% endif %}</li>{% endfor %}
           </ul>
+          <p>Mỗi nhóm thử bốn cấu hình (có hoặc không có mùa vụ tuần, có hoặc không có hằng số, có hoặc không có biến ngoại sinh là các số hạng Fourier theo ngày trong năm) và giữ cấu hình có sai số nhỏ nhất trên tập xác thực.</p>
         </section>
         <section>
           <h3>Thư viện</h3>
