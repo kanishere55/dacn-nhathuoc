@@ -36,7 +36,7 @@
           <li><span class="anh-nho-dong">{% if dong.id_anh %}<img src="{% url 'danh_muc:anh_thuoc' dong.id_anh %}" alt="" loading="lazy">{% else %}<i data-lucide="pill" aria-hidden="true"></i>{% endif %}</span><span><a href="{% url 'danh_muc:khach_thuoc_chi_tiet' dong.thuoc.ma_thuoc %}">{{ dong.thuoc.ten_thuoc }}</a><small>{{ dong.so_luong }} × {{ dong.don_gia|tien }}{% if dong.phan_tram_giam %} (giảm {{ dong.phan_tram_giam }}%){% endif %}</small></span><strong>{{ dong.thanh_tien|tien }}</strong></li>
         {% endfor %}
       </ul>
-      {% include "ban_hang/_bang_tien.html" %}
+      {% include "ban_hang/_bang_tien.html" with cho_khach=True %}
     </section>
     <section class="the-khach" aria-labelledby="nhan-hang-don">
       <h2 id="nhan-hang-don">{% if don.la_giao_hang %}Giao hàng{% else %}Nhận tại nhà thuốc{% endif %}</h2>

@@ -39,7 +39,7 @@
     <aside class="the-khach" aria-labelledby="tom-tat-tt">
       <h2 id="tom-tat-tt">Đơn hàng</h2>
       <p class="ghi-chu-khach">{% if don.la_giao_hang %}Giao đến {{ don.dia_chi_giao }}{% else %}Nhận tại {{ don.chi_nhanh.ten_chi_nhanh }}{% endif %}</p>
-      {% include "ban_hang/_bang_tien.html" %}
+      {% include "ban_hang/_bang_tien.html" with cho_khach=True %}
       <a class="nut nut-phu" href="{% url 'ban_hang:khach_don_hang_chi_tiet' don.pk %}">Xem chi tiết đơn</a>
     </aside>
   </div>

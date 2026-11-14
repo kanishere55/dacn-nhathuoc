@@ -289,6 +289,43 @@ class DonHang(models.Model):
     def la_giao_hang(self):
         return self.hinh_thuc_nhan == "giao_hang"
 
+    @property
+    def nhan_thanh_toan_khach(self):
+        """Tình trạng thanh toán theo cách khách nhìn thấy (trang đơn của khách, email).
+
+        Đơn COD đã giao xong: khách đã trả tiền cho người giao, dù nhà thuốc chưa đối soát với
+        người giao nên trạng thái nội bộ vẫn là "chưa thanh toán". Đơn chưa tới lúc trả tiền thì
+        nói rõ trả khi nào thay vì chỉ ghi "chưa thanh toán".
+        """
+        if self.trang_thai_thanh_toan == "cho_hoan_tien" and self.trang_thai not in (
+            "da_huy",
+            "het_han",
+            "giao_that_bai",
+        ):
+            # Đơn vẫn đi tiếp (chuyển thừa, trả một phần hàng): tiền đơn đã đủ, chỉ còn khoản hoàn.
+            return "Đã thanh toán, có khoản chờ hoàn"
+        if self.trang_thai_thanh_toan != "chua_thanh_toan":
+            return self.get_trang_thai_thanh_toan_display()
+        if self.phuong_thuc_thanh_toan == "cod":
+            if self.trang_thai == "hoan_thanh":
+                return "Đã trả cho người giao"
+            if self.trang_thai in ("cho_xac_nhan", "dang_chuan_bi", "dang_giao"):
+                return "Trả khi nhận hàng"
+        if self.phuong_thuc_thanh_toan == "tai_quay" and self.trang_thai == "dang_giu":
+            return "Trả tại quầy khi nhận hàng"
+        return self.get_trang_thai_thanh_toan_display()
+
+    @property
+    def lop_nhan_thanh_toan_khach(self):
+        """Lớp CSS của nhãn thanh toán phía khách: COD đã giao xong hiện như đã thanh toán."""
+        if (
+            self.trang_thai_thanh_toan == "chua_thanh_toan"
+            and self.phuong_thuc_thanh_toan == "cod"
+            and self.trang_thai == "hoan_thanh"
+        ):
+            return "da_thanh_toan"
+        return self.trang_thai_thanh_toan
+
 
 class ChiTietDonHang(models.Model):
     id_chi_tiet_don_hang = models.BigAutoField(

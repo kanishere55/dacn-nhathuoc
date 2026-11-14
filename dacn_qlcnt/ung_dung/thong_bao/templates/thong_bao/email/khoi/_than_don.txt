@@ -39,7 +39,7 @@ SẢN PHẨM{% for dong in cac_dong %}
 Tiền hàng: {{ don.tien_hang|tien }}{% if don.giam_gia_thanh_vien %}
 Ưu đãi thành viên: -{{ don.giam_gia_thanh_vien|tien }}{% endif %}{% if don.la_giao_hang %}
 Phí giao hàng: {{ don.phi_giao_hang|tien }}{% endif %}
-Tổng thanh toán: {{ don.tong_thanh_toan|tien }} ({{ don.get_phuong_thuc_thanh_toan_display }} · {{ don.get_trang_thai_thanh_toan_display }}){% endif %}{% if nut_phu %}
+Tổng thanh toán: {{ don.tong_thanh_toan|tien }} ({{ don.get_phuong_thuc_thanh_toan_display }} · {{ don.nhan_thanh_toan_khach }}){% endif %}{% if nut_phu %}
 
 {{ nut_phu.nhan }}:
 {{ nut_phu.url }}{% endif %}

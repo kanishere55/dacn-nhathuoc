@@ -36,6 +36,10 @@ MOMO = {
     "MOMO_ACCESS_KEY": "truy-cap-thu",
     "MOMO_SECRET_KEY": "bi-mat-thu",
 }
+# Xóa cấu hình cổng lấy từ .env của máy chạy test, để kết quả không phụ thuộc máy đã khai
+# khóa VietQR/SePay/MoMo hay chưa.
+KHONG_NGAN_HANG = dict.fromkeys(NGAN_HANG, "")
+KHONG_MOMO = dict.fromkeys(MOMO, "")
 
 
 def giao():
@@ -67,7 +71,7 @@ class VietQRTests(TestCase):
             vietqr.tao_chuoi("97043", "0123456789", 1000, "DH1")
 
 
-@override_settings(**NGAN_HANG)
+@override_settings(**NGAN_HANG, **KHONG_MOMO)
 class ChuyenKhoanTests(TestCase):
     def setUp(self):
         self.d = tao_du_lieu()
@@ -242,7 +246,7 @@ class ChuyenKhoanTests(TestCase):
         self.assertIn("HX-Redirect", self.client.get(url))
 
 
-@override_settings(**MOMO)
+@override_settings(**MOMO, **KHONG_NGAN_HANG)
 class MoMoTests(TestCase):
     def setUp(self):
         self.d = tao_du_lieu()
@@ -351,6 +355,7 @@ class TaiQuayVaCodTests(TestCase):
         gd = GiaoDichThanhToan.objects.get(don_hang=don)
         self.assertEqual((gd.phuong_thuc, gd.so_tien), ("cod", don.tong_thanh_toan))
 
+    @override_settings(**KHONG_NGAN_HANG, **KHONG_MOMO)
     def test_phuong_thuc_tra_truoc_an_khi_chua_cau_hinh(self):
         self.assertEqual(phuong_thuc_kha_dung(), {"cod"})
 
