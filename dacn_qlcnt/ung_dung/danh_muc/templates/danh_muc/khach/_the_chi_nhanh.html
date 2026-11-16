@@ -1,0 +1,27 @@
+{% url 'danh_muc:khach_chi_nhanh_chi_tiet' chi_nhanh.ma_chi_nhanh as duong_dan %}
+<article class="the-khach the-chi-nhanh">
+  <a class="anh-the-chi-nhanh" href="{{ duong_dan }}" tabindex="-1" aria-hidden="true">
+    {% if chi_nhanh.id_anh_dai_dien %}
+      <img src="{% url 'danh_muc:anh_chi_nhanh' chi_nhanh.id_anh_dai_dien %}" alt="" loading="lazy">
+    {% else %}
+      <span class="anh-thay-the"><i data-lucide="store"></i></span>
+    {% endif %}
+    {% with so_anh=chi_nhanh.cac_anh.all|length %}{% if so_anh > 1 %}<span class="so-anh-the"><i data-lucide="images"></i>{{ so_anh }} ảnh</span>{% endif %}{% endwith %}
+  </a>
+  <div class="than-the-chi-nhanh">
+    <p class="trang-thai-the-chi-nhanh">
+      {% if chi_nhanh.dang_mo_cua %}<span class="nhan-dang-mo">Đang mở cửa</span>{% else %}<span class="nhan-da-dong">Đã đóng cửa</span>{% endif %}
+      {% if chi_nhanh.so_danh_gia %}<span class="sao-the-chi-nhanh"><i data-lucide="star" aria-hidden="true"></i>{{ chi_nhanh.diem_sao|floatformat:1 }}<small>({{ chi_nhanh.so_danh_gia }} đánh giá)</small></span>{% endif %}
+    </p>
+    <h3><a href="{{ duong_dan }}">{{ chi_nhanh.ten_chi_nhanh }}</a></h3>
+    <ul class="thong-tin-the-chi-nhanh">
+      <li><i data-lucide="map-pin" aria-hidden="true"></i><span>{{ chi_nhanh.dia_chi }}</span></li>
+      <li><i data-lucide="clock" aria-hidden="true"></i><span>{{ chi_nhanh.gio_mo_cua|time:"H:i" }} – {{ chi_nhanh.gio_dong_cua|time:"H:i" }} hằng ngày</span></li>
+      {% if chi_nhanh.so_dien_thoai %}<li><i data-lucide="phone" aria-hidden="true"></i><a href="tel:{{ chi_nhanh.so_dien_thoai }}">{{ chi_nhanh.so_dien_thoai }}</a></li>{% endif %}
+    </ul>
+    <div class="tac-vu-the-chi-nhanh">
+      <a class="nut nut-phu" href="{% url 'webgis:ban_do' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="navigation" aria-hidden="true"></i>Chỉ đường</a>
+      <a class="nut" href="{{ duong_dan }}">Xem chi tiết<span class="sr-only"> {{ chi_nhanh.ten_chi_nhanh }}</span></a>
+    </div>
+  </div>
+</article>

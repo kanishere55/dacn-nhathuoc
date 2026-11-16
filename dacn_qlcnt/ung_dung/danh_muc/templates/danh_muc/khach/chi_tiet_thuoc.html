@@ -7,27 +7,7 @@
     <span>{{ thuoc.ten_thuoc }}</span>
   </nav>
   <section class="the-khach chi-tiet-thuoc" aria-labelledby="ten-thuoc">
-    <div class="bo-anh-thuoc" x-data="{ chon: 0 }">
-      <div class="anh-chinh-thuoc">
-        {% for anh in cac_anh %}
-          {% url 'danh_muc:anh_thuoc' anh.pk as url_anh %}
-          <div class="khung-anh-mo" style="--nen: url('{{ url_anh }}')" x-show="chon === {{ forloop.counter0 }}"{% if not forloop.first %} x-cloak{% endif %}>
-            <img src="{{ url_anh }}" alt="{{ thuoc.ten_thuoc }} – ảnh {{ forloop.counter }}" width="{{ anh.chieu_rong }}" height="{{ anh.chieu_cao }}">
-          </div>
-        {% empty %}
-          <span class="anh-thay-the"><i data-lucide="pill" aria-hidden="true"></i></span>
-        {% endfor %}
-        {% if thuoc.phan_tram_giam %}<span class="nhan-giam">-{{ thuoc.phan_tram_giam }}%</span>{% endif %}
-      </div>
-      {% if cac_anh %}<p class="ghi-chu-anh">Hình ảnh mang tính chất minh họa, bao bì có thể thay đổi theo lô sản xuất.</p>{% endif %}
-      {% if cac_anh|length > 1 %}
-        <div class="anh-nho-thuoc" role="tablist" aria-label="Chọn ảnh">
-          {% for anh in cac_anh %}
-            <button type="button" role="tab" @click="chon = {{ forloop.counter0 }}" :aria-selected="chon === {{ forloop.counter0 }}"><img src="{% url 'danh_muc:anh_thuoc' anh.pk %}" alt="Ảnh {{ forloop.counter }}" loading="lazy"></button>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
+    {% include "components/_bo_anh.html" with cac_anh=cac_anh ten_url="danh_muc:anh_thuoc" mo_ta=thuoc.ten_thuoc bieu_tuong="pill" phan_tram_giam=thuoc.phan_tram_giam ghi_chu="Hình ảnh mang tính chất minh họa, bao bì có thể thay đổi theo lô sản xuất." only %}
     <div class="thong-tin-chinh-thuoc">
       <div class="cac-nhan-thuoc">
         {% if thuoc.danh_muc_san_pham %}<span class="nhan-khach">{{ thuoc.danh_muc_san_pham }}</span>{% endif %}
@@ -97,3 +77,4 @@
     </section>
   {% endif %}
 {% endblock %}
+{% block cuoi_trang %}{% include "components/_tai_bo_anh.html" %}{% endblock %}

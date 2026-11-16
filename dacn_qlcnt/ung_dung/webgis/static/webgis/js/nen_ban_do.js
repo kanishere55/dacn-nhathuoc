@@ -54,3 +54,150 @@ window.layLoTrinh = async (mayChu, tu, den, tinHieu) => {
   }
   return duong;
 };
+
+// Nội dung popup một nhà thuốc: ảnh trượt (nút ‹ ›), tên, trạng thái mở cửa, địa chỉ, điện thoại và các nút
+// trang truyền vào. `cn` theo du_lieu_ban_do_chi_nhanh (danh_muc/selectors.py).
+window.noiDungPopupNhaThuoc = (cn, tacVu = []) => {
+  const tao = (the, lop, chu) => {
+    const el = document.createElement(the);
+    if (lop) el.className = lop;
+    if (chu !== undefined) el.textContent = chu;
+    return el;
+  };
+  const khung = tao('div', 'noi-dung-popup');
+  const cacAnh = cn.cac_anh?.length ? cn.cac_anh : (cn.anh ? [cn.anh] : []);
+  if (cacAnh.length) {
+    const boAnh = tao('div', 'bo-anh bo-anh-phu-kin bo-anh-popup');
+    boAnh.dataset.boAnh = '';
+    const chinh = tao('div', 'splide bo-anh-chinh');
+    chinh.setAttribute('aria-label', 'Ảnh ' + cn.ten_chi_nhanh);
+    const ray = tao('div', 'splide__track');
+    const dsAnh = tao('ul', 'splide__list');
+    cacAnh.forEach((url, so) => {
+      const o = tao('li', 'splide__slide');
+      const img = tao('img');
+      img.src = url;
+      img.alt = `${cn.ten_chi_nhanh} – ảnh ${so + 1}`;
+      if (so) img.loading = 'lazy';
+      const khungAnh = tao('div', 'khung-anh-mo');
+      khungAnh.append(img);
+      o.append(khungAnh);
+      dsAnh.append(o);
+    });
+    ray.append(dsAnh);
+    chinh.append(ray);
+    if (cacAnh.length > 1) {
+      const dem = tao('span', 'dem-anh');
+      dem.setAttribute('aria-hidden', 'true');
+      const so = tao('span', '', '1');
+      so.dataset.soAnh = '';
+      dem.append(so, ` / ${cacAnh.length}`);
+      chinh.append(dem);
+    }
+    boAnh.append(chinh);
+    khung.append(boAnh);
+  }
+  const than = tao('div', 'than-popup');
+  const ten = tao('a', 'ten-popup', cn.ten_chi_nhanh);
+  ten.href = cn.duong_dan;
+  const trangThai = tao('p', 'trang-thai-popup');
+  trangThai.append(
+    tao('span', cn.dang_mo_cua ? 'nhan-dang-mo' : 'nhan-da-dong', cn.dang_mo_cua ? 'Đang mở cửa' : 'Đã đóng cửa'),
+    tao('span', '', `${cn.gio_mo_cua}–${cn.gio_dong_cua}`),
+  );
+  if (cn.diem_sao) trangThai.append(tao('span', 'sao-popup', `★ ${cn.diem_sao} (${cn.so_danh_gia})`));
+  const dong = (bieuTuong, noiDung) => {
+    const p = tao('p', 'dong-popup');
+    const i = tao('i');
+    i.dataset.lucide = bieuTuong;
+    i.setAttribute('aria-hidden', 'true');
+    p.append(i, noiDung);
+    return p;
+  };
+  than.append(ten, trangThai, dong('map-pin', cn.dia_chi));
+  if (cn.so_dien_thoai) {
+    const tel = tao('a', '', cn.so_dien_thoai);
+    tel.href = 'tel:' + cn.so_dien_thoai;
+    than.append(dong('phone', tel));
+  }
+  if (cn.khoang_cach_met !== null && cn.khoang_cach_met !== undefined) {
+    than.append(dong('navigation', `Cách bạn ${window.dinhDangKm(cn.khoang_cach_met)} (đường chim bay)`));
+  }
+  if (tacVu.length) {
+    const hang = tao('div', 'tac-vu-popup');
+    hang.append(...tacVu);
+    than.append(hang);
+  }
+  khung.append(than);
+  return khung;
+};
+
+// Popup nhà thuốc trên một bản đồ: rê chuột vào ghim thì xem nhanh, rời chuột thì ẩn; bấm (hoặc Enter) thì
+// popup được ghim lại, có nút X ở góc để đóng. Mỗi bản đồ ghim tối đa một popup.
+// Dùng: const ganPopup = taoPopupNhaThuoc(banDo); const p = ganPopup(moc, () => noiDung); p.mo(true).
+window.taoPopupNhaThuoc = (banDo) => {
+  let dangGhim = null;
+  return (moc, taoNoiDung) => {
+    let popup = null;
+    let hen = 0;
+    const giu = () => clearTimeout(hen);
+    const an = () => {
+      if (popup && popup !== dangGhim) popup.remove();
+    };
+    const anSau = () => {
+      giu();
+      hen = setTimeout(() => {
+        if (!popup?.getElement()?.matches(':hover')) an();
+      }, 200);
+    };
+    const tao = () => {
+      if (popup) return;
+      popup = L.popup({
+        className: 'popup-nha-thuoc', minWidth: 272, maxWidth: 272, offset: [0, -34], autoPan: false,
+      }).setLatLng(moc.getLatLng()).setContent(taoNoiDung());
+      popup.on('add', () => {
+        const el = popup.getElement();
+        el.classList.toggle('da-ghim', popup === dangGhim);
+        if (!el.dataset.daGan) {
+          el.dataset.daGan = '1';
+          el.addEventListener('mouseenter', giu);
+          el.addEventListener('mouseleave', anSau);
+          el.querySelector('.leaflet-popup-close-button')?.setAttribute('aria-label', 'Đóng thông tin nhà thuốc');
+        }
+        if (el.querySelector('i[data-lucide]')) window.lucide?.createIcons();
+        el.querySelectorAll('[data-bo-anh]').forEach((k) => window.ganBoAnh?.(k)?.refresh());
+      });
+      popup.on('remove', () => {
+        if (dangGhim === popup) dangGhim = null;
+      });
+    };
+    const mo = (ghim) => {
+      tao();
+      giu();
+      if (ghim) {
+        if (dangGhim && dangGhim !== popup) dangGhim.remove();
+        dangGhim = popup;
+      }
+      popup.options.autoClose = popup !== dangGhim;
+      popup.options.autoPan = popup === dangGhim;
+      if (!banDo.hasLayer(popup)) popup.openOn(banDo);
+      else if (ghim) popup.update();
+      popup.getElement()?.classList.toggle('da-ghim', popup === dangGhim);
+    };
+    const dong = () => {
+      giu();
+      if (popup) {
+        if (dangGhim === popup) dangGhim = null;
+        popup.remove();
+      }
+    };
+    moc.on('mouseover', () => mo(false));
+    moc.on('mouseout', anSau);
+    moc.on('click', () => mo(true));
+    moc.on('keypress', (e) => {
+      if (e.originalEvent.key === 'Enter') mo(true);
+    });
+    moc.on('remove', dong);
+    return { mo, dong, anSau };
+  };
+};

@@ -22,3 +22,6 @@ Tải bằng `python cong_cu/tai_thu_vien.py`. Không gọi CDN từ trình duy�
 | `quill/LICENSE` | https://raw.githubusercontent.com/slab/quill/v2.0.3/LICENSE | `395c12b616d6f58238b4be39284d4d9221b58dd6e1f1e34d9ab537e34abbb022` |
 | `chartjs/chart.umd.min.js` | https://unpkg.com/chart.js@4.4.6/dist/chart.umd.js | `3850656abbdc319141e6e8ce8eacde2622fc767c30e20d81704af2bf3159f92d` |
 | `chartjs/LICENSE` | https://raw.githubusercontent.com/chartjs/Chart.js/v4.4.6/LICENSE.md | `41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce` |
+| `splide/splide.min.js` | https://unpkg.com/@splidejs/splide@4.1.4/dist/js/splide.min.js | `159b16ec7d95e57f531a29d28e3c18278d7d5e46b6ec8f173c3996af21a55adc` |
+| `splide/splide-core.min.css` | https://unpkg.com/@splidejs/splide@4.1.4/dist/css/splide-core.min.css | `6405c8982634e928d5b88ac97d65044e4c8272d5f968674bd40544057e42c590` |
+| `splide/LICENSE` | https://unpkg.com/@splidejs/splide@4.1.4/LICENSE | `0e9b1d2f301b38a230deb2d5a3b487959ecafd3fb80c7aefaf168c7a72337a14` |

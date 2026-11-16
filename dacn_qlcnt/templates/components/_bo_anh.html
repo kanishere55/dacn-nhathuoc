@@ -1,0 +1,41 @@
+{% comment %}
+  Bộ ảnh trượt dùng chung (trang thuốc, trang chi nhánh): ảnh lớn có nút ‹ › và số thứ tự, kéo hoặc vuốt
+  để đổi ảnh, hàng ảnh nhỏ bên dưới để chọn nhanh. Chạy bằng Splide, gắn ở chung/js/bo_anh.js.
+  Tham số: cac_anh (ảnh có pk, chieu_rong, chieu_cao), ten_url (tên URL trả ảnh theo pk), mo_ta (chữ thay
+  thế), bieu_tuong (biểu tượng khi chưa có ảnh), ghi_chu (dòng dưới ảnh), phu_kin (ảnh phủ kín khung thay vì
+  hiện trọn), phan_tram_giam (nhãn giảm giá góc ảnh).
+{% endcomment %}
+<div class="bo-anh{% if phu_kin %} bo-anh-phu-kin{% endif %}" data-bo-anh>
+  <div class="khung-bo-anh">
+    {% if cac_anh %}
+      <section class="splide bo-anh-chinh" aria-label="Ảnh {{ mo_ta }}">
+        <div class="splide__track">
+          <ul class="splide__list">
+            {% for anh in cac_anh %}
+              {% url ten_url anh.pk as url_anh %}
+              <li class="splide__slide">
+                <div class="khung-anh-mo" style="--nen: url('{{ url_anh }}')">
+                  <img src="{{ url_anh }}" alt="{{ mo_ta }} – ảnh {{ forloop.counter }}" width="{{ anh.chieu_rong }}" height="{{ anh.chieu_cao }}"{% if not forloop.first %} loading="lazy"{% endif %}>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% if cac_anh|length > 1 %}<span class="dem-anh" aria-hidden="true"><span data-so-anh>1</span> / {{ cac_anh|length }}</span>{% endif %}
+      </section>
+    {% else %}
+      <div class="bo-anh-trong"><span class="anh-thay-the"><i data-lucide="{{ bieu_tuong|default:'image' }}" aria-hidden="true"></i></span></div>
+    {% endif %}
+    {% if phan_tram_giam %}<span class="nhan-giam">-{{ phan_tram_giam }}%</span>{% endif %}
+  </div>
+  {% if cac_anh|length > 1 %}
+    <section class="splide bo-anh-nho" aria-label="Chọn ảnh {{ mo_ta }}">
+      <div class="splide__track">
+        <ul class="splide__list">
+          {% for anh in cac_anh %}<li class="splide__slide"><img src="{% url ten_url anh.pk %}" alt="" loading="lazy"></li>{% endfor %}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
+  {% if cac_anh and ghi_chu %}<p class="ghi-chu-anh">{{ ghi_chu }}</p>{% endif %}
+</div>

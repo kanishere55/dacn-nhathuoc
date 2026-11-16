@@ -1,15 +1,19 @@
 from django.db.models import (
+    Avg,
     Case,
+    Count,
     DecimalField,
     ExpressionWrapper,
     F,
     OuterRef,
+    Prefetch,
     Q,
     Subquery,
     Value,
     When,
 )
 from django.db.models.functions import Coalesce, Round
+from django.urls import reverse
 from django.utils import timezone
 
 from ung_dung.chung.permissions import thay_toan_chuoi
@@ -110,12 +114,50 @@ def lay_chi_nhanh(nguoi, *, ca_chi_nhanh_ngung=False):
 
 
 def lay_chi_nhanh_cong_khai():
+    """Chi nhánh đang hoạt động cho website khách: ảnh đại diện, danh sách ảnh (chỉ khóa, không tải
+    bytea) và điểm trung bình của các đánh giá đang hiển thị."""
     anh_dau = AnhChiNhanh.objects.filter(chi_nhanh=OuterRef("pk")).order_by("thu_tu", "pk")
+    dang_hien = Q(cac_danh_gia__dang_hien_thi=True)
     return (
         ChiNhanh.objects.filter(dang_hoat_dong=True)
-        .annotate(id_anh_dai_dien=Subquery(anh_dau.values("pk")[:1]))
+        .annotate(
+            id_anh_dai_dien=Subquery(anh_dau.values("pk")[:1]),
+            diem_sao=Avg("cac_danh_gia__so_sao", filter=dang_hien),
+            so_danh_gia=Count("cac_danh_gia", filter=dang_hien),
+        )
+        .prefetch_related(
+            Prefetch("cac_anh", queryset=AnhChiNhanh.objects.only("pk", "chi_nhanh", "thu_tu"))
+        )
         .order_by("ma_chi_nhanh")
     )
+
+
+def du_lieu_ban_do_chi_nhanh(cn):
+    """Một chi nhánh lấy từ lay_chi_nhanh_cong_khai() thành dữ liệu cho ghim và popup bản đồ.
+
+    Dùng chung cho trang tìm nhà thuốc và bản đồ trang đặt giữ; `khoang_cach` có khi truy vấn đã
+    chú thích ST_Distance tới vị trí của khách.
+    """
+    cac_anh = [reverse("danh_muc:anh_chi_nhanh", args=[anh.pk]) for anh in cn.cac_anh.all()]
+    khoang_cach = getattr(cn, "khoang_cach", None)
+    return {
+        "id_chi_nhanh": cn.pk,
+        "ma_chi_nhanh": cn.ma_chi_nhanh,
+        "ten_chi_nhanh": cn.ten_chi_nhanh,
+        "dia_chi": cn.dia_chi,
+        "so_dien_thoai": cn.so_dien_thoai,
+        "gio_mo_cua": cn.gio_mo_cua.strftime("%H:%M"),
+        "gio_dong_cua": cn.gio_dong_cua.strftime("%H:%M"),
+        "dang_mo_cua": cn.dang_mo_cua(),
+        "vi_do": cn.vi_tri.y,
+        "kinh_do": cn.vi_tri.x,
+        "khoang_cach_met": round(khoang_cach.m, 1) if khoang_cach is not None else None,
+        "diem_sao": round(cn.diem_sao, 1) if cn.diem_sao else None,
+        "so_danh_gia": cn.so_danh_gia,
+        "anh": cac_anh[0] if cac_anh else "",
+        "cac_anh": cac_anh,
+        "duong_dan": reverse("danh_muc:khach_chi_nhanh_chi_tiet", args=[cn.ma_chi_nhanh]),
+    }
 
 
 def khuyen_mai_dang_ap_dung(ngay=None):

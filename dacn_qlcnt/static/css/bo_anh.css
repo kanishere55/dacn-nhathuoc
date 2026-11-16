@@ -1,0 +1,171 @@
+/*
+  Bộ ảnh trượt dùng chung (templates/components/_bo_anh.html, chung/js/bo_anh.js): trang thuốc, trang
+  chi nhánh và popup trên bản đồ. Phần khung chạy của Splide nằm ở vendor/splide/splide-core.min.css.
+*/
+@layer components {
+  .bo-anh {
+    --ti-le: 1;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    min-width: 0;
+  }
+  /* Ảnh nhà thuốc là ảnh chụp không gian: khung ngang và phủ kín. */
+  .bo-anh-phu-kin {
+    --ti-le: 4 / 3;
+  }
+  .khung-bo-anh {
+    position: relative;
+    min-width: 0;
+  }
+  .bo-anh-chinh .splide__track,
+  .bo-anh-trong {
+    border-radius: var(--radius-the);
+    background: #f4f7f4;
+  }
+  /* Ảnh sản phẩm: hiện trọn ảnh, phần trống lấp bằng chính ảnh làm mờ nên không có dải nền lệch. */
+  .bo-anh .khung-anh-mo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: var(--ti-le);
+    overflow: hidden;
+  }
+  .bo-anh .khung-anh-mo::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    background: var(--nen) center / cover no-repeat;
+    filter: blur(22px) saturate(1.1);
+    opacity: 0.55;
+  }
+  .bo-anh .khung-anh-mo img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .bo-anh-phu-kin .khung-anh-mo::before {
+    display: none;
+  }
+  .bo-anh-phu-kin .khung-anh-mo img {
+    object-fit: cover;
+  }
+  .bo-anh-trong {
+    display: grid;
+    place-items: center;
+    aspect-ratio: var(--ti-le);
+  }
+  .bo-anh-trong .anh-thay-the {
+    width: 120px;
+    height: 120px;
+    border-radius: 28px;
+  }
+  .bo-anh-trong .anh-thay-the svg.lucide {
+    width: 56px;
+    height: 56px;
+  }
+  .khung-bo-anh .nhan-giam {
+    z-index: 2;
+    top: 12px;
+    left: 12px;
+  }
+
+  /* Nút ‹ › hai bên ảnh lớn */
+  .bo-anh .splide__arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--color-vien);
+    border-radius: var(--radius-tron);
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: var(--shadow-vua);
+    color: var(--color-chu);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .bo-anh .splide__arrow:hover {
+    border-color: var(--color-chinh);
+    background: var(--color-chinh);
+    color: white;
+  }
+  .bo-anh .splide__arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .bo-anh .splide__arrow svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+  .bo-anh .splide__arrow--prev {
+    left: 12px;
+  }
+  .bo-anh .splide__arrow--prev svg {
+    transform: scaleX(-1);
+  }
+  .bo-anh .splide__arrow--next {
+    right: 12px;
+  }
+  .dem-anh {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 2;
+    padding: 3px 10px;
+    border-radius: var(--radius-tron);
+    background: rgb(17 24 21 / 0.62);
+    color: white;
+    font-size: var(--text-huy-hieu);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  /* Hàng ảnh nhỏ: bấm để xem, ảnh đang xem có viền màu thương hiệu */
+  .bo-anh-nho .splide__slide {
+    overflow: hidden;
+    border: 2px solid transparent;
+    border-radius: var(--radius-vua);
+    background: #f4f7f4;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.15s, border-color 0.15s;
+  }
+  .bo-anh-nho .splide__slide:hover {
+    opacity: 0.9;
+  }
+  .bo-anh-nho .splide__slide.is-active {
+    border-color: var(--color-chinh);
+    opacity: 1;
+  }
+  .bo-anh-nho .splide__slide:focus-visible {
+    outline: 3px solid var(--color-chinh-vien);
+    outline-offset: 1px;
+  }
+  .bo-anh-nho img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 640px) {
+    .bo-anh .splide__arrow {
+      width: 36px;
+      height: 36px;
+    }
+    .bo-anh .splide__arrow--prev {
+      left: 8px;
+    }
+    .bo-anh .splide__arrow--next {
+      right: 8px;
+    }
+  }
+}

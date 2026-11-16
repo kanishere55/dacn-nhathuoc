@@ -473,22 +473,6 @@
     font-size: var(--text-chu-thich);
     font-weight: 700;
   }
-  .the-chi-nhanh {
-    display: flex;
-    align-items: start;
-    gap: var(--khoang-3);
-  }
-  .the-chi-nhanh svg.lucide {
-    color: var(--color-chinh);
-  }
-  .the-chi-nhanh small {
-    display: block;
-    margin-top: var(--khoang-1);
-    color: var(--color-chu-phu);
-  }
-  .the-chi-nhanh:hover {
-    border-color: var(--color-chinh-vien);
-  }
   /* Thẻ thuốc: chỉ bố cục cột (kiểu dáng ở danh_muc.css). Không nhô lên khi rê chuột. */
   .the-thuoc {
     display: flex;

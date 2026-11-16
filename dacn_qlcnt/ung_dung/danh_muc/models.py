@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Now
+from django.utils import timezone
 
 from ung_dung.chung.anh import AnhCoNguon, AnhCSDL, rang_buoc_anh
 from ung_dung.chung.ten_csdl import (
@@ -96,6 +97,11 @@ class ChiNhanh(models.Model):
 
     def __str__(self):
         return str(self.ten_chi_nhanh)
+
+    def dang_mo_cua(self, luc=None):
+        """Đang trong giờ mở cửa (giờ Việt Nam) tại thời điểm `luc`, mặc định là bây giờ."""
+        gio = timezone.localtime(luc).time()
+        return self.gio_mo_cua <= gio < self.gio_dong_cua
 
 
 class DonViTinh(models.Model):

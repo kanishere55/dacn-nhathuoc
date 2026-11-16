@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../vendor/splide/splide-core.min.css";
 @import "./khach.css";
 @import "./bang_dieu_khien.css";
 @import "./tai_khoan.css";
@@ -14,6 +15,7 @@
 @import "./quay_ban.css";
 @import "./form_phieu.css";
 @import "./tro_chuyen.css";
+@import "./bo_anh.css";
 @source "../../templates";
 @source "../../ung_dung";
 

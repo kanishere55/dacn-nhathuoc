@@ -18,21 +18,43 @@
     let boLoTrinh = null;
     let daHuy = false;
     const gioiHan = [];
+    const ganPopup = window.taoPopupNhaThuoc(banDo);
+
+    // Nút trong popup: nhận tại chi nhánh này (chọn ô tương ứng trong danh sách) và xem chi tiết.
+    const tacVuPopup = (cn) => {
+      let chon;
+      if (cn.chon) {
+        chon = document.createElement('span');
+        chon.className = 'nhan-dang-chon';
+        chon.textContent = 'Đang chọn';
+      } else {
+        chon = document.createElement('button');
+        chon.type = 'button';
+        chon.className = 'nut';
+        chon.textContent = 'Nhận tại đây';
+        chon.addEventListener('click', () => {
+          const o = form.querySelector(`input[name="chi_nhanh"][value="${cn.id_chi_nhanh}"]`);
+          if (!o) return;
+          o.checked = true;
+          o.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+      const chiTiet = document.createElement('a');
+      chiTiet.className = 'nut nut-phu';
+      chiTiet.textContent = 'Xem chi tiết';
+      chiTiet.href = cn.duong_dan;
+      chiTiet.target = '_blank';
+      chiTiet.rel = 'noopener';
+      return [chon, chiTiet];
+    };
 
     duLieu.cac_chi_nhanh.forEach((cn) => {
       const diem = [cn.vi_do, cn.kinh_do];
       gioiHan.push(diem);
-      const moc = L.marker(diem, { icon: window.bieuTuongNhaThuoc({ mo: cn.chon }), title: cn.ten, zIndexOffset: cn.chon ? 500 : 0 })
-        .bindTooltip(cn.ten + (cn.chon ? ' (đang chọn)' : ''), { direction: 'top', offset: [0, -40] })
-        .addTo(banDo);
-      moc.on('click', () => {
-        if (cn.chon) return;
-        const o = form.querySelector(`input[name="chi_nhanh"][value="${cn.id}"]`);
-        if (o) {
-          o.checked = true;
-          o.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
+      const moc = L.marker(diem, {
+        icon: window.bieuTuongNhaThuoc({ mo: cn.chon }), alt: cn.ten_chi_nhanh, zIndexOffset: cn.chon ? 500 : 0,
+      }).addTo(banDo);
+      ganPopup(moc, () => window.noiDungPopupNhaThuoc(cn, tacVuPopup(cn)));
     });
 
     const datKhach = (diem, nhan) => {
@@ -49,7 +71,7 @@
     async function veLoTrinh() {
       if (!chon) return;
       if (!diemKhach) {
-        tomTat.textContent = `Nhận tại ${chon.ten}. Chọn vị trí của bạn ở phía trên (định vị hoặc nhập địa chỉ), hoặc chạm lên bản đồ để xem đường đi.`;
+        tomTat.textContent = `Nhận tại ${chon.ten_chi_nhanh}. Chọn vị trí của bạn ở phía trên (định vị hoặc nhập địa chỉ), hoặc chạm lên bản đồ để xem đường đi.`;
         return;
       }
       tomTat.textContent = 'Đang tính lộ trình…';
@@ -75,7 +97,7 @@
           span.append(b);
           tomTat.append(span);
         };
-        them(`Đến ${chon.ten}`, window.dinhDangKm(duong.distance));
+        them(`Đến ${chon.ten_chi_nhanh}`, window.dinhDangKm(duong.distance));
         them('Xe máy khoảng', xeMay);
         them('Ô tô khoảng', window.dinhDangPhut(duong.duration));
       } catch {

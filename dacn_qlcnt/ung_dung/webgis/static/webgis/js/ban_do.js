@@ -23,8 +23,9 @@
   let boDuong = null;
   let lanYeuCauDiBo = -Infinity;
   const cacLoTrinh = new Map();
-  const cacMoc = new Map();
+  const cacMoc = new Map(); // id chi nhánh -> { moc, popup }
   const lopMoc = L.layerGroup().addTo(banDo);
+  const ganPopup = window.taoPopupNhaThuoc(banDo);
   let mocNguoiDung = null;
   let lopDuong = null;
 
@@ -36,6 +37,20 @@
   };
 
   // ---------------------------------------------------------------- Vẽ danh sách và mốc bản đồ
+  const urlDatGiu = (cn) => `${khung.dataset.urlDatHang}?${new URLSearchParams({ chi_nhanh: cn.id_chi_nhanh })}`;
+
+  // Nút trong popup: đường đi, trang chi tiết, đặt giữ tại chi nhánh.
+  function tacVuPopup(cn) {
+    const nutDuong = chu('button', 'nut nut-phu', 'Đường đi');
+    nutDuong.type = 'button';
+    nutDuong.addEventListener('click', () => chonChiNhanh(cn));
+    const chiTiet = chu('a', 'nut nut-phu', 'Xem chi tiết');
+    chiTiet.href = cn.duong_dan;
+    const datGiu = chu('a', 'nut', 'Đặt giữ tại đây');
+    datGiu.href = urlDatGiu(cn);
+    return [nutDuong, chiTiet, datGiu];
+  }
+
   function veMoc() {
     lopMoc.clearLayers();
     cacMoc.clear();
@@ -43,20 +58,35 @@
       const moc = L.marker([cn.vi_do, cn.kinh_do], {
         icon: window.bieuTuongNhaThuoc({ noiBat: viTri && so === 0, mo: cn.id_chi_nhanh === dangChon }),
         alt: cn.ten_chi_nhanh,
-        title: cn.ten_chi_nhanh,
       });
-      const popup = chu('div', 'popup-nha-thuoc');
-      const ten = chu('strong', '', cn.ten_chi_nhanh);
-      const dc = chu('span', '', cn.dia_chi);
-      const nut = chu('button', 'nut nut-phu', 'Xem đường đi');
-      nut.type = 'button';
-      nut.addEventListener('click', () => chonChiNhanh(cn));
-      popup.append(ten, dc, nut);
-      moc.bindPopup(popup);
-      moc.on('click', () => chonChiNhanh(cn, false));
+      const popup = ganPopup(moc, () => window.noiDungPopupNhaThuoc(cn, tacVuPopup(cn)));
+      moc.on('click', () => bamMoc(cn));
       moc.addTo(lopMoc);
-      cacMoc.set(cn.id_chi_nhanh, moc);
+      cacMoc.set(cn.id_chi_nhanh, { moc, popup });
     });
+  }
+
+  // Đổi chi nhánh đang chọn mà không vẽ lại ghim, để popup đang mở không bị đóng.
+  function capNhatChon() {
+    danhSachEl.querySelectorAll('.the-nha-thuoc').forEach((the) => {
+      the.classList.toggle('dang-chon', Number(the.dataset.id) === dangChon);
+    });
+    cacMoc.forEach(({ moc }, id) => moc.getElement()?.classList.toggle('mo', id === dangChon));
+  }
+
+  // Bấm ghim: popup được ghim (có nút X), thẻ trong danh sách được đánh dấu. Đang xem đường đi thì
+  // đổi đích sang chi nhánh vừa bấm.
+  function bamMoc(cn) {
+    if (chiNhanhLoTrinh && chiNhanhLoTrinh.id_chi_nhanh !== cn.id_chi_nhanh) {
+      chonChiNhanh(cn, { tuMoc: true });
+      return;
+    }
+    dangChon = cn.id_chi_nhanh;
+    capNhatChon();
+    const the = danhSachEl.querySelector(`.the-nha-thuoc[data-id="${cn.id_chi_nhanh}"]`);
+    const cot = khung.querySelector('.bang-tim-nha-thuoc');
+    // Chỉ cuộn khi cột danh sách tự cuộn (màn rộng), tránh kéo cả trang khỏi bản đồ trên điện thoại.
+    if (the && cot.scrollHeight > cot.clientHeight + 1) the.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   const hienThi = () => cacChiNhanh.filter((cn) => !locThuoc || locThuoc.has(cn.id_chi_nhanh));
@@ -72,6 +102,7 @@
     }
     ds.forEach((cn, so) => {
       const the = chu('article', 'the-nha-thuoc' + (cn.id_chi_nhanh === dangChon ? ' dang-chon' : ''));
+      the.dataset.id = cn.id_chi_nhanh;
       const anh = chu('div', 'anh-nha-thuoc');
       if (cn.anh) {
         const img = chu('img');
@@ -112,11 +143,13 @@
       const chiTiet = chu('a', 'nut nut-phu', 'Chi tiết');
       chiTiet.href = cn.duong_dan;
       const datHang = chu('a', 'nut', 'Đặt giữ tại đây');
-      datHang.href = `${khung.dataset.urlDatHang}?${new URLSearchParams({ chi_nhanh: cn.id_chi_nhanh })}`;
+      datHang.href = urlDatGiu(cn);
       tacVu.append(nutDuong, chiTiet, datHang);
       noiDung.append(dau, diaChi, meta, tacVu);
       the.append(anh, noiDung);
-      the.addEventListener('mouseenter', () => cacMoc.get(cn.id_chi_nhanh)?.openPopup());
+      // Rê chuột lên thẻ thì xem nhanh popup của nhà thuốc đó trên bản đồ.
+      the.addEventListener('mouseenter', () => cacMoc.get(cn.id_chi_nhanh)?.popup.mo(false));
+      the.addEventListener('mouseleave', () => cacMoc.get(cn.id_chi_nhanh)?.popup.anSau());
       danhSachEl.append(the);
     });
     if (window.lucide) window.lucide.createIcons();
@@ -229,20 +262,21 @@
     bangLoTrinh.hidden = true;
   }
 
-  function chonChiNhanh(cn, moPopup = true) {
+  // Chọn chi nhánh để xem đường đi; chưa có vị trí thì đưa bản đồ tới chi nhánh và ghim popup của nó.
+  function chonChiNhanh(cn, { tuMoc = false } = {}) {
     if (dangChon !== cn.id_chi_nhanh) cacLoTrinh.clear();
     dangChon = cn.id_chi_nhanh;
-    veLai();
+    capNhatChon();
     if (!viTri) {
       banDo.setView([cn.vi_do, cn.kinh_do], 16);
-      if (moPopup) cacMoc.get(cn.id_chi_nhanh)?.openPopup();
+      cacMoc.get(cn.id_chi_nhanh)?.popup.mo(true);
       baoViTri.textContent = 'Chọn vị trí của bạn để xem đường đi tới chi nhánh này.';
       return;
     }
-    banDo.closePopup();
+    if (!tuMoc) cacMoc.forEach(({ popup }) => popup.dong());
     chiNhanhLoTrinh = cn;
     veLoTrinh(cn);
-    if (moPopup) {
+    if (!tuMoc) {
       bangLoTrinh.querySelector('[data-ten-dich]').focus({ preventScroll: true });
       bangLoTrinh.scrollIntoView({ block: 'nearest' });
     }
@@ -398,4 +432,8 @@
   veLai({ vuaKhung: true });
   // Đến từ giỏ hàng hoặc từ trang thuốc: lọc ngay theo thuốc đó.
   if (khung.hasAttribute('data-tu-gio') || form.querySelector('[data-thuoc]')?.value) apDungLocThuoc();
+  // Đến từ nút "Chỉ đường" của một chi nhánh (?chi_nhanh=MÃ): đưa bản đồ tới chi nhánh đó.
+  const maChiNhanh = new URLSearchParams(window.location.search).get('chi_nhanh');
+  const chiNhanhDen = cacChiNhanh.find((cn) => cn.ma_chi_nhanh === maChiNhanh);
+  if (chiNhanhDen) chonChiNhanh(chiNhanhDen);
 })();

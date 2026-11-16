@@ -56,15 +56,94 @@
     white-space: nowrap;
     transform: translateX(-50%);
   }
-  .popup-nha-thuoc {
-    display: grid;
-    gap: 6px;
-    min-width: 180px;
+  /* Popup nhà thuốc (nen_ban_do.js): ảnh trượt, trạng thái, địa chỉ và nút. */
+  .noi-dung-popup {
     font-family: var(--font-sans);
   }
-  .popup-nha-thuoc span {
-    color: var(--chu-phu);
-    font-size: 12px;
+  .bo-anh-popup {
+    --ti-le: 16 / 10;
+  }
+  .bo-anh-popup .splide__track {
+    border-radius: 0;
+  }
+  .bo-anh-popup .splide__arrow {
+    width: 32px;
+    height: 32px;
+  }
+  .bo-anh-popup .splide__arrow--prev {
+    left: 8px;
+  }
+  .bo-anh-popup .splide__arrow--next {
+    right: 8px;
+  }
+  .bo-anh-popup .dem-anh {
+    right: 8px;
+    bottom: 8px;
+  }
+  .than-popup {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px 14px;
+  }
+  .noi-dung-popup:not(:has(.bo-anh)) .ten-popup {
+    padding-right: 30px;
+  }
+  .trang-thai-popup {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    color: var(--color-chu-phu);
+    font-size: var(--text-huy-hieu);
+  }
+  .trang-thai-popup .nhan-dang-mo,
+  .trang-thai-popup .nhan-da-dong {
+    margin-left: 0;
+  }
+  .sao-popup {
+    color: #9a5b00;
+    font-weight: 600;
+  }
+  .dong-popup {
+    display: flex;
+    align-items: start;
+    gap: 7px;
+    color: var(--color-chu-phu);
+    font-size: var(--text-chu-thich);
+  }
+  .dong-popup svg.lucide {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    color: var(--color-chinh);
+  }
+  .tac-vu-popup {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .tac-vu-popup .nut {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: var(--text-chu-thich);
+  }
+  /* Số nút lẻ: nút cuối (đặt giữ) trải hết hàng. */
+  .tac-vu-popup > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .nhan-dang-chon {
+    display: grid;
+    place-items: center;
+    min-height: 36px;
+    padding: 0 8px;
+    border-radius: var(--radius-vua);
+    background: var(--color-chinh-nhat);
+    color: var(--color-chinh-dam);
+    font-size: var(--text-chu-thich);
+    font-weight: 600;
+    text-align: center;
   }
 
   /* Trang tìm nhà thuốc: điện thoại xem bản đồ trước rồi mới tới bộ lọc, danh sách;
@@ -409,4 +488,68 @@
 :root {
   /* Khoảng cách từ đỉnh màn hình tới cột dính của trang tìm nhà thuốc. */
   --cach-dinh-ban-do: 16px;
+}
+
+/*
+  Ghi đè kiểu mặc định của Leaflet cho popup nhà thuốc. leaflet.css không nằm trong @layer nên phải viết
+  ngoài @layer, với bộ chọn cụ thể hơn của Leaflet (.leaflet-container a, .leaflet-popup-content p).
+  Popup chỉ xem nhanh (rê chuột) thì ẩn nút X; popup đã ghim (.da-ghim, khi bấm vào ghim) mới hiện nút X.
+*/
+.leaflet-container .popup-nha-thuoc .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-the);
+  box-shadow: var(--shadow-lon);
+}
+.leaflet-container .popup-nha-thuoc .leaflet-popup-content {
+  margin: 0;
+  color: var(--color-chu);
+  font-size: var(--text-phu);
+  line-height: 1.45;
+}
+.leaflet-container .popup-nha-thuoc .leaflet-popup-content p {
+  margin: 0;
+}
+.leaflet-container .popup-nha-thuoc a.ten-popup {
+  color: var(--color-chu);
+  font-size: var(--text-than);
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: none;
+}
+.leaflet-container .popup-nha-thuoc a.ten-popup:hover {
+  color: var(--color-chinh);
+  text-decoration: underline;
+}
+.leaflet-container .popup-nha-thuoc .dong-popup a {
+  color: var(--color-chinh-dam);
+  font-weight: 600;
+}
+.leaflet-container .popup-nha-thuoc a.nut {
+  color: #fff;
+  text-decoration: none;
+}
+.leaflet-container .popup-nha-thuoc a.nut-phu {
+  color: var(--color-chinh-dam);
+}
+.leaflet-container .popup-nha-thuoc:not(.da-ghim) a.leaflet-popup-close-button {
+  display: none;
+}
+.leaflet-container .popup-nha-thuoc a.leaflet-popup-close-button {
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.95);
+  box-shadow: var(--shadow-vua);
+  color: var(--color-chu);
+  font: 600 20px / 1 var(--font-sans);
+}
+.leaflet-container .popup-nha-thuoc a.leaflet-popup-close-button:hover {
+  background: var(--color-chinh);
+  color: #fff;
 }

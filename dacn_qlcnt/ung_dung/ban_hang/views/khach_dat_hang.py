@@ -16,7 +16,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.vary import vary_on_headers
 
 from ung_dung.chung.permissions import yeu_cau_vai_tro
-from ung_dung.danh_muc.selectors import lay_chi_nhanh_cong_khai
+from ung_dung.danh_muc.selectors import du_lieu_ban_do_chi_nhanh, lay_chi_nhanh_cong_khai
 from ung_dung.kho.selectors import loc_chi_nhanh_du_thuoc
 
 from ..forms import DatHangForm
@@ -132,13 +132,8 @@ def dat_hang(request):
         ),
         "cac_chi_nhanh": [
             {
-                "id": pa["chi_nhanh"].pk,
-                "ten": pa["chi_nhanh"].ten_chi_nhanh,
-                "dia_chi": pa["chi_nhanh"].dia_chi,
-                "vi_do": pa["chi_nhanh"].vi_tri.y,
-                "kinh_do": pa["chi_nhanh"].vi_tri.x,
+                **du_lieu_ban_do_chi_nhanh(pa["chi_nhanh"]),
                 "chon": bool(phuong_an) and pa["chi_nhanh"].pk == phuong_an["chi_nhanh"].pk,
-                "khoang_cach_met": pa.get("khoang_cach_met"),
             }
             for pa in cac_phuong_an
         ],

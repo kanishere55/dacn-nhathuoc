@@ -91,12 +91,9 @@
       <div><p class="chu-dan">NHẬN TẠI QUẦY</p><h2 id="chi-nhanh-khach">Các nhà thuốc trong chuỗi</h2></div>
       <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}">Mở bản đồ<i data-lucide="arrow-right" aria-hidden="true"></i></a>
     </div>
-    <div class="luoi-khach-ba">
+    <div class="luoi-khach-ba luoi-chi-nhanh-khach">
       {% for chi_nhanh in cac_chi_nhanh %}
-        <a class="the-khach the-chi-nhanh" href="{% url 'danh_muc:khach_chi_nhanh_chi_tiet' chi_nhanh.ma_chi_nhanh %}">
-          <i data-lucide="map-pin" aria-hidden="true"></i>
-          <span><strong>{{ chi_nhanh.ten_chi_nhanh }}</strong><small>{{ chi_nhanh.dia_chi }}</small></span>
-        </a>
+        {% include "danh_muc/khach/_the_chi_nhanh.html" with chi_nhanh=chi_nhanh only %}
       {% empty %}
         <p>Chưa có chi nhánh hoạt động.</p>
       {% endfor %}

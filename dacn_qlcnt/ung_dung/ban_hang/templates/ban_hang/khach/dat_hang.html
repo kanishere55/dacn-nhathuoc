@@ -5,6 +5,7 @@
 {% block cuoi_trang %}
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
   <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
+  {% include "components/_tai_bo_anh.html" %}
   <script src="{% tep_tinh 'webgis/js/ban_do_dat_hang.js' %}" defer></script>
   <script src="{% tep_tinh 'ban_hang/js/dat_hang.js' %}" defer></script>
 {% endblock %}
@@ -74,7 +75,7 @@
           {{ du_lieu_ban_do|json_script:"du-lieu-ban-do-dat-hang" }}
           <div class="ban-do ban-do-dat-hang" data-ban-do-dat-hang aria-label="Bản đồ các chi nhánh còn đủ hàng"></div>
           <p class="tom-tat-lo-trinh" data-tom-tat-lo-trinh role="status">Đang tải lộ trình…</p>
-          <p class="ghi-chu-khach">Bấm vào biểu tượng nhà thuốc để đổi chi nhánh. Chạm vào chỗ khác trên bản đồ để đặt vị trí của bạn tại đó.</p>
+          <p class="ghi-chu-khach">Rê chuột hoặc bấm vào biểu tượng nhà thuốc để xem ảnh, giờ mở cửa và bấm “Nhận tại đây”. Chạm vào chỗ khác trên bản đồ để đặt vị trí của bạn tại đó.</p>
         </details>
       {% endif %}
 

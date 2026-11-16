@@ -124,5 +124,6 @@
 {% block cuoi_trang %}
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
   <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
+  {% include "components/_tai_bo_anh.html" %}
   <script src="{% tep_tinh 'webgis/js/ban_do.js' %}" defer></script>
 {% endblock %}

@@ -4,34 +4,32 @@
 {% block dau_trang %}<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">{% endblock %}
 {% block noi_dung %}
   <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'webgis:ban_do' %}">Tìm nhà thuốc</a><span aria-hidden="true">/</span><span>{{ chi_nhanh.ma_chi_nhanh }}</span></nav>
-  <header class="tieu-de-khach">
-    <p class="chu-dan">CHI NHÁNH</p>
-    <h1>{{ chi_nhanh.ten_chi_nhanh }}</h1>
-    <p>{{ chi_nhanh.dia_chi }}</p>
-    {% if danh_gia.so_luong %}<a class="tom-tat-sao" href="#danh-gia"><i data-lucide="star" aria-hidden="true"></i>{{ danh_gia.trung_binh|floatformat:1 }} <span>· {{ danh_gia.so_luong }} đánh giá</span></a>{% endif %}
-  </header>
-  <div class="thong-tin-chi-nhanh">
-    {% if cac_anh %}
-      <div class="anh-chi-nhanh">
-        {% for anh in cac_anh|slice:":3" %}<img src="{% url 'danh_muc:anh_chi_nhanh' anh.pk %}" alt="{{ chi_nhanh.ten_chi_nhanh }} – ảnh {{ forloop.counter }}" loading="lazy">{% endfor %}
+  <section class="the-khach chi-tiet-chi-nhanh" aria-labelledby="ten-chi-nhanh">
+    {% include "components/_bo_anh.html" with cac_anh=cac_anh ten_url="danh_muc:anh_chi_nhanh" mo_ta=chi_nhanh.ten_chi_nhanh bieu_tuong="store" phu_kin=True ghi_chu="Hình ảnh mang tính chất minh họa." only %}
+    <div class="thong-tin-chi-nhanh">
+      <p class="chu-dan">NHÀ THUỐC TRONG CHUỖI</p>
+      <h1 id="ten-chi-nhanh">{{ chi_nhanh.ten_chi_nhanh }}</h1>
+      {% if danh_gia.so_luong %}<a class="tom-tat-sao" href="#danh-gia"><i data-lucide="star" aria-hidden="true"></i>{{ danh_gia.trung_binh|floatformat:1 }} <span>· {{ danh_gia.so_luong }} đánh giá</span></a>{% endif %}
+      <dl class="chi-so-chi-nhanh">
+        <div><dt><i data-lucide="clock" aria-hidden="true"></i>Giờ mở cửa</dt><dd>{{ chi_nhanh.gio_mo_cua|time:"H:i" }} – {{ chi_nhanh.gio_dong_cua|time:"H:i" }} hằng ngày {% if chi_nhanh.dang_mo_cua %}<span class="nhan-dang-mo">Đang mở cửa</span>{% else %}<span class="nhan-da-dong">Đã đóng cửa</span>{% endif %}</dd></div>
+        {% if chi_nhanh.so_dien_thoai %}<div><dt><i data-lucide="phone" aria-hidden="true"></i>Điện thoại</dt><dd><a href="tel:{{ chi_nhanh.so_dien_thoai }}">{{ chi_nhanh.so_dien_thoai }}</a></dd></div>{% endif %}
+        <div><dt><i data-lucide="map-pin" aria-hidden="true"></i>Địa chỉ</dt><dd>{{ chi_nhanh.dia_chi }}</dd></div>
+        <div><dt><i data-lucide="shield-check" aria-hidden="true"></i>Dịch vụ</dt><dd>Đặt giữ thuốc trực tuyến, nhận và thanh toán tại quầy trong 24 giờ</dd></div>
+      </dl>
+      <div class="hanh-dong-khach">
+        <a class="nut" href="{% url 'webgis:ban_do' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="navigation" aria-hidden="true"></i>Chỉ đường đến đây</a>
+        {% if not noi_bo %}
+          <a class="nut nut-phu" href="{% url 'tro_chuyen:khach_danh_sach' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện với chi nhánh</a>
+        {% endif %}
       </div>
-      <p class="ghi-chu-anh">Hình ảnh mang tính chất minh họa.</p>
-    {% endif %}
-    <dl class="the-khach chi-so-chi-nhanh">
-      <div><dt><i data-lucide="clock" aria-hidden="true"></i>Giờ mở cửa</dt><dd>{{ chi_nhanh.gio_mo_cua|time:"H:i" }} – {{ chi_nhanh.gio_dong_cua|time:"H:i" }} hằng ngày {% if dang_mo_cua %}<span class="nhan-dang-mo">Đang mở cửa</span>{% else %}<span class="nhan-da-dong">Đã đóng cửa</span>{% endif %}</dd></div>
-      {% if chi_nhanh.so_dien_thoai %}<div><dt><i data-lucide="phone" aria-hidden="true"></i>Điện thoại</dt><dd><a href="tel:{{ chi_nhanh.so_dien_thoai }}">{{ chi_nhanh.so_dien_thoai }}</a></dd></div>{% endif %}
-      <div><dt><i data-lucide="map-pin" aria-hidden="true"></i>Địa chỉ</dt><dd>{{ chi_nhanh.dia_chi }}</dd></div>
-    </dl>
-  </div>
-  {% if chi_nhanh.gioi_thieu %}<section class="the-khach" aria-label="Giới thiệu chi nhánh"><div class="noi-dung-phong-phu">{{ chi_nhanh.gioi_thieu|phong_phu }}</div></section>{% endif %}
-  <div class="hanh-dong-khach">
-    {% if not noi_bo %}
-      <a class="nut" href="{% url 'tro_chuyen:khach_danh_sach' %}?chi_nhanh={{ chi_nhanh.ma_chi_nhanh|urlencode }}"><i data-lucide="messages-square" aria-hidden="true"></i>Trò chuyện với chi nhánh</a>
-    {% endif %}
-    <a class="nut nut-phu" href="{% url 'webgis:ban_do' %}"><i data-lucide="map" aria-hidden="true"></i>Tìm thuốc trên bản đồ</a>
-  </div>
-  <div class="ban-do" data-vi-tri-chi-nhanh data-vi-do="{{ chi_nhanh.vi_tri.y|unlocalize }}"
-       data-kinh-do="{{ chi_nhanh.vi_tri.x|unlocalize }}" aria-label="Vị trí chi nhánh trên bản đồ"></div>
+    </div>
+  </section>
+  {% if chi_nhanh.gioi_thieu %}<section class="the-khach gioi-thieu-chi-nhanh" aria-label="Giới thiệu chi nhánh"><div class="noi-dung-phong-phu">{{ chi_nhanh.gioi_thieu|phong_phu }}</div></section>{% endif %}
+  <section class="muc-khach" aria-labelledby="vi-tri-chi-nhanh">
+    <div class="dau-muc-khach"><h2 id="vi-tri-chi-nhanh">Vị trí trên bản đồ</h2></div>
+    <div class="ban-do" data-vi-tri-chi-nhanh data-vi-do="{{ chi_nhanh.vi_tri.y|unlocalize }}"
+         data-kinh-do="{{ chi_nhanh.vi_tri.x|unlocalize }}" aria-label="Vị trí {{ chi_nhanh.ten_chi_nhanh }} trên bản đồ"></div>
+  </section>
   {% url 'danh_muc:khach_danh_gia_chi_nhanh' chi_nhanh.ma_chi_nhanh as url_gui %}
   {% include "danh_muc/khach/_danh_gia.html" with tieu_de_danh_gia="Đánh giá của khách đã mua tại chi nhánh" loi_moi="Bạn đã mua hàng tại đây, hãy đánh giá phục vụ của chi nhánh" goi_y="Dược sĩ tư vấn, thời gian chờ, đóng gói, giao nhận thế nào? Không ghi thông tin cá nhân." chua_co="Chưa có đánh giá. Khách có đơn hoàn thành tại chi nhánh có thể đánh giá tại đây." %}
 {% endblock %}
@@ -39,4 +37,5 @@
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
   <script src="{% tep_tinh 'webgis/js/nen_ban_do.js' %}" defer></script>
   <script src="{% tep_tinh 'danh_muc/js/chi_nhanh_khach.js' %}" defer></script>
+  {% include "components/_tai_bo_anh.html" %}
 {% endblock %}

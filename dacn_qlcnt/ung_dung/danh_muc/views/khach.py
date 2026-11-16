@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from ung_dung.ban_hang.forms import ThemThuocVaoGioForm
@@ -109,14 +108,12 @@ def chi_tiet_thuoc(request, ma):
 @require_GET
 def chi_tiet_chi_nhanh(request, ma):
     chi_nhanh = get_object_or_404(lay_chi_nhanh_cong_khai(), ma_chi_nhanh=ma)
-    bay_gio = timezone.localtime().time()
     return render(
         request,
         "danh_muc/khach/chi_tiet_chi_nhanh.html",
         {
             "chi_nhanh": chi_nhanh,
             "cac_anh": AnhChiNhanh.objects.filter(chi_nhanh=chi_nhanh).defer("noi_dung_anh"),
-            "dang_mo_cua": chi_nhanh.gio_mo_cua <= bay_gio < chi_nhanh.gio_dong_cua,
             "danh_gia": tom_tat_danh_gia_chi_nhanh(chi_nhanh),
             "duoc_danh_gia": la_khach(request.user)
             and da_mua_tai_chi_nhanh(request.user, chi_nhanh),
