@@ -129,6 +129,12 @@ class KiemTraLuuTruTests(SimpleTestCase):
             (thu_muc / "bieu_tuong.svg").touch()
         self.assertEqual(tim_tep_du_lieu(self.thu_muc_goc), [])
 
+    def test_cau_hinh_vs_code_khong_bi_coi_la_du_lieu(self):
+        thu_muc = self.thu_muc_goc / ".vscode"
+        thu_muc.mkdir()
+        (thu_muc / "settings.json").write_text("{}", encoding="utf-8")
+        self.assertEqual(tim_tep_du_lieu(self.thu_muc_goc), [])
+
     def test_bo_qua_cac_thu_muc_san_pham_sinh_va_git(self):
         for ten_thu_muc in THU_MUC_BO_QUA:
             thu_muc = self.thu_muc_goc / ten_thu_muc / "long_nhau"

@@ -57,7 +57,11 @@ DUOI_TEP_ANH = frozenset(
         ".heic",
     }
 )
-THU_MUC_BO_QUA = frozenset({".venv", "staticfiles", "__pycache__", ".git"})
+# .vscode, .idea: cấu hình công cụ lập trình trên máy (VS Code tự ghi .vscode/settings.json
+# khi chọn trình thông dịch Python), không phải dữ liệu hệ thống.
+THU_MUC_BO_QUA = frozenset(
+    {".venv", "staticfiles", "__pycache__", ".git", ".vscode", ".idea"}
+)
 CAC_BACKEND_POSTGRESQL = frozenset(
     {"django.db.backends.postgresql", "django.contrib.gis.db.backends.postgis"}
 )

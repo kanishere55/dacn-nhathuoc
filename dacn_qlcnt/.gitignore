@@ -10,3 +10,5 @@ static/css/da_bien_dich.css
 *.log
 .coverage
 htmlcov/
+.vscode/
+.idea/

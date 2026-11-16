@@ -3,3 +3,4 @@
 *.woff2 binary
 *.png binary
 static/vendor/leaflet/** -text whitespace=cr-at-eol
+*.bat text eol=crlf
