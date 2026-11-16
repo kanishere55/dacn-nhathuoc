@@ -4,9 +4,10 @@ Mọi ảnh là ảnh chụp thật trên Wikimedia Commons với giấy phép m
 công cộng). Lệnh `nap_anh_that` tải về, kiểm SHA-256, chuẩn hóa WebP rồi lưu bytea trong PostgreSQL
 kèm tác giả, giấy phép và đường dẫn nguồn để ghi công theo yêu cầu của giấy phép.
 
-Mỗi thuốc dùng ảnh chụp đúng sản phẩm hoặc đúng hoạt chất và hàm lượng với dạng bào chế tương ứng
-(ví dụ viên diclofenac 50 mg, Voltaren 50 mg). Thuốc không có ảnh mở phù hợp (Hapacol, Efferalgan,
-Phosphalugel) được để trống thay vì dùng ảnh sai sản phẩm; quản trị tự tải ảnh chụp bao bì thật lên.
+Mỗi thuốc dùng ảnh chụp đúng sản phẩm, đúng nhãn hiệu hoặc cùng hoạt chất (ví dụ viên diclofenac
+50 mg, Voltaren 50 mg). Mức khớp được ghi ở MUC_KHOP và hiện thành ghi chú trước dòng nguồn ảnh, để
+người xem biết ảnh nào chỉ là minh họa. Hapacol và Efferalgan chưa có ảnh mở đúng sản phẩm nên dùng ảnh
+viên paracetamol (cùng hoạt chất); quản trị có thể tải ảnh chụp bao bì thật lên thay thế.
 """
 
 ANH_THUOC = {
@@ -136,6 +137,27 @@ ANH_THUOC = {
         "giay_phep": "CC BY-SA 4.0",
         "trang": "https://commons.wikimedia.org/wiki/File:Berocca_tablet_and_drink.jpg",
     },
+    "TA-PHOSPHALUGEL-26": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/%D0%A4%D0%BE%D1%81%D1%84%D0%B0%D0%BB%D1%8E%D0%B3%D0%B5%D0%BB%D1%8C.jpg/1920px-%D0%A4%D0%BE%D1%81%D1%84%D0%B0%D0%BB%D1%8E%D0%B3%D0%B5%D0%BB%D1%8C.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+        "sha256": "bdf265cc186f8c59c1f26af8460ad50019071fda4b8aeaab5a84b72e23f0a07c",
+        "tac_gia": "BarbariSka88",
+        "giay_phep": "CC0",
+        "trang": "https://commons.wikimedia.org/wiki/File:%D0%A4%D0%BE%D1%81%D1%84%D0%B0%D0%BB%D1%8E%D0%B3%D0%B5%D0%BB%D1%8C.jpg",
+    },
+    "TA-EFFERALGAN-500": {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Paracetamol_acetaminophen_500_mg_pills.jpg/1920px-Paracetamol_acetaminophen_500_mg_pills.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+        "sha256": "0bb0e126ba3cc9d78250717ee2baf4498595579cbfc8a606d3b428375087d859",
+        "tac_gia": "Michelle Tribe from Ottawa, Canada",
+        "giay_phep": "CC BY 2.0",
+        "trang": "https://commons.wikimedia.org/wiki/File:Paracetamol_acetaminophen_500_mg_pills.jpg",
+    },
+    "TA-HAPACOL-250": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Medication_Paracetamol.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+        "sha256": "5ee128b911056d3b576042d4da3492492d52be24e3b9a56e789c7c8934617875",
+        "tac_gia": "Mk2010",
+        "giay_phep": "CC BY-SA 3.0",
+        "trang": "https://commons.wikimedia.org/wiki/File:Medication_Paracetamol.JPG",
+    },
     "TA-BETADINE-125": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Betadine.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
         "sha256": "327377897571b99b71b0add0be00d791f5b6dddb9d55fe5434008bff4700db36",
@@ -180,7 +202,7 @@ ANH_CHI_NHANH = [
 # Mức khớp của ảnh với sản phẩm; hiện thành ghi chú đầu dòng nguồn để khách và hội đồng không hiểu nhầm.
 KHOP_SAN_PHAM = "san_pham"  # đúng sản phẩm, đúng quy cách
 KHOP_NHAN_HIEU = "nhan_hieu"  # đúng nhãn hiệu, bao bì hoặc quy cách có thể khác
-KHOP_HOAT_CHAT = "hoat_chat"  # cùng hoạt chất và hàm lượng, khác nhãn hiệu
+KHOP_HOAT_CHAT = "hoat_chat"  # cùng hoạt chất, khác nhãn hiệu (hàm lượng, dạng bào chế có thể khác)
 GHI_CHU_KHOP = {
     KHOP_SAN_PHAM: "",
     KHOP_NHAN_HIEU: "Ảnh minh họa cùng nhãn hiệu, bao bì hoặc quy cách có thể khác · ",
@@ -199,6 +221,7 @@ MUC_KHOP = {
     "TA-REDOXON-1000": KHOP_NHAN_HIEU,
     "TA-BEROCCA-10": KHOP_NHAN_HIEU,
     "TA-IMODIUM-2": KHOP_NHAN_HIEU,
+    "TA-PHOSPHALUGEL-26": KHOP_NHAN_HIEU,
     "TA-ASPIRIN-PH8": KHOP_HOAT_CHAT,
     "TA-GOFEN-400": KHOP_HOAT_CHAT,
     "TA-ATARAX-25": KHOP_HOAT_CHAT,
@@ -206,5 +229,7 @@ MUC_KHOP = {
     "TA-CLARITYNE-10": KHOP_HOAT_CHAT,
     "TA-BISOLVON-8": KHOP_HOAT_CHAT,
     "TA-ACEMUC-200": KHOP_HOAT_CHAT,
+    "TA-EFFERALGAN-500": KHOP_HOAT_CHAT,
+    "TA-HAPACOL-250": KHOP_HOAT_CHAT,
 }
 GHI_CHU_CHI_NHANH = "Ảnh minh họa nhà thuốc, không phải cơ sở thật của chi nhánh này · "
