@@ -24,7 +24,7 @@
             <td>{% if not tin.dang_hien_thi %}Đang ẩn{% elif tin.thoi_diem_dang > bay_gio %}Hẹn giờ{% else %}<a href="{% url 'noi_dung:khach_tin_tuc_chi_tiet' tin.duong_dan_tin_tuc %}" target="_blank" rel="noopener">Đang hiển thị</a>{% endif %}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="4">{% if loc.dang_loc %}Không có bài phù hợp bộ lọc.{% else %}Chưa có bài nào. Bấm “Viết tin” để đăng bài đầu tiên.{% endif %}</td></tr>
+          <tr><td colspan="4">{% if loc.dang_loc %}Không có bài phù hợp bộ lọc.{% else %}Chưa có bài nào.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

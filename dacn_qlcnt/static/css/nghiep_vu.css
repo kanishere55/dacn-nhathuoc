@@ -203,6 +203,24 @@
     .bang-canh-bao td { padding: 9px 8px; }
     .muc-ton { flex-direction: column; align-items: flex-start; gap: 4px; }
     .thanh-muc-ton { width: 120px; flex: none; }
+    /* Mở khung khóa/mở bán lô: khung chiếm cả bề ngang thẻ, không ép cột tên thuốc. */
+    .bang-canh-bao .o-thao-tac:has(details[open]) { grid-column: 1 / -1; grid-row: auto; text-align: left; }
+    .bang-canh-bao .form-doi-dieu-kien-lo { width: 100%; }
+    /* Thẻ trên điện thoại: nền xen kẽ đặt cho cả dòng, không tô từng ô (tránh sọc rời). */
+    .khung-bang .bang-canh-bao tbody tr:nth-child(even) { background: var(--color-nen-phu); }
+    .khung-bang .bang-canh-bao tbody tr > :is(td, th) { background: transparent; }
+    /* Tồn kho: ba con số (trong kho, đang giữ, có thể bán) xếp thành một hàng có nhãn. */
+    .bang-ton-kho tr { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .bang-ton-kho tbody th,
+    .bang-ton-kho td:not(.o-so) { grid-column: 1 / -1; }
+    .bang-ton-kho td.o-so { grid-column: auto; grid-row: auto; margin-top: 6px; text-align: left; }
+    .bang-ton-kho td.o-so::before {
+      content: attr(data-nhan);
+      display: block;
+      color: var(--chu-phu);
+      font-size: 11px;
+      font-weight: 600;
+    }
   }
 }
 
@@ -385,5 +403,40 @@
     min-height: 32px;
     padding: 5px 12px;
     font-size: 13px;
+  }
+}
+
+@layer components {
+  /* Lô thuốc: bấm "Khóa bán"/"Mở bán lại" mở khung nhập lý do xếp dọc ngay trong ô thao tác. */
+  .doi-dieu-kien-lo > summary {
+    list-style: none;
+  }
+  .doi-dieu-kien-lo > summary::-webkit-details-marker {
+    display: none;
+  }
+  .doi-dieu-kien-lo[open] > summary {
+    margin-bottom: 8px;
+  }
+  .form-doi-dieu-kien-lo {
+    display: grid;
+    gap: 6px;
+    width: 260px;
+    padding: 12px;
+    border: 1px solid var(--color-vien);
+    border-radius: var(--radius-vua);
+    background: var(--color-nen-phu);
+    font-size: var(--text-chu-thich);
+    text-align: left;
+    white-space: normal;
+  }
+  .form-doi-dieu-kien-lo :is(textarea, input:not([type="hidden"])) {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--color-vien-o-nhap);
+    border-radius: var(--radius-nho);
+    background: var(--color-be-mat);
+  }
+  .form-doi-dieu-kien-lo .nut {
+    justify-self: start;
   }
 }

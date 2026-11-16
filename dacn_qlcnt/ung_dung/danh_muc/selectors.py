@@ -132,11 +132,12 @@ def lay_chi_nhanh_cong_khai():
     )
 
 
-def du_lieu_ban_do_chi_nhanh(cn):
+def du_lieu_ban_do_chi_nhanh(cn, quang_duong=None):
     """Một chi nhánh lấy từ lay_chi_nhanh_cong_khai() thành dữ liệu cho ghim và popup bản đồ.
 
-    Dùng chung cho trang tìm nhà thuốc và bản đồ trang đặt giữ; `khoang_cach` có khi truy vấn đã
-    chú thích ST_Distance tới vị trí của khách.
+    Dùng chung cho trang tìm nhà thuốc và bản đồ trang đặt hàng. `khoang_cach` có khi truy vấn đã
+    chú thích ST_Distance tới vị trí của khách; `quang_duong` là quãng đường đi thực tế từ
+    webgis.services.duong_di.quang_duong_tu_vi_tri (mét, phút xe máy, có phải ước tính không).
     """
     cac_anh = [reverse("danh_muc:anh_chi_nhanh", args=[anh.pk]) for anh in cn.cac_anh.all()]
     khoang_cach = getattr(cn, "khoang_cach", None)
@@ -152,6 +153,9 @@ def du_lieu_ban_do_chi_nhanh(cn):
         "vi_do": cn.vi_tri.y,
         "kinh_do": cn.vi_tri.x,
         "khoang_cach_met": round(khoang_cach.m, 1) if khoang_cach is not None else None,
+        "quang_duong_met": quang_duong["quang_duong_met"] if quang_duong else None,
+        "phut_xe_may": quang_duong["phut_xe_may"] if quang_duong else None,
+        "quang_duong_uoc_tinh": quang_duong["uoc_tinh"] if quang_duong else False,
         "diem_sao": round(cn.diem_sao, 1) if cn.diem_sao else None,
         "so_danh_gia": cn.so_danh_gia,
         "anh": cac_anh[0] if cac_anh else "",

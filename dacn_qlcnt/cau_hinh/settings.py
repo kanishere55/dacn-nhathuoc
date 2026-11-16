@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -95,6 +96,9 @@ OSRM_BASE_URL = os.environ.get("OSRM_BASE_URL", "https://router.project-osrm.org
 OSRM_DI_BO_BASE_URL = os.environ.get(
     "OSRM_DI_BO_BASE_URL", "https://routing.openstreetmap.de/routed-foot"
 ).rstrip("/")
+# Bộ kiểm thử không gọi máy chủ OSRM thật (kết quả mạng thay đổi); test cần quãng đường thì giả lập.
+if sys.argv[1:2] == ["test"]:
+    OSRM_BASE_URL = ""
 NOMINATIM_BASE_URL = os.environ.get(
     "NOMINATIM_BASE_URL", "https://nominatim.openstreetmap.org"
 ).rstrip("/")

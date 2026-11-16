@@ -116,6 +116,8 @@
   }
   .anh-nho {
     display: grid;
+    /* Lưới cố định bằng khung: ảnh dọc được cắt giữa (cover) thay vì kéo dài rồi mất phần dưới. */
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     place-items: center;
     width: 48px;
     height: 48px;
@@ -195,6 +197,7 @@
   }
   .o-chon-anh {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     place-items: center;
     gap: 4px;
     padding: 16px;
@@ -210,6 +213,10 @@
   }
   .o-chon-anh input[type="file"] {
     max-width: 100%;
+  }
+  .o-chon-anh small {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
   .thong-bao-anh {
     margin: 8px 0 0;
@@ -413,5 +420,22 @@
     font-style: normal;
     font-weight: 700;
     white-space: nowrap;
+  }
+}
+
+@layer components {
+  /* Điện thoại: bảng nhiều cột cuộn ngang trong khung thay vì ép cột hẹp tới mức chữ xuống từng ký tự. */
+  @media (max-width: 640px) {
+    .khung-bang table {
+      max-width: none;
+    }
+    .khung-bang :is(td, th):not(.o-anh-nho, .o-thao-tac, .o-chon) {
+      min-width: 6.5em;
+    }
+    /* Bảng rỗng (chỉ còn ô "Chưa có…"): bỏ hàng tiêu đề để bảng không rộng hơn màn hình và câu báo
+       không bị cắt khuất trong khung cuộn ngang. */
+    .khung-bang table:has(> tbody > tr:only-child > td[colspan]:only-child) > thead {
+      display: none;
+    }
   }
 }

@@ -16,7 +16,7 @@
       <summary><i data-lucide="file-spreadsheet" aria-hidden="true"></i>Nhập nhanh nhiều lô từ tệp Excel <span class="chu-tuy-chon">(không bắt buộc)</span></summary>
       <form method="post" enctype="multipart/form-data" class="form-chinh">
         {% csrf_token %}
-        <p>Tải <a class="duong-dan-noi-dung" href="{% url 'kho:phieu_nhap_mau_excel' %}">tệp mẫu</a>, điền mỗi lô một dòng (tối đa 50) rồi chọn tệp. Cột Mã lô trong tệp mẫu đã để dạng văn bản để giữ số 0 ở đầu mã. Các dòng được điền vào phiếu bên dưới để bạn xem lại; kho chỉ thay đổi khi bạn bấm lưu.</p>
+        <p>Tải <a class="duong-dan-noi-dung" href="{% url 'kho:phieu_nhap_mau_excel' %}">tệp mẫu</a>, mỗi lô một dòng, tối đa 50 dòng. Kho chỉ thay đổi khi lưu phiếu.</p>
         {{ form_excel.non_field_errors }}
         {% for truong in form_excel %}{% include "components/_o_nhap.html" %}{% endfor %}
         <button class="nut nut-phu" name="doc_excel" value="1"><i data-lucide="file-up" aria-hidden="true"></i>Đọc tệp và điền vào phiếu</button>

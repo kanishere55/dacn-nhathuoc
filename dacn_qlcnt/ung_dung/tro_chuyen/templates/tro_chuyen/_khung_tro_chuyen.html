@@ -27,7 +27,7 @@
     {% if cac_goi_y %}
       {% comment %}Gợi ý nằm cuối luồng tin, JS giữ nó ở cuối khi vẽ lại và ẩn sau khi gửi tin.{% endcomment %}
       <li class="goi-y-trong-chat" data-goi-y-trong-chat{% if the_cho %} data-theo-the{% endif %}>
-        <span class="tieu-de-goi-y" id="tieu-de-goi-y-{{ phong.pk }}"><i data-lucide="message-circle-question" aria-hidden="true"></i>Câu hỏi gợi ý, bấm để điền vào ô nhập</span>
+        <span class="tieu-de-goi-y" id="tieu-de-goi-y-{{ phong.pk }}"><i data-lucide="message-circle-question" aria-hidden="true"></i>Câu hỏi gợi ý</span>
         <div class="goi-y-nhanh" data-goi-y-nhanh role="group" aria-labelledby="tieu-de-goi-y-{{ phong.pk }}">
           {% for cau in cac_goi_y %}<button type="button" data-cau="{{ cau }}">{{ cau }}</button>{% endfor %}
         </div>

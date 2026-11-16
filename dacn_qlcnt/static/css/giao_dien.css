@@ -1435,6 +1435,7 @@
     .trang-loi form[role="search"] input {
       flex: 1;
       min-width: 0;
+      width: 100%;
       min-height: 44px;
       padding: 0 var(--khoang-3);
       border: 1px solid var(--color-vien-o-nhap);

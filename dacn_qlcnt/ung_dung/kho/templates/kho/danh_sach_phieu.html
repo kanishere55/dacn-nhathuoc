@@ -37,7 +37,7 @@
               <td>{{ phieu.nguoi_lap.ho_ten|default:phieu.nguoi_lap.ten_dang_nhap }}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="9">{% if loc.dang_loc %}Không có phiếu phù hợp bộ lọc.{% else %}Chưa có phiếu nào.{% if url_tao %} Bấm “{{ nhan_tao }}” để bắt đầu.{% endif %}{% endif %}</td></tr>
+            <tr><td colspan="9">{% if loc.dang_loc %}Không có phiếu phù hợp bộ lọc.{% else %}Chưa có phiếu nào.{% if url_tao %}{% endif %}{% endif %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

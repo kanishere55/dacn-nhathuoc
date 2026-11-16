@@ -31,7 +31,6 @@
           <div class="cham-slide" role="group" aria-label="Chọn banner">
             {% for b in cac_banner %}<button type="button" data-den="{{ forloop.counter0 }}" aria-label="Xem banner {{ forloop.counter }}: {{ b.tieu_de }}"{% if forloop.first %} aria-current="true"{% endif %}></button>{% endfor %}
           </div>
-          <button type="button" class="nut nut-phu nut-dung-banner" data-tam-dung-banner>Tạm dừng</button>
         </div>
       {% endif %}
     </section>

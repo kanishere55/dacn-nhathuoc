@@ -34,10 +34,10 @@
                     {% if not dong.lo_thuoc.duoc_phep_ban %}<span class="nhan-han khoa">Khóa bán</span>{% endif %}
                   </small>
                 </td>
-                {% if nhieu_chi_nhanh %}<td>{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
-                <td class="o-so">{{ dong.so_luong|so_nguyen }} <small>{{ dong.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></td>
-                <td class="o-so">{% if dong.dang_giu %}{{ dong.dang_giu|so_nguyen }}{% else %}<span class="chu-mo">—</span>{% endif %}</td>
-                <td class="o-so"><strong>{{ dong.kha_dung_hop_le|so_nguyen }}</strong></td>
+                {% if nhieu_chi_nhanh %}<td class="o-chi-nhanh">{{ dong.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
+                <td class="o-so" data-nhan="Trong kho">{{ dong.so_luong|so_nguyen }} <small>{{ dong.lo_thuoc.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}</small></td>
+                <td class="o-so" data-nhan="Đang giữ">{% if dong.dang_giu %}{{ dong.dang_giu|so_nguyen }}{% else %}<span class="chu-mo">—</span>{% endif %}</td>
+                <td class="o-so" data-nhan="Có thể bán"><strong>{{ dong.kha_dung_hop_le|so_nguyen }}</strong></td>
               </tr>
             {% endwith %}
           {% empty %}

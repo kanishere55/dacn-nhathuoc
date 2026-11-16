@@ -6,7 +6,6 @@
   <header class="tieu-de-trang">
     <p class="chu-dan">BÁN HÀNG</p>
     <h1>Trò chuyện với khách</h1>
-    <p>Trả lời "Chờ trả lời" từ trên xuống: khách chờ lâu nhất nằm đầu. Giải quyết xong thì bấm "Đã xong" trong cuộc trò chuyện; khách nhắn tiếp sẽ tự quay lại hàng chờ.</p>
   </header>
 
   {% include "components/_thanh_loc.html" with loc=loc vung="vung-hop-thu" giu_trang_thai=hang_cho %}
@@ -50,7 +49,7 @@
               {% elif hang_cho == "cho_tra_loi" %}Không còn khách nào chờ trả lời.
               {% elif hang_cho == "da_tra_loi" %}Không có cuộc trò chuyện nào đang chờ khách phản hồi.
               {% elif hang_cho == "da_xong" %}Chưa có cuộc trò chuyện nào được đánh dấu đã xong.
-              {% else %}Chưa có khách nào nhắn tin. Khách bấm "Tư vấn", "Hỏi dược sĩ" ở trang thuốc hoặc "Nhắn nhà thuốc" trong đơn hàng thì cuộc trò chuyện sẽ hiện ở đây; mỗi khách một cuộc trò chuyện với chi nhánh.{% endif %}
+              {% else %}Chưa có khách nào nhắn tin.{% endif %}
             </p>
           </li>
         {% endfor %}

@@ -59,7 +59,7 @@
 
     const datKhach = (diem, nhan) => {
       diemKhach = diem;
-      if (!mocKhach) mocKhach = L.marker(diem, { icon: window.bieuTuongNguoiDung(nhan), zIndexOffset: 1000 }).addTo(banDo);
+      if (!mocKhach) mocKhach = L.marker(diem, { icon: window.bieuTuongNguoiDung(nhan), zIndexOffset: 1000, interactive: false }).addTo(banDo);
       else mocKhach.setLatLng(diem);
     };
     if (diemKhach) {
@@ -71,7 +71,7 @@
     async function veLoTrinh() {
       if (!chon) return;
       if (!diemKhach) {
-        tomTat.textContent = `Nhận tại ${chon.ten_chi_nhanh}. Chọn vị trí của bạn ở phía trên (định vị hoặc nhập địa chỉ), hoặc chạm lên bản đồ để xem đường đi.`;
+        tomTat.textContent = `Nhận tại ${chon.ten_chi_nhanh}.`;
         return;
       }
       tomTat.textContent = 'Đang tính lộ trình…';
@@ -102,9 +102,8 @@
         them('Ô tô khoảng', window.dinhDangPhut(duong.duration));
       } catch {
         if (daHuy || boLoTrinh !== luot) return;
-        lopDuong = L.polyline([tu, den], { color: '#116b54', dashArray: '6 8', weight: 4 }).addTo(banDo);
-        banDo.fitBounds(lopDuong.getBounds(), { padding: [40, 40], maxZoom: 16, animate: false });
-        tomTat.textContent = 'Chưa lấy được lộ trình đường bộ; đường nét đứt là khoảng cách thẳng.';
+        banDo.fitBounds([tu, den], { padding: [40, 40], maxZoom: 16, animate: false });
+        tomTat.textContent = 'Chưa tải được đường đi, vui lòng thử lại sau.';
       } finally {
         clearTimeout(hen);
       }

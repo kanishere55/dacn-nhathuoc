@@ -27,11 +27,16 @@ window.bieuTuongNguoiDung = (nhan = 'Bạn ở đây') => L.divIcon({
 
 // Tốc độ trung bình trong đô thị dùng ước tính thời gian khi OSRM chỉ có hồ sơ ô tô.
 const TOC_DO_XE_MAY_KM_GIO = 28;
-window.dinhDangKm = (met) => (met / 1000).toLocaleString('vi-VN', { maximumFractionDigits: met < 10000 ? 1 : 0 }) + ' km';
+// Cùng cách viết với bộ lọc |km phía máy chủ: dưới 1 km ghi mét, từ 1 km ghi một chữ số thập phân.
+window.dinhDangKm = (met) => (met < 1000 ? `${Math.round(met)} m` : `${(met / 1000).toFixed(1).replace('.', ',')} km`);
 window.dinhDangPhut = (giay) => {
   const phut = Math.max(1, Math.round(giay / 60));
   return phut < 60 ? `${phut} phút` : `${Math.floor(phut / 60)} giờ ${phut % 60} phút`;
 };
+// Quãng đường đi thực tế từ vị trí của khách (máy chủ tính bằng OSRM); OSRM lỗi thì là số ước tính.
+window.moTaQuangDuong = (cn) => (cn.quang_duong_uoc_tinh
+  ? `Cách bạn khoảng ${window.dinhDangKm(cn.quang_duong_met)}`
+  : `Cách bạn ${window.dinhDangKm(cn.quang_duong_met)}, khoảng ${cn.phut_xe_may} phút xe máy`);
 window.thoiGianTheoPhuongTien = (duong, phuongTien) => {
   return phuongTien === 'xe_may' ? duong.distance / 1000 / TOC_DO_XE_MAY_KM_GIO * 3600 : duong.duration;
 };
@@ -120,8 +125,8 @@ window.noiDungPopupNhaThuoc = (cn, tacVu = []) => {
     tel.href = 'tel:' + cn.so_dien_thoai;
     than.append(dong('phone', tel));
   }
-  if (cn.khoang_cach_met !== null && cn.khoang_cach_met !== undefined) {
-    than.append(dong('navigation', `Cách bạn ${window.dinhDangKm(cn.khoang_cach_met)} (đường chim bay)`));
+  if (cn.quang_duong_met !== null && cn.quang_duong_met !== undefined) {
+    than.append(dong('navigation', window.moTaQuangDuong(cn)));
   }
   if (tacVu.length) {
     const hang = tao('div', 'tac-vu-popup');
@@ -153,7 +158,13 @@ window.taoPopupNhaThuoc = (banDo) => {
     const tao = () => {
       if (popup) return;
       popup = L.popup({
-        className: 'popup-nha-thuoc', minWidth: 272, maxWidth: 272, offset: [0, -34], autoPan: false,
+        className: 'popup-nha-thuoc',
+        minWidth: 272,
+        maxWidth: 272,
+        offset: [0, -34],
+        autoPan: false,
+        autoPanPaddingTopLeft: [52, 10],
+        autoPanPaddingBottomRight: [10, 24],
       }).setLatLng(moc.getLatLng()).setContent(taoNoiDung());
       popup.on('add', () => {
         const el = popup.getElement();
@@ -171,9 +182,18 @@ window.taoPopupNhaThuoc = (banDo) => {
         if (dangGhim === popup) dangGhim = null;
       });
     };
+    // Bản đồ hẹp (điện thoại): popup co theo khung và cuộn bên trong khi cao hơn bản đồ, để nút bên
+    // dưới không bị cắt. Đo lại mỗi lần mở vì khung bản đồ có thể đổi cỡ (xoay máy, mở/đóng <details>).
+    const coTheoKhung = () => {
+      const khung = banDo.getSize();
+      if (!khung.x || !khung.y) return;
+      const rong = Math.max(200, Math.min(272, khung.x - 72));
+      Object.assign(popup.options, { minWidth: rong, maxWidth: rong, maxHeight: Math.max(200, khung.y - 84) });
+    };
     const mo = (ghim) => {
       tao();
       giu();
+      coTheoKhung();
       if (ghim) {
         if (dangGhim && dangGhim !== popup) dangGhim.remove();
         dangGhim = popup;

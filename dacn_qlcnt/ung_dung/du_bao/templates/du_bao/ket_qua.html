@@ -57,7 +57,7 @@
         <h2 id="tieu-de-cac-nhom">Kết quả theo nhóm thuốc</h2>
         <span class="chu-thich-muc"><span class="cham-muc thap"></span>Sai số dưới 20%<span class="cham-muc vua"></span>20–35%<span class="cham-muc cao"></span>Trên 35%</span>
       </div>
-      <p class="mo-ta-bang-dieu-khien">Mỗi thẻ là một nhóm ATC. Con số lớn là tổng lượng bán dự báo cho bảy ngày tới; sai số là mức lệch trung bình khi kiểm thử. Chọn một thẻ để xem biểu đồ chi tiết.</p>
+      <p class="mo-ta-bang-dieu-khien">Con số lớn là tổng lượng bán dự báo bảy ngày tới của nhóm ATC; sai số là mức lệch trung bình khi kiểm thử.</p>
       <div class="luoi-nhom-du-bao" role="tablist" aria-label="Chọn nhóm thuốc">
         {% for nhom in cac_nhom %}
           <button type="button" class="the-nhom-du-bao" role="tab" data-nhom="{{ nhom.ma }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="chi-tiet-nhom">
@@ -87,7 +87,7 @@
         <figure class="khung-bieu-do rong">
           <figcaption>
             <h3>Dự báo so với thực tế trên đoạn kiểm thử</h3>
-            <p>Mỗi điểm là tổng lượng bán của một tuần (bảy ngày sau ngày gốc), lấy các tuần nối tiếp không chồng lấp. Đường dự báo càng bám đường thực tế thì mô hình càng chính xác. Bấm tên mô hình để bật hoặc tắt.</p>
+            <p>Mỗi điểm là tổng lượng bán của một tuần (bảy ngày sau ngày gốc), lấy các tuần nối tiếp không chồng lấp. Đường dự báo càng bám đường thực tế thì mô hình càng chính xác.</p>
           </figcaption>
           <div class="cac-cong-tac" data-cong-tac aria-label="Chọn mô hình hiển thị"></div>
           <div class="vung-bieu-do cao"><canvas data-bieu-do="kiem_thu" aria-label="Biểu đồ dự báo so với thực tế"></canvas></div>

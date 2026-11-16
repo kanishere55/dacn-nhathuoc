@@ -9,13 +9,12 @@
   <header class="tieu-de-khach">
     <p class="chu-dan">Bản đồ nhà thuốc</p>
     <h1>Tìm nhà thuốc gần bạn</h1>
-    <p>Chọn vị trí của bạn để xem chi nhánh gần nhất, khoảng cách, đường đi và thời gian di chuyển. Cần một loại thuốc cụ thể? Bật “Chỉ chi nhánh còn thuốc” để lọc theo tồn kho.</p>
   </header>
   {{ cac_chi_nhanh|json_script:"du-lieu-chi-nhanh" }}
   <div class="trang-tim-nha-thuoc" data-webgis
        data-url-gan="{% url 'webgis:chi_nhanh_gan' %}" data-url-tim="{% url 'webgis:tim_kiem' %}"
        {% if user.is_authenticated %}data-url-tim-dia-chi="{% url 'webgis:tim_dia_chi' %}"{% endif %}
-       data-url-dat-hang="{% url 'ban_hang:dat_hang' %}"
+       {% if not noi_bo %}data-url-dat-hang="{% url 'ban_hang:dat_hang' %}"{% endif %}
        data-osrm="{{ may_chu_osrm }}" data-osrm-di-bo="{{ may_chu_osrm_di_bo }}" data-gioi-han="{{ gioi_han_so_thuoc }}"
        {% if tu_gio %}data-tu-gio{% endif %}>
     <aside class="bang-tim-nha-thuoc the-khach">
@@ -33,9 +32,9 @@
             </div>
             <div class="ket-qua-tim-vi-tri" data-ket-qua-dia-chi></div>
           {% else %}
-            <p class="ghi-chu-khach"><a href="{% url 'tai_khoan:dang_nhap' %}?next={{ request.get_full_path|urlencode }}">Đăng nhập</a> để tìm theo địa chỉ, hoặc bấm trực tiếp lên bản đồ.</p>
+            <p class="ghi-chu-khach"><a href="{% url 'tai_khoan:dang_nhap' %}?next={{ request.get_full_path|urlencode }}">Đăng nhập</a> để tìm theo địa chỉ.</p>
           {% endif %}
-          <p class="trang-thai-vi-tri" data-vi-tri role="status">Bấm “Vị trí của tôi” hoặc chạm lên bản đồ để chọn điểm xuất phát.</p>
+          <p class="trang-thai-vi-tri" data-vi-tri role="status"></p>
         </section>
 
         <section class="muc-tim">
@@ -90,7 +89,7 @@
 
       <section class="muc-tim ket-qua-ban-do" aria-labelledby="danh-sach-ket-qua">
         <div class="dau-ket-qua"><h2 id="danh-sach-ket-qua">Chi nhánh</h2><span class="nhan-trang-thai" data-dem>{{ cac_chi_nhanh|length }}</span></div>
-        <p class="ghi-chu-khach" data-thong-bao role="status">Đang hiển thị mọi chi nhánh. Chọn vị trí để sắp xếp theo khoảng cách.</p>
+        <p class="ghi-chu-khach" data-thong-bao role="status"></p>
         <div class="danh-sach-nha-thuoc" data-ket-qua></div>
       </section>
     </aside>

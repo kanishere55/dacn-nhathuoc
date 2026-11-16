@@ -46,6 +46,7 @@
     nutDuong.addEventListener('click', () => chonChiNhanh(cn));
     const chiTiet = chu('a', 'nut nut-phu', 'Xem chi tiết');
     chiTiet.href = cn.duong_dan;
+    if (!khung.dataset.urlDatHang) return [nutDuong, chiTiet];
     const datGiu = chu('a', 'nut', 'Đặt giữ tại đây');
     datGiu.href = urlDatGiu(cn);
     return [nutDuong, chiTiet, datGiu];
@@ -98,7 +99,7 @@
     if (!ds.length) {
       danhSachEl.append(chu('p', 'ghi-chu-khach', locThuoc
         ? 'Không có chi nhánh nào còn đủ thuốc đã chọn trong phạm vi này.'
-        : 'Không có chi nhánh nào trong phạm vi đã chọn. Hãy mở rộng phạm vi.'));
+        : 'Không có chi nhánh nào trong phạm vi đã chọn.'));
     }
     ds.forEach((cn, so) => {
       const the = chu('article', 'the-nha-thuoc' + (cn.id_chi_nhanh === dangChon ? ' dang-chon' : ''));
@@ -120,9 +121,9 @@
       link.href = cn.duong_dan;
       ten.append(link);
       dau.append(ten);
-      if (cn.khoang_cach_met !== null && cn.khoang_cach_met !== undefined) {
+      if (cn.quang_duong_met !== null && cn.quang_duong_met !== undefined) {
         dau.append(chu('span', 'nhan-khoang-cach' + (so === 0 ? ' gan-nhat' : ''),
-          (so === 0 ? 'Gần nhất · ' : '') + window.dinhDangKm(cn.khoang_cach_met)));
+          (so === 0 ? 'Gần nhất · ' : '') + (cn.quang_duong_uoc_tinh ? 'khoảng ' : '') + window.dinhDangKm(cn.quang_duong_met)));
       }
       const diaChi = chu('p', 'dia-chi-nha-thuoc', cn.dia_chi);
       const meta = chu('p', 'meta-nha-thuoc');
@@ -142,9 +143,13 @@
       nutDuong.addEventListener('click', () => chonChiNhanh(cn));
       const chiTiet = chu('a', 'nut nut-phu', 'Chi tiết');
       chiTiet.href = cn.duong_dan;
-      const datHang = chu('a', 'nut', 'Đặt giữ tại đây');
-      datHang.href = urlDatGiu(cn);
-      tacVu.append(nutDuong, chiTiet, datHang);
+      tacVu.append(nutDuong, chiTiet);
+      // Nhân sự nhà thuốc xem bản đồ không có nút đặt giữ (trang đặt giữ chỉ dành cho khách).
+      if (khung.dataset.urlDatHang) {
+        const datGiu = chu('a', 'nut', 'Đặt giữ tại đây');
+        datGiu.href = urlDatGiu(cn);
+        tacVu.append(datGiu);
+      }
       noiDung.append(dau, diaChi, meta, tacVu);
       the.append(anh, noiDung);
       // Rê chuột lên thẻ thì xem nhanh popup của nhà thuốc đó trên bản đồ.
@@ -169,7 +174,7 @@
   async function napTheoViTri() {
     const banKinh = Number(oBanKinh.value);
     if (!viTri) {
-      baoKetQua.textContent = 'Chọn vị trí để sắp xếp theo khoảng cách.';
+      baoKetQua.textContent = '';
       return;
     }
     baoKetQua.textContent = 'Đang tính khoảng cách…';
@@ -181,7 +186,7 @@
       cacChiNhanh = (await phanHoi.json()).ket_qua;
       const ds = hienThi();
       baoKetQua.textContent = ds.length
-        ? `Gần bạn nhất: ${ds[0].ten_chi_nhanh} (${window.dinhDangKm(ds[0].khoang_cach_met)} theo đường chim bay).`
+        ? `Gần bạn nhất: ${ds[0].ten_chi_nhanh}. ${window.moTaQuangDuong(ds[0])}.`
         : 'Không có chi nhánh phù hợp trong phạm vi đã chọn.';
       veLai({ vuaKhung: true });
     } catch {
@@ -200,23 +205,23 @@
     } else {
       mocNguoiDung.setLatLng(viTri);
     }
-    baoViTri.textContent = `Đang dùng ${moTa}. Có thể kéo chấm xanh để chỉnh.`;
+    baoViTri.textContent = `Đang dùng ${moTa}.`;
     xoaLoTrinh();
     napTheoViTri();
   }
 
   banDo.on('click', (e) => datViTri(e.latlng.lat, e.latlng.lng, 'điểm bạn chọn trên bản đồ'));
-  oBanKinh.addEventListener('change', () => (viTri ? napTheoViTri() : (baoKetQua.textContent = 'Phạm vi chỉ áp dụng khi đã chọn vị trí.')));
+  oBanKinh.addEventListener('change', () => (viTri ? napTheoViTri() : (baoKetQua.textContent = 'Chọn vị trí của bạn trước để lọc theo phạm vi.')));
 
   khung.querySelector('[data-dinh-vi]').addEventListener('click', () => {
     if (!navigator.geolocation) {
-      baoViTri.textContent = 'Trình duyệt không hỗ trợ định vị. Hãy bấm lên bản đồ.';
+      baoViTri.textContent = 'Trình duyệt không hỗ trợ định vị.';
       return;
     }
     baoViTri.textContent = 'Đang lấy vị trí của bạn…';
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => datViTri(coords.latitude, coords.longitude, 'vị trí hiện tại của bạn'),
-      () => { baoViTri.textContent = 'Không lấy được vị trí (chưa cho phép định vị). Hãy tìm địa chỉ hoặc bấm lên bản đồ.'; },
+      () => { baoViTri.textContent = 'Không lấy được vị trí. Bạn chưa cho phép định vị hoặc thiết bị không định vị được.'; },
       { enableHighAccuracy: true, timeout: 10000 },
     );
   });
@@ -233,7 +238,7 @@
       const phanHoi = await fetch(`${khung.dataset.urlTimDiaChi}?q=${encodeURIComponent(tuKhoa)}`, { headers: { Accept: 'application/json' } });
       const duLieu = await phanHoi.json();
       if (!phanHoi.ok) throw new Error((duLieu.loi || []).join(' '));
-      if (!duLieu.ket_qua.length) { baoViTri.textContent = 'Không thấy địa chỉ phù hợp. Hãy thử chỉ gõ tên đường, hoặc bấm lên bản đồ.'; return; }
+      if (!duLieu.ket_qua.length) { baoViTri.textContent = 'Không thấy địa chỉ phù hợp, thử gõ tên đường và quận.'; return; }
       baoViTri.textContent = duLieu.gan_dung ? 'Chưa thấy đúng số nhà này. Chọn con đường gần đúng:' : 'Chọn một kết quả:';
       duLieu.ket_qua.forEach((muc) => {
         const nut = chu('button', '', muc.dia_chi);
@@ -270,7 +275,7 @@
     if (!viTri) {
       banDo.setView([cn.vi_do, cn.kinh_do], 16);
       cacMoc.get(cn.id_chi_nhanh)?.popup.mo(true);
-      baoViTri.textContent = 'Chọn vị trí của bạn để xem đường đi tới chi nhánh này.';
+      baoViTri.textContent = 'Chọn vị trí của bạn trước để xem đường đi.';
       return;
     }
     if (!tuMoc) cacMoc.forEach(({ popup }) => popup.dong());
@@ -322,17 +327,17 @@
       baoThoiGian.textContent = window.dinhDangPhut(window.thoiGianTheoPhuongTien(duong, phuongTien));
       ghiChu.textContent = {
         di_bo: 'Quãng đường và thời gian theo tuyến đi bộ.',
-        o_to: 'Thời gian theo tuyến ô tô, chưa tính kẹt xe.',
-        xe_may: 'Thời gian xe máy ước tính trên tuyến ô tô.',
+        o_to: 'Chưa tính thời gian kẹt xe.',
+        xe_may: 'Chưa tính thời gian kẹt xe.',
       }[phuongTien];
     } catch {
       if (boDuong !== luot) return;
-      lopDuong = L.polyline([viTri, den], { color: '#116b54', dashArray: '6 8', weight: 4 }).addTo(banDo);
-      banDo.fitBounds(lopDuong.getBounds(), { padding: [40, 40], maxZoom: 16 });
-      baoDuong.textContent = window.dinhDangKm(banDo.distance(viTri, den)) + ' (đường chim bay)';
-      ghiChu.textContent = diBo
-        ? 'Chưa lấy được tuyến đi bộ. Đường nét đứt là khoảng cách thẳng.'
-        : 'Chưa lấy được lộ trình đường bộ. Đường nét đứt là khoảng cách thẳng.';
+      banDo.fitBounds([viTri, den], { padding: [40, 40], maxZoom: 16 });
+      baoDuong.textContent = cn.quang_duong_met
+        ? `${cn.quang_duong_uoc_tinh ? 'khoảng ' : ''}${window.dinhDangKm(cn.quang_duong_met)}`
+        : '—';
+      baoThoiGian.textContent = '—';
+      ghiChu.textContent = 'Chưa tải được đường đi, vui lòng thử lại sau.';
     } finally {
       clearTimeout(hen);
     }

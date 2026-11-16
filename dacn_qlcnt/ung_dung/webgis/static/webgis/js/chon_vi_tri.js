@@ -68,9 +68,9 @@
       baoTrangThai('Đang tìm…');
       try {
         const { ket_qua: ketQua, gan_dung: ganDung } = await docJson(`${khung.dataset.urlTim}?q=${encodeURIComponent(tuKhoa)}`);
-        if (!ketQua.length) baoTrangThai('Không thấy địa chỉ phù hợp. Hãy thử chỉ gõ tên đường, hoặc bấm trực tiếp lên bản đồ.');
-        else if (ganDung) baoTrangThai('Chưa thấy đúng số nhà này. Chọn con đường gần đúng bên dưới rồi kéo ghim tới đúng nhà:');
-        else if (ketQua.length === 1) baoTrangThai('Tìm thấy 1 kết quả, bấm để ghim:');
+        if (!ketQua.length) baoTrangThai('Không thấy địa chỉ phù hợp, thử gõ tên đường và quận.');
+        else if (ganDung) baoTrangThai('Chưa thấy đúng số nhà, chọn con đường gần đúng:');
+        else if (ketQua.length === 1) baoTrangThai('Tìm thấy 1 kết quả:');
         else baoTrangThai(`Chọn một trong ${ketQua.length} kết quả:`);
         ketQua.forEach((muc) => {
           const nut = document.createElement('button');
@@ -82,7 +82,7 @@
             // Kết quả gần đúng chỉ là con đường: giữ địa chỉ người dùng đã gõ (có số nhà).
             if (oDiaChi) oDiaChi.value = ganDung ? (oDiaChi.value.trim() || tuKhoa) : muc.dia_chi;
             danhSach.replaceChildren();
-            baoTrangThai(ganDung ? 'Đã ghim theo tên đường. Kéo ghim tới đúng nhà và kiểm tra lại ô Địa chỉ.' : 'Đã ghim. Có thể kéo ghim tới đúng cổng nhà.');
+            baoTrangThai(ganDung ? 'Đã ghim theo tên đường, kéo ghim tới đúng nhà.' : 'Đã ghim.');
           });
           danhSach.append(nut);
         });

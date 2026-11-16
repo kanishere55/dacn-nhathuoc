@@ -432,10 +432,6 @@
     width: 22px;
     background: var(--color-chinh);
   }
-  .nut-dung-banner {
-    min-height: 36px;
-    padding: 6px 12px;
-  }
   /* Ô tìm nhanh và cam kết dịch vụ dưới banner */
   .tim-nhanh-trang-chu {
     display: grid;

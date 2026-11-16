@@ -5,7 +5,7 @@
     <ol class="cac-buoc-giao-don">
       <li>Hỏi mã đơn hoặc số điện thoại, đối chiếu đúng <strong>{{ don.ma_don_hang }}</strong>.</li>
       <li>Lấy thuốc theo danh sách, hệ thống xuất kho theo lô hết hạn trước (FEFO).</li>
-      <li>Thu <strong>{{ don.tong_thanh_toan|tien }}</strong> rồi bấm nút bên dưới.</li>
+      <li>Thu <strong>{{ don.tong_thanh_toan|tien }}</strong> của khách.</li>
     </ol>
     <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
     {% if co_ke_don %}

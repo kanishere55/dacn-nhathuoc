@@ -14,21 +14,31 @@ from ung_dung.danh_muc.selectors import (
 )
 from ung_dung.kho.selectors import lay_ton_kha_dung, loc_chi_nhanh_du_thuoc
 
+from .services.duong_di import quang_duong_tu_vi_tri
+
+# Bảng OSRM công cộng nhận tối đa 100 tọa độ; lấy các chi nhánh gần nhất theo PostGIS.
+SO_CHI_NHANH_TINH_DUONG = 50
+
 
 def lay_chi_nhanh_ban_do(kinh_do=None, vi_do=None, ban_kinh_met=None):
     """Mọi chi nhánh đang hoạt động cho trang tìm nhà thuốc.
 
-    Có tọa độ người xem thì PostGIS tính khoảng cách (ST_Distance), lọc bán kính bằng ST_DWithin
-    và sắp gần nhất trước; chưa có tọa độ thì sắp theo mã.
+    Có tọa độ người xem thì PostGIS lọc bán kính (ST_DWithin) và sắp sơ bộ theo ST_Distance, rồi
+    OSRM cho quãng đường đi thực tế để hiển thị và sắp gần nhất trước; chưa có tọa độ thì sắp theo mã.
     """
     tap_hop = lay_chi_nhanh_cong_khai()
-    if kinh_do is not None and vi_do is not None:
-        vi_tri = Point(kinh_do, vi_do, srid=4326)
-        tap_hop = tap_hop.annotate(khoang_cach=Distance("vi_tri", vi_tri))
-        if ban_kinh_met:
-            tap_hop = tap_hop.filter(vi_tri__dwithin=(vi_tri, D(m=ban_kinh_met)))
-        tap_hop = tap_hop.order_by("khoang_cach", "ma_chi_nhanh")
-    return [du_lieu_ban_do_chi_nhanh(cn) for cn in tap_hop[:100]]
+    if kinh_do is None or vi_do is None:
+        return [du_lieu_ban_do_chi_nhanh(cn) for cn in tap_hop[:100]]
+    vi_tri = Point(kinh_do, vi_do, srid=4326)
+    tap_hop = tap_hop.annotate(khoang_cach=Distance("vi_tri", vi_tri))
+    if ban_kinh_met:
+        tap_hop = tap_hop.filter(vi_tri__dwithin=(vi_tri, D(m=ban_kinh_met)))
+    cac_chi_nhanh = list(tap_hop.order_by("khoang_cach", "ma_chi_nhanh")[:SO_CHI_NHANH_TINH_DUONG])
+    quang_duong = quang_duong_tu_vi_tri(
+        vi_tri, [(cn.pk, cn.vi_tri, cn.khoang_cach.m) for cn in cac_chi_nhanh]
+    )
+    ket_qua = [du_lieu_ban_do_chi_nhanh(cn, quang_duong[cn.pk]) for cn in cac_chi_nhanh]
+    return sorted(ket_qua, key=lambda cn: cn["quang_duong_met"])
 
 
 def tim_chi_nhanh(kinh_do, vi_do, ban_kinh_met, cac_thuoc):

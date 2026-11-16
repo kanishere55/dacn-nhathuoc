@@ -93,6 +93,44 @@ class DatHangWebTests(TestCase):
         self.assertContains(phan_hoi, "Cách bạn")
         self.assertContains(phan_hoi, f'value="{self.d.cn2.pk}" data-tai-lai checked')
 
+    def test_chi_nhanh_gan_nhat_theo_quang_duong_thuc_te(self):
+        from unittest import mock
+
+        from django.core.cache import cache
+
+        cache.clear()
+        self.addCleanup(cache.clear)
+        tao_ton(self.d, "LO2", ngay=60, luong=30, chi_nhanh=self.d.cn2)
+        self.them_gio(1)
+        # Theo đường bộ chi nhánh một gần hơn dù chi nhánh hai gần hơn theo khoảng cách thẳng.
+        with mock.patch(
+            "ung_dung.webgis.services.duong_di._goi_osrm_tu_vi_tri", return_value=[2100, 5200]
+        ) as goi:
+            phan_hoi = self.client.get(
+                reverse("ban_hang:dat_hang"),
+                {"vi_do": 10.7801, "kinh_do": 106.7101},
+                headers={"HX-Request": "true"},
+            )
+        # Thứ tự gọi OSRM theo PostGIS (chi nhánh hai trước) nên 2100 m là của chi nhánh hai.
+        cac_dich = goi.call_args.args[1]
+        self.assertEqual(cac_dich[0], self.d.cn2.vi_tri)
+        noi_dung = phan_hoi.content.decode()
+        self.assertLess(noi_dung.index("Chi nhánh hai"), noi_dung.index("Chi nhánh một"))
+        self.assertContains(phan_hoi, "Cách bạn 2,1 km, khoảng 4 phút xe máy")
+        self.assertNotContains(phan_hoi, "chim bay")
+        cache.clear()
+        with mock.patch(
+            "ung_dung.webgis.services.duong_di._goi_osrm_tu_vi_tri", return_value=[5200, 2100]
+        ):
+            phan_hoi = self.client.get(
+                reverse("ban_hang:dat_hang"),
+                {"vi_do": 10.7801, "kinh_do": 106.7101},
+                headers={"HX-Request": "true"},
+            )
+        noi_dung = phan_hoi.content.decode()
+        self.assertLess(noi_dung.index("Chi nhánh một"), noi_dung.index("Chi nhánh hai"))
+        self.assertContains(phan_hoi, f'value="{self.d.cn.pk}" data-tai-lai checked')
+
     def test_vi_tri_go_dia_chi_giu_lai_khi_doi_chi_nhanh(self):
         tao_ton(self.d, "LO2", ngay=60, luong=30, chi_nhanh=self.d.cn2)
         self.them_gio(1)
@@ -107,7 +145,7 @@ class DatHangWebTests(TestCase):
             },
             headers={"HX-Request": "true"},
         )
-        self.assertContains(phan_hoi, "Đã sắp theo khoảng cách từ <strong>Chợ Bến Thành</strong>")
+        self.assertContains(phan_hoi, "Sắp theo quãng đường đi từ <strong>Chợ Bến Thành</strong>")
         self.assertContains(phan_hoi, 'name="vi_do" value="10.780100"')
         self.assertContains(phan_hoi, 'name="nhan_vi_tri" value="Chợ Bến Thành"')
         self.assertContains(phan_hoi, f'value="{self.d.cn.pk}" data-tai-lai checked')

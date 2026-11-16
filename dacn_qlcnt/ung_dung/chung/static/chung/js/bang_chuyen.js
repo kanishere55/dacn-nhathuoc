@@ -1,5 +1,5 @@
-// Băng chuyền banner trang chủ: tự chuyển 5 giây, dừng khi rê chuột/focus/ẩn tab,
-// vuốt trên điện thoại, phím mũi tên; tôn trọng prefers-reduced-motion.
+// Băng chuyền banner trang chủ: tự chuyển 5 giây, tự dừng khi con trỏ hoặc tiêu điểm bàn phím đang ở
+// trên banner hay khi tab bị ẩn; vuốt trên điện thoại, phím mũi tên; máy bật giảm chuyển động thì không tự chuyển.
 (() => {
   const khoi = document.querySelector('[data-bang-chuyen]');
   if (!khoi) return;
@@ -7,10 +7,9 @@
   const cacCham = [...khoi.querySelectorAll('[data-den]')];
   if (cacSlide.length < 2) return;
   const giamChuyenDong = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const nutTamDung = khoi.querySelector('[data-tam-dung-banner]');
   let hienTai = 0;
   let hen = null;
-  let tamDung = giamChuyenDong.matches;
+  let giamDong = giamChuyenDong.matches;
   let reChuot = false;
   let coFocus = false;
   let daTaiTrang = document.readyState === 'complete';
@@ -35,7 +34,7 @@
   const capNhatHen = () => {
     clearInterval(hen);
     hen = null;
-    if (daTaiTrang && !tamDung && !reChuot && !coFocus && !document.hidden && xBatDau === null) {
+    if (daTaiTrang && !giamDong && !reChuot && !coFocus && !document.hidden && xBatDau === null) {
       hen = setInterval(() => den(hienTai + 1), 5000);
     }
   };
@@ -43,14 +42,9 @@
     den(so);
     capNhatHen();
   };
-  const capNhatNutTamDung = () => {
-    nutTamDung.textContent = tamDung ? 'Tự chuyển banner' : 'Tạm dừng';
-    capNhatHen();
-  };
 
   khoi.querySelector('[data-dieu-khien-banner]').hidden = false;
-  nutTamDung.addEventListener('click', () => { tamDung = !tamDung; capNhatNutTamDung(); });
-  giamChuyenDong.addEventListener('change', (e) => { tamDung = e.matches; capNhatNutTamDung(); });
+  giamChuyenDong.addEventListener('change', (e) => { giamDong = e.matches; capNhatHen(); });
   khoi.querySelectorAll('[data-truoc], [data-sau]').forEach((nut) => {
     nut.hidden = false;
     nut.addEventListener('click', () => chon(hienTai + (nut.hasAttribute('data-truoc') ? -1 : 1)));
@@ -81,5 +75,5 @@
   if (!daTaiTrang) {
     window.addEventListener('load', () => { daTaiTrang = true; capNhatHen(); }, { once: true });
   }
-  capNhatNutTamDung();
+  capNhatHen();
 })();

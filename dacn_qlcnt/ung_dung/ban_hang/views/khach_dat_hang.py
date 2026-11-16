@@ -18,6 +18,7 @@ from django.views.decorators.vary import vary_on_headers
 from ung_dung.chung.permissions import yeu_cau_vai_tro
 from ung_dung.danh_muc.selectors import du_lieu_ban_do_chi_nhanh, lay_chi_nhanh_cong_khai
 from ung_dung.kho.selectors import loc_chi_nhanh_du_thuoc
+from ung_dung.webgis.services.duong_di import quang_duong_tu_vi_tri
 
 from ..forms import DatHangForm
 from ..selectors import lay_dong_gio, lay_gio, tom_tat_gio
@@ -30,24 +31,28 @@ from ..thanh_vien import giam_thanh_vien, hang_cua
 def _cac_chi_nhanh_du_hang(cac_dong, vi_tri):
     """Chi nhánh còn đủ toàn bộ giỏ trên lô còn hạn tới hết thời gian giữ.
 
-    Có vị trí của khách (định vị trình duyệt) thì sắp theo khoảng cách PostGIS, gần trước.
+    Có vị trí của khách thì PostGIS sắp sơ bộ (ST_Distance), OSRM cho quãng đường đi thực tế;
+    danh sách sắp theo quãng đường đó, gần nhất trước.
     """
     cac_chi_nhanh = lay_chi_nhanh_cong_khai()
     if vi_tri:
         cac_chi_nhanh = cac_chi_nhanh.annotate(khoang_cach=Distance("vi_tri", vi_tri)).order_by(
             "khoang_cach"
         )
-    return [
-        {
-            "chi_nhanh": cn,
-            "khoang_cach_met": getattr(getattr(cn, "khoang_cach", None), "m", None),
-        }
-        for cn in loc_chi_nhanh_du_thuoc(
-            list(cac_chi_nhanh),
-            cac_dong,
-            con_han_den=timezone.localdate(timezone.now() + timedelta(hours=GIO_GIU_TAI_QUAY)),
-        )
-    ]
+    du_hang = loc_chi_nhanh_du_thuoc(
+        list(cac_chi_nhanh),
+        cac_dong,
+        con_han_den=timezone.localdate(timezone.now() + timedelta(hours=GIO_GIU_TAI_QUAY)),
+    )
+    if not vi_tri:
+        return [{"chi_nhanh": cn, "quang_duong": None} for cn in du_hang]
+    quang_duong = quang_duong_tu_vi_tri(
+        vi_tri, [(cn.pk, cn.vi_tri, cn.khoang_cach.m) for cn in du_hang]
+    )
+    return sorted(
+        ({"chi_nhanh": cn, "quang_duong": quang_duong[cn.pk]} for cn in du_hang),
+        key=lambda pa: pa["quang_duong"]["quang_duong_met"],
+    )
 
 
 @yeu_cau_vai_tro("khach_hang")
@@ -132,7 +137,7 @@ def dat_hang(request):
         ),
         "cac_chi_nhanh": [
             {
-                **du_lieu_ban_do_chi_nhanh(pa["chi_nhanh"]),
+                **du_lieu_ban_do_chi_nhanh(pa["chi_nhanh"], pa["quang_duong"]),
                 "chon": bool(phuong_an) and pa["chi_nhanh"].pk == phuong_an["chi_nhanh"].pk,
             }
             for pa in cac_phuong_an

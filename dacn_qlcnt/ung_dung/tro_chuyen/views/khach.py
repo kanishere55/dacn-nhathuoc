@@ -8,6 +8,7 @@ Thêm ?nhung=1 để hiện gọn trong khung chat nổi (iframe cùng nguồn) 
 Mở trang soạn tin không tạo gì cả; cuộc trò chuyện chỉ xuất hiện khi tin đầu tiên được gửi.
 """
 
+from functools import wraps
 from urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
@@ -19,7 +20,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from ung_dung.ban_hang.models import DonHang
-from ung_dung.chung.permissions import yeu_cau_vai_tro
+from ung_dung.chung.permissions import NHAN_SU_CHUOI, co_vai_tro, yeu_cau_vai_tro
 from ung_dung.danh_muc.selectors import lay_chi_nhanh_cong_khai, lay_thuoc_cong_khai
 
 from ..forms import MoPhongForm, TinDauVeDonForm
@@ -41,6 +42,19 @@ from ._chung import gui_tin_kem_anh, so_truoc, the_don_cho_gui, xem_anh
 SO_PHONG_MOI_TRANG = 30
 # Khóa trong session (lưu ở PostgreSQL): khách đã ẩn lưu ý tư vấn.
 KHOA_AN_LUU_Y = "an_luu_y_tu_van"
+
+
+def _nhan_su_ve_trang_noi_bo(ham):
+    """Nhân sự nhà thuốc bấm "Hỏi dược sĩ" (banner, menu website) thì về trang trò chuyện của nhà thuốc,
+    không rơi vào trang báo không có quyền."""
+
+    @wraps(ham)
+    def xu_ly(request, *args, **kwargs):
+        if request.user.is_authenticated and co_vai_tro(request.user, *NHAN_SU_CHUOI):
+            return redirect("tro_chuyen:danh_sach")
+        return ham(request, *args, **kwargs)
+
+    return xu_ly
 
 
 def _nhung(request):
@@ -112,6 +126,7 @@ def _hien_thi(request, *, phong=None, form=None, don_nhap=None, form_don=None, t
 
 
 @xframe_options_sameorigin
+@_nhan_su_ve_trang_noi_bo
 @yeu_cau_vai_tro("khach_hang")
 @require_http_methods(["GET", "POST"])
 def danh_sach(request):

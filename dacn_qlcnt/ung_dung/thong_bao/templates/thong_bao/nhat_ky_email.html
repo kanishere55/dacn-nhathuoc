@@ -12,7 +12,7 @@
       <i data-lucide="mail-warning" aria-hidden="true"></i>
       <div>
         <strong>{% if dem.loi %}{{ dem.loi }} thư gửi lỗi{% endif %}{% if dem.loi and dem.ket %} · {% endif %}{% if dem.ket %}{{ dem.ket }} thư kẹt ở “Chờ gửi”{% endif %}</strong>
-        <p>Khách chưa nhận được những thư này. Đọc dòng lỗi màu đỏ để biết nguyên nhân (thường là mật khẩu ứng dụng Gmail trong tệp .env hết hiệu lực hoặc mất mạng), sửa xong thì bấm “Gửi lại” ở từng thư.</p>
+        <p>Khách chưa nhận được những thư này. Lỗi thường gặp: mật khẩu ứng dụng Gmail trong tệp .env hết hiệu lực hoặc mất mạng.</p>
       </div>
       <a class="nut nut-phu" href="?trang_thai=can_gui_lai">Xem thư cần gửi lại</a>
     </div>

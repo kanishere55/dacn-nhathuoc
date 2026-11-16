@@ -1,0 +1,1 @@
+{# Quãng đường đi thực tế từ vị trí của khách (webgis/services/duong_di.py); OSRM lỗi thì là số ước tính. #}{% if quang_duong.uoc_tinh %}Cách {{ tu|default:"bạn" }} khoảng {{ quang_duong.quang_duong_met|km }}{% else %}Cách {{ tu|default:"bạn" }} {{ quang_duong.quang_duong_met|km }}, khoảng {{ quang_duong.phut_xe_may }} phút xe máy{% endif %}

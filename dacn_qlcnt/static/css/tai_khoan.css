@@ -369,10 +369,13 @@
   .tim-vi-tri {
     display: flex;
     gap: 6px;
+    min-width: 0;
   }
+  /* width: 100% để ô nhập không giữ bề rộng mặc định (~20 ký tự) làm cả trang rộng ra ở màn hình 320px. */
   .tim-vi-tri input {
     flex: 1;
     min-width: 0;
+    width: 100%;
   }
   .ket-qua-tim-vi-tri {
     border: 1px solid var(--vien);

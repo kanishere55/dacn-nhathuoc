@@ -47,16 +47,16 @@
             <p class="trang-thai-vi-tri" data-trang-thai-vi-tri role="status"></p>
             <div class="ket-qua-tim-vi-tri" data-ket-qua-dia-chi-dat-hang></div>
           </div>
-          <p class="ghi-chu-khach">{% if vi_tri %}<i data-lucide="map-pin" aria-hidden="true"></i> Đã sắp theo khoảng cách từ <strong>{{ nhan_vi_tri }}</strong>.{% else %}Chỉ hiện chi nhánh còn đủ toàn bộ thuốc trong giỏ.{% endif %}</p>
+          <p class="ghi-chu-khach">{% if vi_tri %}<i data-lucide="map-pin" aria-hidden="true"></i> Sắp theo quãng đường đi từ <strong>{{ nhan_vi_tri }}</strong>.{% else %}Chỉ hiện chi nhánh còn đủ toàn bộ thuốc trong giỏ.{% endif %}</p>
           <div class="cac-lua-chon-the cot-don">
             {% for pa in cac_phuong_an %}
               <label class="lua-chon-the">
                 <input id="chi-nhanh-{{ pa.chi_nhanh.pk }}" type="radio" name="chi_nhanh" value="{{ pa.chi_nhanh.pk }}" data-tai-lai{% if pa.chi_nhanh.pk == phuong_an.chi_nhanh.pk %} checked{% endif %}>
                 <i data-lucide="building-2" aria-hidden="true"></i>
                 <span>
-                  <strong>{{ pa.chi_nhanh.ten_chi_nhanh }}{% if forloop.first and pa.khoang_cach_met != None %} <em class="nhan-goi-y">Gần bạn nhất</em>{% endif %}</strong>
+                  <strong>{{ pa.chi_nhanh.ten_chi_nhanh }}{% if forloop.first and pa.quang_duong %} <em class="nhan-goi-y">Gần bạn nhất</em>{% endif %}</strong>
                   <small>{{ pa.chi_nhanh.dia_chi }}</small>
-                  <small>{% if pa.khoang_cach_met != None %}Cách bạn {{ pa.khoang_cach_met|km }} · {% endif %}Mở cửa {{ pa.chi_nhanh.gio_mo_cua|time:"H:i" }}–{{ pa.chi_nhanh.gio_dong_cua|time:"H:i" }}{% if pa.chi_nhanh.so_dien_thoai %} · {{ pa.chi_nhanh.so_dien_thoai }}{% endif %}</small>
+                  <small>{% if pa.quang_duong %}{% include "ban_hang/khach/_quang_duong.html" with quang_duong=pa.quang_duong only %} · {% endif %}Mở cửa {{ pa.chi_nhanh.gio_mo_cua|time:"H:i" }}–{{ pa.chi_nhanh.gio_dong_cua|time:"H:i" }}{% if pa.chi_nhanh.so_dien_thoai %} · {{ pa.chi_nhanh.so_dien_thoai }}{% endif %}</small>
                 </span>
               </label>
             {% endfor %}
@@ -64,7 +64,7 @@
         {% else %}
           <div class="thong-diep-don thong-diep-canh-bao">
             <i data-lucide="package-x" aria-hidden="true"></i>
-            <span>Chưa có chi nhánh nào còn đủ toàn bộ thuốc trong giỏ. Hãy giảm số lượng, bỏ bớt thuốc, hoặc <a href="{% url 'webgis:ban_do' %}?tu_gio=1">xem từng chi nhánh trên bản đồ</a>.</span>
+            <span>Chưa có chi nhánh nào còn đủ toàn bộ thuốc trong giỏ. <a href="{% url 'webgis:ban_do' %}?tu_gio=1">Xem tồn kho từng chi nhánh trên bản đồ</a>.</span>
           </div>
         {% endif %}
       </section>
@@ -75,7 +75,6 @@
           {{ du_lieu_ban_do|json_script:"du-lieu-ban-do-dat-hang" }}
           <div class="ban-do ban-do-dat-hang" data-ban-do-dat-hang aria-label="Bản đồ các chi nhánh còn đủ hàng"></div>
           <p class="tom-tat-lo-trinh" data-tom-tat-lo-trinh role="status">Đang tải lộ trình…</p>
-          <p class="ghi-chu-khach">Rê chuột hoặc bấm vào biểu tượng nhà thuốc để xem ảnh, giờ mở cửa và bấm “Nhận tại đây”. Chạm vào chỗ khác trên bản đồ để đặt vị trí của bạn tại đó.</p>
         </details>
       {% endif %}
 

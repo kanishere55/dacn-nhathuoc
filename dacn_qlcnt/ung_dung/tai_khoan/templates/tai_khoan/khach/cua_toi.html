@@ -4,7 +4,6 @@
   <header class="tieu-de-khach">
     <p class="chu-dan">TÀI KHOẢN</p>
     <h1>Xin chào, {{ user.ho_ten|default:user.ten_dang_nhap }}</h1>
-    <p>Theo dõi đơn đặt giữ, hạng thành viên và thông tin đăng nhập của bạn.</p>
   </header>
   {% if not user.email %}
     <div class="canh-bao-email" role="note">

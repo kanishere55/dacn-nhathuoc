@@ -1,10 +1,12 @@
 """Tìm địa chỉ qua Nominatim (OpenStreetMap) từ máy chủ.
 
 Làm đúng chính sách sử dụng của Nominatim: User-Agent định danh ứng dụng, tối đa
-một yêu cầu mỗi giây cho toàn tiến trình, chỉ gọi khi người dùng bấm tìm.
+một yêu cầu mỗi giây cho toàn tiến trình, chỉ gọi khi người dùng bấm tìm, kết quả đã tìm được
+giữ một ngày trong bộ nhớ đệm để không hỏi lại cùng một địa chỉ.
 https://operations.osmfoundation.org/policies/nominatim/
 """
 
+import hashlib
 import json
 import threading
 import time
@@ -13,13 +15,24 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 
 _khoa = threading.Lock()
 _lan_goi_cuoi = [0.0]
 
 
+THOI_GIAN_NHO_DEM_GIAY = 86400
+
+
 def _goi(duong_dan, tham_so):
+    khoa_dem = (
+        "nominatim:"
+        + hashlib.sha256(f"{duong_dan}?{urlencode(sorted(tham_so.items()))}".encode()).hexdigest()
+    )
+    da_luu = cache.get(khoa_dem)
+    if da_luu is not None:
+        return da_luu
     with _khoa:
         cho = 1.0 - (time.monotonic() - _lan_goi_cuoi[0])
         if cho > 0:
@@ -33,9 +46,11 @@ def _goi(duong_dan, tham_so):
     )
     try:
         with urlopen(yeu_cau, timeout=8) as phan_hoi:
-            return json.load(phan_hoi)
+            du_lieu = json.load(phan_hoi)
     except (URLError, TimeoutError, ValueError) as loi:
         raise ValidationError("Chưa kết nối được dịch vụ tìm địa chỉ, hãy thử lại.") from loi
+    cache.set(khoa_dem, du_lieu, THOI_GIAN_NHO_DEM_GIAY)
+    return du_lieu
 
 
 SO_LAN_THU_GAN_DUNG = 2

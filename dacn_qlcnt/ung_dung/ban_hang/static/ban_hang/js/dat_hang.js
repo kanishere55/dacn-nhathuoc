@@ -61,7 +61,7 @@
       ({ coords }) => datViTri(coords.latitude, coords.longitude, 'vị trí hiện tại của bạn'),
       () => {
         nut.disabled = false;
-        bao('Không lấy được vị trí (chưa cho phép định vị hoặc thiết bị không định vị được). Hãy nhập địa chỉ của bạn.');
+        bao('Không lấy được vị trí. Hãy nhập địa chỉ của bạn.');
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -86,7 +86,7 @@
       const phanHoi = await fetch(`${khung.dataset.urlTimDiaChi}?q=${encodeURIComponent(tuKhoa)}`, { headers: { Accept: 'application/json' } });
       const duLieu = await phanHoi.json();
       if (!phanHoi.ok) throw new Error((duLieu.loi || []).join(' '));
-      if (!duLieu.ket_qua.length) { bao('Không thấy địa chỉ phù hợp. Hãy thử chỉ gõ tên đường và quận.'); return; }
+      if (!duLieu.ket_qua.length) { bao('Không thấy địa chỉ phù hợp, thử gõ tên đường và quận.'); return; }
       bao(duLieu.gan_dung ? 'Chưa thấy đúng số nhà này. Chọn con đường gần đúng:' : 'Chọn đúng địa chỉ của bạn:');
       duLieu.ket_qua.forEach((muc) => {
         const nut = document.createElement('button');

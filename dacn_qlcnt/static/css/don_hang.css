@@ -24,6 +24,8 @@
   }
   .anh-nho-dong {
     display: grid;
+    /* Lưới cố định bằng khung: ảnh dọc được cắt giữa (cover) thay vì kéo dài rồi mất phần dưới. */
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     place-items: center;
     flex-shrink: 0;
     width: 56px;

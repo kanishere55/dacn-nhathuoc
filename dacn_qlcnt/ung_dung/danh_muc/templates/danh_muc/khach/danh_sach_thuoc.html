@@ -4,7 +4,7 @@
   <nav class="vi-tri-khach" aria-label="Đường dẫn trang"><a href="{% url 'chung:trang_chu' %}">Trang chủ</a><span aria-hidden="true">/</span>{% if danh_muc_chon %}<a href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Thuốc</a><span aria-hidden="true">/</span><span>{{ danh_muc_chon.ten_danh_muc_san_pham }}</span>{% else %}<span>Thuốc</span>{% endif %}</nav>
   <header class="tieu-de-khach">
     <h1>{% if danh_muc_chon %}{{ danh_muc_chon.ten_danh_muc_san_pham }}{% else %}Tất cả thuốc{% endif %}</h1>
-    <p>{% if danh_muc_chon.mo_ta %}{{ danh_muc_chon.mo_ta }}{% else %}Tìm theo tên, hoạt chất hoặc mã thuốc; lọc theo danh mục và nhóm điều trị.{% endif %}</p>
+    {% if danh_muc_chon.mo_ta %}<p>{{ danh_muc_chon.mo_ta }}</p>{% endif %}
   </header>
   <form method="get" class="khung-danh-muc" aria-label="Lọc danh mục thuốc">
     <aside class="loc-danh-muc the-khach">

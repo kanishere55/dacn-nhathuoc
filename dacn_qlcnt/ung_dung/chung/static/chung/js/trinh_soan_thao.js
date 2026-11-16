@@ -154,7 +154,7 @@
         quill.formatText(vitri, 1, 'lop', CO_BAN, 'user');
         quill.formatText(vitri, 1, 'alt', tep.name.replace(/\.[^.]+$/, ''), 'user');
         quill.setSelection(vitri + 1, 0, 'silent');
-        bao('Đã chèn ảnh. Bấm vào ảnh để chỉnh kích thước và vị trí.');
+        bao('Đã chèn ảnh.');
       } catch (loi) {
         bao(loi.message, true);
       }

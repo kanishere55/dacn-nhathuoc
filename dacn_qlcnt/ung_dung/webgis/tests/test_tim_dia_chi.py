@@ -3,12 +3,15 @@ import json
 from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
 
 class TimDiaChiTests(TestCase):
     def setUp(self):
+        cache.clear()  # kết quả tìm địa chỉ được giữ trong bộ nhớ đệm
+        self.addCleanup(cache.clear)
         self.client.force_login(get_user_model().objects.create_user("khach_tim", "Mk-test-2026!"))
 
     @mock.patch("ung_dung.webgis.services.dia_chi.time.sleep")

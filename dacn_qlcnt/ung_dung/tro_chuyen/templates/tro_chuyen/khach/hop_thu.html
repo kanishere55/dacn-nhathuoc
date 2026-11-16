@@ -73,7 +73,7 @@
         <div class="soan-tin-dau">
           <p class="dau-the-cho">Bạn đang hỏi về đơn hàng này</p>
           {% include "tro_chuyen/_the_tin.html" with the=the_cho ben="khach" only %}
-          <p class="chu-mo-ta">Tin nhắn mở cuộc trò chuyện với nhà thuốc {{ don_nhap.chi_nhanh.ten_chi_nhanh }}. Mọi câu hỏi sau này với nhà thuốc này (đơn khác, sản phẩm, tư vấn) đều nằm chung một hộp thoại.</p>
+          <p class="chu-mo-ta">Gửi tới {{ don_nhap.chi_nhanh.ten_chi_nhanh }}.</p>
           <form method="post" enctype="multipart/form-data" class="form-chinh" data-soan-tin>
             {% csrf_token %}
             {% if nhung %}<input type="hidden" name="nhung" value="1">{% endif %}
@@ -99,7 +99,6 @@
             <span class="icon-lon" aria-hidden="true"><i data-lucide="stethoscope"></i></span>
             <h2>Nhắn nhà thuốc</h2>
           {% endif %}
-          <p>Chưa mua hàng vẫn hỏi được. Mỗi nhà thuốc có một cuộc trò chuyện duy nhất giữ toàn bộ lịch sử: hỏi tư vấn, hỏi về sản phẩm hay đơn hàng đều nằm chung, bạn nhận thông báo khi dược sĩ trả lời.</p>
           <form method="post" enctype="multipart/form-data" class="form-chinh form-hoi-duoc-si" data-soan-tin>
             {% csrf_token %}
             {% if nhung %}<input type="hidden" name="nhung" value="1">{% endif %}
@@ -110,7 +109,6 @@
             {% include "tro_chuyen/_chon_anh_form.html" with truong=form.cac_anh only %}
             <button class="nut" type="submit"><i data-lucide="send-horizontal" aria-hidden="true"></i>Gửi tin nhắn</button>
           </form>
-          <p class="goi-y-phu">Đã từng nhắn nhà thuốc đã chọn thì tin sẽ nối tiếp vào cuộc trò chuyện cũ. Muốn hỏi về một đơn đã đặt? Mở đơn trong <a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}" target="_top">Đơn của tôi</a> rồi bấm "Nhắn nhà thuốc về đơn này".</p>
         </div>
       {% endif %}
     </section>

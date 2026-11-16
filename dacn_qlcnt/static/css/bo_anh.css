@@ -3,12 +3,20 @@
   chi nhánh và popup trên bản đồ. Phần khung chạy của Splide nằm ở vendor/splide/splide-core.min.css.
 */
 @layer components {
+  /* Cột ảnh luôn bằng khung cha (minmax(0, 1fr)): hàng ảnh nhỏ dài bao nhiêu cũng chỉ cuộn bên trong,
+     không đẩy ảnh lớn phình ra đè sang phần thông tin bên cạnh. */
   .bo-anh {
     --ti-le: 1;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     align-content: start;
     min-width: 0;
+  }
+  .bo-anh > *,
+  .bo-anh .splide {
+    min-width: 0;
+    max-width: 100%;
   }
   /* Ảnh nhà thuốc là ảnh chụp không gian: khung ngang và phủ kín. */
   .bo-anh-phu-kin {
@@ -24,9 +32,12 @@
     background: #f4f7f4;
   }
   /* Ảnh sản phẩm: hiện trọn ảnh, phần trống lấp bằng chính ảnh làm mờ nên không có dải nền lệch. */
+  /* Hàng/cột lưới cố định bằng khung (minmax(0, 1fr)): ảnh dọc cao gấp mấy lần khung vẫn được thu
+     vừa khung (contain) hoặc cắt giữa (cover), không bị kéo dài rồi cắt mất phần dưới. */
   .bo-anh .khung-anh-mo {
     position: relative;
     display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     place-items: center;
     aspect-ratio: var(--ti-le);
     overflow: hidden;
