@@ -84,7 +84,7 @@ def cac_nguon_bien_dong():
         ),
         (
             "xuat_huy",
-            ChiTietPhieuXuatHuy.objects.filter(phieu_xuat_huy__co_tru_ton=True),
+            ChiTietPhieuXuatHuy.objects.all(),
             "phieu_xuat_huy__chi_nhanh",
             "lo_thuoc",
             "phieu_xuat_huy__thoi_diem_tao",

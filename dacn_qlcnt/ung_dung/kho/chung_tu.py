@@ -150,7 +150,6 @@ def du_lieu_chung_tu(phieu):
         thong_tin = [
             ("Chi nhánh", phieu.chi_nhanh.ten_chi_nhanh),
             ("Lý do", phieu.get_loai_xuat_huy_display()),
-            ("Ảnh hưởng tồn kho", "Giảm tồn" if phieu.co_tru_ton else "Hàng đã xuất khỏi tồn"),
         ]
         cot = [*COT_LO, ("Số lượng", True)]
         hang = [

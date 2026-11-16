@@ -42,15 +42,6 @@ class PhieuXuatHuy(models.Model):
             "thu_hoi: lô đang khóa bán theo thông báo thu hồi, ghi chú ghi số văn bản."
         ),
     )
-    co_tru_ton = models.BooleanField(
-        default=True,
-        db_default=True,
-        db_column="co_tru_ton",
-        db_comment=(
-            "TRUE nếu phiếu hủy xuất từ tồn chi nhánh; FALSE nếu hàng đã xuất bán "
-            "và đang để riêng chờ hủy."
-        ),
-    )
     ghi_chu = models.TextField(
         db_column="ghi_chu",
         db_comment="Mô tả tình trạng hàng và biên bản kèm theo; cho phép nhiều dòng.",
