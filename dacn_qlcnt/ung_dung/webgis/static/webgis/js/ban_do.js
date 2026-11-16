@@ -12,7 +12,6 @@
   const oBanKinh = khung.querySelector('[data-ban-kinh]');
   const bangLoTrinh = khung.querySelector('[data-bang-lo-trinh]');
   const docJson = (id) => JSON.parse(document.getElementById(id).textContent || 'null');
-  const diaChiMacDinh = docJson('du-lieu-dia-chi-mac-dinh');
   const banDo = window.taoBanDoNhaThuoc(khung.querySelector('[data-ban-do]'));
 
   let cacChiNhanh = docJson('du-lieu-chi-nhanh') || [];
@@ -112,8 +111,8 @@
       nutDuong.addEventListener('click', () => chonChiNhanh(cn));
       const chiTiet = chu('a', 'nut nut-phu', 'Chi tiết');
       chiTiet.href = cn.duong_dan;
-      const datHang = chu('a', 'nut', 'Đặt hàng tại đây');
-      datHang.href = `${khung.dataset.urlDatHang}?${new URLSearchParams({ hinh_thuc_nhan: 'nhan_tai_quay', chi_nhanh: cn.id_chi_nhanh })}`;
+      const datHang = chu('a', 'nut', 'Đặt giữ tại đây');
+      datHang.href = `${khung.dataset.urlDatHang}?${new URLSearchParams({ chi_nhanh: cn.id_chi_nhanh })}`;
       tacVu.append(nutDuong, chiTiet, datHang);
       noiDung.append(dau, diaChi, meta, tacVu);
       the.append(anh, noiDung);
@@ -187,9 +186,6 @@
       () => { baoViTri.textContent = 'Không lấy được vị trí (chưa cho phép định vị). Hãy tìm địa chỉ hoặc bấm lên bản đồ.'; },
       { enableHighAccuracy: true, timeout: 10000 },
     );
-  });
-  khung.querySelector('[data-dia-chi-mac-dinh]')?.addEventListener('click', () => {
-    datViTri(diaChiMacDinh.vi_do, diaChiMacDinh.kinh_do, `địa chỉ đã lưu: ${diaChiMacDinh.dia_chi}`);
   });
 
   // Tìm địa chỉ qua máy chủ (Nominatim), chỉ khi đã đăng nhập.

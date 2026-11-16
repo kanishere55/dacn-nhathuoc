@@ -1,7 +1,7 @@
 """Giữ hàng cho đơn: mốc hạn dùng của lô, phân bổ lại phần giữ khi lô không còn dùng được.
 
 Q03 hứa đơn giữ được đủ hàng tới hết hạn giữ; Q04 giữ theo lô. Vì vậy:
-- lúc đặt chỉ giữ trên lô còn hạn tới ngày hết giữ (đơn giao: còn hạn ít nhất 30 ngày);
+- lúc đặt chỉ giữ trên lô còn hạn tới ngày hết giữ;
 - lô bị khóa bán hoặc hết hạn khi đơn còn giữ thì phần giữ được dời sang lô hợp lệ khác
   theo FEFO, cùng thứ tự khóa kho → đơn như lúc đặt hàng.
 """
@@ -15,13 +15,10 @@ from ung_dung.kho.selectors import luong_ban_duoc
 from ung_dung.kho.services.giao_dich import khoa_kho, phan_bo_fefo
 
 from ..models import TRANG_THAI_GIU, DonHang, PhanBoDonHang
-from .giao_hang import han_toi_thieu_giao
 
 
 def han_lo_can_cho_don(don, het_giu=None):
-    """Ngày lô giữ cho đơn phải còn hạn tới: hết giữ (nhận tại quầy) hoặc +30 ngày (giao)."""
-    if don.hinh_thuc_nhan == "giao_hang":
-        return han_toi_thieu_giao()
+    """Ngày lô giữ cho đơn phải còn hạn tới: ngày hết giữ của đơn."""
     return timezone.localdate(het_giu or don.thoi_diem_het_giu)
 
 

@@ -42,8 +42,8 @@ def lay_so_du(*, nguoi=None, chi_nhanh=None, bo_qua_don=None):
 def dieu_kien_lo_hop_le(con_han_den=None):
     """Lô bán được hôm nay (Q04: còn hiệu lực hết ngày hết hạn theo giờ Việt Nam).
 
-    `con_han_den`: ngày lô phải còn hạn tới, ví dụ ngày hết giữ của đơn hoặc ngày tối thiểu
-    của đơn giao hàng; không truyền thì chỉ cần còn hạn hôm nay.
+    `con_han_den`: ngày lô phải còn hạn tới, ví dụ ngày hết giữ của đơn đặt giữ; không truyền
+    thì chỉ cần còn hạn hôm nay.
     """
     hom_nay = timezone.localdate()
     return Q(
@@ -98,7 +98,7 @@ def luong_ban_duoc(cac_chi_nhanh, cac_thuoc, *, con_han_den=None, bo_qua_don=Non
     """{(id chi nhánh, id thuốc): lượng còn bán được} sau khi trừ cả phần giữ mồ côi.
 
     Lượng lấy được từ các lô đạt `con_han_den` không vượt tổng của mọi lô bán được hôm nay
-    trừ phần giữ mồ côi, để đơn giao (cần lô xa hạn) không lấy mất hàng đã hứa cho đơn khác.
+    trừ phần giữ mồ côi, để đơn cần lô xa hạn hơn không lấy mất hàng đã hứa cho đơn khác.
     """
 
     def tong(con_han):

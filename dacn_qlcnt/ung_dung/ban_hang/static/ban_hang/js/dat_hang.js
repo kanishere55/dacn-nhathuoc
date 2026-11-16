@@ -31,7 +31,31 @@
     khoaDatHang(!daCapNhat);
     trangThai.textContent = daCapNhat
       ? 'Đã cập nhật lựa chọn và tổng tiền.'
-      : 'Chưa cập nhật được. Bấm Cập nhật lựa chọn để thử lại.';
+      : 'Chưa cập nhật được. Hãy chọn lại chi nhánh hoặc tải lại trang.';
+  });
+  // "Gần tôi nhất": lấy vị trí trình duyệt rồi tải lại danh sách chi nhánh, máy chủ sắp theo PostGIS.
+  form.addEventListener('click', (e) => {
+    const nut = e.target.closest('[data-sap-theo-vi-tri]');
+    if (!nut) return;
+    const bao = form.querySelector('[data-trang-thai-vi-tri]');
+    if (!navigator.geolocation) {
+      if (bao) bao.textContent = 'Trình duyệt không hỗ trợ định vị.';
+      return;
+    }
+    nut.disabled = true;
+    if (bao) bao.textContent = 'Đang lấy vị trí của bạn…';
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        form.querySelector('[data-vi-do]').value = coords.latitude.toFixed(6);
+        form.querySelector('[data-kinh-do]').value = coords.longitude.toFixed(6);
+        window.htmx.trigger(form, 'cap-nhat');
+      },
+      () => {
+        nut.disabled = false;
+        if (bao) bao.textContent = 'Không lấy được vị trí. Hãy cho phép định vị trong trình duyệt hoặc tự chọn chi nhánh.';
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
   });
   form.addEventListener('submit', (e) => {
     if (e.submitter?.name === 'cap_nhat') {

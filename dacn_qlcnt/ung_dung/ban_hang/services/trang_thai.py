@@ -1,4 +1,4 @@
-"""Bảng chuyển trạng thái hợp lệ của đơn hàng; mọi lần đổi đều ghi lich_su_don_hang."""
+"""Bảng chuyển trạng thái hợp lệ của đơn đặt giữ; mọi lần đổi đều ghi lich_su_don_hang."""
 
 from django.core.exceptions import ValidationError
 
@@ -7,20 +7,12 @@ from ..models import TRANG_THAI_DON, LichSuDonHang
 NHAN = dict(TRANG_THAI_DON)
 KHACH, NHAN_SU, HE_THONG = "khach", "nhan_su", "he_thong"
 
-# (từ, đến) -> những bên được thực hiện.
+# (từ, đến) -> những bên được thực hiện. Đơn đặt giữ chỉ có một trạng thái đang xử lý: khách
+# đến quầy nhận và trả tiền (hoàn thành), tự hủy hoặc nhà thuốc hủy, hoặc quá hạn giữ.
 CHUYEN_HOP_LE = {
-    ("cho_thanh_toan", "cho_xac_nhan"): {HE_THONG, NHAN_SU},
-    ("cho_thanh_toan", "da_huy"): {KHACH, NHAN_SU, HE_THONG},
-    ("cho_xac_nhan", "dang_chuan_bi"): {NHAN_SU},
-    ("cho_xac_nhan", "da_huy"): {KHACH, NHAN_SU, HE_THONG},
     ("dang_giu", "hoan_thanh"): {NHAN_SU},
     ("dang_giu", "da_huy"): {KHACH, NHAN_SU},
     ("dang_giu", "het_han"): {HE_THONG, KHACH, NHAN_SU},
-    ("dang_chuan_bi", "dang_giao"): {NHAN_SU},
-    ("dang_chuan_bi", "da_huy"): {NHAN_SU},
-    # Khách xác nhận nhận hàng, hoặc nhân sự đối chiếu xác nhận đã giao thực tế.
-    ("dang_giao", "hoan_thanh"): {KHACH, NHAN_SU},
-    ("dang_giao", "giao_that_bai"): {NHAN_SU},
 }
 
 

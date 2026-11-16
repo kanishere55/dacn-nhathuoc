@@ -1,8 +1,8 @@
-"""Email gửi khách theo từng sự kiện của đơn: đặt đơn, đổi trạng thái, nhận tiền, chờ hoàn tiền,
-đã hoàn tiền, trả hàng và hóa đơn công ty.
+"""Email gửi khách theo từng sự kiện của đơn đặt giữ: đặt giữ, đổi trạng thái (đã nhận hàng,
+hủy, hết hạn) và hóa đơn công ty.
 
 Mỗi thư nói rõ khách cần làm gì tiếp theo, kèm hạn bằng giờ tuyệt đối và nút đi thẳng tới
-đúng trang (thanh toán, chỉ đường, đơn, hóa đơn). Nội dung dựng ở đây; trình bày nằm trong
+đúng trang (chỉ đường tới chi nhánh, đơn, hóa đơn). Nội dung dựng ở đây; trình bày nằm trong
 thong_bao/templates/thong_bao/email/. Thư chỉ gửi khi khách có email.
 """
 
@@ -22,23 +22,13 @@ MAU_NHAN = {
     "trung_tinh": ("#eef1ef", "#45524b"),
 }
 NHOM_MAU = {
-    "cho_thanh_toan": "cho",
-    "cho_xac_nhan": "cho",
     "dang_giu": "dang",
-    "dang_chuan_bi": "dang",
-    "dang_giao": "dang",
     "hoan_thanh": "xong",
     "da_huy": "huy",
-    "giao_that_bai": "huy",
     "het_han": "trung_tinh",
 }
-# Các bước trên dòng tiến trình, giống trang chi tiết đơn của khách.
-BUOC = {
-    "giao_hang": ["cho_xac_nhan", "dang_chuan_bi", "dang_giao", "hoan_thanh"],
-    "nhan_tai_quay": ["dang_giu", "hoan_thanh"],
-}
-# Tiền tố nội bộ hệ thống thêm vào mã tham chiếu; khách chỉ cần phần mã gốc.
-TIEN_TO_MA = ("sepay-", "momo-", "tay-", "hoan-", "tra-")
+# Các bước trên dòng tiến trình của đơn đặt giữ.
+BUOC = ["dang_giu", "hoan_thanh"]
 
 
 def _gio(thoi_diem):
@@ -49,24 +39,12 @@ def _tien(so_tien):
     return tien(so_tien).replace(" ", " ")
 
 
-def ma_hien_thi(ma_tham_chieu):
-    """Mã giao dịch khách đối chiếu được với ngân hàng/ví (bỏ tiền tố nội bộ)."""
-    ma = ma_tham_chieu or ""
-    for tien_to in TIEN_TO_MA:
-        if ma.startswith(tien_to):
-            return ma[len(tien_to) :]
-    return ma
-
-
 def tien_trinh(don):
     """[(nhãn, đã qua, hiện tại)] cho dòng tiến trình; rỗng khi đơn đã kết thúc bất thường."""
-    cac_buoc = BUOC[don.hinh_thuc_nhan]
-    if don.trang_thai == "cho_thanh_toan":
-        cac_buoc = ["cho_thanh_toan", *cac_buoc]
-    if don.trang_thai not in cac_buoc:
+    if don.trang_thai not in BUOC:
         return []
-    vi_tri = cac_buoc.index(don.trang_thai)
-    return [(NHAN[buoc], so <= vi_tri, so == vi_tri) for so, buoc in enumerate(cac_buoc)]
+    vi_tri = BUOC.index(don.trang_thai)
+    return [(NHAN[buoc], so <= vi_tri, so == vi_tri) for so, buoc in enumerate(BUOC)]
 
 
 def _the(nhan, nhom, tieu_de, mo_ta="", *, ma_nhan="Mã đơn", ma_gia_tri="", thoi_diem=None):
@@ -108,34 +86,6 @@ def _lich_su_moi_nhat(don):
     return (
         don.cac_lich_su.select_related("nguoi_thuc_hien").order_by("-thoi_diem_tao", "-pk").first()
     )
-
-
-def _giao_dich(don, loai):
-    from ung_dung.thanh_toan.models import GiaoDichThanhToan
-
-    return (
-        GiaoDichThanhToan.objects.filter(don_hang=don, loai_giao_dich=loai, trang_thai="thanh_cong")
-        .order_by("-pk")
-        .first()
-    )
-
-
-def _doi_soat(don):
-    """Phải thu, đã thu, còn thiếu, phải hoàn của đơn: một nguồn chung với nghiệp vụ thanh toán."""
-    from ung_dung.thanh_toan.services.doi_soat import doi_soat
-
-    return doi_soat(don)
-
-
-def _dong_giao_dich(giao_dich, nhan_so_tien):
-    dong = [
-        (nhan_so_tien, _tien(giao_dich.so_tien)),
-        ("Kênh", giao_dich.get_phuong_thuc_display()),
-    ]
-    if giao_dich.ma_tham_chieu:
-        dong.append(("Mã giao dịch", ma_hien_thi(giao_dich.ma_tham_chieu)))
-    dong.append(("Thời điểm", _gio(giao_dich.thoi_diem_hoan_tat or giao_dich.thoi_diem_tao)))
-    return dong
 
 
 def _ngu_canh_don(don):
@@ -192,41 +142,7 @@ def _noi_dung_theo_trang_thai(don, ghi_chu="", *, phieu=None):
     lich_su = _lich_su_moi_nhat(don)
     tt = don.trang_thai
 
-    if tt == "cho_thanh_toan":
-        the = _the(
-            nhan,
-            nhom,
-            f"Thanh toán trước {_gio(don.thoi_diem_het_giu)} để giữ đơn",
-            f"Đơn {tong} thanh toán qua {don.get_phuong_thuc_thanh_toan_display()}. Hàng được "
-            f"giữ cho bạn đến {_gio(don.thoi_diem_het_giu)}; quá hạn mà nhà thuốc chưa nhận "
-            "được tiền thì đơn tự hủy.",
-            ma_gia_tri=ma,
-            thoi_diem=don.thoi_diem_tao,
-        )
-        if don.phuong_thuc_thanh_toan == "chuyen_khoan":
-            luu_y.append(
-                f"Chuyển đúng {tong} và ghi mã đơn {ma} trong nội dung để hệ thống tự xác nhận."
-            )
-        nc["nut_chinh"] = _nut(
-            "Thanh toán ngay", url_tuyet_doi("thanh_toan:trang_thanh_toan", don.pk)
-        )
-        nc["nut_phu"] = nut_don
-        tieu_de = f"Thanh toán đơn {ma} trước {timezone.localtime(don.thoi_diem_het_giu):%H:%M}"
-    elif tt == "cho_xac_nhan":
-        the = _the(
-            "Đã nhận đơn",
-            nhom,
-            "Nhà thuốc đã nhận đơn của bạn",
-            f"Dược sĩ sẽ xác nhận đơn trước {_gio(don.thoi_diem_het_giu)}. Quá hạn này mà chưa "
-            "được xác nhận, đơn tự hủy và bạn không mất phí.",
-            ma_gia_tri=ma,
-            thoi_diem=don.thoi_diem_tao,
-        )
-        if don.phuong_thuc_thanh_toan == "cod":
-            luu_y.append(f"Bạn trả {tong} cho người giao khi nhận hàng.")
-        nc["nut_chinh"] = _nut("Theo dõi đơn", nc["url_don"])
-        tieu_de = f"Đã nhận đơn {ma}"
-    elif tt == "dang_giu":
+    if tt == "dang_giu":
         the = _the(
             nhan,
             nhom,
@@ -245,34 +161,7 @@ def _noi_dung_theo_trang_thai(don, ghi_chu="", *, phieu=None):
         nc["nut_chinh"] = _nut("Xem đường đến nhà thuốc", nc["url_chi_nhanh"])
         nc["nut_phu"] = nut_don
         tieu_de = f"Đơn {ma} đang được giữ tại quầy"
-    elif tt == "dang_chuan_bi":
-        the = _the(
-            nhan,
-            nhom,
-            "Dược sĩ đang soạn thuốc cho đơn của bạn",
-            "Nhà thuốc sẽ báo tiếp khi đơn được giao cho người vận chuyển.",
-            ma_gia_tri=ma,
-        )
-        if don.phuong_thuc_thanh_toan == "cod":
-            luu_y.append(f"Chuẩn bị {tong} để trả khi nhận hàng.")
-        nc["nut_chinh"] = _nut("Theo dõi đơn", nc["url_don"])
-        tieu_de = f"Đơn {ma} đang được chuẩn bị"
-    elif tt == "dang_giao":
-        the = _the(
-            nhan,
-            nhom,
-            "Đơn đang trên đường tới bạn",
-            f"Người giao sẽ gọi số {don.so_dien_thoai_nhan} khi tới nơi.",
-            ma_gia_tri=ma,
-        )
-        if don.phuong_thuc_thanh_toan == "cod":
-            luu_y.append(f"Chuẩn bị {tong} để trả người giao.")
-        luu_y.append("Khi nhận đủ thuốc, mở trang đơn và bấm “Đã nhận được hàng”.")
-        nc["nut_chinh"] = _nut("Tôi đã nhận được hàng", nc["url_don"])
-        tieu_de = f"Đơn {ma} đang được giao"
     elif tt == "hoan_thanh":
-        from .tra_hang import han_tra_hang
-
         co_phieu = phieu is not None
         the = _the(
             nhan,
@@ -281,13 +170,6 @@ def _noi_dung_theo_trang_thai(don, ghi_chu="", *, phieu=None):
             "Bạn có thể mở hoặc tải hóa đơn bán lẻ từ nút bên dưới." if co_phieu else "",
             ma_gia_tri=ma,
         )
-        han = han_tra_hang(don)
-        if han:
-            luu_y.append(
-                "Thuốc có vấn đề do nhà thuốc (giao sai, hư hỏng, cận hạn)? Gửi yêu cầu trả hàng "
-                f"trong trang đơn trước {_gio(han)}."
-            )
-        nc["han_tra_hang"] = han
         if lich_su and lich_su.nguoi_thuc_hien_id is None and not ghi_chu:
             ghi_chu = lich_su.ghi_chu
         if co_phieu:
@@ -322,25 +204,7 @@ def _noi_dung_theo_trang_thai(don, ghi_chu="", *, phieu=None):
         nc["nhan_ghi_chu"] = "Lý do"
         nc["nut_chinh"] = nut_don
         tieu_de = f"Đơn {ma} đã hết hạn giữ"
-    else:  # giao_that_bai
-        the = _the(
-            nhan,
-            nhom,
-            "Giao hàng không thành công",
-            "Đơn đã kết thúc và thuốc được chuyển về nhà thuốc. Vẫn cần thuốc, bạn đặt đơn mới "
-            "hoặc gọi nhà thuốc để được hỗ trợ.",
-            ma_gia_tri=ma,
-        )
-        nc["nhan_ghi_chu"] = "Lý do"
-        nc["nut_chinh"] = nut_don
-        tieu_de = f"Đơn {ma} giao không thành công"
-
-    if don.trang_thai_thanh_toan == "cho_hoan_tien":
-        luu_y.append(
-            f"Nhà thuốc sẽ hoàn lại {_tien(_doi_soat(don).phai_hoan)} bạn đã thanh toán và gửi "
-            "email kèm mã giao dịch khi hoàn xong."
-        )
-    if tt in ("da_huy", "het_han", "giao_that_bai", "cho_xac_nhan", "dang_chuan_bi"):
+    if tt in ("da_huy", "het_han"):
         luu_y.append(_cau_lien_he(don))
     nc.update(the=the, ghi_chu=ghi_chu)
     return tieu_de, nc
@@ -353,34 +217,12 @@ def bao_don_moi(don):
     _gui_thu_don(don, loai_email="don_hang_moi", tieu_de=tieu_de, mau="don_hang_moi", ngu_canh=nc)
 
 
-def _vua_nhan_du_tien(don):
-    """Đơn vừa chuyển chờ thanh toán → chờ xác nhận vì đã nhận đủ tiền."""
-    lich_su = _lich_su_moi_nhat(don)
-    return (
-        don.trang_thai == "cho_xac_nhan"
-        and don.trang_thai_thanh_toan == "da_thanh_toan"
-        and lich_su is not None
-        and lich_su.tu_trang_thai == "cho_thanh_toan"
-    )
-
-
 def bao_doi_trang_thai(don, ghi_chu=""):
-    """Thư khi đơn đổi trạng thái; `ghi_chu` là lý do (hủy, giao thất bại) gửi nguyên văn cho khách.
+    """Thư khi đơn đổi trạng thái; `ghi_chu` là lý do hủy hoặc hết hạn gửi nguyên văn cho khách.
 
-    Hai trường hợp được chuyển sang thư riêng để khách đọc đúng việc vừa xảy ra:
-    đã nhận đủ tiền (đơn sang chờ xác nhận) và đã hoàn tiền. Chỗ ghi hoàn tiền hiện gọi hàm
-    này với ghi chú "Đã hoàn …" (trạng thái đơn không đổi); khi chỗ đó gọi thẳng
-    bao_hoan_tien thì nhánh này không còn được dùng.
+    Đơn hoàn thành (khách đã nhận và trả tiền tại quầy) kèm hóa đơn bán lẻ PDF.
     """
     if not don.khach_hang.email:
-        return
-    if ghi_chu.startswith("Đã hoàn"):
-        giao_dich = _giao_dich(don, "hoan")
-        if giao_dich is not None:
-            bao_hoan_tien(don, giao_dich)
-            return
-    if _vua_nhan_du_tien(don):
-        bao_da_nhan_tien(don)
         return
     from ..hoa_don import ten_tep_pdf
     from ..models import PhieuBan
@@ -411,218 +253,6 @@ def tep_hoa_don(id_don_hang):
     if phieu is None:
         return None
     return ten_tep_pdf(phieu), ve_pdf(du_lieu_hoa_don(phieu)), "application/pdf"
-
-
-# Thanh toán và hoàn tiền
-
-
-def bao_da_nhan_tien(don, giao_dich=None):
-    """Thư "đã nhận tiền": đủ tiền, nhận thiếu (còn thiếu bao nhiêu, hạn bổ sung), nhận thừa,
-    hoặc tiền tới khi đơn đã hủy (sẽ hoàn lại).
-
-    `giao_dich`: dòng GiaoDichThanhToan thu vừa ghi; bỏ trống thì lấy khoản thu mới nhất.
-    """
-    if not don.khach_hang.email:
-        return
-    giao_dich = giao_dich or _giao_dich(don, "thu")
-    nc = _ngu_canh_don(don)
-    ma, tong = don.ma_don_hang, don.tong_thanh_toan
-    doi_soat = _doi_soat(don)
-    da_thu = doi_soat.da_thu
-    luu_y = nc["cac_luu_y"]
-    if don.trang_thai in ("da_huy", "het_han", "giao_that_bai"):
-        the = _the(
-            "Sẽ hoàn tiền",
-            "huy",
-            "Nhà thuốc đã nhận tiền nhưng đơn đã kết thúc",
-            f"Đơn {ma} đã {NHAN[don.trang_thai].lower()} trước khi tiền tới nên nhà thuốc sẽ hoàn "
-            "lại khoản này và gửi email kèm mã giao dịch khi hoàn xong.",
-            ma_gia_tri=ma,
-        )
-        tieu_de = f"Đã nhận tiền cho đơn {ma} – sẽ hoàn lại"
-        nc["hien_san_pham"] = False
-    elif don.trang_thai == "cho_thanh_toan" and doi_soat.con_thieu > 0:
-        con_thieu = _tien(doi_soat.con_thieu)
-        the = _the(
-            "Còn thiếu tiền",
-            "cho",
-            f"Còn thiếu {con_thieu} để hoàn tất thanh toán",
-            f"Nhà thuốc đã nhận {_tien(da_thu)}, đơn cần {_tien(tong)}. Chuyển thêm {con_thieu} "
-            f"trước {_gio(don.thoi_diem_het_giu)} và ghi mã đơn {ma} trong nội dung.",
-            ma_gia_tri=ma,
-        )
-        luu_y.append("Quá hạn mà chưa đủ tiền, đơn tự hủy và số tiền bạn đã chuyển được hoàn lại.")
-        nc["nut_chinh"] = _nut(
-            "Thanh toán phần còn thiếu", url_tuyet_doi("thanh_toan:trang_thanh_toan", don.pk)
-        )
-        tieu_de = f"Đơn {ma}: còn thiếu {con_thieu}"
-    else:
-        the = _the(
-            "Đã thanh toán",
-            "xong",
-            "Nhà thuốc đã nhận tiền thanh toán",
-            (
-                f"Đơn chuyển sang chờ dược sĩ xác nhận, hạn xác nhận {_gio(don.thoi_diem_het_giu)}."
-                if don.trang_thai == "cho_xac_nhan"
-                else f"Đơn hiện ở trạng thái “{NHAN[don.trang_thai]}”."
-            ),
-            ma_gia_tri=ma,
-        )
-        if doi_soat.phai_hoan > 0:
-            luu_y.append(
-                f"Bạn đã chuyển thừa {_tien(doi_soat.phai_hoan)}. Nhà thuốc sẽ hoàn lại phần thừa "
-                "và báo qua email."
-            )
-        tieu_de = f"Đã nhận thanh toán đơn {ma}"
-    nc["nut_chinh"] = nc.get("nut_chinh") or _nut("Theo dõi đơn", nc["url_don"])
-    luu_y.append(_cau_lien_he(don))
-    if giao_dich is not None:
-        nc["tieu_de_thong_tin"] = "Khoản tiền vừa nhận"
-        nc["cac_dong_thong_tin"] = _dong_giao_dich(giao_dich, "Số tiền")
-        if da_thu != giao_dich.so_tien:
-            nc["cac_dong_thong_tin"].append(("Tổng đã nhận cho đơn", _tien(da_thu)))
-    nc["the"] = the
-    _gui_thu_don(don, loai_email="da_nhan_tien", tieu_de=tieu_de, mau="da_nhan_tien", ngu_canh=nc)
-
-
-def bao_hoan_tien(don, giao_dich):
-    """Thư "đã hoàn tiền" riêng (không dùng thư đổi trạng thái): số tiền, kênh, mã giao dịch."""
-    if not don.khach_hang.email:
-        return
-    nc = _ngu_canh_don(don)
-    tien_mat = giao_dich.phuong_thuc == "tien_mat"
-    nc.update(
-        the=_the(
-            "Đã hoàn tiền",
-            "xong",
-            f"Đã hoàn {_tien(giao_dich.so_tien)} cho bạn",
-            "Bạn đã nhận lại tiền mặt tại nhà thuốc."
-            if tien_mat
-            else f"Nhà thuốc đã chuyển tiền hoàn qua {giao_dich.get_phuong_thuc_display().lower()}. "
-            "Nếu chưa thấy tiền về, liên hệ nhà thuốc kèm mã giao dịch bên dưới để đối chiếu.",
-            ma_gia_tri=don.ma_don_hang,
-        ),
-        hien_san_pham=False,
-        hien_nhan_hang=False,
-        tieu_de_thong_tin="Khoản đã hoàn",
-        cac_dong_thong_tin=_dong_giao_dich(giao_dich, "Số tiền hoàn"),
-        cac_luu_y=[_cau_lien_he(don)],
-        nut_chinh=_nut("Xem đơn", url_tuyet_doi("ban_hang:khach_don_hang_chi_tiet", don.pk)),
-    )
-    _gui_thu_don(
-        don,
-        loai_email="hoan_tien",
-        tieu_de=f"Đã hoàn {_tien(giao_dich.so_tien)} cho đơn {don.ma_don_hang}",
-        mau="hoan_tien",
-        ngu_canh=nc,
-    )
-
-
-# Trả hàng
-
-LOI_NHAN_TRA_HANG = {
-    "cho_duyet": (
-        "Đã nhận yêu cầu",
-        "cho",
-        "Nhà thuốc đã nhận yêu cầu trả hàng",
-        "Nhà thuốc sẽ liên hệ hẹn nhận lại hàng để kiểm tra. Giữ nguyên bao bì và hóa đơn nhé.",
-    ),
-    "da_duyet": (
-        "Đã chấp nhận",
-        "dang",
-        "Yêu cầu trả hàng đã được chấp nhận",
-        "Nhà thuốc đã nhận lại và kiểm hàng. Tiền hoàn sẽ được trả theo hình thức bạn chọn.",
-    ),
-    "tu_choi": (
-        "Không chấp nhận",
-        "huy",
-        "Yêu cầu trả hàng chưa được chấp nhận",
-        "Nhà thuốc đã kiểm tra và chưa thể nhận trả hàng cho yêu cầu này.",
-    ),
-    "da_hoan_tien": (
-        "Đã hoàn tiền",
-        "xong",
-        "Đã hoàn tiền cho yêu cầu trả hàng",
-        "Nhà thuốc đã hoàn tiền cho các thuốc bạn trả lại.",
-    ),
-}
-TIEU_DE_TRA_HANG = {
-    "cho_duyet": "Đã nhận yêu cầu trả hàng {ma}",
-    "da_duyet": "Yêu cầu trả hàng {ma} được chấp nhận",
-    "tu_choi": "Yêu cầu trả hàng {ma} chưa được chấp nhận",
-    "da_hoan_tien": "Đã hoàn tiền yêu cầu trả hàng {ma}",
-}
-
-
-def _giao_dich_tra_hang(yeu_cau):
-    from ung_dung.thanh_toan.models import GiaoDichThanhToan
-
-    return (
-        GiaoDichThanhToan.objects.filter(
-            don_hang_id=yeu_cau.don_hang_id,
-            loai_giao_dich="hoan",
-            trang_thai="thanh_cong",
-            ghi_chu__contains=yeu_cau.ma_yeu_cau_tra_hang,
-        )
-        .order_by("-pk")
-        .first()
-    )
-
-
-def bao_tra_hang(yeu_cau):
-    don = yeu_cau.don_hang
-    if not don.khach_hang.email:
-        return
-    nhan, nhom, tieu_de_lon, mo_ta = LOI_NHAN_TRA_HANG[yeu_cau.trang_thai]
-    nc = _ngu_canh_don(don)
-    dong = [("Đơn hàng", don.ma_don_hang), ("Lý do trả", yeu_cau.get_ly_do_display())]
-    if yeu_cau.trang_thai != "tu_choi":
-        dong.append(("Số tiền hoàn", _tien(yeu_cau.so_tien_hoan)))
-        dong.append(("Hình thức nhận tiền", yeu_cau.get_hinh_thuc_hoan_tien_display()))
-    luu_y = []
-    if yeu_cau.trang_thai == "da_duyet" and yeu_cau.hinh_thuc_hoan_tien == "tai_quay":
-        luu_y.append(
-            f"Mang mã yêu cầu {yeu_cau.ma_yeu_cau_tra_hang} tới {don.chi_nhanh.ten_chi_nhanh} "
-            f"({don.chi_nhanh.dia_chi}) để nhận tiền mặt."
-        )
-    if yeu_cau.trang_thai == "da_hoan_tien":
-        giao_dich = _giao_dich_tra_hang(yeu_cau)
-        if giao_dich is not None:
-            dong = [d for d in dong if d[0] not in ("Số tiền hoàn", "Hình thức nhận tiền")]
-            dong += _dong_giao_dich(giao_dich, "Số tiền hoàn")
-            if giao_dich.phuong_thuc != "tien_mat":
-                luu_y.append(
-                    "Nếu chưa thấy tiền về, liên hệ nhà thuốc kèm mã giao dịch để đối chiếu."
-                )
-    luu_y.append(_cau_lien_he(don))
-    nc.update(
-        the=_the(
-            nhan,
-            nhom,
-            tieu_de_lon,
-            mo_ta,
-            ma_nhan="Mã yêu cầu",
-            ma_gia_tri=yeu_cau.ma_yeu_cau_tra_hang,
-            thoi_diem=yeu_cau.thoi_diem_xu_ly or yeu_cau.thoi_diem_tao,
-        ),
-        tien_trinh=[],
-        hien_san_pham=False,
-        hien_nhan_hang=False,
-        ghi_chu=yeu_cau.ghi_chu_xu_ly,
-        nhan_ghi_chu="Lý do" if yeu_cau.trang_thai == "tu_choi" else "Ghi chú của nhà thuốc",
-        cac_dong_tra=list(yeu_cau.cac_dong.select_related("chi_tiet_don_hang__thuoc__don_vi_tinh")),
-        tieu_de_thong_tin="Thông tin yêu cầu",
-        cac_dong_thong_tin=dong,
-        cac_luu_y=luu_y,
-        nut_chinh=_nut("Xem đơn", nc["url_don"]),
-    )
-    _gui_thu_don(
-        don,
-        loai_email="tra_hang",
-        tieu_de=TIEU_DE_TRA_HANG[yeu_cau.trang_thai].format(ma=yeu_cau.ma_yeu_cau_tra_hang),
-        mau="tra_hang",
-        ngu_canh=nc,
-    )
 
 
 # Hóa đơn công ty

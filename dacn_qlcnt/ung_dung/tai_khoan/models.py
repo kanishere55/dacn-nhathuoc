@@ -2,7 +2,6 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Now
@@ -122,18 +121,6 @@ class TaiKhoan(AbstractBaseUser):
         db_comment=(
             "Nhóm quyền của quản lý hoặc nhân viên; NULL thì dùng nhóm mặc định của vai trò. "
             "Quản trị chuỗi luôn có mọi quyền nên không gán nhóm."
-        ),
-    )
-    dia_chi_giao_hang_mac_dinh = models.ForeignKey(
-        "tai_khoan.DiaChiGiaoHang",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="+",
-        db_column="id_dia_chi_giao_hang_mac_dinh",
-        db_comment=(
-            "Địa chỉ chọn sẵn khi đặt giao hàng; service chỉ cho trỏ tới địa chỉ "
-            "của chính tài khoản. NULL khi chưa chọn."
         ),
     )
     so_lan_dang_nhap_sai = models.SmallIntegerField(
@@ -276,72 +263,6 @@ class TaiKhoan(AbstractBaseUser):
 
 def tao_ma_uuid():
     return str(uuid.uuid4())
-
-
-class DiaChiGiaoHang(models.Model):
-    BANG = "dia_chi_giao_hang"
-
-    id_dia_chi_giao_hang = models.BigAutoField(
-        primary_key=True,
-        db_column="id_dia_chi_giao_hang",
-        db_comment="Định danh nội bộ PostgreSQL cấp, không phải mã hiển thị.",
-    )
-    tai_khoan = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        related_name="cac_dia_chi_giao_hang",
-        db_column="id_tai_khoan",
-        db_comment="Khách sở hữu địa chỉ trong sổ địa chỉ.",
-    )
-    ten_nguoi_nhan = models.TextField(
-        "người nhận",
-        db_column="ten_nguoi_nhan",
-        db_comment="Họ tên người nhận hàng do khách nhập; văn bản một dòng.",
-    )
-    so_dien_thoai = models.TextField(
-        "số điện thoại",
-        db_column="so_dien_thoai",
-        db_comment="Số điện thoại người nhận, dạng nội địa 10 hoặc 11 chữ số.",
-    )
-    dia_chi = models.TextField(
-        "địa chỉ",
-        db_column="dia_chi",
-        db_comment="Địa chỉ giao hàng đầy đủ khách nhập hoặc chọn từ kết quả tìm; một dòng.",
-    )
-    vi_tri = PointField(
-        geography=True,
-        srid=4326,
-        db_column="vi_tri",
-        db_comment="Tọa độ WGS84 khách ghim trên bản đồ; dùng tính quãng đường giao.",
-    )
-    ghi_chu = models.TextField(
-        "ghi chú cho người giao",
-        blank=True,
-        db_default="",
-        db_column="ghi_chu",
-        db_comment="Chỉ dẫn thêm như số tầng, cổng; văn bản một dòng, có thể rỗng.",
-    )
-    thoi_diem_tao = models.DateTimeField(
-        db_default=Now(),
-        db_column="thoi_diem_tao",
-        db_comment="Thời điểm khách thêm địa chỉ.",
-    )
-
-    class Meta:
-        db_table = "dia_chi_giao_hang"
-        db_table_comment = "Mỗi hàng là một địa chỉ nhận hàng trong sổ địa chỉ của khách."
-        verbose_name = "địa chỉ giao hàng"
-        verbose_name_plural = "địa chỉ giao hàng"
-        ordering = ["-thoi_diem_tao", "-id_dia_chi_giao_hang"]
-        constraints = [
-            *rang_buoc_van_ban("dia_chi_giao_hang", "ten_nguoi_nhan", nhan="ten_nguoi_nhan"),
-            *rang_buoc_van_ban("dia_chi_giao_hang", "so_dien_thoai", dinh_dang=SO_DIEN_THOAI),
-            *rang_buoc_van_ban("dia_chi_giao_hang", "dia_chi"),
-            *rang_buoc_van_ban("dia_chi_giao_hang", "ghi_chu", rong=True),
-        ]
-
-    def __str__(self):
-        return f"{self.ten_nguoi_nhan} · {self.dia_chi}"
 
 
 class PhienXacThuc(models.Model):

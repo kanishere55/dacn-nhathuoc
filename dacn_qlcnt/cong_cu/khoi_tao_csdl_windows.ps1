@@ -1,4 +1,6 @@
-﻿# Khởi tạo hoặc sửa kết nối CSDL của project trên PostgreSQL 18 cài bằng bộ cài Windows.
+﻿# Khởi tạo hoặc sửa kết nối CSDL của BẢN NỘP (nhánh ban-nop) trên PostgreSQL 18 cài bằng bộ cài Windows.
+# Bản nộp dùng CSDL riêng dacn_nhathuoc_nop và chạy ở cổng 8001, cạnh bản đầy đủ (cổng 8000).
+# Chưa có .venv riêng thì dùng chung .venv của thư mục dacn_nhathuoc bên cạnh (cùng requirements).
 # Chạy lại được: chỉ tạo phần còn thiếu, không xóa dữ liệu đang có.
 #   powershell -ExecutionPolicy Bypass -File cong_cu\khoi_tao_csdl_windows.ps1
 # Mật khẩu chỉ nhập từ bàn phím hoặc đọc từ .env, không in ra màn hình.
@@ -21,12 +23,17 @@ $OutputEncoding = New-Object Text.UTF8Encoding $false
 $env:PGCLIENTENCODING = 'UTF8'
 $env:PYTHONUTF8 = '1'
 
-$python = Join-Path $goc '.venv\Scripts\python.exe'
+$venv = Join-Path $goc '.venv'
+if (-not (Test-Path (Join-Path $venv 'Scripts\python.exe'))) {
+    $venv = Join-Path (Split-Path -Parent $goc) 'dacn_nhathuoc\.venv'
+}
+$python = Join-Path $venv 'Scripts\python.exe'
 $tepEnv = Join-Path $goc '.env'
 $pg = 'C:\Program Files\PostgreSQL\18'
 $psql = Join-Path $pg 'bin\psql.exe'
-$boPostgis = Join-Path $goc '.venv\cong_cu\postgis\postgis-bundle-pg18-3.6.2x64'
-$redis = Join-Path $goc '.venv\cong_cu\redis\Redis-8.10.3-Windows-x64-msys2\redis-server.exe'
+$boPostgis = Join-Path $venv 'cong_cu\postgis\postgis-bundle-pg18-3.6.2x64'
+$redis = Join-Path $venv 'cong_cu\redis\Redis-8.10.3-Windows-x64-msys2\redis-server.exe'
+$cong = '8001'
 
 function Dung([string]$loi) {
     Write-Host "LỖI: $loi" -ForegroundColor Red
@@ -59,7 +66,8 @@ function Sql([string]$csdl, [string]$lenh) {
 function Chuoi-Sql([string]$s) { "'" + $s.Replace("'", "''") + "'" }
 function Ten-Sql([string]$s) { '"' + $s.Replace('"', '""') + '"' }
 
-if (-not (Test-Path $python)) { Dung 'Không thấy .venv\Scripts\python.exe. Tạo môi trường ảo theo README trước.' }
+if (-not (Test-Path $python)) { Dung 'Không thấy .venv (của thư mục này hoặc của dacn_nhathuoc bên cạnh). Tạo môi trường ảo theo README trước.' }
+Write-Host "Dùng Python tại $python"
 if (-not (Test-Path $psql)) { Dung "Không thấy $psql. Script này dành cho PostgreSQL 18 cài bằng bộ cài Windows." }
 if (-not (Test-Path $tepEnv)) { Copy-Item (Join-Path $goc '.env.example') $tepEnv }
 
@@ -122,7 +130,13 @@ for ($lan = 1; $lan -le 4; $lan++) {
 }
 
 $cauHinh = Doc-Env
-$tenCsdl = if ($cauHinh['POSTGRES_DB']) { $cauHinh['POSTGRES_DB'] } else { 'dacn_nhathuoc' }
+$tenCsdl = if ($cauHinh['POSTGRES_DB']) { $cauHinh['POSTGRES_DB'] } else { 'dacn_nhathuoc_nop' }
+if ($tenCsdl -eq 'dacn_nhathuoc') {
+    # CSDL của bản đầy đủ: bản nộp không dùng chung để không làm hỏng dữ liệu bản dự phòng.
+    $tenCsdl = 'dacn_nhathuoc_nop'
+    Ghi-Env 'POSTGRES_DB' $tenCsdl
+    Write-Host 'Đổi POSTGRES_DB sang dacn_nhathuoc_nop (CSDL riêng của bản nộp).'
+}
 $tenVaiTro = if ($cauHinh['POSTGRES_USER']) { $cauHinh['POSTGRES_USER'] } else { 'dacn_ung_dung' }
 $matKhau = $cauHinh['POSTGRES_PASSWORD']
 if (-not $matKhau) {
@@ -178,6 +192,9 @@ Remove-Item Env:PGPASSWORD
 Buoc 'Cập nhật .env'
 Ghi-Env 'POSTGRES_HOST' '127.0.0.1'
 Ghi-Env 'POSTGRES_PORT' '5432'
+Ghi-Env 'URL_WEBSITE' "http://127.0.0.1:$cong"
+# Redis dùng chung máy chủ với bản đầy đủ nhưng khác số CSDL (1) để tin nhắn không lẫn.
+Ghi-Env 'REDIS_URL' 'redis://127.0.0.1:6379/1'
 Write-Host 'POSTGRES_HOST=127.0.0.1, POSTGRES_PORT=5432'
 
 Buoc 'Redis'
@@ -232,6 +249,6 @@ if ($LASTEXITCODE -ne 0) { Dung 'nap_anh_that thất bại (cần Internet để
 if ($LASTEXITCODE -ne 0) { Dung 'tao_noi_dung_website thất bại.' }
 
 Buoc 'Xong'
-Write-Host 'Mở web: http://127.0.0.1:8000/  ·  Khu quản lý: http://127.0.0.1:8000/quan-ly/' -ForegroundColor Green
-Write-Host 'Đang chạy web. Bấm Ctrl+C để dừng; lần sau chỉ cần: python manage.py runserver 127.0.0.1:8000'
-& $python manage.py runserver 127.0.0.1:8000
+Write-Host "Mở web: http://127.0.0.1:$cong/  ·  Khu quản lý: http://127.0.0.1:$cong/quan-ly/" -ForegroundColor Green
+Write-Host "Đang chạy web. Bấm Ctrl+C để dừng; lần sau chỉ cần: $python manage.py runserver 127.0.0.1:$cong"
+& $python manage.py runserver "127.0.0.1:$cong"

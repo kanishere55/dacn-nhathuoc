@@ -45,7 +45,7 @@
             {% for don in don_da_hoi %}
               <li>
                 <a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a>
-                <small>{{ don.get_trang_thai_display }} · {{ don.get_hinh_thuc_nhan_display }} · {{ don.tong_thanh_toan|tien }} · {{ don.thoi_diem_tao|date:"d/m/Y" }}</small>
+                <small>{{ don.get_trang_thai_display }} · {{ don.tong_thanh_toan|tien }} · {{ don.thoi_diem_tao|date:"d/m/Y" }}</small>
                 <a class="lien-ket-nho" href="?don={{ don.pk }}{% if quay_lai %}&amp;quay_lai={{ quay_lai|urlencode }}{% endif %}">Gắn thẻ đơn vào tin trả lời</a>
               </li>
             {% endfor %}

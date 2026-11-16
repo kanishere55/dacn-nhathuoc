@@ -1,4 +1,4 @@
-// Bản đồ trang đặt hàng: địa chỉ nhận, các chi nhánh đủ hàng, lộ trình và thời gian từ chi nhánh đang chọn.
+// Bản đồ trang đặt giữ: các chi nhánh đủ hàng, vị trí của khách và đường đi tới chi nhánh đang chọn.
 (() => {
   const form = document.getElementById('form-dat-hang');
   if (!form) return;
@@ -7,7 +7,6 @@
     if (!khung) return;
     const duLieu = JSON.parse(document.getElementById('du-lieu-ban-do-dat-hang').textContent);
     const tomTat = form.querySelector('[data-tom-tat-lo-trinh]');
-    const giaoHang = duLieu.hinh_thuc === 'giao_hang';
     const chon = duLieu.cac_chi_nhanh.find((cn) => cn.chon) || duLieu.cac_chi_nhanh[0];
     // Khối checkout có thể bị thay thế trong lúc người dùng đang phóng bản đồ.
     const banDo = window.taoBanDoNhaThuoc(
@@ -42,7 +41,7 @@
       else mocKhach.setLatLng(diem);
     };
     if (diemKhach) {
-      datKhach(diemKhach, giaoHang ? 'Giao tới đây' : 'Địa chỉ của bạn');
+      datKhach(diemKhach, 'Bạn ở đây');
       gioiHan.push(diemKhach);
     }
     if (gioiHan.length > 1) banDo.fitBounds(gioiHan, { padding: [40, 40], maxZoom: 15, animate: false });
@@ -50,9 +49,7 @@
     async function veLoTrinh() {
       if (!chon) return;
       if (!diemKhach) {
-        tomTat.textContent = giaoHang
-          ? 'Chọn địa chỉ giao để xem lộ trình.'
-          : `Nhận tại ${chon.ten}. Bấm “Tính đường từ vị trí hiện tại” để xem đường đi.`;
+        tomTat.textContent = `Nhận tại ${chon.ten}. Bấm “Tính đường từ vị trí hiện tại” để xem đường đi.`;
         return;
       }
       tomTat.textContent = 'Đang tính lộ trình…';
@@ -61,8 +58,8 @@
       boLoTrinh = luot;
       const hen = setTimeout(() => luot.abort(), 10000);
       lopDuong?.remove();
-      const tu = giaoHang ? [chon.vi_do, chon.kinh_do] : diemKhach;
-      const den = giaoHang ? diemKhach : [chon.vi_do, chon.kinh_do];
+      const tu = diemKhach;
+      const den = [chon.vi_do, chon.kinh_do];
       try {
         const duong = await window.layLoTrinh(duLieu.osrm, tu, den, luot.signal);
         if (daHuy || boLoTrinh !== luot) return;
@@ -78,9 +75,9 @@
           span.append(b);
           tomTat.append(span);
         };
-        them(giaoHang ? `Từ ${chon.ten} đến bạn` : `Đến ${chon.ten}`, window.dinhDangKm(duong.distance));
-        them(giaoHang ? 'Thời gian chạy xe dự kiến' : 'Xe máy khoảng', xeMay);
-        if (!giaoHang) them('Ô tô khoảng', window.dinhDangPhut(duong.duration));
+        them(`Đến ${chon.ten}`, window.dinhDangKm(duong.distance));
+        them('Xe máy khoảng', xeMay);
+        them('Ô tô khoảng', window.dinhDangPhut(duong.duration));
       } catch {
         if (daHuy || boLoTrinh !== luot) return;
         lopDuong = L.polyline([tu, den], { color: '#116b54', dashArray: '6 8', weight: 4 }).addTo(banDo);

@@ -130,7 +130,7 @@ def mo_lai_phong(request, ma):
 @yeu_cau_quyen("tro_chuyen.dung")
 @require_http_methods(["GET", "POST"])
 def tu_don_hang(request, ma):
-    """Nhân sự liên hệ khách về đơn (báo hết hàng, hẹn giờ giao…). Đã có cuộc trò chuyện với khách
+    """Nhân sự liên hệ khách về đơn (báo hết hàng, hẹn giờ đến nhận…). Đã có cuộc trò chuyện với khách
     thì mở nó, thẻ đơn chờ sẵn ở khung soạn tin; chưa có thì soạn tin đầu, khách chỉ thấy cuộc
     trò chuyện khi tin được gửi."""
     don = get_object_or_404(lay_don(request.user), pk=ma)

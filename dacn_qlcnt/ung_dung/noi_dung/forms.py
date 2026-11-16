@@ -121,7 +121,7 @@ class TrangNoiDungForm(_CatKhoangTrang, forms.ModelForm):
             "dang_hien_thi": "Đang hiển thị",
         }
         help_texts = {
-            "duong_dan_trang": "Chữ thường không dấu, nối bằng gạch ngang: chinh-sach-doi-tra"
+            "duong_dan_trang": "Chữ thường không dấu, nối bằng gạch ngang: huong-dan-dat-giu"
         }
         widgets = {
             "tieu_de": forms.TextInput(),

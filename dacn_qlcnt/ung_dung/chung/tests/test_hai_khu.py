@@ -28,7 +28,7 @@ class HaiKhuTests(TestCase):
                 url = reverse(ten)
                 self.assertTrue(url.startswith("/quan-ly/"))
                 self.assertEqual(self.client.get(url).status_code, 403)
-        self.assertContains(self.client.get(reverse("tai_khoan:cua_toi")), "Đơn của tôi")
+        self.assertContains(self.client.get(reverse("tai_khoan:cua_toi")), "Đơn đặt giữ")
 
     def test_dang_nhap_nhan_su_den_khu_quan_ly_va_xem_duoc_website_khach(self):
         for nguoi in (self.d.admin, self.d.ql, self.d.nv):

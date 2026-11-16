@@ -18,7 +18,7 @@
             <td><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' yc.don_hang.pk %}">{{ yc.don_hang.ma_don_hang }}</a><br><small>{{ yc.don_hang.chi_nhanh.ten_chi_nhanh }}</small></td>
             <td><strong>{{ yc.ten_cong_ty }}</strong><br><small>MST {{ yc.ma_so_thue }} · {{ yc.dia_chi_cong_ty }}<br>{{ yc.email_nhan_hoa_don }}</small></td>
             <td>{{ yc.thoi_diem_tao|date:"H:i d/m/Y" }}</td>
-            <td><span class="nhan-tra-hang nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span></td>
+            <td><span class="nhan-yeu-cau nhan-{{ yc.trang_thai }}">{{ yc.get_trang_thai_display }}</span></td>
             <td>
               {% if yc.trang_thai == "cho_xu_ly" and duoc_xu_ly %}
                 <details class="chi-tiet-doi-soat">

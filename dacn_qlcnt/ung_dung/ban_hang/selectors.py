@@ -10,6 +10,7 @@ from ung_dung.danh_muc.selectors import them_gia_va_anh
 
 from .gio_hang import KHOA_GIO
 from .models import (
+    PHUONG_THUC_TAI_QUAY,
     TRANG_THAI_GIU,
     ChiTietPhieuBan,
     DonHang,
@@ -67,21 +68,17 @@ def chuan_hoa_so_dien_thoai(chuoi):
 
 
 def tim_don(tap_hop, tu_khoa):
-    """Tìm đơn theo mã, tên khách, SĐT người nhận hoặc SĐT tài khoản khách.
-
-    Đơn nhận tại quầy không có SĐT người nhận nên phải tìm cả SĐT của tài khoản khách.
-    """
+    """Tìm đơn theo mã đơn khách đọc tại quầy, tên hoặc số điện thoại của tài khoản khách."""
     so = chuan_hoa_so_dien_thoai(tu_khoa)
     return tap_hop.filter(
         Q(ma_don_hang__icontains=tu_khoa)
         | Q(khach_hang__ten_dang_nhap__icontains=tu_khoa)
         | Q(khach_hang__ho_ten__icontains=tu_khoa)
-        | Q(so_dien_thoai_nhan__icontains=so)
         | Q(khach_hang__so_dien_thoai__icontains=so)
     )
 
 
-def lay_don(nguoi, *, trang_thai="", hinh_thuc_nhan="", tim=""):
+def lay_don(nguoi, *, trang_thai="", tim=""):
     tap_hop = (
         DonHang.objects.select_related("chi_nhanh", "khach_hang")
         .annotate(
@@ -100,34 +97,14 @@ def lay_don(nguoi, *, trang_thai="", hinh_thuc_nhan="", tim=""):
         )
     if trang_thai:
         tap_hop = tap_hop.filter(trang_thai=trang_thai)
-    if hinh_thuc_nhan:
-        tap_hop = tap_hop.filter(hinh_thuc_nhan=hinh_thuc_nhan)
     if tim:
         tap_hop = tim_don(tap_hop, tim)
     return tap_hop
 
 
-def don_cho_doi_soat_cod(tap_hop):
-    """Đơn COD đã giao xong nhưng nhà thuốc chưa nhận tiền từ người giao."""
-    return tap_hop.filter(
-        cac_giao_dich__phuong_thuc="cod", cac_giao_dich__trang_thai="cho"
-    ).distinct()
-
-
-def don_cho_hoan_tien(tap_hop):
-    return tap_hop.filter(trang_thai_thanh_toan="cho_hoan_tien")
-
-
-# (giờ còn lại tối đa, mức) theo thứ tự; đơn chờ thanh toán chỉ có 30 phút nên ngưỡng ngắn hơn.
-MUC_GAP = {
-    "cho_thanh_toan": ((10 / 60, "gap"), (0.5, "sap_het")),
-    "mac_dinh": ((1, "gap"), (6, "sap_het")),
-}
-HAU_QUA_QUA_HAN = {
-    "dang_giu": "Quá hạn, hệ thống tự chuyển đơn sang hết hạn và nhả hàng cho khách khác.",
-    "cho_thanh_toan": "Quá hạn, hệ thống tự hủy đơn và nhả hàng; tiền tới sau sẽ chờ hoàn.",
-    "cho_xac_nhan": "Quá hạn, hệ thống tự hủy đơn và nhả hàng.",
-}
+# (giờ còn lại tối đa, mức) theo thứ tự.
+MUC_GAP = ((1, "gap"), (6, "sap_het"))
+HAU_QUA_QUA_HAN = "Quá hạn, hệ thống tự chuyển đơn sang hết hạn và nhả hàng cho khách khác."
 
 
 def _doc_thoi_luong(giay):
@@ -149,13 +126,11 @@ def thong_tin_han(don, bay_gio=None):
         return None
     bay_gio = bay_gio or timezone.now()
     giay = (don.thoi_diem_het_giu - bay_gio).total_seconds()
-    hau_qua = HAU_QUA_QUA_HAN.get(don.trang_thai, "")
-    if don.trang_thai == "cho_xac_nhan" and don.phuong_thuc_thanh_toan != "cod":
-        hau_qua = "Quá hạn, hệ thống tự hủy đơn, nhả hàng và nhà thuốc phải hoàn tiền cho khách."
+    hau_qua = HAU_QUA_QUA_HAN
     if giay <= 0:
         return {"chu": f"đã quá hạn {_doc_thoi_luong(-giay)}", "muc": "qua_han", "hau_qua": hau_qua}
     muc = "binh_thuong"
-    for gio_toi_da, ten in MUC_GAP.get(don.trang_thai, MUC_GAP["mac_dinh"]):
+    for gio_toi_da, ten in MUC_GAP:
         if giay <= gio_toi_da * 3600:
             muc = ten
             break
@@ -277,21 +252,18 @@ def lay_phieu_ban_danh_sach(nguoi):
     """Phiếu bán kèm số mặt hàng, tổng tiền hàng sau ưu đãi thành viên và cách khách trả."""
     from django.db.models import CharField, ExpressionWrapper, OuterRef, Subquery, Value
 
-    from ung_dung.thanh_toan.models import PHUONG_THUC, GiaoDichThanhToan
-
     dong = ChiTietPhieuBan.objects.filter(phieu_ban=OuterRef("pk")).order_by().values("phieu_ban")
     tien = ExpressionWrapper(
         F("so_luong") * F("don_gia") - F("giam_gia_phan_bo"), output_field=DecimalField()
     )
-    phuong_thuc = GiaoDichThanhToan.objects.filter(
-        phieu_ban=OuterRef("pk"), loai_giao_dich="thu"
-    ).values("phuong_thuc")[:1]
     return lay_phieu_ban(nguoi).annotate(
         so_mat_hang=Subquery(dong.annotate(n=Count("pk")).values("n")),
         tong_tien=Subquery(dong.annotate(t=Sum(tien)).values("t"), output_field=DecimalField()),
-        ma_phuong_thuc=Subquery(phuong_thuc),
         cach_tra=Case(
-            *(When(ma_phuong_thuc=ma, then=Value(nhan)) for ma, nhan in PHUONG_THUC),
+            *(
+                When(phuong_thuc_thanh_toan=ma, then=Value(nhan))
+                for ma, nhan in PHUONG_THUC_TAI_QUAY
+            ),
             default=Value(""),
             output_field=CharField(),
         ),

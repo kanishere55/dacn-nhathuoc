@@ -1,7 +1,7 @@
 {% extends "tai_khoan/khach/_khung_tai_khoan.html" %}
-{% block tieu_de %}Đơn của tôi · {{ block.super }}{% endblock %}
+{% block tieu_de %}Đơn đặt giữ · {{ block.super }}{% endblock %}
 {% block noi_dung_tai_khoan %}
-  <header class="tieu-de-khach"><h1>Đơn của tôi</h1></header>
+  <header class="tieu-de-khach"><h1>Đơn đặt giữ</h1><p>Hàng được giữ 24 giờ tại chi nhánh bạn chọn. Đến quầy đọc mã đơn, trả tiền và nhận thuốc.</p></header>
   <nav class="tab-khach" aria-label="Lọc đơn">
     {% for ma, nhan in cac_nhom %}<a href="?nhom={{ ma }}"{% if ma == nhom %} aria-current="page"{% endif %}>{{ nhan }}</a>{% endfor %}
   </nav>
@@ -9,7 +9,7 @@
     {% for don in trang %}
       <a class="the-khach the-don" href="{% url 'ban_hang:khach_don_hang_chi_tiet' don.pk %}">
         <header>
-          <span><strong>{{ don.ma_don_hang }}</strong><small>{{ don.thoi_diem_tao|date:"H:i d/m/Y" }} · {{ don.get_hinh_thuc_nhan_display }}</small></span>
+          <span><strong>{{ don.ma_don_hang }}</strong><small>{{ don.thoi_diem_tao|date:"H:i d/m/Y" }}{% if don.con_hieu_luc %} · giữ đến {{ don.thoi_diem_het_giu|date:"H:i d/m" }}{% endif %}</small></span>
           {% include "ban_hang/_nhan_don.html" %}
         </header>
         <p class="ghi-chu-khach">{% for dong in don.cac_dong.all|slice:":3" %}{{ dong.thuoc.ten_thuoc }} × {{ dong.so_luong }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if don.cac_dong.all|length > 3 %} và {{ don.cac_dong.all|length|add:"-3" }} sản phẩm khác{% endif %}</p>
@@ -19,7 +19,8 @@
       <div class="the-khach khoang-trong-khach">
         <i data-lucide="package-open" aria-hidden="true"></i>
         <h2>Chưa có đơn nào</h2>
-        <a class="nut" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Mua thuốc</a>
+        <p>Chọn thuốc vào giỏ rồi đặt giữ tại chi nhánh còn đủ hàng gần bạn.</p>
+        <a class="nut" href="{% url 'danh_muc:khach_thuoc_danh_sach' %}">Xem danh mục thuốc</a>
       </div>
     {% endfor %}
   </div>

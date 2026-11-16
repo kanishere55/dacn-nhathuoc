@@ -13,7 +13,7 @@ from ..models import ChiNhanh, KhuyenMai, QuyDoiBaoGoi, Thuoc
 from ..selectors import DANH_MUC
 
 # Đơn đã kết thúc; mọi trạng thái khác (kể cả trạng thái thêm sau này) coi là đơn chưa xong.
-TRANG_THAI_DON_KET_THUC = {"hoan_thanh", "da_huy", "het_han", "giao_that_bai"}
+TRANG_THAI_DON_KET_THUC = {"hoan_thanh", "da_huy", "het_han"}
 
 
 def _so(gia_tri):

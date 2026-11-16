@@ -12,7 +12,7 @@
   {% if so_don_can_xu_ly %}
     <section class="khoi-trang khoi-canh-bao muc-khoa_ban" aria-labelledby="don-can-xu-ly">
       <h2 id="don-can-xu-ly">{{ so_don_can_xu_ly }} đơn giữ trên lô không thể bán</h2>
-      <p>Mở đơn để kiểm tra lượng còn đáp ứng được. Nếu thiếu hàng, liên hệ khách trước khi hủy hoặc hoàn tiền.</p>
+      <p>Mở đơn để kiểm tra lượng còn đáp ứng được. Nếu thiếu hàng, điều chuyển từ chi nhánh khác hoặc liên hệ khách trước khi hủy đơn.</p>
       <ul class="danh-sach-don-canh-bao">
         {% for don in don_can_xu_ly %}
           <li><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a> · {{ don.chi_nhanh.ten_chi_nhanh }}</li>

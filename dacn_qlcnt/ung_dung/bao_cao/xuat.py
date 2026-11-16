@@ -43,17 +43,14 @@ def xuat_excel(bao_cao, *, tu_ngay, den_ngay, ten_chi_nhanh):
         "Doanh thu",
         ["Chỉ tiêu", "Số tiền"],
         [
-            ("Doanh thu bán hàng", bao_cao["doanh_thu_gop"]),
-            ("Hoàn tiền trả hàng", bao_cao["tien_hoan_tra_hang"]),
-            ("Doanh thu thuần", bao_cao["doanh_thu_thuan"]),
-            ("Tổng đã hoàn cho khách (hủy đơn, trả hàng)", bao_cao["tien_hoan_khach"]),
-            ("Phiếu đã hoàn kho (không tính doanh thu)", bao_cao["tien_hoan_kho"]),
+            ("Doanh thu bán hàng (sau ưu đãi thành viên)", bao_cao["doanh_thu"]),
+            ("Trung bình mỗi phiếu bán", bao_cao["trung_binh_phieu"]),
         ],
         cot_tien=(1,),
     )
     _bang(
         tong,
-        "Thu theo phương thức",
+        "Đã thu tại quầy theo phương thức",
         ["Phương thức", "Số tiền"],
         bao_cao["theo_phuong_thuc"],
         cot_tien=(1,),
@@ -65,12 +62,12 @@ def xuat_excel(bao_cao, *, tu_ngay, den_ngay, ten_chi_nhanh):
         [
             ("Phiếu nhập", bao_cao["so_phieu_nhap"]),
             ("Phiếu bán", bao_cao["so_phieu_ban"]),
-            ("Đơn hàng mới (kể cả đã hủy, hết hạn)", bao_cao["so_don_giu"]),
+            ("Đơn đặt giữ mới (kể cả đã hủy, hết hạn)", bao_cao["so_don_giu"]),
+            ("Đơn đặt giữ khách đã nhận", bao_cao["so_don_da_nhan"]),
             ("Trả nhà cung cấp", bao_cao["so_phieu_tra"]),
             ("Điều chuyển", bao_cao["so_phieu_chuyen"]),
             ("Kiểm kê", bao_cao["so_phieu_kiem_ke"]),
             ("Xuất hủy", bao_cao["so_phieu_xuat_huy"]),
-            ("Hoàn kho (đơn hủy, giao thất bại)", bao_cao["so_phieu_hoan_kho"]),
         ],
     )
     ban_chay = so.create_sheet("Thuốc bán chạy")

@@ -18,12 +18,11 @@ from ung_dung.kho.selectors import lay_canh_bao_ton_thap, lay_so_du, lo_theo_muc
 from ung_dung.tro_chuyen.selectors import lay_phong_co_tin_moi
 from ung_dung.webgis.selectors import lay_tuy_chon_ban_do_nhiet
 
-from .permissions import co_quyen, co_vai_tro, la_quan_tri, thay_toan_chuoi
+from .permissions import co_quyen, co_vai_tro, la_quan_tri
 
 SO_DONG_TOM_TAT = 5
 SO_MUC_MOI_VIEC = 3
-# Đơn chờ xác nhận còn dưới chừng này giờ là gấp; đơn giữ tại quầy sắp hết hạn để gọi nhắc khách.
-GIO_GAP_XAC_NHAN = 2
+# Đơn đặt giữ còn dưới chừng này giờ là sắp hết hạn, cần gọi nhắc khách.
 GIO_SAP_HET_GIU = 3
 THU_TU_MUC = {"gap": 0, "chu_y": 1, "theo_doi": 2}
 NHAN_MUC = {"gap": "Cần làm ngay", "chu_y": "Cần xử lý", "theo_doi": "Theo dõi"}
@@ -61,127 +60,39 @@ def _muc_don(don, phu):
 
 
 def _viec_don_hang(nguoi):
-    """Đơn trực tuyến: chờ xác nhận, đang chuẩn bị, giữ tại quầy sắp hết hạn, chờ hoàn tiền."""
-    from ung_dung.thanh_toan.services.doi_soat import doi_soat
-
+    """Đơn đặt giữ: sắp hết hạn giữ (gọi nhắc khách) và tổng số đơn đang chờ khách đến nhận."""
     bay_gio = timezone.now()
     don = lay_don(nguoi)
     ds = reverse("ban_hang:don_hang_danh_sach")
-    cac_viec = []
-
-    cho_hoan = don.filter(trang_thai_thanh_toan="cho_hoan_tien").order_by("pk")
-    so_cho_hoan = cho_hoan.count()
-    if so_cho_hoan:
-        mau = list(cho_hoan[:SO_MUC_MOI_VIEC])
-        cac_muc = [_muc_don(d, f"hoàn {_tien(doi_soat(d).phai_hoan)}") for d in mau]
-        mo_ta = "Khách đã trả tiền mà đơn hủy, giao thất bại hoặc trả thừa. Hoàn tiền rồi ghi nhận."
-    else:
-        cac_muc, mo_ta = [], ""
-    cac_viec.append(
-        _viec(
-            "don_cho_hoan_tien",
-            "Đơn chờ hoàn tiền cho khách",
-            so_cho_hoan,
-            "gap",
-            f"{ds}?tt_thanh_toan=cho_hoan_tien",
-            mo_ta,
-            cac_muc,
-        )
-    )
-
-    cho_xac_nhan = don.filter(trang_thai="cho_xac_nhan", thoi_diem_het_giu__gt=bay_gio).order_by(
-        "thoi_diem_het_giu", "pk"
-    )
-    so = cho_xac_nhan.count()
-    gap = cho_xac_nhan.filter(
-        thoi_diem_het_giu__lte=bay_gio + timedelta(hours=GIO_GAP_XAC_NHAN)
-    ).exists()
-    mau = list(cho_xac_nhan[:SO_MUC_MOI_VIEC])
-    cac_viec.append(
-        _viec(
-            "don_cho_xac_nhan",
-            "Đơn giao hàng chờ xác nhận",
-            so,
-            "gap" if gap else "chu_y",
-            f"{ds}?trang_thai=cho_xac_nhan",
-            f"Hạn sớm nhất {_gio(mau[0].thoi_diem_het_giu)}; quá hạn đơn tự hủy." if mau else "",
-            [_muc_don(d, f"hạn {_gio(d.thoi_diem_het_giu)}") for d in mau],
-        )
-    )
-
-    chuan_bi = don.filter(trang_thai="dang_chuan_bi").order_by("pk")
-    so = chuan_bi.count()
-    cac_viec.append(
-        _viec(
-            "don_dang_chuan_bi",
-            "Đơn đã soạn, chờ giao cho người vận chuyển",
-            so,
-            "chu_y",
-            f"{ds}?trang_thai=dang_chuan_bi",
-            "Giao cho người vận chuyển rồi bấm “Đã giao cho người vận chuyển”." if so else "",
-            [_muc_don(d, d.ten_nguoi_nhan) for d in chuan_bi[:SO_MUC_MOI_VIEC]],
-        )
-    )
-
     dang_giu = don.filter(trang_thai="dang_giu", thoi_diem_het_giu__gt=bay_gio)
     sap_het = dang_giu.filter(
         thoi_diem_het_giu__lte=bay_gio + timedelta(hours=GIO_SAP_HET_GIU)
     ).order_by("thoi_diem_het_giu", "pk")
     so_sap_het = sap_het.count()
-    cac_viec.append(
+    so_dang_giu = dang_giu.count()
+    return [
         _viec(
             "don_giu_sap_het_han",
-            f"Đơn giữ tại quầy hết hạn trong {GIO_SAP_HET_GIU} giờ",
+            f"Đơn đặt giữ hết hạn trong {GIO_SAP_HET_GIU} giờ",
             so_sap_het,
             "chu_y",
             f"{ds}?trang_thai=dang_giu",
-            (
-                f"Đang giữ tổng cộng {dang_giu.count()} đơn. Gọi nhắc khách tới nhận trước hạn."
-                if so_sap_het
-                else ""
-            ),
+            "Gọi nhắc khách tới nhận trước hạn; quá hạn hệ thống tự nhả hàng."
+            if so_sap_het
+            else "",
             [_muc_don(d, f"hạn {_gio(d.thoi_diem_het_giu)}") for d in sap_het[:SO_MUC_MOI_VIEC]],
-        )
-    )
-    return cac_viec
-
-
-def _viec_tra_hang(nguoi):
-    from ung_dung.ban_hang.models import YeuCauTraHang
-
-    tap_hop = YeuCauTraHang.objects.select_related("don_hang")
-    if not thay_toan_chuoi(nguoi):
-        tap_hop = tap_hop.filter(don_hang__chi_nhanh_id=nguoi.chi_nhanh_id)
-    ds = reverse("ban_hang:tra_hang_danh_sach")
-
-    def muc(yc):
-        return {
-            "ten": yc.ma_yeu_cau_tra_hang,
-            "url": reverse("ban_hang:tra_hang_chi_tiet", args=[yc.pk]),
-            "phu": f"đơn {yc.don_hang.ma_don_hang}",
-        }
-
-    cho_duyet = tap_hop.filter(trang_thai="cho_duyet").order_by("thoi_diem_tao", "pk")
-    da_duyet = tap_hop.filter(trang_thai="da_duyet").order_by("thoi_diem_xu_ly", "pk")
-    so_duyet, so_hoan = cho_duyet.count(), da_duyet.count()
-    return [
-        _viec(
-            "tra_hang_cho_duyet",
-            "Yêu cầu trả hàng chờ duyệt",
-            so_duyet,
-            "chu_y",
-            f"{ds}?trang_thai=cho_duyet",
-            "Hẹn khách nhận lại hàng, kiểm tra rồi duyệt hoặc từ chối." if so_duyet else "",
-            [muc(yc) for yc in cho_duyet[:SO_MUC_MOI_VIEC]],
         ),
         _viec(
-            "tra_hang_cho_hoan_tien",
-            "Trả hàng đã duyệt, chờ hoàn tiền",
-            so_hoan,
-            "gap",
-            f"{ds}?trang_thai=da_duyet",
-            "Trả tiền cho khách theo hình thức đã chọn rồi ghi nhận." if so_hoan else "",
-            [muc(yc) for yc in da_duyet[:SO_MUC_MOI_VIEC]],
+            "don_dang_giu",
+            "Đơn đặt giữ chờ khách đến nhận",
+            so_dang_giu,
+            "theo_doi",
+            f"{ds}?trang_thai=dang_giu",
+            "Soạn sẵn thuốc theo đơn để khách đến là giao ngay." if so_dang_giu else "",
+            [
+                _muc_don(d, f"hạn {_gio(d.thoi_diem_het_giu)}")
+                for d in dang_giu.order_by("thoi_diem_het_giu", "pk")[:SO_MUC_MOI_VIEC]
+            ],
         ),
     ]
 
@@ -289,8 +200,6 @@ def lay_hang_viec(nguoi):
     dem_kho, ton_thap = {}, []
     if co_quyen(nguoi, "don_hang.xem"):
         cac_viec += _viec_don_hang(nguoi)
-    if co_quyen(nguoi, "tra_hang.xem", "tra_hang.duyet"):
-        cac_viec += _viec_tra_hang(nguoi)
     if co_quyen(nguoi, "hoa_don_cong_ty.xem"):
         cac_viec += _viec_hoa_don(nguoi)
     if co_quyen(nguoi, "email.xem"):
@@ -323,9 +232,9 @@ def _ranh_gioi_ngay(ngay):
 
 
 def lay_doanh_thu(nguoi):
-    """Doanh thu bán (phiếu bán, không tính phiếu đã hoàn kho) hôm nay, hôm qua, 7 ngày, tháng
-    này: tổng phạm vi và từng chi nhánh, cùng cách tính với báo cáo doanh thu gộp."""
-    from ung_dung.ban_hang.models import ChiTietPhieuBan, PhieuHoanKho
+    """Doanh thu bán (phiếu bán, sau ưu đãi thành viên) hôm nay, hôm qua, 7 ngày, tháng này:
+    tổng phạm vi và từng chi nhánh, cùng cách tính với báo cáo doanh thu."""
+    from ung_dung.ban_hang.models import ChiTietPhieuBan
 
     hom_nay = timezone.localdate()
     moc = {
@@ -335,11 +244,13 @@ def lay_doanh_thu(nguoi):
         "thang": _ranh_gioi_ngay(hom_nay.replace(day=1)),
     }
     cac_chi_nhanh = list(lay_chi_nhanh(nguoi))
-    tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
+    tien = ExpressionWrapper(
+        F("so_luong") * F("don_gia") - F("giam_gia_phan_bo"), output_field=DecimalField()
+    )
     thoi_diem = "phieu_ban__thoi_diem_tao"
     dong = ChiTietPhieuBan.objects.filter(
         phieu_ban__chi_nhanh__in=cac_chi_nhanh, **{f"{thoi_diem}__gte": min(moc.values())}
-    ).exclude(phieu_ban__in=PhieuHoanKho.objects.values("phieu_ban"))
+    )
     theo_chi_nhanh = {
         hang["phieu_ban__chi_nhanh"]: hang
         for hang in dong.order_by()
@@ -466,16 +377,14 @@ def _lo_can_theo_doi(nguoi):
 
 
 def _ban_hom_nay(nguoi):
-    """Số phiếu và doanh thu hàng hôm nay trong phạm vi (không tính phiếu đã hoàn kho)."""
-    from ung_dung.ban_hang.models import ChiTietPhieuBan, PhieuHoanKho
+    """Số phiếu và doanh thu hàng hôm nay trong phạm vi, sau ưu đãi thành viên."""
+    from ung_dung.ban_hang.models import ChiTietPhieuBan
     from ung_dung.ban_hang.selectors import lay_phieu_ban
 
-    phieu = (
-        lay_phieu_ban(nguoi)
-        .filter(thoi_diem_tao__date=timezone.localdate())
-        .exclude(pk__in=PhieuHoanKho.objects.values("phieu_ban"))
+    phieu = lay_phieu_ban(nguoi).filter(thoi_diem_tao__date=timezone.localdate())
+    tien = ExpressionWrapper(
+        F("so_luong") * F("don_gia") - F("giam_gia_phan_bo"), output_field=DecimalField()
     )
-    tien = ExpressionWrapper(F("so_luong") * F("don_gia"), output_field=DecimalField())
     return {
         "so_phieu": phieu.count(),
         "doanh_thu": ChiTietPhieuBan.objects.filter(phieu_ban__in=phieu).aggregate(

@@ -20,10 +20,6 @@ def ban_do(request):
     tu_gio = gio_duoc_giu(cac_dong)
     cac_thuoc = lay_thuoc_cong_khai()
     ma_thuoc = request.GET.get("thuoc")
-    dia_chi_mac_dinh = None
-    if co_vai_tro(request.user, "khach_hang") and request.user.dia_chi_giao_hang_mac_dinh_id:
-        dc = request.user.dia_chi_giao_hang_mac_dinh
-        dia_chi_mac_dinh = {"dia_chi": dc.dia_chi, "vi_do": dc.vi_tri.y, "kinh_do": dc.vi_tri.x}
     return render(
         request,
         "webgis/khach/ban_do.html",
@@ -37,7 +33,6 @@ def ban_do(request):
             "may_chu_osrm": settings.OSRM_BASE_URL,
             "may_chu_osrm_di_bo": settings.OSRM_DI_BO_BASE_URL,
             "cac_chi_nhanh": lay_chi_nhanh_ban_do(),
-            "dia_chi_mac_dinh": dia_chi_mac_dinh,
             "che_do_thuoc": bool(tu_gio or ma_thuoc),
         },
     )

@@ -3,7 +3,7 @@
 Mỗi chi nhánh lập một phiếu nhập lô riêng (mã LS-...) với hạn dùng sớm hơn mọi lô đang
 còn hàng của cùng thuốc, nên FEFO xuất từ lô này trước và không đụng tồn kho hiện có.
 Số lượng nhập bằng đúng tổng sẽ bán, lô về 0 sau khi chạy. Mỗi phiếu bán đi qua
-ban_tai_quay (khóa kho, FEFO, ghi thu tiền); sau đó thời điểm phiếu và giao dịch được
+ban_tai_quay (khóa kho, FEFO, ghi cách khách trả tiền); sau đó thời điểm phiếu được
 đặt lại về ngày mô phỏng để báo cáo có chuỗi thời gian. Chỉ dùng cho dữ liệu mô phỏng.
 """
 
@@ -22,7 +22,6 @@ from ung_dung.chung.permissions import kiem_tra_vai_tro
 from ung_dung.danh_muc.models import ChiNhanh, NhaCungCap, Thuoc
 from ung_dung.kho.models import LoThuoc, PhieuNhap, TonKho
 from ung_dung.kho.services.phieu_nhap import nhap_hang
-from ung_dung.thanh_toan.models import GiaoDichThanhToan
 
 from ..models import PhieuBan
 from .phieu_ban import ban_tai_quay
@@ -156,8 +155,5 @@ def tao_lich_su_ban_mo_phong(nguoi, *, so_ngay=60, hat_giong=2026):
             )
             luc = _thoi_diem(ngay, ngau_nhien)
             PhieuBan.objects.filter(pk=phieu.pk).update(thoi_diem_tao=luc)
-            GiaoDichThanhToan.objects.filter(phieu_ban=phieu).update(
-                thoi_diem_tao=luc, thoi_diem_hoan_tat=luc
-            )
             tong_phieu += 1
     return f"Đã tạo {tong_phieu} phiếu bán mô phỏng trong {so_ngay} ngày, từ {ngay_dau:%d/%m/%Y}."

@@ -14,20 +14,13 @@ LƯU Ý: {{ the.canh_bao }}{% endif %}{% if ghi_chu %}
 {{ tieu_de_thong_tin|upper }}{% endif %}{% for nhan, gia_tri in cac_dong_thong_tin %}
 {{ nhan }}: {{ gia_tri }}{% endfor %}{% endif %}{% if ten_tep_hoa_don %}
 
-Đính kèm: {{ ten_tep_hoa_don }} (hóa đơn bán lẻ, không phải hóa đơn điện tử có mã của cơ quan thuế).{% if han_tra_hang %} Hạn gửi yêu cầu trả hàng: {{ han_tra_hang|date:"H:i d/m/Y" }}.{% endif %}{% endif %}{% if cac_dong_tra %}
+Đính kèm: {{ ten_tep_hoa_don }} (hóa đơn bán lẻ, không phải hóa đơn điện tử có mã của cơ quan thuế).{% endif %}{% if hien_nhan_hang %}
 
-THUỐC TRẢ LẠI{% for dong in cac_dong_tra %}
-- {{ dong.chi_tiet_don_hang.thuoc.ten_thuoc }}: {{ dong.so_luong }} {{ dong.chi_tiet_don_hang.thuoc.don_vi_tinh.ten_don_vi_tinh|lower }}{% endfor %}{% endif %}{% if hien_nhan_hang %}
-
-{% if don.la_giao_hang %}GIAO TỚI
-{{ don.ten_nguoi_nhan }} · {{ don.so_dien_thoai_nhan }}
-{{ don.dia_chi_giao }}
-
-GIAO TỪ NHÀ THUỐC{% else %}NHẬN TẠI QUẦY{% if don.trang_thai == "dang_giu" %} – giữ hàng đến {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% endif %}
+NHẬN TẠI QUẦY{% if don.trang_thai == "dang_giu" %} – giữ hàng đến {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}{% endif %}
 Đọc mã đơn {{ don.ma_don_hang }} cho nhân viên và thanh toán tại quầy.{% if co_ke_don %}
 Đơn có thuốc kê đơn: mang theo đơn thuốc còn hạn của bác sĩ.{% endif %}
 
-NHÀ THUỐC{% endif %}
+NHÀ THUỐC
 {{ don.chi_nhanh.ten_chi_nhanh }}, {{ don.chi_nhanh.dia_chi }}{% if don.chi_nhanh.so_dien_thoai %}
 Điện thoại: {{ don.chi_nhanh.so_dien_thoai }}{% endif %}{% if don.chi_nhanh.gio_mo_cua and don.chi_nhanh.gio_dong_cua %}
 Mở cửa {{ don.chi_nhanh.gio_mo_cua|time:"H:i" }}–{{ don.chi_nhanh.gio_dong_cua|time:"H:i" }}{% endif %}
@@ -37,9 +30,8 @@ Bản đồ và chỉ đường:
 SẢN PHẨM{% for dong in cac_dong %}
 - {{ dong.thuoc.ten_thuoc }}{% if dong.thuoc.la_thuoc_ke_don %} (thuốc kê đơn){% endif %}: {{ dong.so_luong }} x {{ dong.don_gia|tien }} = {{ dong.thanh_tien|tien }}{% endfor %}
 Tiền hàng: {{ don.tien_hang|tien }}{% if don.giam_gia_thanh_vien %}
-Ưu đãi thành viên: -{{ don.giam_gia_thanh_vien|tien }}{% endif %}{% if don.la_giao_hang %}
-Phí giao hàng: {{ don.phi_giao_hang|tien }}{% endif %}
-Tổng thanh toán: {{ don.tong_thanh_toan|tien }} ({{ don.get_phuong_thuc_thanh_toan_display }} · {{ don.nhan_thanh_toan_khach }}){% endif %}{% if nut_phu %}
+Ưu đãi thành viên: -{{ don.giam_gia_thanh_vien|tien }}{% endif %}
+Tổng thanh toán: {{ don.tong_thanh_toan|tien }} ({{ don.nhan_thanh_toan_khach }}){% endif %}{% if nut_phu %}
 
 {{ nut_phu.nhan }}:
 {{ nut_phu.url }}{% endif %}

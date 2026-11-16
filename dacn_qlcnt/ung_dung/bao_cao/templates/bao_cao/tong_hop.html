@@ -7,7 +7,7 @@
     <div>
       <p class="chu-dan">PHÂN TÍCH</p>
       <h1>Báo cáo vận hành</h1>
-      <p>Doanh thu ghi theo kỳ lập phiếu cho hàng đã giao hoặc nhận. Doanh thu thuần đã trừ tiền hoàn do trả hàng.</p>
+      <p>Doanh thu tính theo phiếu bán tại quầy trong kỳ (bán trực tiếp và khách nhận đơn đặt giữ), sau ưu đãi thành viên.</p>
     </div>
   </header>
   <form method="get" class="khoi-trang form-chinh loc-bao-cao" hx-get="{% url 'bao_cao:tong_hop' %}" hx-target="#ket-qua-bao-cao" hx-swap="outerHTML" hx-push-url="true">
@@ -21,24 +21,24 @@
       {% if bao_cao %}
         <p class="xuat-bao-cao"><a class="nut nut-phu" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}xuat=xlsx"><i data-lucide="file-spreadsheet" aria-hidden="true"></i>Xuất Excel</a></p>
         <dl class="chi-so-bang-dieu-khien">
-          <div><dt><i data-lucide="banknote" aria-hidden="true"></i>Doanh thu bán hàng</dt><dd>{{ bao_cao.doanh_thu_gop|tien }}{% if bao_cao.thay_doi_doanh_thu is not None %}<span class="so-sanh-ky {% if bao_cao.thay_doi_doanh_thu > 0 %}tang{% elif bao_cao.thay_doi_doanh_thu < 0 %}giam{% else %}bang{% endif %}">{% if bao_cao.thay_doi_doanh_thu > 0 %}+{% endif %}{{ bao_cao.thay_doi_doanh_thu|floatformat:1 }}% so với kỳ trước</span>{% elif bao_cao.doanh_thu_gop %}<span class="so-sanh-ky bang">Kỳ trước chưa có doanh thu</span>{% endif %}</dd></div>
-          <div><dt><i data-lucide="rotate-ccw" aria-hidden="true"></i>Hoàn tiền trả hàng</dt><dd>{{ bao_cao.tien_hoan_tra_hang|tien }}</dd></div>
-          <div><dt><i data-lucide="trending-up" aria-hidden="true"></i>Doanh thu thuần</dt><dd>{{ bao_cao.doanh_thu_thuan|tien }}</dd></div>
-          <div><dt><i data-lucide="receipt" aria-hidden="true"></i>Phiếu bán / đơn mới</dt><dd>{{ bao_cao.so_phieu_ban }} / {{ bao_cao.so_don_giu }}<span class="so-sanh-ky bang">Đơn mới gồm cả đơn đã hủy hoặc hết hạn</span></dd></div>
+          <div><dt><i data-lucide="banknote" aria-hidden="true"></i>Doanh thu bán hàng</dt><dd>{{ bao_cao.doanh_thu|tien }}{% if bao_cao.thay_doi_doanh_thu is not None %}<span class="so-sanh-ky {% if bao_cao.thay_doi_doanh_thu > 0 %}tang{% elif bao_cao.thay_doi_doanh_thu < 0 %}giam{% else %}bang{% endif %}">{% if bao_cao.thay_doi_doanh_thu > 0 %}+{% endif %}{{ bao_cao.thay_doi_doanh_thu|floatformat:1 }}% so với kỳ trước</span>{% elif bao_cao.doanh_thu %}<span class="so-sanh-ky bang">Kỳ trước chưa có doanh thu</span>{% endif %}</dd></div>
+          <div><dt><i data-lucide="receipt" aria-hidden="true"></i>Phiếu bán</dt><dd>{{ bao_cao.so_phieu_ban }}<span class="so-sanh-ky bang">Trung bình {{ bao_cao.trung_binh_phieu|tien }} mỗi phiếu</span></dd></div>
+          <div><dt><i data-lucide="hand-heart" aria-hidden="true"></i>Đơn đặt giữ mới</dt><dd>{{ bao_cao.so_don_giu }}<span class="so-sanh-ky bang">Gồm cả đơn đã hủy hoặc hết hạn</span></dd></div>
+          <div><dt><i data-lucide="package-check" aria-hidden="true"></i>Đơn khách đã nhận</dt><dd>{{ bao_cao.so_don_da_nhan }}{% if bao_cao.so_don_giu %}<span class="so-sanh-ky bang">{% widthratio bao_cao.so_don_da_nhan bao_cao.so_don_giu 100 %}% số đơn đặt giữ trong kỳ</span>{% endif %}</dd></div>
         </dl>
         {{ bao_cao.bieu_do|json_script:"du-lieu-bieu-do-bao-cao" }}
         <div class="luoi-bieu-do-bao-cao" data-bieu-do-bao-cao>
           <figure class="khung-bieu-do">
             <figcaption>
               <h3>Doanh thu theo {% if bao_cao.bieu_do.don_vi_thoi_gian == "thang" %}tháng{% else %}ngày{% endif %}</h3>
-              <p>Cột là doanh thu hàng (không gồm phiếu đã hoàn kho), đường là số phiếu bán.</p>
+              <p>Cột là doanh thu sau ưu đãi, đường là số phiếu bán.</p>
             </figcaption>
             <div class="vung-bieu-do"><canvas data-bieu-do="thoi_gian" aria-label="Biểu đồ doanh thu theo thời gian"></canvas></div>
           </figure>
           <figure class="khung-bieu-do">
             <figcaption>
               <h3>Doanh thu theo kênh bán</h3>
-              <p>Bán tại quầy, đặt giữ nhận tại quầy và giao tận nơi.</p>
+              <p>Bán trực tiếp tại quầy và đơn đặt giữ trên website khách đã nhận.</p>
             </figcaption>
             <div class="vung-bieu-do"><canvas data-bieu-do="kenh" aria-label="Biểu đồ doanh thu theo kênh bán"></canvas></div>
           </figure>
@@ -52,7 +52,7 @@
           <figure class="khung-bieu-do">
             <figcaption>
               <h3>{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}Doanh thu theo chi nhánh{% else %}Đã thu theo phương thức{% endif %}</h3>
-              <p>{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}So sánh các chi nhánh trong phạm vi đang xem.{% else %}Tiền mặt, chuyển khoản, COD và ví điện tử đã ghi nhận.{% endif %}</p>
+              <p>{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}So sánh các chi nhánh trong phạm vi đang xem.{% else %}Tiền mặt và chuyển khoản thu tại quầy.{% endif %}</p>
             </figcaption>
             <div class="vung-bieu-do"><canvas data-bieu-do="{% if bao_cao.bieu_do.theo_chi_nhanh|length > 1 %}chi_nhanh{% else %}phuong_thuc{% endif %}" aria-label="Biểu đồ so sánh"></canvas></div>
           </figure>
@@ -71,11 +71,9 @@
           </section>
           <div>
             <section class="khoi-trang" aria-labelledby="phuong-thuc">
-              <h2 id="phuong-thuc">Đã thu theo phương thức</h2>
+              <h2 id="phuong-thuc">Đã thu tại quầy theo phương thức</h2>
               <dl class="bang-tien-don">
                 {% for ten, so_tien in bao_cao.theo_phuong_thuc %}<div><dt>{{ ten }}</dt><dd>{{ so_tien|tien }}</dd></div>{% empty %}<p>Chưa có khoản thu trong kỳ.</p>{% endfor %}
-                {% if bao_cao.tien_hoan_khach %}<div><dt>Đã hoàn cho khách (hủy đơn, trả hàng)</dt><dd>{{ bao_cao.tien_hoan_khach|tien }}</dd></div>{% endif %}
-                {% if bao_cao.tien_hoan_kho %}<div><dt>Phiếu đã hoàn kho</dt><dd>{{ bao_cao.tien_hoan_kho|tien }}</dd></div>{% endif %}
               </dl>
             </section>
             <section class="khoi-trang" aria-labelledby="chung-tu">
@@ -86,15 +84,13 @@
                 <div><dt>Điều chuyển</dt><dd>{{ bao_cao.so_phieu_chuyen }}</dd></div>
                 <div><dt>Kiểm kê</dt><dd>{{ bao_cao.so_phieu_kiem_ke }}</dd></div>
                 <div><dt>Xuất hủy</dt><dd>{{ bao_cao.so_phieu_xuat_huy }}</dd></div>
-                <div><dt>Hoàn kho (đơn hủy, giao thất bại)</dt><dd>{{ bao_cao.so_phieu_hoan_kho }}</dd></div>
-                <div><dt>Tiền bán tại quầy và đơn</dt><dd>{{ bao_cao.tong_tien_ban|tien }}</dd></div>
               </dl>
             </section>
           </div>
         </div>
         <section class="khoi-trang khung-bang" aria-labelledby="bien-dong">
           <h2 id="bien-dong">Nhập – xuất – tồn trong kỳ</h2>
-          <p class="ghi-chu-bang">Tính theo đơn vị cơ sở từ các chứng từ: tồn đầu kỳ + nhập, chuyển đến, hoàn kho, nhập lại, điều chỉnh − bán, chuyển đi, trả nhà cung cấp, xuất hủy = tồn cuối kỳ. Cột Bán là toàn bộ hàng đã xuất bán; hàng của đơn bị hủy hoặc giao thất bại quay về ở cột Hoàn kho. Khả dụng hiện tại là số bán được ngay lúc xem (đã trừ hàng đang giữ, lô hết hạn hoặc khóa), không thay đổi theo kỳ.</p>
+          <p class="ghi-chu-bang">Tính theo đơn vị cơ sở từ các chứng từ: tồn đầu kỳ + nhập, chuyển đến, điều chỉnh − bán, chuyển đi, trả nhà cung cấp, xuất hủy = tồn cuối kỳ. Cột Bán là toàn bộ hàng đã xuất bán tại quầy (bán trực tiếp và giao đơn đặt giữ). Khả dụng hiện tại là số bán được ngay lúc xem (đã trừ hàng đang giữ, lô hết hạn hoặc khóa), không thay đổi theo kỳ.</p>
           <table class="bang-nhap-xuat-ton">
             <thead><tr><th scope="col">Đơn vị</th>{% for _, nhan in bao_cao.cot_bien_dong %}<th scope="col" class="o-so">{{ nhan }}</th>{% endfor %}</tr></thead>
             <tbody>

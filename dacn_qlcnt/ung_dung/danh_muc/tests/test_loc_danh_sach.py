@@ -108,7 +108,6 @@ class LocKhoVaBanHangTests(TestCase):
             "kho:phieu_xuat_huy_danh_sach",
             "ban_hang:phieu_ban_danh_sach",
             "ban_hang:don_hang_danh_sach",
-            "ban_hang:tra_hang_danh_sach",
             "ban_hang:xuat_hoa_don_danh_sach",
             "tai_khoan:danh_sach",
         ):

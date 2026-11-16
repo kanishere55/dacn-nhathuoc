@@ -183,9 +183,6 @@
     color: #1f2f28;
     font-size: 13.5px;
   }
-  .con-phai-thu {
-    color: #8a5300;
-  }
   .tong-hoa-don {
     flex: 0 1 300px;
     display: grid;
@@ -213,15 +210,6 @@
   .tong-hoa-don .tong dt,
   .tong-hoa-don .tong dd {
     color: var(--color-chinh);
-  }
-  .dau-hoan-kho {
-    margin: 18px 0 0;
-    padding: 8px 12px;
-    border: 1.5px dashed #a2382d;
-    border-radius: 6px;
-    color: #a2382d;
-    font-weight: 700;
-    text-align: center;
   }
   .chan-hoa-don {
     margin-top: 26px;

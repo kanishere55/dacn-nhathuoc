@@ -1,7 +1,7 @@
 {% autoescape off %}Tài khoản của bạn đã sẵn sàng
 
 Xin chào {{ ho_ten }}, tài khoản {{ ten_dang_nhap }} đã được tạo và xác thực email.
-Từ nay bạn có thể tra cứu thuốc, đặt giữ nhận tại quầy hoặc đặt giao tận nơi, theo dõi đơn và trò chuyện với dược sĩ.
+Từ nay bạn có thể tra cứu thuốc, đặt giữ thuốc rồi nhận và thanh toán tại quầy, theo dõi đơn và trò chuyện với dược sĩ.
 
 {{ nut_chinh.nhan }}:
 {{ nut_chinh.url }}

@@ -95,14 +95,8 @@ class NapThuocThucTeTests(TestCase):
 
 class DanhGiaThuocTests(TestCase):
     def test_chi_khach_da_mua_duoc_danh_gia_va_quan_tri_an(self):
-        from django.contrib.gis.geos import Point
-
-        from ung_dung.ban_hang.services.dat_hang import dat_hang
-        from ung_dung.ban_hang.services.don_hang import (
-            giao_cho_van_chuyen,
-            xac_nhan_da_giao,
-            xac_nhan_don,
-        )
+        from ung_dung.ban_hang.services.dat_hang import dat_giu
+        from ung_dung.ban_hang.services.phieu_ban import ban_tai_quay
         from ung_dung.kho.tests.du_lieu import tao_ton
 
         from ..models import DanhGiaThuoc
@@ -113,26 +107,11 @@ class DanhGiaThuocTests(TestCase):
         self.client.force_login(d.khach)
         self.client.post(url, {"so_sao": 5, "noi_dung": "Tốt"})
         self.assertFalse(DanhGiaThuoc.objects.exists())
-        don = dat_hang(
-            d.khach,
-            d.cn,
-            [{"thuoc": d.thuoc, "so_luong": 1}],
-            hinh_thuc_nhan="giao_hang",
-            phuong_thuc_thanh_toan="cod",
-            giao={
-                "ten_nguoi_nhan": "A",
-                "so_dien_thoai": "0901234567",
-                "dia_chi": "Q1",
-                "vi_tri": Point(106.7, 10.77, srid=4326),
-                "khoang_cach_met": 900,
-            },
-        )
-        xac_nhan_don(d.nv, don)
-        giao_cho_van_chuyen(d.nv, don)
-        xac_nhan_da_giao(d.khach, don)
+        don = dat_giu(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 1}])
+        ban_tai_quay(d.nv, d.cn, [], don_hang=don)
         trang = self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=[d.thuoc.ma_thuoc]))
         self.assertContains(trang, "Gửi đánh giá")
-        self.client.post(url, {"so_sao": 4, "noi_dung": "Giao nhanh"})
+        self.client.post(url, {"so_sao": 4, "noi_dung": "Nhận nhanh"})
         self.client.post(url, {"so_sao": 5, "noi_dung": "Đỡ đau đầu"})
         dg = DanhGiaThuoc.objects.get()
         self.assertEqual((dg.so_sao, dg.noi_dung_danh_gia), (5, "Đỡ đau đầu"))

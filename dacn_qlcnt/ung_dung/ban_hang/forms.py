@@ -3,23 +3,12 @@ from uuid import uuid4
 
 from django import forms
 
-from ung_dung.chung.truong_form import TruongEmail, TruongMotDong, TruongSoDienThoai
-from ung_dung.danh_muc.forms import NhieuTepInput, TruongNhieuTep
+from ung_dung.chung.truong_form import TruongEmail, TruongMotDong
 from ung_dung.danh_muc.models import ChiNhanh
 from ung_dung.danh_muc.selectors import lay_chi_nhanh
 
 from .gio_hang import SO_LUONG_TOI_DA
-from .models import (
-    HINH_THUC_HOAN_TIEN,
-    HINH_THUC_NHAN,
-    KY_HIEU_HOA_DON,
-    LY_DO_TRA_HANG,
-    MA_SO_THUE,
-    PHUONG_THUC_THANH_TOAN,
-    SO_HOA_DON,
-)
-
-PHUONG_THUC_TAI_QUAY = [("tien_mat", "Tiền mặt"), ("chuyen_khoan", "Chuyển khoản")]
+from .models import KY_HIEU_HOA_DON, MA_SO_THUE, PHUONG_THUC_TAI_QUAY, SO_HOA_DON
 
 
 class DonThuocForm(forms.Form):
@@ -79,14 +68,12 @@ class ThemThuocVaoGioForm(forms.Form):
 
 
 class DatHangForm(forms.Form):
-    """Lựa chọn khi đặt hàng; hợp lệ với giỏ và chi nhánh do view và service kiểm lại."""
+    """Lựa chọn khi đặt giữ; chi nhánh còn đủ hàng do view và service kiểm lại."""
 
-    hinh_thuc_nhan = forms.ChoiceField(choices=HINH_THUC_NHAN, widget=forms.RadioSelect)
-    dia_chi = forms.IntegerField(required=False, widget=forms.HiddenInput)
     chi_nhanh = forms.IntegerField(required=False, widget=forms.HiddenInput)
-    phuong_thuc_thanh_toan = forms.ChoiceField(
-        choices=PHUONG_THUC_THANH_TOAN, required=False, widget=forms.RadioSelect
-    )
+    # Vị trí hiện tại của khách (định vị trình duyệt), chỉ để sắp chi nhánh gần trước.
+    vi_do = forms.FloatField(required=False, min_value=8.0, max_value=23.5)
+    kinh_do = forms.FloatField(required=False, min_value=102.0, max_value=110.0)
     ghi_chu_khach = TruongMotDong(label="Lời nhắn cho nhà thuốc", max_length=300, required=False)
     # Tổng tiền khách đang nhìn thấy khi bấm đặt; khác tổng tính lại thì không tạo đơn.
     tong_da_xem = forms.IntegerField(required=False, min_value=0, widget=forms.HiddenInput)
@@ -97,163 +84,6 @@ class XuLyDonForm(DonThuocForm):
     phuong_thuc_thanh_toan = forms.ChoiceField(
         choices=PHUONG_THUC_TAI_QUAY, required=False, initial="tien_mat"
     )
-    ma_tham_chieu = TruongMotDong(label="Mã giao dịch", max_length=64, required=False)
-    so_tien_nhan = forms.IntegerField(
-        label="Số tiền trên sao kê", min_value=1, max_value=10**13, required=False
-    )
-    phuong_thuc_hoan = forms.ChoiceField(
-        choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
-    )
-    xu_ly_hang_giao = forms.ChoiceField(
-        label="Tình trạng hàng sau giao thất bại",
-        choices=[
-            ("hoan_kho", "Đã kiểm hàng nguyên vẹn, đủ điều kiện nhập lại"),
-            ("da_huy", "Hàng hỏng, đã xử lý hủy"),
-            ("that_lac", "Đã xác nhận thất lạc"),
-            ("theo_lo", "Tình trạng khác nhau theo lô"),
-        ],
-        required=False,
-    )
-
-    def clean_ma_tham_chieu(self):
-        ma = self.cleaned_data["ma_tham_chieu"]
-        if ma and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,58}", ma):
-            raise forms.ValidationError("Mã giao dịch chỉ gồm chữ, số và . _ : / -")
-        return ma
-
-
-def chu_in_hoa_khong_dau(chuoi):
-    """Tên chủ tài khoản ngân hàng in trên thẻ: chữ in hoa, không dấu, một khoảng trắng."""
-    import unicodedata
-
-    chuoi = (chuoi or "").replace("đ", "d").replace("Đ", "D")
-    khong_dau = "".join(
-        ky_tu
-        for ky_tu in unicodedata.normalize("NFD", chuoi)
-        if unicodedata.category(ky_tu) != "Mn"
-    )
-    return " ".join(re.sub(r"[^A-Za-z ]", " ", khong_dau).upper().split())
-
-
-class TraHangForm(forms.Form):
-    """Khách chọn số lượng trả cho từng dòng đơn, lý do, mô tả và ảnh minh chứng."""
-
-    ly_do = forms.ChoiceField(label="Lý do", choices=LY_DO_TRA_HANG, widget=forms.RadioSelect)
-    mo_ta = forms.CharField(
-        label="Mô tả tình trạng",
-        max_length=1000,
-        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Ví dụ: hộp bị móp, vỉ thuốc rách"}),
-    )
-    cac_anh = TruongNhieuTep(
-        label="Ảnh chụp thuốc và bao bì",
-        widget=NhieuTepInput(attrs={"accept": "image/jpeg,image/png,image/webp"}),
-        error_messages={"required": "Cần ít nhất một ảnh chụp tình trạng thuốc."},
-    )
-
-    hinh_thuc_hoan_tien = forms.ChoiceField(
-        label="Nhận tiền hoàn qua",
-        choices=HINH_THUC_HOAN_TIEN,
-        initial="chuyen_khoan",
-        widget=forms.RadioSelect,
-    )
-    ten_ngan_hang = TruongMotDong(
-        label="Ngân hàng",
-        max_length=100,
-        required=False,
-        widget=forms.TextInput(attrs={"list": "danh-sach-ngan-hang", "autocomplete": "off"}),
-    )
-    so_tai_khoan = TruongMotDong(
-        label="Số tài khoản",
-        max_length=19,
-        required=False,
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
-    )
-    ten_chu_tai_khoan = TruongMotDong(
-        label="Tên chủ tài khoản",
-        max_length=100,
-        required=False,
-        help_text="Viết đúng như trên thẻ, hệ thống tự đổi sang chữ in hoa không dấu.",
-    )
-    so_dien_thoai_momo = TruongSoDienThoai(
-        label="Số điện thoại ví MoMo", required=False, loai="di_dong"
-    )
-
-    def __init__(self, *args, cac_dong, con_lai, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cac_dong_don = []
-        for dong in cac_dong:
-            toi_da = con_lai.get(dong.pk, 0)
-            if toi_da <= 0:
-                continue
-            ten = f"so_luong_{dong.pk}"
-            self.fields[ten] = forms.IntegerField(
-                label=dong.thuoc.ten_thuoc, min_value=0, max_value=toi_da, initial=0
-            )
-            self.cac_dong_don.append({"dong": dong, "o": self[ten], "toi_da": toi_da})
-
-    def clean(self):
-        du_lieu = super().clean()
-        hinh_thuc = du_lieu.get("hinh_thuc_hoan_tien")
-        if hinh_thuc == "chuyen_khoan":
-            du_lieu["ten_chu_tai_khoan"] = chu_in_hoa_khong_dau(
-                du_lieu.get("ten_chu_tai_khoan", "")
-            )
-            for ten, nhan in (
-                ("ten_ngan_hang", "ngân hàng"),
-                ("so_tai_khoan", "số tài khoản"),
-                ("ten_chu_tai_khoan", "tên chủ tài khoản"),
-            ):
-                if not du_lieu.get(ten):
-                    self.add_error(ten, f"Nhập {nhan} để nhà thuốc chuyển khoản hoàn tiền.")
-            so_tk = re.sub(r"[\s.-]", "", du_lieu.get("so_tai_khoan") or "")
-            if so_tk and not re.fullmatch(r"[0-9]{6,19}", so_tk):
-                self.add_error("so_tai_khoan", "Số tài khoản gồm 6 đến 19 chữ số.")
-            du_lieu["so_tai_khoan"] = so_tk
-            du_lieu["so_dien_thoai_momo"] = ""
-        elif hinh_thuc == "momo":
-            if not du_lieu.get("so_dien_thoai_momo"):
-                self.add_error("so_dien_thoai_momo", "Nhập số điện thoại đăng ký ví MoMo.")
-            du_lieu.update(ten_ngan_hang="", so_tai_khoan="", ten_chu_tai_khoan="")
-        else:
-            du_lieu.update(
-                ten_ngan_hang="", so_tai_khoan="", ten_chu_tai_khoan="", so_dien_thoai_momo=""
-            )
-        return du_lieu
-
-    def thong_tin_hoan_tien(self):
-        return {
-            ten: self.cleaned_data.get(ten, "")
-            for ten in (
-                "hinh_thuc_hoan_tien",
-                "ten_ngan_hang",
-                "so_tai_khoan",
-                "ten_chu_tai_khoan",
-                "so_dien_thoai_momo",
-            )
-        }
-
-    def cac_dong_tra(self):
-        return {
-            muc["dong"].pk: self.cleaned_data.get(f"so_luong_{muc['dong'].pk}") or 0
-            for muc in self.cac_dong_don
-        }
-
-
-class XuLyTraHangForm(forms.Form):
-    ghi_chu = TruongMotDong(label="Ghi chú", max_length=500, required=False)
-    con_niem_phong = forms.BooleanField(
-        label="Hàng nhập lại còn nguyên niêm phong, đã kiểm", required=False
-    )
-    phuong_thuc = forms.ChoiceField(
-        choices=[*PHUONG_THUC_TAI_QUAY, ("momo", "Ví MoMo")], required=False
-    )
-    ma_tham_chieu = TruongMotDong(label="Mã giao dịch", max_length=58, required=False)
-
-    def clean_ma_tham_chieu(self):
-        ma = self.cleaned_data["ma_tham_chieu"]
-        if ma and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,58}", ma):
-            raise forms.ValidationError("Mã giao dịch chỉ gồm chữ, số và . _ : / -")
-        return ma
 
 
 class YeuCauXuatHoaDonForm(forms.Form):
@@ -304,12 +134,3 @@ class XuLyXuatHoaDonForm(forms.Form):
         elif du_lieu.get("trang_thai") == "tu_choi" and not du_lieu.get("ly_do_tu_choi"):
             self.add_error("ly_do_tu_choi", "Ghi lý do từ chối để khách nắm được.")
         return du_lieu
-
-
-class GanTienForm(forms.Form):
-    ma_don_hang = TruongMotDong(label="Mã đơn", max_length=32)
-    ghi_chu = TruongMotDong(label="Ghi chú", max_length=200, required=False)
-
-
-class BoQuaTienForm(forms.Form):
-    ly_do = TruongMotDong(label="Đã xử lý thế nào", max_length=200)

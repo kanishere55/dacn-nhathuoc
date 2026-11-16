@@ -364,69 +364,6 @@
   }
 
   /* Sổ địa chỉ */
-  .luoi-dia-chi {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .the-dia-chi {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .the-dia-chi.la-mac-dinh {
-    border-color: var(--color-chinh);
-    box-shadow: inset 0 0 0 1px var(--color-chinh);
-  }
-  .the-dia-chi header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .the-dia-chi p {
-    color: var(--chu-phu);
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-  .tac-vu-dia-chi {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 14px;
-    margin-top: auto;
-    padding-top: 10px;
-    border-top: 1px dashed var(--vien);
-    font-size: 13px;
-  }
-  .tac-vu-dia-chi a,
-  .tac-vu-dia-chi button {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--color-chinh);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .tac-vu-dia-chi .nut-xoa {
-    color: #a2382d;
-  }
-  .the-them-dia-chi {
-    display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 6px;
-    min-height: 150px;
-    border: 1.5px dashed #c5d6cb;
-    border-radius: var(--radius-the);
-    color: var(--color-chinh);
-    font-weight: 700;
-  }
-  .the-them-dia-chi:hover {
-    background: #f2f8f4;
-    border-color: var(--color-chinh);
-  }
 
   /* Chọn vị trí trên bản đồ: bố cục và kích thước ở ban_do.css */
   .tim-vi-tri {
@@ -492,7 +429,6 @@
   }
   @media (max-width: 600px) {
     .hai-cot-form,
-    .luoi-dia-chi,
     .bang-thong-tin-tai-khoan {
       grid-template-columns: minmax(0, 1fr);
     }

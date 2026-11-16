@@ -268,9 +268,9 @@ BAI_VIET = [
         '<strong>Rx</strong> ở góc trên bên trái tên thuốc và dòng chữ "Thuốc kê đơn".</p>\n'
         "<p>Với kháng sinh, WHO lưu ý bác sĩ cần xác định người bệnh có thật sự cần kháng "
         "sinh không và cần loại nào, tốt nhất là sau xét nghiệm. Vì vậy, nhà thuốc chỉ bán "
-        "kháng sinh kê đơn khi khách có đơn và không giao loại thuốc này qua website; luật "
-        "chỉ cho bán lẻ qua thương mại điện tử đối với thuốc không kê đơn, trừ trường hợp "
-        "cách ly y tế khi có bệnh truyền nhiễm nhóm A.</p>\n"
+        "kháng sinh kê đơn tại quầy khi khách có đơn và dược sĩ đã kiểm tra đơn; luật chỉ cho "
+        "bán lẻ qua thương mại điện tử đối với thuốc không kê đơn, trừ trường hợp cách ly y tế "
+        "khi có bệnh truyền nhiễm nhóm A.</p>\n"
         "<h2>Dùng kháng sinh đúng cách</h2>\n"
         "<ul>\n"
         "<li><strong>Đúng liều, đủ ngày.</strong> Đơn thuốc ghi rõ liều mỗi lần, số lần "

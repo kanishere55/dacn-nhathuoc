@@ -122,17 +122,11 @@ class TraiNghiemTests(TestCase):
         from ung_dung.ban_hang.services.dat_hang import dat_hang
 
         tao_ton(self.d, luong=10)
-        don = dat_hang(
-            self.d.khach,
-            self.d.cn,
-            [{"thuoc": self.d.thuoc, "so_luong": 1}],
-            hinh_thuc_nhan="nhan_tai_quay",
-            phuong_thuc_thanh_toan="tai_quay",
-        )
+        don = dat_hang(self.d.khach, self.d.cn, [{"thuoc": self.d.thuoc, "so_luong": 1}])
         self.client.force_login(self.d.nv)
         trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
-        self.assertContains(trang, "Việc cần làm")
-        self.assertContains(trang, "Hủy đơn hoặc báo sự cố")
+        self.assertContains(trang, "Giao đơn tại quầy")
+        self.assertContains(trang, "Khách không đến nhận hoặc muốn hủy?")
         self.assertTrue(trang.context["co_hanh_dong_phu"])
 
     def test_form_phieu_nhap_giu_an_dong_da_bo_khi_bao_loi(self):

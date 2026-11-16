@@ -42,15 +42,14 @@
         <h2>Tóm tắt</h2>
         <dl>
           <div><dt>Tạm tính</dt><dd>{{ tom_tat.tien_hang|tien }}</dd></div>
-          <div><dt>Phí giao hàng</dt><dd class="ghi-chu-khach">Tính ở bước sau</dd></div>
         </dl>
         {% if tom_tat.co_ke_don %}
-          <p class="canh-bao-ke-don"><i data-lucide="shield-alert" aria-hidden="true"></i><span>Giỏ có thuốc kê đơn nên đơn chỉ nhận tại nhà thuốc. Mang đơn thuốc của bác sĩ khi tới nhận.</span></p>
+          <p class="canh-bao-ke-don"><i data-lucide="shield-alert" aria-hidden="true"></i><span>Giỏ có thuốc kê đơn: mang đơn thuốc của bác sĩ khi tới quầy nhận.</span></p>
         {% endif %}
         {% if tom_tat.hop_le %}
-          <a class="nut nut-rong" href="{% url 'ban_hang:dat_hang' %}">Tiến hành đặt hàng<i data-lucide="arrow-right" aria-hidden="true"></i></a>
+          <a class="nut nut-day" href="{% url 'ban_hang:dat_hang' %}">Chọn nhà thuốc nhận hàng<i data-lucide="arrow-right" aria-hidden="true"></i></a>
         {% else %}
-          <p class="ghi-chu-khach">Bỏ sản phẩm đã ngừng kinh doanh để đặt hàng.</p>
+          <p class="ghi-chu-khach">Bỏ sản phẩm đã ngừng kinh doanh để đặt giữ.</p>
         {% endif %}
         <a class="lien-ket-noi-bat" href="{% url 'webgis:ban_do' %}?tu_gio=1"><i data-lucide="map" aria-hidden="true"></i>Xem chi nhánh còn đủ hàng trên bản đồ</a>
       </aside>

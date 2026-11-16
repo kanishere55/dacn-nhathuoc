@@ -131,7 +131,7 @@ class GiaVaKhuyenMaiTests(TestCase):
         self.assertEqual(lay_thuoc_cong_khai(ma_danh_muc="DM1").count(), 1)
         self.assertEqual(lay_thuoc_cong_khai(khong_ke_don=True).count(), 0)
         phan_hoi = self.client.get(reverse("danh_muc:khach_thuoc_chi_tiet", args=["THUOC1"]))
-        self.assertContains(phan_hoi, "không bán qua giao hàng")
+        self.assertContains(phan_hoi, "dược sĩ phải kiểm tra đơn thuốc")
 
 
 class NguonAnhTests(TestCase):

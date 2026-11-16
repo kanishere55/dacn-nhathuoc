@@ -72,7 +72,7 @@ class QuyenQuanTriBanHangTests(TestCase):
             self.assertContains(trang, str(don))
             chi_tiet = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
             self.assertContains(chi_tiet, "Hủy đơn")
-            self.assertContains(chi_tiet, "Khách đã nhận và thanh toán tại quầy")
+            self.assertContains(chi_tiet, "Khách đã nhận hàng và thanh toán")
 
     def test_nhan_vien_khong_xu_ly_don_chi_nhanh_khac(self):
         with self.assertRaises(PermissionDenied):

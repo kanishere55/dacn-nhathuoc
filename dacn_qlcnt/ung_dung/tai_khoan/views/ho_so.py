@@ -1,19 +1,17 @@
-"""Trang tài khoản của người đã đăng nhập: hồ sơ, mật khẩu, email, sổ địa chỉ."""
+"""Trang tài khoản của người đã đăng nhập: hồ sơ, mật khẩu, email."""
 
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods
 
 from ung_dung.ban_hang.thanh_vien import CAC_HANG, hang_cua
-from ung_dung.chung.duong_dan import quay_lai
 from ung_dung.chung.permissions import MOI_VAI_TRO, co_vai_tro, yeu_cau_vai_tro
 
 from ..dia_chi_ip import lay_dia_chi_ip
-from ..forms import DiaChiGiaoHangForm, DoiEmailForm, DoiMatKhauForm, HoSoForm, MaOTPForm
-from ..selectors import cac_dia_chi_cua, lay_dia_chi_cua
-from ..services import dia_chi_giao_hang, ho_so, xac_thuc
+from ..forms import DoiEmailForm, DoiMatKhauForm, HoSoForm, MaOTPForm
+from ..services import ho_so, xac_thuc
 from .khach import ghi_phien, lay_phien_cua_trinh_duyet, ngu_canh_nhap_ma
 
 
@@ -34,8 +32,6 @@ def cua_toi(request):
         request,
         "cua_toi",
         {
-            "dia_chi_mac_dinh": request.user.dia_chi_giao_hang_mac_dinh,
-            "so_dia_chi": cac_dia_chi_cua(request.user).count(),
             "hang": hang_cua(request.user) if request.user.vai_tro == "khach_hang" else None,
             "cac_hang": CAC_HANG,
         },
@@ -118,60 +114,3 @@ def xac_thuc_doi_email(request, ma):
         "tai_khoan/khach/nhap_ma.html",
         ngu_canh_nhap_ma(phien, form, tieu_de="Xác nhận email mới", nut="Xác nhận"),
     )
-
-
-@yeu_cau_vai_tro("khach_hang")
-def so_dia_chi(request):
-    return _trang(
-        request,
-        "so_dia_chi",
-        {
-            "cac_dia_chi": cac_dia_chi_cua(request.user),
-            "id_mac_dinh": request.user.dia_chi_giao_hang_mac_dinh_id,
-            "toi_da": dia_chi_giao_hang.SO_DIA_CHI_TOI_DA,
-        },
-    )
-
-
-@yeu_cau_vai_tro("khach_hang")
-@require_http_methods(["GET", "POST"])
-def luu_dia_chi(request, ma=None):
-    dia_chi = lay_dia_chi_cua(request.user, ma) if ma else None
-    if request.method == "POST":
-        form = DiaChiGiaoHangForm(request.POST)
-    elif dia_chi:
-        form = DiaChiGiaoHangForm.tu_dia_chi(
-            dia_chi, dia_chi.pk == request.user.dia_chi_giao_hang_mac_dinh_id
-        )
-    else:
-        form = DiaChiGiaoHangForm(
-            initial={
-                "ten_nguoi_nhan": request.user.ho_ten,
-                "so_dien_thoai": request.user.so_dien_thoai,
-            }
-        )
-    if form.is_bound and form.is_valid():
-        try:
-            dia_chi_giao_hang.luu_dia_chi(request.user, form.cleaned_data, dia_chi)
-        except ValidationError as loi:
-            form.add_error(None, loi)
-        else:
-            messages.success(request, "Đã lưu địa chỉ.")
-            return quay_lai(request, "tai_khoan:so_dia_chi")
-    return _trang(request, "dia_chi_form", {"form": form, "dia_chi": dia_chi})
-
-
-@yeu_cau_vai_tro("khach_hang")
-@require_POST
-def xoa_dia_chi(request, ma):
-    dia_chi_giao_hang.xoa_dia_chi(request.user, lay_dia_chi_cua(request.user, ma))
-    messages.success(request, "Đã xóa địa chỉ.")
-    return redirect("tai_khoan:so_dia_chi")
-
-
-@yeu_cau_vai_tro("khach_hang")
-@require_POST
-def dat_dia_chi_mac_dinh(request, ma):
-    dia_chi_giao_hang.dat_mac_dinh(request.user, lay_dia_chi_cua(request.user, ma))
-    messages.success(request, "Đã đổi địa chỉ mặc định.")
-    return redirect("tai_khoan:so_dia_chi")

@@ -16,19 +16,16 @@ from ung_dung.kho.services.giao_dich import (
     phan_bo_fefo,
     thay_doi_ton,
 )
-from ung_dung.thanh_toan.services.doi_soat import cap_nhat_trang_thai_thanh_toan, doi_soat
-from ung_dung.thanh_toan.services.ghi import ghi_ngay
 
 from ..models import (
     MA_DON_THUOC,
+    PHUONG_THUC_TAI_QUAY,
     TRANG_THAI_GIU,
     ChiTietPhieuBan,
     DonHang,
     PhanBoPhieuBan,
     PhieuBan,
 )
-from ..selectors import tong_tien_ban
-from .giao_hang import han_toi_thieu_giao
 from .thong_bao_don import bao_doi_trang_thai
 from .trang_thai import doi_trang_thai, kiem_tra_chuyen
 
@@ -40,7 +37,6 @@ THONG_BAO_QUYEN_KE_DON = (
     "Phiếu có thuốc kê đơn: chỉ dược sĩ được giao quyền bán thuốc kê đơn mới lập được. "
     "Hãy nhờ dược sĩ hoặc quản lý chi nhánh thực hiện."
 )
-PHUONG_THUC_TAI_QUAY = ("tien_mat", "chuyen_khoan")
 
 
 def _thong_tin_don_thuoc(co_ke_don, don_thuoc):
@@ -91,15 +87,9 @@ def _thong_tin_don_thuoc(co_ke_don, don_thuoc):
 def thong_bao_qua_han(don_hang):
     """Lời báo khi đơn đang giữ hàng đã qua hạn mà lệnh định kỳ chưa kịp đổi trạng thái."""
     han = timezone.localtime(don_hang.thoi_diem_het_giu)
-    if don_hang.trang_thai == "dang_giu":
-        return (
-            f"Đơn đã quá hạn giữ lúc {han:%H:%M %d/%m/%Y}, hàng đã được nhả cho khách khác. "
-            "Nếu khách vẫn mua, hãy lập phiếu bán trực tiếp tại quầy."
-        )
-    return f"Đơn đã quá hạn xác nhận lúc {han:%H:%M %d/%m/%Y}; hệ thống sẽ hủy đơn" + (
-        " và chuyển tiền khách đã trả sang chờ hoàn."
-        if don_hang.phuong_thuc_thanh_toan != "cod"
-        else "."
+    return (
+        f"Đơn đã quá hạn giữ lúc {han:%H:%M %d/%m/%Y}, hàng đã được nhả cho khách khác. "
+        "Nếu khách vẫn mua, hãy lập phiếu bán trực tiếp tại quầy."
     )
 
 
@@ -114,17 +104,15 @@ def ban_tai_quay(
     don_thuoc=None,
     phuong_thuc_thanh_toan="tien_mat",
 ):
-    """Lập phiếu bán và xuất kho FEFO.
+    """Lập phiếu bán, xuất kho FEFO và ghi cách khách trả tiền tại quầy.
 
-    Có `don_hang`: xuất đúng các dòng của đơn với giá đã chụp lúc đặt. Đơn nhận tại
-    quầy chuyển hoàn thành (khách nhận và trả tiền), đơn giao hàng chuyển đang chuẩn bị.
-    Không có đơn: bán trực tiếp theo giá đang áp dụng. `don_thuoc` gồm
-    da_kiem_tra_don_thuoc, ma_don_thuoc, ten_nguoi_ke_don, noi_kham_benh và chỉ bắt
-    buộc khi phiếu có thuốc kê đơn, cùng ngay_ke_don và ho_ten_nguoi_benh. Phiếu có thuốc kê
-    đơn cần quyền thuoc_ke_don.ban (dược sĩ). Đơn giao hàng chỉ xuất lô còn hạn ít nhất 30
-    ngày. Đơn đã trả trước một phần hoặc đủ thì quầy chỉ thu phần còn thiếu.
+    Có `don_hang`: khách đến nhận đơn đặt giữ; xuất đúng các dòng của đơn với giá đã chụp lúc
+    đặt rồi chuyển đơn sang hoàn thành. Không có đơn: bán trực tiếp theo giá đang áp dụng.
+    `don_thuoc` gồm da_kiem_tra_don_thuoc, ma_don_thuoc, ten_nguoi_ke_don, noi_kham_benh,
+    ngay_ke_don, ho_ten_nguoi_benh và chỉ bắt buộc khi phiếu có thuốc kê đơn. Phiếu có thuốc
+    kê đơn cần quyền thuoc_ke_don.ban (dược sĩ).
     """
-    if phuong_thuc_thanh_toan not in PHUONG_THUC_TAI_QUAY:
+    if phuong_thuc_thanh_toan not in dict(PHUONG_THUC_TAI_QUAY):
         raise ValidationError("Tại quầy chỉ nhận tiền mặt hoặc chuyển khoản.")
     khoa_chi_nhanh(nguoi, chi_nhanh, "don_hang.xu_ly" if don_hang else "phieu_ban.tao")
     khoa_yeu_cau = str(khoa_yeu_cau or uuid4())
@@ -140,8 +128,7 @@ def ban_tai_quay(
         da_ban = PhieuBan.objects.filter(don_hang=don_hang).first()
         if da_ban:
             return da_ban
-        den = "hoan_thanh" if don_hang.hinh_thuc_nhan == "nhan_tai_quay" else "dang_chuan_bi"
-        kiem_tra_chuyen(don_hang, den, nguoi)
+        kiem_tra_chuyen(don_hang, "hoan_thanh", nguoi)
         # Cùng quy tắc hạn ở mọi đường đi, không phụ thuộc lệnh định kỳ đã chạy hay chưa.
         if don_hang.trang_thai in TRANG_THAI_GIU and don_hang.thoi_diem_het_giu <= timezone.now():
             raise ValidationError(thong_bao_qua_han(don_hang))
@@ -168,15 +155,13 @@ def ban_tai_quay(
     if co_ke_don and not co_quyen(nguoi, "thuoc_ke_don.ban"):
         raise PermissionDenied(THONG_BAO_QUYEN_KE_DON)
     thong_tin_don = _thong_tin_don_thuoc(co_ke_don, don_thuoc)
-    con_han_den = (
-        han_toi_thieu_giao() if don_hang and don_hang.hinh_thuc_nhan == "giao_hang" else None
-    )
     phieu = PhieuBan(
         ma_phieu_ban=ma_chung_tu("BH"),
         khoa_yeu_cau=khoa_yeu_cau,
         chi_nhanh=chi_nhanh,
         nguoi_lap=nguoi,
         don_hang=don_hang,
+        phuong_thuc_thanh_toan=phuong_thuc_thanh_toan,
         **thong_tin_don,
     )
     phieu.save()
@@ -194,35 +179,10 @@ def ban_tai_quay(
         )
         chi_tiet.full_clean()
         chi_tiet.save()
-        for ton, lay in phan_bo_fefo(
-            chi_nhanh, thuoc, luong, bo_qua_don=don_hang, con_han_den=con_han_den
-        ):
+        for ton, lay in phan_bo_fefo(chi_nhanh, thuoc, luong, bo_qua_don=don_hang):
             thay_doi_ton(ton, -lay)
             PhanBoPhieuBan.objects.create(chi_tiet_phieu_ban=chi_tiet, ton_kho=ton, so_luong=lay)
-    if not don_hang:
-        ghi_ngay(
-            loai="thu",
-            phuong_thuc=phuong_thuc_thanh_toan,
-            so_tien=tong_tien_ban(phieu),
-            phieu_ban=phieu,
-            nguoi=nguoi,
-            ghi_chu="Thu tại quầy",
-        )
-        return phieu
-    doi_trang_thai(don_hang, den, nguoi, f"Lập phiếu bán {phieu.ma_phieu_ban}")
-    if den == "hoan_thanh":
-        # Khách nhận tại quầy: chỉ thu phần còn thiếu (đơn có thể đã chuyển khoản trước).
-        con_thieu = doi_soat(don_hang).con_thieu
-        if con_thieu > 0:
-            ghi_ngay(
-                loai="thu",
-                phuong_thuc=phuong_thuc_thanh_toan,
-                so_tien=con_thieu,
-                don_hang=don_hang,
-                phieu_ban=phieu,
-                nguoi=nguoi,
-                ghi_chu="Thu tại quầy",
-            )
-        cap_nhat_trang_thai_thanh_toan(don_hang)
-    bao_doi_trang_thai(don_hang)
+    if don_hang:
+        doi_trang_thai(don_hang, "hoan_thanh", nguoi, f"Lập phiếu bán {phieu.ma_phieu_ban}")
+        bao_doi_trang_thai(don_hang)
     return phieu

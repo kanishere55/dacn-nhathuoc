@@ -23,9 +23,6 @@ from .services.dang_nhap import (
 )
 
 MAU_TEN_DANG_NHAP = r"^[A-Za-z0-9._-]{4,30}$"
-# Khung tọa độ lãnh thổ Việt Nam (đất liền và đảo gần bờ) để chặn điểm ghim nhầm.
-VI_DO_VN = (8.0, 23.5)
-KINH_DO_VN = (102.0, 110.0)
 
 
 def _o_mat_khau(nhan, autocomplete="new-password", **kwargs):
@@ -157,45 +154,6 @@ class DoiMatKhauForm(KiemHaiMatKhau, forms.Form):
 class DoiEmailForm(forms.Form):
     email_moi = TruongEmail(label="Email mới")
     mat_khau_hien_tai = _o_mat_khau("Mật khẩu hiện tại", "current-password")
-
-
-class DiaChiGiaoHangForm(forms.Form):
-    ten_nguoi_nhan = TruongHoTen(label="Người nhận")
-    so_dien_thoai = TruongSoDienThoai(label="Số điện thoại")
-    dia_chi = TruongMotDong(
-        label="Địa chỉ",
-        max_length=300,
-        help_text="Số nhà, tên đường, phường/xã, tỉnh/thành phố.",
-        widget=forms.TextInput(attrs={"autocomplete": "street-address"}),
-    )
-    ghi_chu = TruongMotDong(label="Ghi chú cho người giao", max_length=200, required=False)
-    vi_do = forms.FloatField(widget=forms.HiddenInput, min_value=VI_DO_VN[0], max_value=VI_DO_VN[1])
-    kinh_do = forms.FloatField(
-        widget=forms.HiddenInput, min_value=KINH_DO_VN[0], max_value=KINH_DO_VN[1]
-    )
-    dat_mac_dinh = forms.BooleanField(label="Đặt làm địa chỉ mặc định", required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        thong_bao = "Hãy ghim vị trí giao hàng trên bản đồ (trong lãnh thổ Việt Nam)."
-        for ten in ("vi_do", "kinh_do"):
-            self.fields[ten].error_messages.update(
-                {"required": thong_bao, "min_value": thong_bao, "max_value": thong_bao}
-            )
-
-    @classmethod
-    def tu_dia_chi(cls, dia_chi, mac_dinh):
-        return cls(
-            initial={
-                "ten_nguoi_nhan": dia_chi.ten_nguoi_nhan,
-                "so_dien_thoai": dia_chi.so_dien_thoai,
-                "dia_chi": dia_chi.dia_chi,
-                "ghi_chu": dia_chi.ghi_chu,
-                "vi_do": dia_chi.vi_tri.y,
-                "kinh_do": dia_chi.vi_tri.x,
-                "dat_mac_dinh": mac_dinh,
-            }
-        )
 
 
 def _ten_o_quyen(ma):

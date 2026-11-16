@@ -207,7 +207,6 @@ class KhungTaiKhoanTests(TestCase):
                     "ho_ten",
                     "so_dien_thoai",
                     "thoi_diem_tao",
-                    "id_dia_chi_giao_hang_mac_dinh",
                     "id_nhom_quyen",
                     "so_lan_dang_nhap_sai",
                     "thoi_diem_mo_khoa_dang_nhap",

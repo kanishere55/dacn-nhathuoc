@@ -1,4 +1,4 @@
-// Ô chọn vị trí giao hàng: tìm địa chỉ qua máy chủ (Nominatim), ghim và kéo trên bản đồ.
+// Ô chọn vị trí trên bản đồ: tìm địa chỉ qua máy chủ (Nominatim), ghim và kéo trên bản đồ.
 (() => {
   const TAM_MAC_DINH = [10.7769, 106.7009];
 

@@ -93,7 +93,7 @@ TRO_GIUP = {
             "Cảnh báo khi lượng còn bán được ở một chi nhánh thấp hơn số này; 0 là không cảnh báo."
         ),
         "la_thuoc_ke_don": (
-            "Chỉ bán tại quầy khi có đơn của bác sĩ; không bán giao hàng, không khuyến mãi."
+            "Chỉ bán tại quầy khi có đơn của bác sĩ; không khuyến mãi, không ưu đãi thành viên."
         ),
         "dang_hoat_dong": (
             "Bỏ chọn để ngừng kinh doanh; chỉ ngừng được khi đã hết hàng trong kho và hết đơn "

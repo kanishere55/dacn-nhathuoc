@@ -1,2 +1,0 @@
-{% autoescape off %}{% include "thong_bao/email/khoi/_than_don.txt" %}
-{% include "thong_bao/email/khoi/_chan_thu.txt" %}{% endautoescape %}

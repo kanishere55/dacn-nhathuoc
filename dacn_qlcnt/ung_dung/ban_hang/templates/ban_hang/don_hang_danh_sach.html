@@ -1,13 +1,12 @@
 {% extends "base.html" %}
 {% load don_hang %}
-{% block tieu_de %}Đơn hàng · Khu quản lý{% endblock %}
-{% block vi_tri %}Đơn hàng{% endblock %}
+{% block tieu_de %}Đơn đặt giữ · Khu quản lý{% endblock %}
+{% block vi_tri %}Đơn đặt giữ{% endblock %}
 {% block noi_dung %}
   <header class="tieu-de-trang">
     <p class="chu-dan">BÁN HÀNG</p>
-    <h1>Đơn hàng</h1>
-    <p>Đơn giao tận nơi và đơn đặt giữ nhận tại quầy của {% if user.vai_tro == "quan_tri_chuoi" %}toàn chuỗi{% else %}chi nhánh{% endif %}.</p>
-    {% if duoc_xem_tien_chua_khop %}<p><a class="duong-dan-noi-dung" href="{% url 'thanh_toan:tien_chua_khop' %}">Tiền chuyển khoản chưa khớp đơn</a></p>{% endif %}
+    <h1>Đơn đặt giữ</h1>
+    <p>Khách đặt trên website, hàng được giữ 24 giờ; khách đến {% if user.vai_tro == "quan_tri_chuoi" %}chi nhánh đã chọn{% else %}chi nhánh{% endif %} nhận và trả tiền tại quầy. Tìm nhanh bằng mã đơn khách đọc.</p>
   </header>
   {% include "components/_thanh_loc.html" with vung="vung-danh-sach" giu_trang_thai=trang_thai %}
   {% if loc_lo_hong %}
@@ -18,19 +17,16 @@
     <a href="{% querystring trang_thai=None page=None %}"{% if not trang_thai %} aria-current="page"{% endif %}>Tất cả <span>{{ tong_so }}</span></a>
     {% for ma, nhan, so in cac_trang_thai %}{% if so %}<a href="{% querystring trang_thai=ma page=None %}"{% if trang_thai == ma %} aria-current="page"{% endif %}>{{ nhan }} <span>{{ so }}</span></a>{% endif %}{% endfor %}
   </nav>
-  <nav class="tab-quan-ly tab-viec-tien" aria-label="Việc về tiền">
-    {% for ma, nhan, so in cac_loc_tien %}<a href="{% if loc_tien == ma %}{% querystring tien=None page=None %}{% else %}{% querystring tien=ma page=None %}{% endif %}"{% if loc_tien == ma %} aria-current="page"{% endif %}>{{ nhan }} <span>{{ so }}</span></a>{% endfor %}
-  </nav>
   <div class="khoi-trang khung-bang bang-the-di-dong">
-    <table role="table" aria-label="Danh sách đơn hàng">
-      <thead role="rowgroup"><tr role="row"><th scope="col">Mã đơn</th><th scope="col">Đặt lúc</th><th scope="col">Khách</th><th scope="col">Hình thức</th>{% if user.vai_tro == "quan_tri_chuoi" %}<th scope="col">Chi nhánh</th>{% endif %}<th scope="col" class="o-tien">Tổng</th><th scope="col">Trạng thái</th></tr></thead>
+    <table role="table" aria-label="Danh sách đơn đặt giữ">
+      <thead role="rowgroup"><tr role="row"><th scope="col">Mã đơn</th><th scope="col">Đặt lúc</th><th scope="col">Khách</th><th scope="col">Số mặt hàng</th>{% if user.vai_tro == "quan_tri_chuoi" %}<th scope="col">Chi nhánh</th>{% endif %}<th scope="col" class="o-tien">Tổng</th><th scope="col">Trạng thái</th></tr></thead>
       <tbody role="rowgroup">
         {% for don in trang %}
           <tr role="row">
             <td role="cell" data-nhan="Mã đơn"><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_chi_tiet' don.pk %}">{{ don.ma_don_hang }}</a></td>
             <td role="cell" data-nhan="Đặt lúc">{{ don.thoi_diem_tao|date:"H:i d/m" }}</td>
-            <td role="cell" data-nhan="Khách">{{ don.khach_hang.ho_ten|default:don.khach_hang.ten_dang_nhap }}</td>
-            <td role="cell" data-nhan="Hình thức"><span>{{ don.get_hinh_thuc_nhan_display }}<br><small>{{ don.get_phuong_thuc_thanh_toan_display }}</small></span></td>
+            <td role="cell" data-nhan="Khách"><span>{{ don.khach_hang.ho_ten|default:don.khach_hang.ten_dang_nhap }}{% if don.khach_hang.so_dien_thoai %}<br><small>{{ don.khach_hang.so_dien_thoai }}</small>{% endif %}</span></td>
+            <td role="cell" data-nhan="Số mặt hàng">{{ don.so_mat_hang }}</td>
             {% if user.vai_tro == "quan_tri_chuoi" %}<td role="cell" data-nhan="Chi nhánh">{{ don.chi_nhanh.ten_chi_nhanh }}</td>{% endif %}
             <td role="cell" class="o-tien" data-nhan="Tổng">{{ don.tong_thanh_toan|tien }}</td>
             <td role="cell" data-nhan="Trạng thái">{% include "ban_hang/_nhan_don.html" %}{% with han=don|han_don %}{% if han %}<small class="han-xu-ly muc-han-{{ han.muc }}">{{ han.chu }}</small>{% endif %}{% endwith %}</td>

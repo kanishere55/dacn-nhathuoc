@@ -21,10 +21,10 @@ NGUON_STOCKSNAP = "https://cdn.stocksnap.io/img-thumbs/960w/{}.jpg"
 BANNER = [
     {
         "anh": ("WP1KHDXGOY", "a7cc9c3494a6866fb43ccfb1900dfdd10bcdeee29869b2d4de5f7bae7d1f8dda"),
-        "tieu_de": "Giao thuốc tận nhà trong bán kính 15 km",
-        "mo_ta": "Dược sĩ soạn đơn tại chi nhánh gần bạn nhất, phí giao từ 15.000 đ.",
-        "nhan_nut": "Mua thuốc không kê đơn",
-        "duong_dan": "/thuoc/?khong_ke_don=1",
+        "tieu_de": "Đặt giữ trên website, nhận tại nhà thuốc gần bạn",
+        "mo_ta": "Chọn chi nhánh còn đủ thuốc, hàng được giữ 24 giờ, trả tiền khi nhận tại quầy.",
+        "nhan_nut": "Xem danh mục thuốc",
+        "duong_dan": "/thuoc/",
         "mau_nen": "#e4f3ec",
     },
     {
@@ -70,69 +70,47 @@ TRANG = [
         tư vấn, thuốc được bảo quản đúng điều kiện ghi trên nhãn và truy được số lô, hạn dùng.</p>
         <h2>Bạn có thể làm gì trên website</h2>
         <ul><li>Tra cứu thuốc theo tên, hoạt chất, nhóm bệnh.</li>
-        <li>Xem chi nhánh còn đủ thuốc trên bản đồ, chọn chi nhánh gần nhất.</li>
-        <li>Đặt giao tận nơi thuốc không kê đơn, hoặc đặt giữ để nhận tại quầy trong 24 giờ.</li>
-        <li>Nhắn tin hỏi dược sĩ, theo dõi đơn và tải hóa đơn bán lẻ.</li></ul>
+        <li>Xem chi nhánh còn đủ thuốc trên bản đồ, chọn chi nhánh gần nhất và xem đường đi.</li>
+        <li>Đặt giữ thuốc tại chi nhánh, đến quầy nhận và thanh toán trong 24 giờ.</li>
+        <li>Nhắn tin hỏi dược sĩ, theo dõi đơn và tải phiếu bán hàng.</li></ul>
         <h2>Cam kết</h2>
-        <p>Thuốc kê đơn chỉ bán tại quầy khi dược sĩ đã kiểm tra đơn của bác sĩ. Nhà thuốc nhận lại
-        hàng lỗi do nhà thuốc và hoàn tiền theo chính sách đổi trả.</p>""",
+        <p>Thuốc kê đơn chỉ bán tại quầy khi dược sĩ đã kiểm tra đơn của bác sĩ. Mỗi lần bán đều
+        ghi rõ lô và hạn dùng của thuốc trên phiếu bán hàng.</p>""",
     ),
     (
-        "chinh-sach-giao-hang",
-        "Chính sách giao hàng",
-        "Phạm vi, phí giao và thời gian giao thuốc không kê đơn.",
-        """<h2>Phạm vi giao</h2>
-        <p>Đơn được giao từ chi nhánh còn đủ hàng gần địa chỉ của bạn nhất, trong bán kính
-        <strong>15 km</strong> theo đường đi.</p>
-        <h2>Phí giao</h2>
-        <ul><li>3 km đầu: <strong>15.000 đ</strong>.</li><li>Mỗi km tiếp theo: 5.000 đ (làm tròn lên).</li></ul>
-        <p>Phí được tính và hiển thị trước khi bạn đặt đơn.</p>
-        <h2>Thời gian</h2>
-        <p>Chi nhánh xác nhận đơn trong giờ mở cửa và giao trong ngày. Đơn chưa được xác nhận sau
-        24 giờ sẽ tự hủy, tiền đã chuyển được hoàn lại.</p>
-        <h2>Thanh toán</h2>
-        <p>Thanh toán khi nhận hàng (COD), chuyển khoản qua mã VietQR hoặc ví MoMo. Đơn trả trước
-        được giữ hàng 30 phút trong lúc chờ thanh toán.</p>
-        <h2>Giao không thành công</h2>
-        <p>Người giao không liên lạc được hoặc bạn chưa nhận được hàng, nhà thuốc sẽ gọi để hẹn
-        giao lại. Nếu vẫn không giao được, đơn bị hủy: đơn COD không phát sinh tiền; tiền đã trả
-        trước (gồm phí giao) được hoàn đủ qua kênh bạn đã thanh toán và báo qua email kèm mã giao
-        dịch.</p>
-        <blockquote>Thuốc kê đơn không giao qua website. Vui lòng đặt giữ và mang đơn thuốc tới quầy.</blockquote>""",
-    ),
-    (
-        "chinh-sach-doi-tra",
-        "Chính sách đổi trả",
-        "Nhận lại thuốc giao sai, hư hỏng hoặc hết hạn trong 7 ngày.",
-        """<p>Vì an toàn của người dùng, thuốc đã bán ra chỉ được nhận lại khi lỗi thuộc về nhà thuốc.</p>
-        <h2>Trường hợp được trả hàng</h2>
-        <ul><li>Giao sai thuốc, sai hàm lượng hoặc sai số lượng.</li>
-        <li>Bao bì, vỉ, chai bị rách, vỡ, ẩm khi nhận.</li>
-        <li>Thuốc đã hết hạn hoặc còn dưới 1 tháng sử dụng khi giao.</li></ul>
-        <h2>Cách gửi yêu cầu</h2>
-        <ol><li>Vào <strong>Đơn của tôi</strong>, chọn đơn đã hoàn thành trong vòng 7 ngày.</li>
-        <li>Bấm <strong>Yêu cầu trả hàng</strong>, chọn thuốc, lý do và chụp ảnh hộp, vỉ, số lô.</li>
-        <li>Nhà thuốc liên hệ nhận lại hàng, kiểm tra và hoàn tiền theo giá bạn đã mua.</li></ol>
-        <h2>Không áp dụng</h2>
-        <p>Đổi ý sau khi đã nhận, thuốc đã mở dùng, thuốc bảo quản không đúng hướng dẫn. Hàng nhận
-        lại không được đưa trở lại quầy bán.</p>""",
+        "huong-dan-dat-giu",
+        "Hướng dẫn đặt giữ thuốc",
+        "Giữ thuốc tại chi nhánh 24 giờ, nhận và thanh toán tại quầy.",
+        """<p>Đặt giữ giúp bạn chắc chắn chi nhánh còn đủ thuốc trước khi đến, không phải trả tiền
+        trước.</p>
+        <h2>Các bước</h2>
+        <ol><li>Chọn thuốc vào giỏ hoặc tìm thuốc trên <strong>bản đồ nhà thuốc</strong>.</li>
+        <li>Chọn chi nhánh còn đủ toàn bộ thuốc, bấm <strong>Đặt giữ tại nhà thuốc</strong>.</li>
+        <li>Đến quầy trong <strong>24 giờ</strong>, đọc mã đơn (có trong email và mục Đơn đặt
+        giữ) cho nhân viên.</li>
+        <li>Thanh toán bằng tiền mặt hoặc chuyển khoản, nhận thuốc và phiếu bán hàng.</li></ol>
+        <h2>Lưu ý</h2>
+        <ul><li>Mỗi tài khoản giữ tối đa 3 đơn cùng lúc để khách khác vẫn mua được.</li>
+        <li>Đổi ý thì hủy đơn trong trang đơn để nhà thuốc nhả hàng cho người khác.</li>
+        <li>Quá 24 giờ chưa nhận, đơn tự hết hạn và hàng được trả lại kệ.</li></ul>
+        <blockquote>Đơn có thuốc kê đơn: mang theo đơn thuốc còn hạn của bác sĩ, dược sĩ kiểm tra
+        trước khi bán.</blockquote>""",
     ),
     (
         "chinh-sach-bao-mat",
         "Chính sách bảo mật",
         "Dữ liệu chúng tôi thu thập và cách chúng tôi bảo vệ.",
         """<h2>Dữ liệu thu thập</h2>
-        <p>Họ tên, email, số điện thoại, địa chỉ giao hàng, lịch sử đơn và tin nhắn với nhà thuốc.
-        Ảnh trả hàng chỉ nhân viên chi nhánh xử lý đơn mới xem được.</p>
+        <p>Họ tên, email, số điện thoại, lịch sử đơn đặt giữ và tin nhắn với nhà thuốc.</p>
         <h2>Mục đích</h2>
-        <p>Xử lý đơn, giao hàng, hoàn tiền, gửi email xác nhận và trả lời câu hỏi của bạn.</p>
+        <p>Giữ hàng và giao đơn tại quầy, gửi email xác nhận và trả lời câu hỏi của bạn.</p>
         <h2>Chia sẻ</h2>
-        <p>Chúng tôi không bán dữ liệu. Thông tin được chuyển cho đơn vị giao hàng và cổng thanh toán
-        ở mức cần thiết để hoàn tất đơn, hoặc khi cơ quan nhà nước có thẩm quyền yêu cầu.</p>
+        <p>Chúng tôi không bán dữ liệu. Thông tin chỉ được cung cấp khi cơ quan nhà nước có thẩm
+        quyền yêu cầu theo quy định pháp luật.</p>
         <h2>Vị trí và dịch vụ bản đồ</h2>
-        <p>Khi tính quãng đường và phí giao hàng, website gửi tọa độ điểm giao và chi nhánh đến
-        dịch vụ định tuyến OSRM. Khi bạn yêu cầu chỉ đường, OSRM nhận tọa độ điểm xuất phát và điểm đến.
-        Máy chủ định tuyến có thể lưu yêu cầu trong nhật ký vận hành.</p>
+        <p>Vị trí hiện tại chỉ được dùng khi bạn bấm tìm nhà thuốc gần mình. Khi bạn yêu cầu chỉ
+        đường, website gửi tọa độ điểm xuất phát và chi nhánh đến dịch vụ định tuyến OSRM. Máy chủ
+        định tuyến có thể lưu yêu cầu trong nhật ký vận hành.</p>
         <h2>Quyền của bạn</h2>
         <p>Bạn xem và sửa thông tin trong mục Tài khoản, đổi email bằng mã xác thực và có thể yêu
         cầu xóa tài khoản theo quy định pháp luật về bảo vệ dữ liệu cá nhân.</p>""",
@@ -141,12 +119,12 @@ TRANG = [
         "huong-dan-mua-thuoc-ke-don",
         "Hướng dẫn mua thuốc kê đơn",
         "Đặt giữ trên website, mang đơn của bác sĩ tới quầy trong 24 giờ.",
-        """<p>Theo Luật Dược, thuốc kê đơn chỉ bán khi có đơn thuốc hợp lệ và không bán qua giao hàng
-        trực tuyến. Website giúp bạn giữ sẵn thuốc tại chi nhánh.</p>
+        """<p>Theo Luật Dược, thuốc kê đơn chỉ bán khi có đơn thuốc hợp lệ và dược sĩ đã kiểm tra
+        đơn. Website giúp bạn giữ sẵn thuốc tại chi nhánh.</p>
         <ol><li>Tìm thuốc, bấm <strong>Đặt giữ ngay</strong> và chọn chi nhánh còn hàng.</li>
         <li>Mang <strong>đơn thuốc còn hạn</strong> (đơn giấy hoặc mã đơn thuốc điện tử) tới quầy trong 24 giờ.</li>
         <li>Dược sĩ đối chiếu đơn: đúng người bệnh, thuốc, hàm lượng và liều dùng.</li>
-        <li>Thanh toán tại quầy bằng tiền mặt hoặc chuyển khoản, nhận thuốc và hóa đơn.</li></ol>
+        <li>Thanh toán tại quầy bằng tiền mặt hoặc chuyển khoản, nhận thuốc và phiếu bán hàng.</li></ol>
         <blockquote>Nếu đơn không hợp lệ hoặc liều vượt đơn, dược sĩ sẽ không bán và hướng dẫn bạn
         quay lại bác sĩ.</blockquote>""",
     ),

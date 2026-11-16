@@ -275,8 +275,8 @@ class Thuoc(models.Model):
         db_default=False,
         db_column="la_thuoc_ke_don",
         db_comment=(
-            "Thuốc phải bán theo đơn; không bán giao hàng, chỉ đặt giữ và bán tại quầy "
-            "khi dược sĩ đã kiểm tra đơn thuốc (Luật số 44/2024/QH15)."
+            "Thuốc phải bán theo đơn; chỉ bán tại quầy khi dược sĩ đã kiểm tra đơn thuốc "
+            "(Luật số 44/2024/QH15)."
         ),
     )
     hoat_chat = models.TextField(

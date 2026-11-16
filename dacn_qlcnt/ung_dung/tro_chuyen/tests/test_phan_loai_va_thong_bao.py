@@ -36,13 +36,7 @@ KENH_BO_NHO = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 def tao_don(d):
     tao_ton(d, luong=20)
-    return dat_hang(
-        d.khach,
-        d.cn,
-        [{"thuoc": d.thuoc, "so_luong": 1}],
-        hinh_thuc_nhan="nhan_tai_quay",
-        phuong_thuc_thanh_toan="tai_quay",
-    )
+    return dat_hang(d.khach, d.cn, [{"thuoc": d.thuoc, "so_luong": 1}])
 
 
 def anh_png(ten="anh.png"):

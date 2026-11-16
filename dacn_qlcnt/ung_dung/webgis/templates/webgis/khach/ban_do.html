@@ -12,7 +12,6 @@
     <p>Chọn vị trí của bạn để xem chi nhánh gần nhất, khoảng cách, đường đi và thời gian di chuyển. Cần một loại thuốc cụ thể? Bật “Chỉ chi nhánh còn thuốc” để lọc theo tồn kho.</p>
   </header>
   {{ cac_chi_nhanh|json_script:"du-lieu-chi-nhanh" }}
-  {{ dia_chi_mac_dinh|json_script:"du-lieu-dia-chi-mac-dinh" }}
   <div class="trang-tim-nha-thuoc" data-webgis
        data-url-gan="{% url 'webgis:chi_nhanh_gan' %}" data-url-tim="{% url 'webgis:tim_kiem' %}"
        {% if user.is_authenticated %}data-url-tim-dia-chi="{% url 'webgis:tim_dia_chi' %}"{% endif %}
@@ -26,7 +25,6 @@
           <h2 id="tieu-de-vi-tri"><i data-lucide="map-pin" aria-hidden="true"></i>Vị trí của bạn</h2>
           <div class="nut-vi-tri">
             <button type="button" class="nut" data-dinh-vi><i data-lucide="locate-fixed" aria-hidden="true"></i>Vị trí của tôi</button>
-            {% if dia_chi_mac_dinh %}<button type="button" class="nut nut-phu" data-dia-chi-mac-dinh><i data-lucide="house" aria-hidden="true"></i>Địa chỉ đã lưu</button>{% endif %}
           </div>
           {% if user.is_authenticated %}
             <div class="tim-vi-tri">

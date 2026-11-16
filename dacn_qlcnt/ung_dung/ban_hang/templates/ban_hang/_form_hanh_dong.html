@@ -1,50 +1,13 @@
-<form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} data-xac-nhan-tieu-de="Hủy đơn {{ don.ma_don_hang }}?" data-xac-nhan="Đơn bị hủy không khôi phục được. Khách nhận email báo hủy kèm lý do bạn ghi." data-xac-nhan-nut="Hủy đơn" data-xac-nhan-kieu="nguy-hiem"{% elif hd.ma == "hoan_tien" %} data-xac-nhan-tieu-de="Ghi nhận đã hoàn tiền?" data-xac-nhan="Chỉ xác nhận khi đã chuyển {{ tien.phai_hoan|tien }} cho khách. Khách sẽ nhận email báo đã hoàn tiền." data-xac-nhan-nut="Đã hoàn tiền"{% elif hd.ma == "da_thu_cod" %} data-xac-nhan-tieu-de="Đã nhận tiền COD?" data-xac-nhan="Chỉ xác nhận khi người giao đã nộp {{ cod_cho_doi_soat.so_tien|tien }} của đơn {{ don.ma_don_hang }} về nhà thuốc." data-xac-nhan-nut="Đã nhận tiền COD"{% endif %}>
+<form method="post" action="{% url 'ban_hang:don_hang_xu_ly' don.pk hd.ma %}" class="form-chinh form-xu-ly-don"{% if hd.ma == "huy" %} data-xac-nhan-tieu-de="Hủy đơn {{ don.ma_don_hang }}?" data-xac-nhan="Đơn bị hủy không khôi phục được, hàng đang giữ được nhả cho khách khác. Khách nhận email báo hủy kèm lý do bạn ghi." data-xac-nhan-nut="Hủy đơn" data-xac-nhan-kieu="nguy-hiem"{% endif %}>
   {% csrf_token %}
-  {% if hd.can_ly_do %}<label>{% if hd.ma == "xac_nhan_giao_thanh_cong" %}Mã giao nhận hoặc căn cứ xác nhận{% else %}Lý do{% endif %}<input name="ly_do" required maxlength="300"></label>{% endif %}
-  {% if hd.ma == "xac_nhan_thanh_toan" %}
-    <p class="ghi-chu-khach">Tìm trong sao kê khoản có nội dung <strong>{{ don.ma_don_hang }}</strong>. Còn thiếu <strong>{{ tien.con_thieu|tien }}</strong>.</p>
-    <label>Mã giao dịch trên sao kê<input name="ma_tham_chieu" required maxlength="64" autocomplete="off" placeholder="Ví dụ FT26315123456"></label>
-    <label>Số tiền trên sao kê <small>(để trống nếu đúng {{ tien.con_thieu|tien }})</small><input name="so_tien_nhan" type="number" min="1" step="1" inputmode="numeric"></label>
-  {% elif hd.ma == "hoan_tien" %}
-    <p class="ghi-chu-khach">Số tiền phải hoàn: <strong>{{ tien.phai_hoan|tien }}</strong>. Hoàn về đúng tài khoản hoặc ví khách đã dùng để trả.</p>
-    <label>Hoàn qua<select name="phuong_thuc_hoan"><option value="chuyen_khoan">Chuyển khoản</option><option value="tien_mat">Tiền mặt</option>{% if don.phuong_thuc_thanh_toan == "momo" %}<option value="momo" selected>Ví MoMo</option>{% endif %}</select></label>
-    <label>Mã giao dịch hoàn <small>(tùy chọn)</small><input name="ma_tham_chieu" maxlength="64" autocomplete="off"></label>
-  {% elif hd.ma == "da_thu_cod" %}
-    <p class="ghi-chu-khach">Người giao đã thu <strong>{{ cod_cho_doi_soat.so_tien|tien }}</strong> của khách. Bấm khi đã nhận đủ tiền người giao nộp lại.</p>
-    <label>Ghi chú <small>(tùy chọn)</small><input name="ly_do" maxlength="300" placeholder="Ví dụ: anh Nam nộp lúc 17:30"></label>
-  {% elif hd.ma == "giao_that_bai" %}
-    <div class="form-chinh" x-data="{ cachXuLy: '' }">
-    <label>Kết quả xử lý hàng
-      <select name="xu_ly_hang_giao" x-model="cachXuLy" required>
-        <option value="">Chọn sau khi đã kiểm tra</option>
-        <option value="hoan_kho">Đã kiểm hàng nguyên vẹn, đủ điều kiện nhập lại</option>
-        {% if duoc_huy_hang %}<option value="da_huy">Hàng hỏng, đã xử lý hủy</option>{% endif %}
-        <option value="that_lac">Đã xác nhận thất lạc</option>
-        <option value="theo_lo">Tình trạng khác nhau theo lô</option>
-      </select>
-    </label>
-    <p class="ghi-chu-khach">Chỉ chọn nhập lại sau khi hàng đã về kho và đủ điều kiện bán. Chờ đơn vị giao xác minh nếu tình trạng hàng chưa rõ.</p>
-    <fieldset x-show="cachXuLy === 'theo_lo'">
-      <legend>Đối chiếu đủ lượng đã xuất theo lô</legend>
-      {% for dong in cac_lo_da_xuat %}
-        <div class="khoi-lo-tra">
-          <strong>{{ dong.chi_tiet_phieu_ban.ten_thuoc_luc_ban }} · lô {{ dong.ton_kho.lo_thuoc.ma_lo_thuoc }} · đã xuất {{ dong.so_luong }}</strong>
-          <div class="luoi-so-luong-giao">
-            <label>Nhập lại<input name="hoan_kho_{{ dong.pk }}" type="number" min="0" max="{{ dong.so_luong }}" value="0"></label>
-            {% if duoc_huy_hang %}<label>Đã hủy<input name="da_huy_{{ dong.pk }}" type="number" min="0" max="{{ dong.so_luong }}" value="0"></label>{% endif %}
-            <label>Thất lạc<input name="that_lac_{{ dong.pk }}" type="number" min="0" max="{{ dong.so_luong }}" value="0"></label>
-          </div>
-        </div>
-      {% endfor %}
-    </fieldset>
-    </div>
-  {% elif hd.ma == "nhan_tai_quay" %}
-    {% if tien.con_thieu %}
-      <p class="ghi-chu-khach">Thu của khách: <strong>{{ tien.con_thieu|tien }}</strong>{% if tien.da_thu %} (đã chuyển trước {{ tien.da_thu|tien }}){% endif %}.</p>
-      <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
-    {% else %}
-      <p class="ghi-chu-khach">Khách đã trả đủ trước, không thu thêm.</p>
-    {% endif %}
+  {% if hd.can_ly_do %}<label>Lý do <small>(gửi cho khách)</small><input name="ly_do" required maxlength="300" placeholder="Ví dụ: khách gọi báo không đến nhận"></label>{% endif %}
+  {% if hd.ma == "nhan_tai_quay" %}
+    <ol class="cac-buoc-giao-don">
+      <li>Hỏi mã đơn hoặc số điện thoại, đối chiếu đúng <strong>{{ don.ma_don_hang }}</strong>.</li>
+      <li>Lấy thuốc theo danh sách, hệ thống xuất kho theo lô hết hạn trước (FEFO).</li>
+      <li>Thu <strong>{{ don.tong_thanh_toan|tien }}</strong> rồi bấm nút bên dưới.</li>
+    </ol>
+    <label>Khách trả bằng<select name="phuong_thuc_thanh_toan">{% for ma, nhan in phuong_thuc_tai_quay %}<option value="{{ ma }}">{{ nhan }}</option>{% endfor %}</select></label>
     {% if co_ke_don %}
       <fieldset class="nhom-don-thuoc">
         <legend>Đơn thuốc của bác sĩ</legend>
@@ -57,5 +20,5 @@
       </fieldset>
     {% endif %}
   {% endif %}
-  <button class="nut{% if hd.ma == 'huy' or hd.ma == 'giao_that_bai' %} nut-phu{% endif %}" type="submit">{{ hd.nhan }}</button>
+  <button class="nut{% if hd.phu %} nut-phu{% endif %}" type="submit">{% if hd.ma == "nhan_tai_quay" %}<i data-lucide="check-check" aria-hidden="true"></i>{% endif %}{{ hd.nhan }}</button>
 </form>

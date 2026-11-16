@@ -11,26 +11,19 @@ from ..forms import XuLyDonForm, YeuCauXuatHoaDonForm
 from ..hoa_don import du_lieu_hoa_don
 from ..models import TRANG_THAI_DON, PhieuBan, YeuCauXuatHoaDon
 from ..selectors import lay_chi_tiet_don, lay_don, lay_lich_su
-from ..services.don_hang import huy_don, xac_nhan_da_giao
-from ..services.tra_hang import han_tra_hang, ly_do_khong_tra_duoc
+from ..services.don_hang import huy_don
 from ..services.trang_thai import CHUYEN_HOP_LE, KHACH
 from ..services.xuat_hoa_don import gui_yeu_cau_xuat_hoa_don, ly_do_khong_yeu_cau_duoc
 from .phieu_ban import tra_pdf
 
 NHOM_TRANG_THAI = {
     "": ("Tất cả", None),
-    "dang_xu_ly": (
-        "Đang xử lý",
-        ["cho_thanh_toan", "cho_xac_nhan", "dang_giu", "dang_chuan_bi", "dang_giao"],
-    ),
-    "hoan_thanh": ("Hoàn thành", ["hoan_thanh"]),
-    "da_huy": ("Đã hủy, hết hạn", ["da_huy", "het_han", "giao_that_bai"]),
+    "dang_giu": ("Đang giữ hàng", ["dang_giu"]),
+    "hoan_thanh": ("Đã nhận", ["hoan_thanh"]),
+    "da_huy": ("Đã hủy, hết hạn", ["da_huy", "het_han"]),
 }
-# Các bước hiển thị trên thanh tiến trình theo hình thức nhận.
-BUOC = {
-    "giao_hang": ["cho_xac_nhan", "dang_chuan_bi", "dang_giao", "hoan_thanh"],
-    "nhan_tai_quay": ["dang_giu", "hoan_thanh"],
-}
+# Các bước hiển thị trên thanh tiến trình của đơn đặt giữ.
+BUOC = ["dang_giu", "hoan_thanh"]
 
 
 @yeu_cau_vai_tro("khach_hang")
@@ -55,13 +48,10 @@ def danh_sach(request):
 def tien_trinh(don):
     """Danh sách (nhãn, đã qua, hiện tại) cho thanh tiến trình của đơn."""
     nhan = dict(TRANG_THAI_DON)
-    cac_buoc = BUOC[don.hinh_thuc_nhan]
-    if don.trang_thai == "cho_thanh_toan":
-        cac_buoc = ["cho_thanh_toan", *cac_buoc]
-    if don.trang_thai not in cac_buoc:
+    if don.trang_thai not in BUOC:
         return []
-    vi_tri = cac_buoc.index(don.trang_thai)
-    return [(nhan[buoc], so <= vi_tri, so == vi_tri) for so, buoc in enumerate(cac_buoc)]
+    vi_tri = BUOC.index(don.trang_thai)
+    return [(nhan[buoc], so <= vi_tri, so == vi_tri) for so, buoc in enumerate(BUOC)]
 
 
 @yeu_cau_vai_tro("khach_hang")
@@ -107,30 +97,11 @@ def _trang_chi_tiet(request, don, form_hoa_don_cong_ty=None):
             "duoc_huy": not don.qua_han_giu
             and KHACH in CHUYEN_HOP_LE.get((don.trang_thai, "da_huy"), set()),
             "form_huy": XuLyDonForm(),
-            "cac_yeu_cau_tra": don.cac_yeu_cau_tra_hang.prefetch_related("cac_anh"),
-            "duoc_xac_nhan_nhan_hang": don.trang_thai == "dang_giao",
-            "duoc_tra_hang": ly_do_khong_tra_duoc(don) is None,
-            "han_tra_hang": han_tra_hang(don),
+            "phieu_ban": PhieuBan.objects.filter(don_hang=don).first(),
             "co_hoa_don": don.trang_thai == "hoan_thanh"
             and PhieuBan.objects.filter(don_hang=don).exists(),
         },
     )
-
-
-@yeu_cau_vai_tro("khach_hang")
-@require_POST
-def da_nhan_hang(request, ma):
-    """Khách bấm "Đã nhận được hàng": đơn hoàn tất, bắt đầu tính hạn trả hàng 7 ngày."""
-    don = get_object_or_404(lay_don(request.user), pk=ma)
-    try:
-        xac_nhan_da_giao(request.user, don)
-    except ValidationError as loi:
-        messages.error(request, " ".join(loi.messages))
-    else:
-        messages.success(
-            request, "Cảm ơn bạn đã xác nhận. Nếu thuốc có vấn đề, bạn có thể yêu cầu trả hàng."
-        )
-    return redirect("ban_hang:khach_don_hang_chi_tiet", ma=don.pk)
 
 
 @yeu_cau_vai_tro("khach_hang")

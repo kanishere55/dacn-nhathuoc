@@ -18,8 +18,8 @@ GOI_Y_VE_THUOC = (
     "Tôi đang mang thai, dùng được không?",
 )
 GOI_Y_VE_DON = (
-    "Khi nào tôi nhận được hàng?",
-    "Tôi muốn đổi giờ nhận hàng.",
+    "Tôi đến nhận muộn hơn được không?",
+    "Tôi nhờ người khác nhận giúp được không?",
     "Tôi muốn thêm hoặc bớt thuốc trong đơn.",
 )
 GOI_Y_CHUNG = (

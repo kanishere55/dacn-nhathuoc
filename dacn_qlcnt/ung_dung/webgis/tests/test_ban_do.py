@@ -103,7 +103,9 @@ class WebGISTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(phan_hoi.status_code, 201)
-        self.assertContains(self.client.get(phan_hoi.json()["duong_dan"]), "thanh toán")
+        self.assertContains(
+            self.client.get(phan_hoi.json()["duong_dan"]), "Trả tại quầy khi nhận hàng"
+        )
 
 
 class ChiNhanhGanTests(TestCase):

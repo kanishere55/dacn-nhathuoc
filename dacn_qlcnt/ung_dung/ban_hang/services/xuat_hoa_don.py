@@ -5,8 +5,9 @@ quan thuế được nhân viên phát hành trên phần mềm hóa đơn của
 số hóa đơn vào đây để khách tra cứu.
 
 Thời điểm lập hóa đơn bán hàng là lúc chuyển giao hàng hóa (Nghị định 123/2020/NĐ-CP Điều 9,
-sửa đổi bởi Nghị định 70/2025/NĐ-CP), nên thông tin công ty nhận từ lúc đặt đơn. Đơn đã nhận
-hàng còn gửi được tới hết tháng nhận hàng để nhà thuốc kịp lập hoặc điều chỉnh trong kỳ.
+sửa đổi bởi Nghị định 70/2025/NĐ-CP), tức lúc khách nhận thuốc tại quầy, nên thông tin công ty
+nhận từ lúc đặt giữ. Đơn đã nhận hàng còn gửi được tới hết tháng nhận hàng để nhà thuốc kịp lập
+hoặc điều chỉnh trong kỳ.
 """
 
 import re
@@ -19,11 +20,27 @@ from django.utils import timezone
 from ung_dung.chung.permissions import kiem_tra_quyen_ghi_chi_nhanh, kiem_tra_vai_tro
 from ung_dung.chung.van_ban import cat_khoang_trang
 
-from ..models import KY_HIEU_HOA_DON, SO_HOA_DON, TRANG_THAI_GIU, DonHang, YeuCauXuatHoaDon
+from ..models import (
+    KY_HIEU_HOA_DON,
+    SO_HOA_DON,
+    TRANG_THAI_GIU,
+    DonHang,
+    LichSuDonHang,
+    YeuCauXuatHoaDon,
+)
 from .thong_bao_don import bao_xuat_hoa_don
-from .tra_hang import thoi_diem_hoan_thanh
 
-TRANG_THAI_KHONG_NHAN = ("da_huy", "het_han", "giao_that_bai")
+TRANG_THAI_KHONG_NHAN = ("da_huy", "het_han")
+
+
+def thoi_diem_hoan_thanh(don):
+    """Lúc khách nhận hàng tại quầy (đơn chuyển hoàn thành); None khi chưa nhận."""
+    lich_su = (
+        LichSuDonHang.objects.filter(don_hang=don, den_trang_thai="hoan_thanh")
+        .order_by("-thoi_diem_tao")
+        .first()
+    )
+    return lich_su.thoi_diem_tao if lich_su else None
 
 
 def han_yeu_cau_hoa_don(don):
@@ -39,7 +56,7 @@ def han_yeu_cau_hoa_don(don):
 def ly_do_khong_yeu_cau_duoc(don):
     """Câu giải thích vì sao đơn chưa gửi được yêu cầu hóa đơn công ty; None nếu được gửi."""
     if don.trang_thai in TRANG_THAI_KHONG_NHAN:
-        return "Đơn đã hủy hoặc không giao được nên không xuất hóa đơn."
+        return "Đơn đã hủy hoặc hết hạn giữ nên không xuất hóa đơn."
     if don.trang_thai in TRANG_THAI_GIU and don.thoi_diem_het_giu <= timezone.now():
         return "Đơn đã quá hạn giữ hàng."
     han = han_yeu_cau_hoa_don(don)
@@ -112,7 +129,7 @@ def xu_ly_yeu_cau_xuat_hoa_don(
                 f"Hóa đơn {ky_hieu} số {so} đã được ghi cho đơn {trung.don_hang.ma_don_hang}."
             )
         if yeu_cau.don_hang.trang_thai in TRANG_THAI_KHONG_NHAN:
-            raise ValidationError("Đơn đã hủy hoặc không giao được, không ghi hóa đơn cho đơn này.")
+            raise ValidationError("Đơn đã hủy hoặc hết hạn giữ, không ghi hóa đơn cho đơn này.")
         if yeu_cau.don_hang.trang_thai != "hoan_thanh":
             raise ValidationError("Chờ xác nhận khách đã nhận hàng trước khi ghi hóa đơn đã xuất.")
         yeu_cau.ky_hieu_hoa_don, yeu_cau.so_hoa_don = ky_hieu, so

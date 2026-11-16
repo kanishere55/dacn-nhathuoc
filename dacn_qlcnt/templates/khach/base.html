@@ -32,8 +32,7 @@
               <div class="hop-menu-nguoi-dung">
                 <p class="chu-menu"><strong>{{ user.ho_ten|default:user.ten_dang_nhap }}</strong>{% if user.email %}<small>{{ user.email }}</small>{% endif %}</p>
                 <a href="{% url 'tai_khoan:cua_toi' %}"><i data-lucide="layout-grid" aria-hidden="true"></i>Tài khoản của tôi</a>
-                <a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}"><i data-lucide="package" aria-hidden="true"></i>Đơn của tôi</a>
-                <a href="{% url 'tai_khoan:so_dia_chi' %}"><i data-lucide="map-pin" aria-hidden="true"></i>Sổ địa chỉ</a>
+                <a href="{% url 'ban_hang:khach_don_hang_danh_sach' %}"><i data-lucide="package" aria-hidden="true"></i>Đơn đặt giữ</a>
                 <a href="{% url 'tro_chuyen:khach_danh_sach' %}"><i data-lucide="messages-square" aria-hidden="true"></i>Hỏi dược sĩ<span class="huy-hieu" data-dem-chat{% if not so_tin_chua_doc %} hidden{% endif %}>{{ so_tin_chua_doc }}</span></a>
                 <form method="post" action="{% url 'tai_khoan:dang_xuat' %}">{% csrf_token %}<button type="submit"><i data-lucide="log-out" aria-hidden="true"></i>Đăng xuất</button></form>
               </div>

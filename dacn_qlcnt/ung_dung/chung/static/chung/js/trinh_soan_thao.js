@@ -47,9 +47,16 @@
     Quill.register(AnhNoiDung, true);
   };
 
-  const layCsrf = () =>
-    document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
-    document.cookie.split('; ').find((c) => c.startsWith('csrftoken='))?.split('=')[1] || '';
+  // Mã CSRF lấy từ form hoặc hx-headers của trang, không phụ thuộc tên cookie.
+  const layCsrf = () => {
+    const tuForm = document.querySelector('input[name=csrfmiddlewaretoken]')?.value;
+    if (tuForm) return tuForm;
+    try {
+      return JSON.parse(document.body.getAttribute('hx-headers') || '{}')['X-CSRFToken'] || '';
+    } catch {
+      return '';
+    }
+  };
 
   const taiAnhLen = async (url, tep) => {
     const du = new FormData();

@@ -45,8 +45,8 @@ def _so(luong):
 def phan_bo_fefo(chi_nhanh, thuoc, so_luong, *, bo_qua_don=None, con_han_den=None):
     """Chọn lô theo FEFO (hết hạn trước xuất trước) cho `so_luong` đơn vị cơ sở.
 
-    `con_han_den`: chỉ lấy lô còn hạn tới ngày này (giữ hàng tới hết hạn giữ, đơn giao cần
-    lô xa hạn). Tổng lấy được không vượt lượng bán được của mọi lô trừ phần giữ mồ côi của
+    `con_han_den`: chỉ lấy lô còn hạn tới ngày này (giữ hàng tới hết hạn giữ của đơn đặt
+    giữ). Tổng lấy được không vượt lượng bán được của mọi lô trừ phần giữ mồ côi của
     đơn khác (xem lay_giu_mo_coi), để không lấy mất hàng đã hứa.
     """
     if isinstance(so_luong, bool) or not isinstance(so_luong, int) or so_luong <= 0:

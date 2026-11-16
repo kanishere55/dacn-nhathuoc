@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% block tieu_de %}Đơn {{ don.ma_don_hang }} · Khu quản lý{% endblock %}
-{% block vi_tri %}Đơn hàng{% endblock %}
+{% block vi_tri %}Đơn đặt giữ{% endblock %}
 {% block noi_dung %}
   <header class="tieu-de-trang dau-chi-tiet-don">
     <div>
-      <p class="chu-dan"><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_danh_sach' %}">ĐƠN HÀNG</a></p>
+      <p class="chu-dan"><a class="duong-dan-noi-dung" href="{% url 'ban_hang:don_hang_danh_sach' %}">ĐƠN ĐẶT GIỮ</a></p>
       <h1>{{ don.ma_don_hang }}</h1>
-      <p>{{ don.get_hinh_thuc_nhan_display }} · đặt lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }} · {{ don.chi_nhanh.ten_chi_nhanh }}</p>
+      <p>Nhận tại {{ don.chi_nhanh.ten_chi_nhanh }} · đặt lúc {{ don.thoi_diem_tao|date:"H:i d/m/Y" }}</p>
     </div>
     {% include "ban_hang/_nhan_don.html" %}
   </header>
   {% if tien_trinh %}
     <section class="khoi-trang">{% include "ban_hang/_tien_trinh.html" %}
       {% if han %}
-        <p class="han-xu-ly muc-han-{{ han.muc }}" role="status"><i data-lucide="{% if han.muc == 'qua_han' %}alarm-clock-off{% else %}timer{% endif %}" aria-hidden="true"></i><span>Hạn {% if don.trang_thai == "dang_giu" %}giữ hàng{% elif don.trang_thai == "cho_thanh_toan" %}thanh toán{% else %}xác nhận{% endif %} {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}: <strong>{{ han.chu }}</strong>. {{ han.hau_qua }}</span></p>
-        {% if han.muc == "qua_han" and don.trang_thai == "dang_giu" %}<p class="ghi-chu-khach">Hàng của đơn đã được nhả. Nếu khách vẫn muốn mua, <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_tao' %}">lập phiếu bán tại quầy</a> theo giá hiện tại.</p>{% endif %}
+        <p class="han-xu-ly muc-han-{{ han.muc }}" role="status"><i data-lucide="{% if han.muc == 'qua_han' %}alarm-clock-off{% else %}timer{% endif %}" aria-hidden="true"></i><span>Giữ hàng đến {{ don.thoi_diem_het_giu|date:"H:i d/m/Y" }}: <strong>{{ han.chu }}</strong>. {{ han.hau_qua }}</span></p>
+        {% if han.muc == "qua_han" %}<p class="ghi-chu-khach">Hàng của đơn đã được nhả. Nếu khách vẫn muốn mua, <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_tao' %}">lập phiếu bán tại quầy</a> theo giá hiện tại.</p>{% endif %}
       {% endif %}
     </section>
   {% else %}
@@ -23,7 +23,7 @@
   <div class="luoi-chi-tiet-quan-ly">
     <div>
       <section class="khoi-trang khung-bang bang-the-di-dong" aria-labelledby="dong-don">
-        <h2 id="dong-don">Sản phẩm</h2>
+        <h2 id="dong-don">{% if don.trang_thai == "dang_giu" %}Thuốc cần lấy cho khách{% else %}Thuốc trong đơn{% endif %}</h2>
         <table role="table" aria-labelledby="dong-don">
           <thead role="rowgroup"><tr role="row"><th scope="col">Thuốc</th><th scope="col">Số lượng</th><th scope="col" class="o-tien">Đơn giá</th><th scope="col" class="o-tien">Thành tiền</th></tr></thead>
           <tbody role="rowgroup">
@@ -51,20 +51,14 @@
           <ul>
             {% for muc in canh_bao_giu %}
               <li><strong>{{ muc.thuoc.ten_thuoc }}</strong>: cần {{ muc.can }}, lô {% for ma, ly_do in muc.cac_lo_hong %}{{ ma }} ({{ ly_do }}){% if not forloop.last %}, {% endif %}{% endfor %}.
-                {% if muc.du %}Chi nhánh còn {{ muc.con_ban_duoc }} ở lô khác, hệ thống sẽ dời phần giữ khi xử lý đơn.{% else %}Chi nhánh chỉ còn bán được {{ muc.con_ban_duoc }}: hãy liên hệ khách, điều chuyển hoặc nhập thêm.{% endif %}</li>
+                {% if muc.du %}Chi nhánh còn {{ muc.con_ban_duoc }} ở lô khác, hệ thống sẽ dời phần giữ khi giao đơn.{% else %}Chi nhánh chỉ còn bán được {{ muc.con_ban_duoc }}: hãy liên hệ khách, điều chuyển hoặc nhập thêm.{% endif %}</li>
             {% endfor %}
           </ul>
         </section>
       {% endif %}
-      {% if tien.phai_hoan and not duoc_hoan_tien %}
-        <p class="thong-diep-don thong-diep-canh-bao" role="status"><i data-lucide="hand-coins" aria-hidden="true"></i>Đơn đang chờ hoàn {{ tien.phai_hoan|tien }} cho khách. Hãy báo quản lý chi nhánh để hoàn tiền.</p>
-      {% endif %}
       {% if cac_hanh_dong %}
         <section class="khoi-trang khoi-xu-ly-don" aria-labelledby="xu-ly-don">
-          <h2 id="xu-ly-don">Việc cần làm</h2>
-          {% if han_doi_chieu_giao %}
-            <p class="ghi-chu-khach">{% if qua_han_doi_chieu %}<strong>Cần đối chiếu với người giao.</strong> {% endif %}Kiểm tra kết quả giao sau {{ han_doi_chieu_giao|date:"H:i d/m/Y" }} nếu khách chưa xác nhận. Chỉ hoàn tất khi đã giao thực tế{% if don.phuong_thuc_thanh_toan == "cod" %}. Xác nhận tiền COD riêng khi nhà thuốc đã nhận tiền{% endif %}.</p>
-          {% endif %}
+          <h2 id="xu-ly-don">Giao đơn tại quầy</h2>
           {% for hd in cac_hanh_dong %}{% if not hd.phu %}
             {% if hd.ma == "nhan_tai_quay" and co_ke_don and not duoc_ban_ke_don %}
               <p class="thong-diep-don thong-diep-canh-bao"><i data-lucide="shield-alert" aria-hidden="true"></i>Đơn có thuốc kê đơn: cần dược sĩ được giao quyền bán thuốc kê đơn kiểm tra đơn thuốc và giao hàng cho khách.</p>
@@ -74,7 +68,7 @@
           {% endif %}{% endfor %}
           {% if co_hanh_dong_phu %}
             <details class="hanh-dong-phu">
-              <summary>Hủy đơn hoặc báo sự cố</summary>
+              <summary>Khách không đến nhận hoặc muốn hủy?</summary>
               {% for hd in cac_hanh_dong %}{% if hd.phu %}{% include "ban_hang/_form_hanh_dong.html" %}{% endif %}{% endfor %}
             </details>
           {% endif %}
@@ -83,13 +77,7 @@
       <section class="khoi-trang" aria-labelledby="khach-don">
         <h2 id="khach-don">Khách hàng</h2>
         <p><strong>{{ don.khach_hang.ho_ten|default:don.khach_hang.ten_dang_nhap }}</strong></p>
-        {% if don.khach_hang.so_dien_thoai %}<p>{{ don.khach_hang.so_dien_thoai }}</p>{% endif %}
-        {% if don.la_giao_hang %}
-          <h3>Giao tới</h3>
-          <p>{{ don.ten_nguoi_nhan }} · <a href="tel:{{ don.so_dien_thoai_nhan }}">{{ don.so_dien_thoai_nhan }}</a></p>
-          <p>{{ don.dia_chi_giao }}</p>
-          <p><a class="duong-dan-noi-dung" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat={{ don.vi_tri_giao.y }}&amp;mlon={{ don.vi_tri_giao.x }}#map=18/{{ don.vi_tri_giao.y }}/{{ don.vi_tri_giao.x }}">Mở vị trí trên bản đồ</a></p>
-        {% endif %}
+        {% if don.khach_hang.so_dien_thoai %}<p><a class="duong-dan-noi-dung" href="tel:{{ don.khach_hang.so_dien_thoai }}">{{ don.khach_hang.so_dien_thoai }}</a></p>{% endif %}
         {% if don.ghi_chu_khach %}<p><em>Lời nhắn: {{ don.ghi_chu_khach }}</em></p>{% endif %}
         {% if duoc_chat %}
           <p class="form-nhan-khach"><a class="nut nut-phu nut-nho" href="{% url 'tro_chuyen:tu_don_hang' don.pk %}" title="{% if phong_chat %}Mở cuộc trò chuyện với khách, kèm thẻ đơn này{% else %}Gửi tin đầu tiên cho khách, kèm thẻ đơn này{% endif %}"><i data-lucide="messages-square" aria-hidden="true"></i>Nhắn khách về đơn này{% if phong_chat.so_chua_doc %}<span class="so-chua-doc">{{ phong_chat.so_chua_doc }}</span>{% endif %}</a></p>
@@ -97,27 +85,6 @@
         {% if phieu_ban %}<p>Phiếu bán: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_chi_tiet' phieu_ban.pk %}">{{ phieu_ban.ma_phieu_ban }}</a> · <a class="duong-dan-noi-dung" href="{% url 'ban_hang:phieu_ban_in' phieu_ban.pk %}">In phiếu bán hàng</a></p>{% endif %}
         {% if yeu_cau_hoa_don %}<p>Hóa đơn công ty: <a class="duong-dan-noi-dung" href="{% url 'ban_hang:xuat_hoa_don_danh_sach' %}">{{ yeu_cau_hoa_don.ten_cong_ty }}</a> · {{ yeu_cau_hoa_don.get_trang_thai_display }}{% if yeu_cau_hoa_don.so_hoa_don %} · {{ yeu_cau_hoa_don.ky_hieu_hoa_don }} số {{ yeu_cau_hoa_don.so_hoa_don }}{% endif %}</p>{% endif %}
       </section>
-      {% if cac_giao_dich or tien.phai_thu %}
-        <section class="khoi-trang" aria-labelledby="thanh-toan-don">
-          <h2 id="thanh-toan-don">Tiền của đơn</h2>
-          <dl class="doi-soat-tien">
-            <div><dt>Phải thu</dt><dd>{{ tien.phai_thu|tien }}</dd></div>
-            <div><dt>Đã thu</dt><dd>{{ tien.da_thu|tien }}</dd></div>
-            {% if tien.con_thieu and tien.da_thu %}<div class="con-thieu"><dt>Còn thiếu</dt><dd>{{ tien.con_thieu|tien }}</dd></div>{% endif %}
-            {% if tien.phai_hoan %}<div class="phai-hoan"><dt>Phải hoàn cho khách</dt><dd>{{ tien.phai_hoan|tien }}</dd></div>{% endif %}
-            {% if cod_cho_doi_soat %}<div class="cho-doi-soat"><dt>COD chờ đối soát</dt><dd>{{ cod_cho_doi_soat.so_tien|tien }}</dd></div>{% endif %}
-          </dl>
-          {% if tien.con_thieu and tien.da_thu and don.trang_thai == "cho_thanh_toan" %}<p class="ghi-chu-khach">Khách chuyển chưa đủ. Liên hệ khách chuyển thêm {{ tien.con_thieu|tien }} đúng nội dung {{ don.ma_don_hang }} trước hạn; quá hạn hệ thống hủy đơn và khoản đã nhận chuyển sang chờ hoàn.</p>{% endif %}
-          <ul class="danh-sach-giao-dich">
-            {% for gd in cac_giao_dich %}
-              <li>
-                <span><strong>{% if gd.loai_giao_dich == "hoan" %}Hoàn {% endif %}{{ gd.so_tien|tien }}</strong> · {{ gd.get_phuong_thuc_display }}<small>{{ gd.ma_giao_dich_thanh_toan }}{% if gd.ma_tham_chieu %} · {{ gd.ma_tham_chieu }}{% endif %}{% if gd.ghi_chu %} · {{ gd.ghi_chu }}{% endif %}</small></span>
-                <span class="nhan-giao-dich nhan-{{ gd.trang_thai }}">{{ gd.get_trang_thai_display }}</span>
-              </li>
-            {% endfor %}
-          </ul>
-        </section>
-      {% endif %}
     </div>
   </div>
 {% endblock %}

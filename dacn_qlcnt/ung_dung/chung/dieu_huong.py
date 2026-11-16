@@ -27,13 +27,12 @@ MUC_MENU = (
     ("ban_hang:phieu_ban_danh_sach", "Bán tại quầy", "receipt", "phieu_ban.xem", "Bán hàng", False),
     (
         "ban_hang:don_hang_danh_sach",
-        "Đơn hàng",
-        "shopping-basket",
+        "Đơn đặt giữ",
+        "hand-heart",
         "don_hang.xem",
         "Bán hàng",
         False,
     ),
-    ("ban_hang:tra_hang_danh_sach", "Trả hàng", "undo-2", "tra_hang.xem", "Bán hàng", False),
     (
         "ban_hang:xuat_hoa_don_danh_sach",
         "Hóa đơn công ty",

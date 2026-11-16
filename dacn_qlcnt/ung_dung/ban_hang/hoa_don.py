@@ -2,7 +2,7 @@
 
 Đây là chứng từ bán hàng nội bộ của nhà thuốc, không phải hóa đơn điện tử. Theo Nghị định
 123/2020/NĐ-CP (sửa đổi bởi Nghị định 70/2025/NĐ-CP), người bán lập hóa đơn cho mỗi lần bán
-tại thời điểm giao hàng, không chờ khách yêu cầu; hóa đơn điện tử phát hành trên phần mềm
+tại thời điểm giao hàng cho khách (tại quầy), không chờ khách yêu cầu; hóa đơn điện tử phát hành trên phần mềm
 hóa đơn của nhà thuốc. Khi đơn có hóa đơn công ty đã xuất, chứng từ ghi ký hiệu và số.
 """
 
@@ -15,10 +15,9 @@ from django.db.models import Prefetch
 from django.utils import timezone
 
 from ung_dung.chung.phong_pdf import dang_ky_phong_pdf
-from ung_dung.thanh_toan.models import GiaoDichThanhToan
 from ung_dung.thong_bao.services import ten_thuong_hieu
 
-from .models import ChiTietPhieuBan, PhanBoPhieuBan, PhieuBan, PhieuHoanKho, YeuCauXuatHoaDon
+from .models import ChiTietPhieuBan, PhanBoPhieuBan, PhieuBan, YeuCauXuatHoaDon
 
 CHU_SO = ("không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
 TEN_NHOM = ("", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ")
@@ -123,40 +122,19 @@ def du_lieu_hoa_don(phieu):
             }
         )
     don = phieu.don_hang
-    giao_dich = GiaoDichThanhToan.objects.filter(trang_thai="thanh_cong")
-    giao_dich = giao_dich.filter(don_hang=don) if don else giao_dich.filter(phieu_ban=phieu)
     if don:
         khach = {
-            "ten": don.ten_nguoi_nhan or don.khach_hang.ho_ten or don.khach_hang.ten_dang_nhap,
-            "so_dien_thoai": don.so_dien_thoai_nhan or don.khach_hang.so_dien_thoai,
-            "dia_chi": don.dia_chi_giao,
+            "ten": don.khach_hang.ho_ten or don.khach_hang.ten_dang_nhap,
+            "so_dien_thoai": don.khach_hang.so_dien_thoai,
         }
         tong = {
             "tien_hang": don.tien_hang,
             "giam_gia": don.giam_gia_thanh_vien,
-            "phi_giao": don.phi_giao_hang,
-            "khoang_cach_met": don.khoang_cach_met,
             "tong": don.tong_thanh_toan,
         }
     else:
-        khach = {"ten": "Khách mua tại quầy", "so_dien_thoai": "", "dia_chi": ""}
-        tong = {
-            "tien_hang": tien_hang,
-            "giam_gia": 0,
-            "phi_giao": 0,
-            "khoang_cach_met": None,
-            "tong": tien_hang,
-        }
-    cac_khoan = list(giao_dich.order_by("thoi_diem_hoan_tat", "pk"))
-    da_thu = sum((k.so_tien for k in cac_khoan if k.loai_giao_dich == "thu"), Decimal(0))
-    da_hoan = sum((k.so_tien for k in cac_khoan if k.loai_giao_dich == "hoan"), Decimal(0))
-    cod_cho_doi_soat = (
-        don.cac_giao_dich.filter(loai_giao_dich="thu", phuong_thuc="cod", trang_thai="cho")
-        .values_list("so_tien", flat=True)
-        .first()
-        if don and don.trang_thai == "hoan_thanh"
-        else None
-    )
+        khach = {"ten": "Khách mua tại quầy", "so_dien_thoai": ""}
+        tong = {"tien_hang": tien_hang, "giam_gia": 0, "tong": tien_hang}
     return {
         "phieu": phieu,
         "don": don,
@@ -169,15 +147,11 @@ def du_lieu_hoa_don(phieu):
         "cac_dong": cac_dong,
         "tong": tong,
         "bang_chu": doc_tien(tong["tong"]),
-        "cac_khoan": cac_khoan,
-        "con_phai_thu": (
-            Decimal(0)
-            if da_hoan or (don and don.trang_thai in ("da_huy", "het_han", "giao_that_bai"))
-            else max(tong["tong"] - da_thu - (cod_cho_doi_soat or 0), Decimal(0))
-        ),
-        "cod_cho_doi_soat": cod_cho_doi_soat,
-        "da_hoan": da_hoan,
-        "da_hoan_kho": PhieuHoanKho.objects.filter(phieu_ban=phieu).exists(),
+        # Khách trả đủ tại quầy khi lập phiếu; phiếu ghi cách trả và người nhận tiền.
+        "da_thu": {
+            "so_tien": tong["tong"],
+            "phuong_thuc": phieu.get_phuong_thuc_thanh_toan_display(),
+        },
         "ghi_chu_phap_ly": GHI_CHU_PHAP_LY,
         "tieu_de": TIEU_DE_CHUNG_TU,
         "hoa_don_cong_ty": (
@@ -273,10 +247,8 @@ def ve_pdf(du_lieu):
     dong_khach = [f"Khách hàng: {khach['ten']}"]
     if khach["so_dien_thoai"]:
         dong_khach.append(f"Điện thoại: {khach['so_dien_thoai']}")
-    if khach["dia_chi"]:
-        dong_khach.append(f"Giao đến: {khach['dia_chi']}")
     if du_lieu["don"]:
-        dong_khach.append(f"Đơn hàng: {du_lieu['don'].ma_don_hang}")
+        dong_khach.append(f"Đơn đặt giữ: {du_lieu['don'].ma_don_hang}")
     dong_khach.append(f"Người bán: {du_lieu['nguoi_ban']}")
 
     hang = [
@@ -328,8 +300,6 @@ def ve_pdf(du_lieu):
     cac_tong = [[p("Tiền hàng"), p(_tien(tong["tien_hang"]), phai)]]
     if tong["giam_gia"]:
         cac_tong.append([p("Ưu đãi thành viên"), p("-" + _tien(tong["giam_gia"]), phai)])
-    if du_lieu["don"] and du_lieu["don"].la_giao_hang:
-        cac_tong.append([p("Phí giao hàng"), p(_tien(tong["phi_giao"]), phai)])
     cac_tong.append([p("Tổng thanh toán", dam), p(_tien(tong["tong"]), phai_dam)])
     bang_tong = Table(cac_tong, colWidths=[rong * 0.22, rong * 0.2], hAlign="RIGHT")
     bang_tong.setStyle(
@@ -353,19 +323,14 @@ def ve_pdf(du_lieu):
         p(f"Bằng chữ: {du_lieu['bang_chu']}.", dam),
         Spacer(1, 3 * mm),
     ]
-    for khoan in du_lieu["cac_khoan"]:
-        nhan = "Đã hoàn" if khoan.loai_giao_dich == "hoan" else "Đã thu"
-        noi_dung.append(
-            p(
-                f"{nhan} {_tien(khoan.so_tien)} · {khoan.get_phuong_thuc_display()} · "
-                f"{timezone.localtime(khoan.thoi_diem_hoan_tat):%H:%M %d/%m/%Y}",
-                nho,
-            )
+    da_thu = du_lieu["da_thu"]
+    noi_dung.append(
+        p(
+            f"Đã thu tại quầy {_tien(da_thu['so_tien'])} · {da_thu['phuong_thuc']} · "
+            f"{du_lieu['thoi_diem']:%H:%M %d/%m/%Y}",
+            nho,
         )
-    if du_lieu["con_phai_thu"]:
-        noi_dung.append(p(f"Còn phải thu: {_tien(du_lieu['con_phai_thu'])}", dam))
-    if du_lieu["cod_cho_doi_soat"]:
-        noi_dung.append(p(f"Thu hộ khi giao: {_tien(du_lieu['cod_cho_doi_soat'])}.", nho))
+    )
     if phieu.da_kiem_tra_don_thuoc:
         noi_dung += [
             Spacer(1, 3 * mm),
@@ -391,8 +356,6 @@ def ve_pdf(du_lieu):
                 nho,
             ),
         ]
-    if du_lieu["da_hoan_kho"]:
-        noi_dung += [Spacer(1, 3 * mm), p("Phiếu bán đã hoàn kho do đơn bị hủy.", dam)]
     noi_dung += [
         Spacer(1, 8 * mm),
         p("Cảm ơn quý khách. Vui lòng đọc kỹ hướng dẫn sử dụng trước khi dùng thuốc.", chu),

@@ -29,7 +29,7 @@ def danh_sach(request):
             ("Khách trả bằng", "cach_tra", "chu"),
         ),
         nhan_tao="Bán hàng",
-        mo_ta="Phiếu bán tại quầy và phiếu xuất cho đơn hàng.",
+        mo_ta="Phiếu bán trực tiếp tại quầy và phiếu bán khi khách đến nhận đơn đặt giữ.",
     )
 
 

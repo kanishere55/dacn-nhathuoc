@@ -20,8 +20,6 @@ from .models import (
 NHOM_BIEN_DONG = (
     ("nhap", "Nhập", 1),
     ("chuyen_den", "Chuyển đến", 1),
-    ("hoan_kho", "Hoàn kho", 1),
-    ("nhap_lai", "Nhập lại (khách trả)", 1),
     ("dieu_chinh", "Điều chỉnh kiểm kê", 1),
     ("ban", "Bán", -1),
     ("chuyen_di", "Chuyển đi", -1),
@@ -32,7 +30,7 @@ DAU = {ma: dau for ma, _, dau in NHOM_BIEN_DONG}
 
 
 def cac_nguon_bien_dong():
-    from ung_dung.ban_hang.models import ChiTietPhieuHoanKho, PhanBoPhieuBan, PhanBoTraHang
+    from ung_dung.ban_hang.models import PhanBoPhieuBan
 
     luong = F("so_luong")
     return [
@@ -90,22 +88,6 @@ def cac_nguon_bien_dong():
             "phieu_xuat_huy__chi_nhanh",
             "lo_thuoc",
             "phieu_xuat_huy__thoi_diem_tao",
-            luong,
-        ),
-        (
-            "hoan_kho",
-            ChiTietPhieuHoanKho.objects.all(),
-            "phan_bo_phieu_ban__ton_kho__chi_nhanh",
-            "phan_bo_phieu_ban__ton_kho__lo_thuoc",
-            "phieu_hoan_kho__thoi_diem_tao",
-            luong,
-        ),
-        (
-            "nhap_lai",
-            PhanBoTraHang.objects.all(),
-            "phan_bo_phieu_ban__ton_kho__chi_nhanh",
-            "phan_bo_phieu_ban__ton_kho__lo_thuoc",
-            "chi_tiet_tra_hang__yeu_cau_tra_hang__thoi_diem_xu_ly",
             luong,
         ),
     ]

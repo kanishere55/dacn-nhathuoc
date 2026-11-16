@@ -1,6 +1,7 @@
 import re
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
@@ -227,7 +228,7 @@ class KhoiPhucTests(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             gui = trinh_duyet.post(
                 duong_dan,
-                {"csrfmiddlewaretoken": xem.cookies["csrftoken"].value},
+                {"csrfmiddlewaretoken": xem.cookies[settings.CSRF_COOKIE_NAME].value},
                 HTTP_ORIGIN="http://testserver",
             )
         self.assertNotEqual(gui.status_code, 403)

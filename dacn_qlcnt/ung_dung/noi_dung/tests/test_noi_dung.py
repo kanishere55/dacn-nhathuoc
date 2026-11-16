@@ -69,9 +69,9 @@ class NoiDungTests(TestCase):
 
     def test_trang_chinh_sach_va_thong_tin_cua_hang(self):
         TrangNoiDung.objects.create(
-            duong_dan_trang="chinh-sach-doi-tra",
-            tieu_de="Chính sách đổi trả",
-            noi_dung_trang="<p>Trong <strong>7 ngày</strong></p>",
+            duong_dan_trang="huong-dan-dat-giu",
+            tieu_de="Hướng dẫn đặt giữ",
+            noi_dung_trang="<p>Giữ hàng <strong>24 giờ</strong></p>",
         )
         ThongTinCuaHang.objects.create(
             ten_thuong_hieu="Nhà thuốc Thử",
@@ -80,16 +80,16 @@ class NoiDungTests(TestCase):
             dia_chi_tru_so="TP.HCM",
             gio_lam_viec="07:00–22:00",
         )
-        trang = self.client.get(reverse("noi_dung:trang", args=["chinh-sach-doi-tra"]))
-        self.assertContains(trang, "<strong>7 ngày</strong>", html=True)
+        trang = self.client.get(reverse("noi_dung:trang", args=["huong-dan-dat-giu"]))
+        self.assertContains(trang, "<strong>24 giờ</strong>", html=True)
         self.assertContains(trang, "Nhà thuốc Thử")
         self.assertContains(trang, "02839000000")
         self.client.force_login(self.d.admin)
         phan_hoi = self.client.post(
             reverse("noi_dung:trang_sua", args=[TrangNoiDung.objects.get().pk]),
             {
-                "tieu_de": "Đổi trả",
-                "duong_dan_trang": "chinh-sach-doi-tra",
+                "tieu_de": "Đặt giữ",
+                "duong_dan_trang": "huong-dan-dat-giu",
                 "noi_dung_trang": '<p onclick="x()">Mới</p><script>a</script>',
                 "thu_tu": 0,
             },
@@ -99,5 +99,5 @@ class NoiDungTests(TestCase):
         self.assertEqual((trang_nd.noi_dung_trang, trang_nd.dang_hien_thi), ("<p>Mới</p>", False))
         self.client.logout()
         self.assertEqual(
-            self.client.get(reverse("noi_dung:trang", args=["chinh-sach-doi-tra"])).status_code, 404
+            self.client.get(reverse("noi_dung:trang", args=["huong-dan-dat-giu"])).status_code, 404
         )

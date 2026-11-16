@@ -25,41 +25,25 @@ TIEN = DecimalField(max_digits=20, decimal_places=4)
 
 
 def chi_tieu_12_thang(khach):
-    """Tiền khách thực trả cho thuốc không kê đơn ở đơn hoàn thành trong 365 ngày, trừ hàng trả.
+    """Tiền khách thực trả cho thuốc không kê đơn ở đơn đặt giữ đã nhận trong 365 ngày.
 
-    Mỗi dòng tính theo giá sau khuyến mãi trừ phần ưu đãi thành viên phân bổ cho dòng; phần
-    đã hoàn của các dòng đó (yêu cầu trả hàng đã hoàn tiền) được trừ theo tỷ lệ số lượng.
+    Mỗi dòng tính theo giá sau khuyến mãi trừ phần ưu đãi thành viên phân bổ cho dòng.
     """
-    from .models import ChiTietDonHang, ChiTietTraHang
+    from .models import ChiTietDonHang
 
     tu = timezone.now() - timedelta(days=365)
-    cac_dong = ChiTietDonHang.objects.filter(
+    mua = ChiTietDonHang.objects.filter(
         don_hang__khach_hang=khach,
         don_hang__trang_thai="hoan_thanh",
         don_hang__thoi_diem_tao__gte=tu,
         thuoc__la_thuoc_ke_don=False,
-    )
-    mua = cac_dong.aggregate(
+    ).aggregate(
         tong=Sum(
             ExpressionWrapper(F("so_luong") * F("don_gia") - F("giam_gia_phan_bo"), TIEN),
             default=0,
         )
     )["tong"]
-    hoan = ChiTietTraHang.objects.filter(
-        chi_tiet_don_hang__in=cac_dong, yeu_cau_tra_hang__trang_thai="da_hoan_tien"
-    ).aggregate(
-        tong=Sum(
-            ExpressionWrapper(
-                F("so_luong") * F("chi_tiet_don_hang__don_gia")
-                - F("chi_tiet_don_hang__giam_gia_phan_bo")
-                * F("so_luong")
-                / F("chi_tiet_don_hang__so_luong"),
-                TIEN,
-            ),
-            default=0,
-        )
-    )["tong"]
-    return max(Decimal(mua) - Decimal(hoan), Decimal(0)).quantize(Decimal(1))
+    return max(Decimal(mua), Decimal(0)).quantize(Decimal(1))
 
 
 def hang_cua(khach):

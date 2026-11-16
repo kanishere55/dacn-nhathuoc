@@ -4,7 +4,7 @@
   <header class="tieu-de-khach">
     <p class="chu-dan">TÀI KHOẢN</p>
     <h1>Xin chào, {{ user.ho_ten|default:user.ten_dang_nhap }}</h1>
-    <p>Quản lý đơn hàng, địa chỉ nhận hàng và thông tin đăng nhập của bạn.</p>
+    <p>Theo dõi đơn đặt giữ, hạng thành viên và thông tin đăng nhập của bạn.</p>
   </header>
   {% if not user.email %}
     <div class="canh-bao-email" role="note">
@@ -33,11 +33,11 @@
   <div class="luoi-khach-hai">
     <a class="the-khach the-thong-ke-tai-khoan" href="{% url 'ban_hang:khach_don_hang_danh_sach' %}">
       <span class="bieu-tuong-the"><i data-lucide="package" aria-hidden="true"></i></span>
-      <span><strong>Đơn của tôi</strong><small>Theo dõi đơn đặt giữ và đơn giao hàng.</small></span>
+      <span><strong>Đơn đặt giữ của tôi</strong><small>Xem hạn giữ hàng, mã đơn đọc tại quầy và hóa đơn.</small></span>
     </a>
-    <a class="the-khach the-thong-ke-tai-khoan" href="{% url 'tai_khoan:so_dia_chi' %}">
+    <a class="the-khach the-thong-ke-tai-khoan" href="{% url 'webgis:ban_do' %}">
       <span class="bieu-tuong-the"><i data-lucide="map-pin" aria-hidden="true"></i></span>
-      <span><strong>Sổ địa chỉ</strong><small>{{ so_dia_chi }} địa chỉ đã lưu.</small></span>
+      <span><strong>Tìm nhà thuốc gần bạn</strong><small>Xem chi nhánh còn đủ thuốc và đường đi trên bản đồ.</small></span>
     </a>
   </div>
   <section class="the-khach">
@@ -51,7 +51,6 @@
       <dt>Email</dt>
       <dd>{{ user.email|default:"Chưa có" }}{% if user.email %}{% if user.da_xac_thuc_email %}<span class="nhan-da-xac-thuc"><i data-lucide="badge-check" aria-hidden="true"></i>Đã xác thực</span>{% else %}<span class="nhan-chua-xac-thuc">Chưa xác thực</span>{% endif %}{% endif %}</dd>
       <dt>Số điện thoại</dt><dd>{{ user.so_dien_thoai|default:"—" }}</dd>
-      <dt>Địa chỉ mặc định</dt><dd>{% if dia_chi_mac_dinh %}{{ dia_chi_mac_dinh.dia_chi }}{% else %}Chưa chọn{% endif %}</dd>
       <dt>Ngày tham gia</dt><dd>{{ user.thoi_diem_tao|date:"d/m/Y" }}</dd>
     </dl>
   </section>

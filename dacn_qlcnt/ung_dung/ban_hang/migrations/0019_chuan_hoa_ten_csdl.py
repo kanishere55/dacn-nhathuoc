@@ -4,9 +4,9 @@ from ung_dung.chung.ten_csdl import chuan_hoa_v1
 
 
 def chuan_hoa(apps, schema_editor):
-    chuan_hoa_v1(apps, schema_editor, "thanh_toan")
+    chuan_hoa_v1(apps, schema_editor, "ban_hang")
 
 
 class Migration(migrations.Migration):
-    dependencies = [("thanh_toan", "0003_doi_soat_ban_hang")]
+    dependencies = [("ban_hang", "0018_don_dat_giu_theo_de_cuong")]
     operations = [migrations.RunPython(chuan_hoa, migrations.RunPython.noop)]

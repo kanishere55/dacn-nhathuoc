@@ -1,3 +1,3 @@
 {% with cuoi=cac_lich_su.last %}
-  <p class="thong-diep-don thong-diep-ket-thuc"><i data-lucide="{% if don.trang_thai == 'giao_that_bai' %}truck{% elif don.trang_thai == 'het_han' %}clock{% else %}circle-x{% endif %}" aria-hidden="true"></i><strong>{{ don.get_trang_thai_display }}</strong>{% if cuoi %} lúc {{ cuoi.thoi_diem_tao|date:"H:i d/m/Y" }}{% if cuoi.ghi_chu %}. {{ cuoi.ghi_chu }}{% endif %}{% endif %}</p>
+  <p class="thong-diep-don thong-diep-ket-thuc"><i data-lucide="{% if don.trang_thai == 'het_han' %}clock{% else %}circle-x{% endif %}" aria-hidden="true"></i><strong>{{ don.get_trang_thai_display }}</strong>{% if cuoi %} lúc {{ cuoi.thoi_diem_tao|date:"H:i d/m/Y" }}{% if cuoi.ghi_chu %}. {{ cuoi.ghi_chu }}{% endif %}{% endif %}</p>
 {% endwith %}

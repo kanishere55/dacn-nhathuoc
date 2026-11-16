@@ -4,7 +4,6 @@ from django.utils import timezone
 
 from ung_dung.kho.models import LoThuoc, TonKho
 from ung_dung.kho.tests.du_lieu import tao_du_lieu, tao_ton
-from ung_dung.thanh_toan.models import GiaoDichThanhToan
 
 from ..models import PhieuBan
 from ..services.lich_su_mo_phong import tao_lich_su_ban_mo_phong
@@ -22,7 +21,9 @@ class LichSuMoPhongTests(TestCase):
         hom_nay = timezone.localdate()
         self.assertTrue(all(timezone.localdate(p.thoi_diem_tao) < hom_nay for p in cac_phieu))
         self.assertEqual(
-            GiaoDichThanhToan.objects.filter(phieu_ban__in=cac_phieu).count(), cac_phieu.count()
+            set(cac_phieu.values_list("phuong_thuc_thanh_toan", flat=True))
+            - {"tien_mat", "chuyen_khoan"},
+            set(),
         )
         # Chỉ chi nhánh có đủ quản lý và nhân viên mới có lịch sử; lô LS về 0, tồn cũ giữ nguyên.
         self.assertEqual(set(cac_phieu.values_list("chi_nhanh", flat=True)), {d.cn.pk})
