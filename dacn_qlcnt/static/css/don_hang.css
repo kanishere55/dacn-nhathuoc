@@ -741,6 +741,55 @@
     justify-content: space-between;
     gap: var(--khoang-2);
   }
+  /* Khối "Tìm nhà thuốc gần bạn": định vị hoặc gõ địa chỉ (khi thiết bị không định vị được). */
+  .vi-tri-dat-hang {
+    display: grid;
+    gap: var(--khoang-2);
+    margin-block: var(--khoang-3);
+    padding: var(--khoang-3);
+    border: 1px solid var(--color-vien);
+    border-radius: 12px;
+    background: #f6faf8;
+  }
+  .nhan-vi-tri-dat-hang {
+    margin: 0;
+    font-weight: 600;
+  }
+  .hang-vi-tri-dat-hang {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--khoang-2);
+  }
+  .hang-vi-tri-dat-hang .tim-vi-tri {
+    flex: 1 1 280px;
+  }
+  .hang-vi-tri-dat-hang .tim-vi-tri input {
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-vien-o-nhap);
+    border-radius: 8px;
+    background: white;
+    font: inherit;
+  }
+  .hang-vi-tri-dat-hang .tim-vi-tri input:focus-visible {
+    outline: 2px solid var(--color-chinh);
+    outline-offset: 1px;
+  }
+  .hang-vi-tri-dat-hang .nut {
+    gap: 6px;
+  }
+  .chu-hoac {
+    color: var(--color-chu-phu);
+    font-size: var(--text-chu-thich);
+  }
+  .vi-tri-dat-hang + .ghi-chu-khach svg {
+    display: inline;
+    width: 14px;
+    height: 14px;
+    vertical-align: -2px;
+    color: var(--color-chinh);
+  }
   .trang-thai-vi-tri:empty {
     display: none;
   }

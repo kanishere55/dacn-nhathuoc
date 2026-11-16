@@ -49,7 +49,7 @@
     async function veLoTrinh() {
       if (!chon) return;
       if (!diemKhach) {
-        tomTat.textContent = `Nhận tại ${chon.ten}. Bấm “Tính đường từ vị trí hiện tại” để xem đường đi.`;
+        tomTat.textContent = `Nhận tại ${chon.ten}. Chọn vị trí của bạn ở phía trên (định vị hoặc nhập địa chỉ), hoặc chạm lên bản đồ để xem đường đi.`;
         return;
       }
       tomTat.textContent = 'Đang tính lộ trình…';
@@ -88,18 +88,12 @@
       }
     }
 
-    form.querySelector('[data-dinh-vi-dat-hang]')?.addEventListener('click', () => {
-      if (!navigator.geolocation) { tomTat.textContent = 'Trình duyệt không hỗ trợ định vị.'; return; }
-      tomTat.textContent = 'Đang lấy vị trí của bạn…';
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) => {
-          if (daHuy) return;
-          datKhach([coords.latitude, coords.longitude], 'Bạn ở đây');
-          veLoTrinh();
-        },
-        () => { if (!daHuy) tomTat.textContent = 'Không lấy được vị trí. Hãy cho phép định vị trong trình duyệt.'; },
-        { enableHighAccuracy: true, timeout: 10000 },
-      );
+    // Chạm lên bản đồ (không phải biểu tượng nhà thuốc) để đặt vị trí của khách tại đó.
+    banDo.on('click', (e) => {
+      tomTat.textContent = 'Đang tìm nhà thuốc gần điểm bạn chọn…';
+      form.dispatchEvent(new CustomEvent('dat-vi-tri', {
+        detail: { viDo: e.latlng.lat, kinhDo: e.latlng.lng, nhan: 'điểm bạn chọn trên bản đồ' },
+      }));
     });
     veLoTrinh();
     return () => {
@@ -118,11 +112,22 @@
       huyBanDo ||= khoiTao();
     }
   }, true);
+  // Khối lựa chọn được thay sau mỗi lần đổi chi nhánh hoặc vị trí: dựng lại bản đồ nếu khách đang mở,
+  // hoặc khi đã có vị trí (máy chủ trả khung bản đồ ở trạng thái mở).
+  const moLai = () => {
+    const chiTiet = form.querySelector('[data-mo-ban-do-dat-hang]');
+    if (!chiTiet) return;
+    if (moBanDo) chiTiet.open = true;
+    if (chiTiet.open) {
+      moBanDo = true;
+      huyBanDo ||= khoiTao();
+    }
+  };
   form.addEventListener('htmx:afterSwap', (e) => {
     if (e.detail.target.id !== 'lua-chon-dat-hang') return;
     huyBanDo?.();
     huyBanDo = null;
-    const chiTiet = form.querySelector('[data-mo-ban-do-dat-hang]');
-    if (chiTiet && moBanDo) chiTiet.open = true;
+    moLai();
   });
+  moLai();
 })();

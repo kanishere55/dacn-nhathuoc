@@ -71,6 +71,7 @@ def dat_hang(request):
     vi_tri = None
     if lua_chon.get("vi_do") is not None and lua_chon.get("kinh_do") is not None:
         vi_tri = Point(lua_chon["kinh_do"], lua_chon["vi_do"], srid=4326)
+    nhan_vi_tri = (lua_chon.get("nhan_vi_tri") or "vị trí hiện tại của bạn") if vi_tri else ""
     cac_phuong_an = _cac_chi_nhanh_du_hang(cac_dong, vi_tri)
     phuong_an = next(
         (pa for pa in cac_phuong_an if pa["chi_nhanh"].pk == lua_chon.get("chi_nhanh")),
@@ -127,9 +128,7 @@ def dat_hang(request):
             return redirect("ban_hang:khach_don_hang_chi_tiet", ma=don.pk)
     du_lieu_ban_do = {
         "khach": (
-            {"vi_do": vi_tri.y, "kinh_do": vi_tri.x, "dia_chi": "Vị trí của bạn"}
-            if vi_tri
-            else None
+            {"vi_do": vi_tri.y, "kinh_do": vi_tri.x, "dia_chi": "Bạn ở đây"} if vi_tri else None
         ),
         "cac_chi_nhanh": [
             {
@@ -157,6 +156,7 @@ def dat_hang(request):
             "cac_dong": cac_dong,
             "tom_tat": tom_tat,
             "vi_tri": vi_tri,
+            "nhan_vi_tri": nhan_vi_tri,
             "cac_phuong_an": cac_phuong_an,
             "phuong_an": phuong_an,
             "tong_thanh_toan": tom_tat["tien_hang"] - giam,

@@ -33,29 +33,88 @@
       ? 'Đã cập nhật lựa chọn và tổng tiền.'
       : 'Chưa cập nhật được. Hãy chọn lại chi nhánh hoặc tải lại trang.';
   });
-  // "Gần tôi nhất": lấy vị trí trình duyệt rồi tải lại danh sách chi nhánh, máy chủ sắp theo PostGIS.
-  form.addEventListener('click', (e) => {
-    const nut = e.target.closest('[data-sap-theo-vi-tri]');
-    if (!nut) return;
-    const bao = form.querySelector('[data-trang-thai-vi-tri]');
+  // Vị trí của khách (định vị, địa chỉ gõ vào hoặc điểm chạm trên bản đồ) được ghi vào ba ô ẩn rồi tải lại
+  // khối lựa chọn: máy chủ sắp chi nhánh theo khoảng cách PostGIS, bản đồ hiện vị trí và đường đi.
+  // Ô ẩn nằm trong form nên vị trí còn nguyên khi khách đổi chi nhánh.
+  const bao = (chu) => {
+    const o = form.querySelector('[data-trang-thai-vi-tri]');
+    if (o) o.textContent = chu;
+  };
+  const datViTri = (viDo, kinhDo, nhan) => {
+    form.querySelector('[data-vi-do]').value = Number(viDo).toFixed(6);
+    form.querySelector('[data-kinh-do]').value = Number(kinhDo).toFixed(6);
+    form.querySelector('[data-nhan-vi-tri]').value = nhan;
+    // Vị trí mới thì chọn lại từ đầu: máy chủ chọn sẵn nhà thuốc gần nhất còn đủ hàng.
+    form.querySelectorAll('input[name="chi_nhanh"]').forEach((o) => { o.checked = false; });
+    window.htmx.trigger(form, 'cap-nhat');
+  };
+  form.addEventListener('dat-vi-tri', (e) => datViTri(e.detail.viDo, e.detail.kinhDo, e.detail.nhan));
+
+  const dinhVi = (nut) => {
     if (!navigator.geolocation) {
-      if (bao) bao.textContent = 'Trình duyệt không hỗ trợ định vị.';
+      bao('Trình duyệt không hỗ trợ định vị. Hãy nhập địa chỉ của bạn.');
       return;
     }
     nut.disabled = true;
-    if (bao) bao.textContent = 'Đang lấy vị trí của bạn…';
+    bao('Đang lấy vị trí của bạn…');
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        form.querySelector('[data-vi-do]').value = coords.latitude.toFixed(6);
-        form.querySelector('[data-kinh-do]').value = coords.longitude.toFixed(6);
-        window.htmx.trigger(form, 'cap-nhat');
-      },
+      ({ coords }) => datViTri(coords.latitude, coords.longitude, 'vị trí hiện tại của bạn'),
       () => {
         nut.disabled = false;
-        if (bao) bao.textContent = 'Không lấy được vị trí. Hãy cho phép định vị trong trình duyệt hoặc tự chọn chi nhánh.';
+        bao('Không lấy được vị trí (chưa cho phép định vị hoặc thiết bị không định vị được). Hãy nhập địa chỉ của bạn.');
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
+  };
+
+  // Địa chỉ Nominatim rất dài (thêm phường, mã bưu chính, quốc gia): chỉ giữ ba phần đầu để hiện lại.
+  const rutGonDiaChi = (diaChi) => diaChi.split(', ')
+    .filter((phan) => !/^\d{5,6}$/.test(phan) && phan !== 'Việt Nam')
+    .slice(0, 3)
+    .join(', ');
+
+  async function timDiaChi() {
+    const khung = form.querySelector('[data-url-tim-dia-chi]');
+    const o = form.querySelector('[data-tu-khoa-dat-hang]');
+    const ketQua = form.querySelector('[data-ket-qua-dia-chi-dat-hang]');
+    if (!khung || !o) return;
+    const tuKhoa = o.value.trim();
+    ketQua.replaceChildren();
+    if (tuKhoa.length < 3) { bao('Nhập ít nhất 3 ký tự, ví dụ tên đường và quận.'); return; }
+    bao('Đang tìm địa chỉ…');
+    try {
+      const phanHoi = await fetch(`${khung.dataset.urlTimDiaChi}?q=${encodeURIComponent(tuKhoa)}`, { headers: { Accept: 'application/json' } });
+      const duLieu = await phanHoi.json();
+      if (!phanHoi.ok) throw new Error((duLieu.loi || []).join(' '));
+      if (!duLieu.ket_qua.length) { bao('Không thấy địa chỉ phù hợp. Hãy thử chỉ gõ tên đường và quận.'); return; }
+      bao(duLieu.gan_dung ? 'Chưa thấy đúng số nhà này. Chọn con đường gần đúng:' : 'Chọn đúng địa chỉ của bạn:');
+      duLieu.ket_qua.forEach((muc) => {
+        const nut = document.createElement('button');
+        nut.type = 'button';
+        nut.textContent = muc.dia_chi;
+        nut.addEventListener('click', () => {
+          ketQua.replaceChildren();
+          bao('Đang tìm nhà thuốc gần địa chỉ này…');
+          datViTri(muc.vi_do, muc.kinh_do, rutGonDiaChi(muc.dia_chi));
+        });
+        ketQua.append(nut);
+      });
+    } catch (loi) {
+      bao(loi.message || 'Chưa tìm được địa chỉ, hãy thử lại.');
+    }
+  }
+
+  form.addEventListener('click', (e) => {
+    const nutDinhVi = e.target.closest('[data-sap-theo-vi-tri]');
+    if (nutDinhVi) dinhVi(nutDinhVi);
+    if (e.target.closest('[data-tim-dia-chi-dat-hang]')) timDiaChi();
+  });
+  // Enter trong ô địa chỉ là tìm địa chỉ, không được gửi form đặt giữ.
+  form.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('[data-tu-khoa-dat-hang]')) {
+      e.preventDefault();
+      timDiaChi();
+    }
   });
   form.addEventListener('submit', (e) => {
     if (e.submitter?.name === 'cap_nhat') {

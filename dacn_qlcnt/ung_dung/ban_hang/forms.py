@@ -74,6 +74,8 @@ class DatHangForm(forms.Form):
     # Vị trí hiện tại của khách (định vị trình duyệt), chỉ để sắp chi nhánh gần trước.
     vi_do = forms.FloatField(required=False, min_value=8.0, max_value=23.5)
     kinh_do = forms.FloatField(required=False, min_value=102.0, max_value=110.0)
+    # Nhãn của vị trí (địa chỉ khách gõ và chọn, hoặc "vị trí hiện tại") để hiện lại sau mỗi lần cập nhật.
+    nhan_vi_tri = TruongMotDong(max_length=200, required=False)
     ghi_chu_khach = TruongMotDong(label="Lời nhắn cho nhà thuốc", max_length=300, required=False)
     # Tổng tiền khách đang nhìn thấy khi bấm đặt; khác tổng tính lại thì không tạo đơn.
     tong_da_xem = forms.IntegerField(required=False, min_value=0, widget=forms.HiddenInput)

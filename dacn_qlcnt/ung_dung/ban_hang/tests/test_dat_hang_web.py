@@ -93,6 +93,26 @@ class DatHangWebTests(TestCase):
         self.assertContains(phan_hoi, "Cách bạn")
         self.assertContains(phan_hoi, f'value="{self.d.cn2.pk}" data-tai-lai checked')
 
+    def test_vi_tri_go_dia_chi_giu_lai_khi_doi_chi_nhanh(self):
+        tao_ton(self.d, "LO2", ngay=60, luong=30, chi_nhanh=self.d.cn2)
+        self.them_gio(1)
+        # Khách gõ địa chỉ rồi đổi sang chi nhánh xa hơn: vị trí và nhãn địa chỉ vẫn còn trong form.
+        phan_hoi = self.client.get(
+            reverse("ban_hang:dat_hang"),
+            {
+                "chi_nhanh": self.d.cn.pk,
+                "vi_do": 10.7801,
+                "kinh_do": 106.7101,
+                "nhan_vi_tri": "Chợ Bến Thành",
+            },
+            headers={"HX-Request": "true"},
+        )
+        self.assertContains(phan_hoi, "Đã sắp theo khoảng cách từ <strong>Chợ Bến Thành</strong>")
+        self.assertContains(phan_hoi, 'name="vi_do" value="10.780100"')
+        self.assertContains(phan_hoi, 'name="nhan_vi_tri" value="Chợ Bến Thành"')
+        self.assertContains(phan_hoi, f'value="{self.d.cn.pk}" data-tai-lai checked')
+        self.assertContains(phan_hoi, "data-mo-ban-do-dat-hang open")
+
     def test_chi_nhanh_khong_du_hang_khong_hien(self):
         self.them_gio(1)
         phan_hoi = self.client.get(reverse("ban_hang:dat_hang"))

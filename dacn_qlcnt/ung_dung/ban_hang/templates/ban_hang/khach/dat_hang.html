@@ -17,7 +17,7 @@
   <form method="post" id="form-dat-hang"
         hx-get="{% url 'ban_hang:dat_hang' %}"
         hx-trigger="change target:[data-tai-lai], cap-nhat"
-        hx-params="chi_nhanh,vi_do,kinh_do"
+        hx-params="chi_nhanh,vi_do,kinh_do,nhan_vi_tri"
         hx-target="#lua-chon-dat-hang" hx-swap="outerHTML" hx-sync="this:replace"
         hx-request='{"timeout":12000}'>
     {% csrf_token %}
@@ -28,14 +28,25 @@
     <input type="hidden" name="tong_da_xem" value="{{ tong_thanh_toan|stringformat:'d' }}">
     <input type="hidden" name="vi_do" value="{% if vi_tri %}{{ vi_tri.y|stringformat:'.6f' }}{% endif %}" data-vi-do>
     <input type="hidden" name="kinh_do" value="{% if vi_tri %}{{ vi_tri.x|stringformat:'.6f' }}{% endif %}" data-kinh-do>
+    <input type="hidden" name="nhan_vi_tri" value="{% if vi_tri %}{{ nhan_vi_tri }}{% endif %}" data-nhan-vi-tri>
     <div class="cac-buoc-dat-hang">
       <section class="the-khach" aria-labelledby="buoc-chi-nhanh">
-        <div class="dau-buoc-dat-hang">
-          <h2 id="buoc-chi-nhanh"><span class="so-buoc">1</span>Chọn nhà thuốc nhận hàng</h2>
-          {% if cac_phuong_an|length > 1 %}<button type="button" class="nut nut-phu nut-nho" data-sap-theo-vi-tri><i data-lucide="locate-fixed" aria-hidden="true"></i>{% if vi_tri %}Cập nhật vị trí{% else %}Gần tôi nhất{% endif %}</button>{% endif %}
-        </div>
+        <h2 id="buoc-chi-nhanh"><span class="so-buoc">1</span>Chọn nhà thuốc nhận hàng</h2>
         {% if cac_phuong_an %}
-          <p class="ghi-chu-khach">{% if vi_tri %}Đã sắp theo khoảng cách từ vị trí hiện tại của bạn.{% else %}Chỉ hiện chi nhánh còn đủ toàn bộ thuốc trong giỏ.{% endif %}</p>
+          <div class="vi-tri-dat-hang" data-url-tim-dia-chi="{% url 'webgis:tim_dia_chi' %}">
+            <p class="nhan-vi-tri-dat-hang">Tìm nhà thuốc gần bạn</p>
+            <div class="hang-vi-tri-dat-hang">
+              <button type="button" class="nut nut-phu" data-sap-theo-vi-tri><i data-lucide="locate-fixed" aria-hidden="true"></i>Dùng vị trí hiện tại</button>
+              <span class="chu-hoac" aria-hidden="true">hoặc</span>
+              <div class="tim-vi-tri">
+                <input type="search" data-tu-khoa-dat-hang placeholder="Nhập địa chỉ, ví dụ: 268 Lý Thường Kiệt, Quận 10" autocomplete="off" aria-label="Nhập địa chỉ của bạn">
+                <button type="button" class="nut nut-phu" data-tim-dia-chi-dat-hang><i data-lucide="search" aria-hidden="true"></i>Tìm</button>
+              </div>
+            </div>
+            <p class="trang-thai-vi-tri" data-trang-thai-vi-tri role="status"></p>
+            <div class="ket-qua-tim-vi-tri" data-ket-qua-dia-chi-dat-hang></div>
+          </div>
+          <p class="ghi-chu-khach">{% if vi_tri %}<i data-lucide="map-pin" aria-hidden="true"></i> Đã sắp theo khoảng cách từ <strong>{{ nhan_vi_tri }}</strong>.{% else %}Chỉ hiện chi nhánh còn đủ toàn bộ thuốc trong giỏ.{% endif %}</p>
           <div class="cac-lua-chon-the cot-don">
             {% for pa in cac_phuong_an %}
               <label class="lua-chon-the">
@@ -49,7 +60,6 @@
               </label>
             {% endfor %}
           </div>
-          <p class="trang-thai-vi-tri" data-trang-thai-vi-tri role="status"></p>
         {% else %}
           <div class="thong-diep-don thong-diep-canh-bao">
             <i data-lucide="package-x" aria-hidden="true"></i>
@@ -59,13 +69,12 @@
       </section>
 
       {% if cac_phuong_an %}
-        <details class="the-khach chi-tiet-ban-do-dat-hang" data-mo-ban-do-dat-hang>
+        <details class="the-khach chi-tiet-ban-do-dat-hang" data-mo-ban-do-dat-hang{% if vi_tri %} open{% endif %}>
           <summary><i data-lucide="map" aria-hidden="true"></i>Xem nhà thuốc trên bản đồ và đường đi</summary>
           {{ du_lieu_ban_do|json_script:"du-lieu-ban-do-dat-hang" }}
           <div class="ban-do ban-do-dat-hang" data-ban-do-dat-hang aria-label="Bản đồ các chi nhánh còn đủ hàng"></div>
           <p class="tom-tat-lo-trinh" data-tom-tat-lo-trinh role="status">Đang tải lộ trình…</p>
-          <button type="button" class="nut nut-phu" data-dinh-vi-dat-hang><i data-lucide="locate-fixed" aria-hidden="true"></i>Tính đường từ vị trí hiện tại</button>
-          <p class="ghi-chu-khach">Bấm vào biểu tượng nhà thuốc trên bản đồ để đổi chi nhánh.</p>
+          <p class="ghi-chu-khach">Bấm vào biểu tượng nhà thuốc để đổi chi nhánh. Chạm vào chỗ khác trên bản đồ để đặt vị trí của bạn tại đó.</p>
         </details>
       {% endif %}
 
