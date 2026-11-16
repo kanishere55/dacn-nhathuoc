@@ -579,3 +579,38 @@
     .the-du-bao-toi strong { font-size: 28px; }
   }
 }
+
+/* Bảng nhập – xuất – tồn: 11 cột số phải nằm gọn trong khung ở màn hình máy tính, nhất là hai cột
+   cuối (tồn cuối kỳ, khả dụng hiện tại). Tiêu đề cột được xuống dòng thay vì đẩy bảng tràn ngang;
+   màn hình hẹp vẫn cuộn ngang trong khung. */
+@layer components {
+  .bang-nhap-xuat-ton {
+    width: 100%;
+    min-width: 860px;
+    table-layout: fixed;
+  }
+  .khung-bang .bang-nhap-xuat-ton thead th {
+    white-space: normal;
+    line-height: 1.3;
+    vertical-align: bottom;
+  }
+  .bang-nhap-xuat-ton :is(th, td) {
+    padding-inline: 8px;
+  }
+  .bang-nhap-xuat-ton :is(th, td):first-child {
+    width: 76px;
+  }
+}
+
+/* Bảng sai số nằm trong thẻ hẹp (một phần ba hàng): tiêu đề cột và tên mô hình được xuống dòng để
+   cả bốn cột hiện đủ, không bị cắt mất cột RMSE ở bên phải. */
+@layer components {
+  .khung-bang .bang-sai-so thead th,
+  .bang-sai-so th[scope="row"] {
+    white-space: normal;
+    line-height: 1.3;
+  }
+  .bang-sai-so :is(th, td) {
+    padding-inline: 6px;
+  }
+}

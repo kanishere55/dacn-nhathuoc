@@ -1064,6 +1064,9 @@
 
     /* ---------- Bảng dữ liệu ---------- */
     .khung-bang {
+      /* relative: chữ ẩn cho trình đọc màn hình (sr-only, position absolute) trong ô bảng phải nằm
+         trong khung cuộn, nếu không sẽ đẩy cả trang tràn ngang trên điện thoại. */
+      position: relative;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }

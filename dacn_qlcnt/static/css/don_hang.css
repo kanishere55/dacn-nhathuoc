@@ -462,8 +462,15 @@
   .form-xu-ly-don:first-of-type {
     border-top: 0;
   }
-  .form-xu-ly-don input:not([type="checkbox"]) {
+  .form-xu-ly-don input:not([type="checkbox"]),
+  .form-xu-ly-don select {
     width: 100%;
+  }
+  /* Nhãn nằm trên ô chọn (cách khách trả, lý do hủy) để ô chọn rộng hết cột, không dính vào chữ. */
+  .form-xu-ly-don > label:not(.lua-chon-mot-dong) {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 0;
   }
 
   @media (max-width: 900px) {
@@ -781,7 +788,7 @@
   /* Phiếu nhận hàng: mã đơn to để đọc tại quầy, ba bước cần làm, nút chỉ đường. */
   .the-phieu-nhan {
     display: grid;
-    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
     gap: var(--khoang-4) var(--khoang-5);
     align-items: start;
     margin-bottom: var(--khoang-4);
@@ -803,11 +810,12 @@
   .ma-nhan-hang {
     margin: 0;
     color: var(--color-chinh-dam);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     font-variant-numeric: tabular-nums;
-    overflow-wrap: anywhere;
+    /* Mã đơn 13 ký tự phải nằm trên một dòng để khách đọc liền cho nhân viên. */
+    white-space: nowrap;
   }
   .phieu-nhan-ma p:last-child {
     color: var(--color-chu-phu);

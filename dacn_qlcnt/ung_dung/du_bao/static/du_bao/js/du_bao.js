@@ -256,6 +256,10 @@
     });
   }
 
+  // Bảng sai số luôn ghi đủ hai chữ số thập phân (29,70 thay vì 29,7) để các cột so được với nhau.
+  const soHaiChuSo = so =>
+    so == null || Number.isNaN(so) ? '–' : Number(so).toLocaleString('vi-VN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
   function veBang() {
     const bang = khung.querySelector('[data-bang-sai-so]');
     const dau = tao('thead');
@@ -275,7 +279,7 @@
       ten.append(m.ten, tao('small', '', m.duoc_chon ? 'Được chọn' : m.loai));
       dong.append(ten);
       [m.mae_xac_thuc, m.mae_kiem_thu, m.rmse_kiem_thu].forEach((so, i) => {
-        dong.append(tao('td', 'o-so' + (i === 0 && m.mae_xac_thuc === minXacThuc ? ' so-nho-nhat' : ''), dinhDangSo(so, 2)));
+        dong.append(tao('td', 'o-so' + (i === 0 && m.mae_xac_thuc === minXacThuc ? ' so-nho-nhat' : ''), soHaiChuSo(so)));
       });
       than.append(dong);
     }

@@ -184,7 +184,7 @@ class DatHangWebTests(TestCase):
         danh_sach = self.client.get(reverse("ban_hang:don_hang_danh_sach"), {"q": don.ma_don_hang})
         self.assertContains(danh_sach, don.ma_don_hang)
         trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
-        self.assertContains(trang, "Khách đã nhận hàng và thanh toán")
+        self.assertContains(trang, "Giao thuốc và thu tiền")
         self.client.post(
             reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "nhan_tai_quay"]),
             {"phuong_thuc_thanh_toan": "tien_mat"},
@@ -195,7 +195,7 @@ class DatHangWebTests(TestCase):
         self.assertEqual((phieu.phuong_thuc_thanh_toan, phieu.nguoi_lap), ("tien_mat", self.d.nv))
         # Giao xong thì không còn nút giao lần nữa.
         trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
-        self.assertNotContains(trang, "Khách đã nhận hàng và thanh toán")
+        self.assertNotContains(trang, "Giao thuốc và thu tiền")
         self.client.force_login(self.d.khach)
         trang = self.client.get(reverse("ban_hang:khach_don_hang_chi_tiet", args=[don.pk]))
         self.assertContains(trang, "Xem phiếu bán hàng")
@@ -214,7 +214,7 @@ class DatHangWebTests(TestCase):
         self.client.force_login(self.d.nv)
         trang = self.client.get(reverse("ban_hang:don_hang_chi_tiet", args=[don.pk]))
         self.assertContains(trang, "lập phiếu bán tại quầy")
-        self.assertNotContains(trang, "Khách đã nhận hàng và thanh toán")
+        self.assertNotContains(trang, "Giao thuốc và thu tiền")
         self.client.post(reverse("ban_hang:don_hang_xu_ly", args=[don.pk, "nhan_tai_quay"]))
         self.assertFalse(PhieuBan.objects.exists())
         self.assertEqual(xu_ly_qua_han(), 1)

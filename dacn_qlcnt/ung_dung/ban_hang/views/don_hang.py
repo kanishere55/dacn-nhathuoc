@@ -29,7 +29,7 @@ from .khach_don_hang import tien_trinh
 
 # hành động -> (trạng thái đích, nhãn nút, cần lý do, thao tác phụ)
 HANH_DONG = {
-    "nhan_tai_quay": ("hoan_thanh", "Khách đã nhận hàng và thanh toán", False, False),
+    "nhan_tai_quay": ("hoan_thanh", "Giao thuốc và thu tiền", False, False),
     "huy": ("da_huy", "Hủy đơn", True, True),
 }
 
