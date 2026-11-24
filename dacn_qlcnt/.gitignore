@@ -1,14 +1,26 @@
+# Python
 .venv/
 __pycache__/
 *.py[cod]
+.ruff_cache/
+.pytest_cache/
+
+# Cấu hình cục bộ (chứa mật khẩu)
 .env
 .env.*
 !.env.example
-.ruff_cache/
+
+# Tệp sinh ra khi build hoặc chạy
 staticfiles/
 static/css/da_bien_dich.css
 *.log
+*.rdb
 .coverage
 htmlcov/
+
+# Trình soạn thảo và hệ điều hành
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -57,11 +57,9 @@ DUOI_TEP_ANH = frozenset(
         ".heic",
     }
 )
-# .vscode, .idea: cấu hình công cụ lập trình trên máy (VS Code tự ghi .vscode/settings.json
-# khi chọn trình thông dịch Python), không phải dữ liệu hệ thống.
-THU_MUC_BO_QUA = frozenset(
-    {".venv", "staticfiles", "__pycache__", ".git", ".vscode", ".idea"}
-)
+# Thư mục ẩn (.git, .venv, .vscode, .idea...) chứa môi trường và cấu hình công cụ lập trình
+# trên máy, không phải dữ liệu hệ thống, nên được bỏ qua cùng các thư mục dưới đây.
+THU_MUC_BO_QUA = frozenset({".venv", "staticfiles", "__pycache__", ".git", ".vscode", ".idea"})
 CAC_BACKEND_POSTGRESQL = frozenset(
     {"django.db.backends.postgresql", "django.contrib.gis.db.backends.postgis"}
 )
@@ -70,7 +68,9 @@ CAC_BACKEND_POSTGRESQL = frozenset(
 def tim_tep_du_lieu(thu_muc_goc: Path) -> list[Path]:
     cac_tep = []
     for thu_muc_hien_tai, thu_muc_con, ten_tep in os.walk(thu_muc_goc, followlinks=False):
-        thu_muc_con[:] = [ten for ten in thu_muc_con if ten not in THU_MUC_BO_QUA]
+        thu_muc_con[:] = [
+            ten for ten in thu_muc_con if ten not in THU_MUC_BO_QUA and not ten.startswith(".")
+        ]
         for ten in ten_tep:
             duong_dan = Path(thu_muc_hien_tai) / ten
             tuong_doi = duong_dan.relative_to(thu_muc_goc)
