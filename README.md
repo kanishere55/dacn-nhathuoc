@@ -11,6 +11,43 @@
 - **Website khách hàng**: tra cứu thuốc, tìm nhà thuốc gần nhất còn đủ hàng trên bản đồ, đặt giữ thuốc rồi nhận và thanh toán tại quầy, trò chuyện với dược sĩ.
 - **Khu quản lý** (`/quan-ly/`): bán tại quầy, quản lý kho theo lô, danh mục, báo cáo, bản đồ nhiệt tồn kho và dự báo nhu cầu thuốc.
 
+## Cấu trúc repo
+
+```text
+.
+├── dacn_qlcnt/                 # Mã nguồn (Django)
+│   ├── cau_hinh/               # settings, urls, asgi/wsgi
+│   ├── ung_dung/               # Các phân hệ nghiệp vụ
+│   │   ├── chung/              # Thành phần dùng chung, kiểm tra quy ước CSDL và lưu trữ
+│   │   ├── tai_khoan/          # Đăng ký, đăng nhập, OTP, vai trò và phân quyền
+│   │   ├── danh_muc/           # Thuốc, danh mục, chi nhánh, nhà cung cấp, ảnh
+│   │   ├── kho/                # Lô thuốc, chứng từ kho, tồn kho, cảnh báo
+│   │   ├── ban_hang/           # Giỏ hàng, đặt giữ, bán tại quầy, phiếu bán
+│   │   ├── webgis/             # Tìm nhà thuốc, lộ trình, bản đồ nhiệt
+│   │   ├── tro_chuyen/         # Trò chuyện thời gian thực
+│   │   ├── du_bao/             # Nạp dữ liệu và kết quả dự báo
+│   │   ├── bao_cao/            # Báo cáo vận hành
+│   │   ├── thong_bao/          # Email
+│   │   └── noi_dung/           # Banner, trang thông tin, tin tức
+│   ├── thuc_nghiem_du_bao/     # Mã thực nghiệm 5 mô hình dự báo
+│   ├── templates/              # Template dùng chung
+│   ├── static/                 # CSS và thư viện giao diện cục bộ
+│   ├── cong_cu/                # Chạy kiểm thử trên PostgreSQL tạm, tải thư viện giao diện
+│   ├── .env.example            # Mẫu cấu hình
+│   ├── chay_web.bat            # Chạy nhanh trên Windows
+│   ├── manage.py
+│   ├── pyproject.toml
+│   └── requirements.txt
+├── csdl/                       # Cơ sở dữ liệu
+│   ├── README.md               # Mô tả CSDL, quy ước và danh sách bảng
+│   ├── tao_csdl.sql            # Tạo vai trò, CSDL và PostGIS
+│   ├── cau_truc_csdl.sql       # Toàn bộ cấu trúc bảng, ràng buộc, chỉ mục, trigger
+│   └── khoi_tao_csdl_windows.ps1
+└── README.md
+```
+
+Mỗi phân hệ tách tầng rõ ràng: `models` (dữ liệu và ràng buộc), `selectors` (truy vấn chỉ đọc), `services` (nghiệp vụ ghi trong giao dịch), `views`, `forms`, `templates` và `tests`.
+
 ## Tính năng
 
 ### Website khách hàng
@@ -38,42 +75,18 @@
 | Thành phần | Công nghệ |
 | --- | --- |
 | Backend | Python 3.12, Django 6.1, Django REST Framework, Django Channels |
-| Cơ sở dữ liệu | PostgreSQL 18, PostGIS (`GEOGRAPHY(Point, 4326)`, `ST_DWithin`, `ST_Distance`) |
+| Cơ sở dữ liệu | PostgreSQL 18, PostGIS 3.6 (`GEOGRAPHY(Point, 4326)`, `ST_DWithin`, `ST_Distance`) |
 | Thời gian thực | WebSocket qua Channels, Redis làm channel layer |
 | Giao diện | Django templates, HTMX, Alpine.js, Tailwind CSS, Lucide, Chart.js, Quill, Splide |
 | Bản đồ | Leaflet, Leaflet.heat, OpenStreetMap, OSRM, Nominatim |
 | Dự báo | pandas, scikit-learn, XGBoost, statsmodels |
 | Chứng từ | ReportLab (PDF), openpyxl (Excel) |
 
-Thư viện giao diện được tải sẵn vào `static/vendor/` (khóa phiên bản và SHA-256 trong `cong_cu/tai_thu_vien.py`), web không gọi CDN khi chạy. Toàn bộ dữ liệu hệ thống, kể cả ảnh, phiên đăng nhập, tin nhắn và kết quả dự báo, được lưu trong PostgreSQL.
+Thư viện giao diện được tải sẵn vào `dacn_qlcnt/static/vendor/` (khóa phiên bản và SHA-256 trong `cong_cu/tai_thu_vien.py`), web không gọi CDN khi chạy.
 
-## Cấu trúc thư mục
+## Cơ sở dữ liệu
 
-```text
-.
-├── cau_hinh/               # settings, urls, asgi/wsgi
-├── ung_dung/               # Các phân hệ nghiệp vụ
-│   ├── chung/              # Thành phần dùng chung, kiểm tra quy ước CSDL và lưu trữ
-│   ├── tai_khoan/          # Đăng ký, đăng nhập, OTP, vai trò và phân quyền
-│   ├── danh_muc/           # Thuốc, danh mục, chi nhánh, nhà cung cấp, ảnh
-│   ├── kho/                # Lô thuốc, chứng từ kho, tồn kho, cảnh báo
-│   ├── ban_hang/           # Giỏ hàng, đặt giữ, bán tại quầy, phiếu bán
-│   ├── webgis/             # Tìm nhà thuốc, lộ trình, bản đồ nhiệt
-│   ├── tro_chuyen/         # Trò chuyện thời gian thực
-│   ├── du_bao/             # Nạp dữ liệu và kết quả dự báo
-│   ├── bao_cao/            # Báo cáo vận hành
-│   ├── thong_bao/          # Email
-│   └── noi_dung/           # Banner, trang thông tin, tin tức
-├── thuc_nghiem_du_bao/     # Mã thực nghiệm 5 mô hình dự báo
-├── templates/              # Template dùng chung
-├── static/                 # CSS và thư viện giao diện cục bộ
-├── cong_cu/                # Script khởi tạo CSDL, chạy kiểm thử, tải thư viện
-├── chay_web.bat            # Chạy nhanh trên Windows
-├── requirements.txt
-└── manage.py
-```
-
-Mỗi phân hệ tách tầng rõ ràng: `models` (dữ liệu và ràng buộc), `selectors` (truy vấn chỉ đọc), `services` (nghiệp vụ ghi trong giao dịch), `views`, `forms`, `templates` và `tests`.
+CSDL gồm 54 bảng nghiệp vụ, tên bảng và cột bằng tiếng Việt không dấu, có chú thích cho từng bảng và cột, ràng buộc đặt ngay trong CSDL (CHECK, khóa ngoại, trigger chặn sửa chứng từ). Toàn bộ dữ liệu, kể cả ảnh, phiên đăng nhập, tin nhắn và kết quả dự báo, được lưu trong PostgreSQL. Mô tả chi tiết, quy ước và danh sách bảng: [csdl/README.md](csdl/README.md).
 
 ## Cài đặt
 
@@ -87,7 +100,7 @@ Mỗi phân hệ tách tầng rõ ràng: `models` (dữ liệu và ràng buộc)
 
 ```powershell
 git clone https://github.com/kanishere55/dacn-nhathuoc.git
-cd dacn-nhathuoc
+cd dacn-nhathuoc\dacn_qlcnt
 py -3.12 -m venv .venv
 $python = '.\.venv\Scripts\python.exe'
 & $python -m pip install -r requirements.txt
@@ -97,32 +110,27 @@ $python = '.\.venv\Scripts\python.exe'
 & .\.venv\cong_cu\tailwindcss.exe -i static\css\giao_dien.css -o static\css\da_bien_dich.css --minify
 ```
 
-Sau mỗi lần sửa template hoặc CSS, chạy lại lệnh build Tailwind.
+Mọi lệnh `manage.py` bên dưới chạy trong thư mục `dacn_qlcnt`. Sau mỗi lần sửa template hoặc CSS, chạy lại lệnh build Tailwind.
 
 ### 2. Khởi tạo nhanh trên Windows
 
 Với PostgreSQL 18 cài bằng bộ cài Windows, chạy:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File cong_cu\khoi_tao_csdl_windows.ps1
+powershell -ExecutionPolicy Bypass -File ..\csdl\khoi_tao_csdl_windows.ps1
 ```
 
-Script bật dịch vụ PostgreSQL, tạo vai trò và CSDL `dacn_nhathuoc_nop` kèm PostGIS, ghi mật khẩu ngẫu nhiên vào `.env`, bật Redis, chạy migration, tạo tài khoản quản trị, nạp dữ liệu mẫu rồi mở web tại <http://127.0.0.1:8001/>. Script chạy lại được và không xóa dữ liệu đang có. Những lần sau chỉ cần bấm đúp `chay_web.bat`.
+Script bật dịch vụ PostgreSQL, tạo vai trò và CSDL `dacn_nhathuoc_nop` kèm PostGIS, ghi mật khẩu ngẫu nhiên vào `dacn_qlcnt\.env`, bật Redis, chạy migration, tạo tài khoản quản trị, nạp dữ liệu mẫu rồi mở web tại <http://127.0.0.1:8001/>. Script chạy lại được và không xóa dữ liệu đang có. Những lần sau chỉ cần bấm đúp `dacn_qlcnt\chay_web.bat`.
 
 ### 3. Cài thủ công
 
-Tạo CSDL bằng `psql` với quyền quản trị:
+Tạo vai trò, CSDL và PostGIS bằng [csdl/tao_csdl.sql](csdl/tao_csdl.sql):
 
-```sql
-CREATE ROLE dacn_ung_dung LOGIN;
-\password dacn_ung_dung
-CREATE DATABASE dacn_nhathuoc_nop OWNER dacn_ung_dung
-    ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;
-\connect dacn_nhathuoc_nop
-CREATE EXTENSION postgis;
+```powershell
+psql -U postgres -f ..\csdl\tao_csdl.sql
 ```
 
-Sao chép `.env.example` thành `.env` rồi điền `DJANGO_SECRET_KEY`, `POSTGRES_*`, `REDIS_URL`. Trên Windows, nếu GeoDjango không tự tìm được thư viện, điền `GDAL_LIBRARY_PATH` và `GEOS_LIBRARY_PATH` trỏ tới DLL của bản PostGIS đang dùng.
+Sao chép `.env.example` thành `.env` rồi điền `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD` (trùng mật khẩu vừa đặt) và `REDIS_URL`. Trên Windows, nếu GeoDjango không tự tìm được thư viện, điền `GDAL_LIBRARY_PATH` và `GEOS_LIBRARY_PATH` trỏ tới DLL của bản PostGIS đang dùng.
 
 Chạy Redis với cấu hình `bind 127.0.0.1`, `save ""`, `appendonly no` (cổng mặc định 6379), sau đó:
 
@@ -159,7 +167,7 @@ Mở [website khách hàng](http://127.0.0.1:8001/) hoặc [khu quản lý](http
 | `doi_chieu_ton_kho` | Đối chiếu tồn theo lô và chi nhánh với chứng từ |
 | `kiem_tra_csdl`, `kiem_tra_luu_tru` | Kiểm tra quy ước đặt tên CSDL và quy định lưu trữ dữ liệu |
 
-Đặt `xu_ly_don_qua_han` chạy định kỳ 5 phút bằng Task Scheduler (đường dẫn thư mục không chứa dấu cách):
+Đặt `xu_ly_don_qua_han` chạy định kỳ 5 phút bằng Task Scheduler, chạy lệnh dưới trong thư mục `dacn_qlcnt` (đường dẫn không chứa dấu cách):
 
 ```powershell
 schtasks /Create /SC MINUTE /MO 5 /TN "DACN xu ly don qua han" /TR "cmd /c cd /d $PWD && .venv\Scripts\python.exe manage.py xu_ly_don_qua_han"
@@ -169,20 +177,22 @@ Tồn khả dụng luôn loại trừ phần giữ hàng đã hết hạn, kể 
 
 ### Dự báo nhu cầu
 
-Tải tệp `salesdaily.csv` của bộ dữ liệu Pharma Sales Data (Kaggle) và đặt ngoài thư mục project, rồi chạy:
+Tải tệp `salesdaily.csv` của bộ dữ liệu Pharma Sales Data (Kaggle), đặt ngoài thư mục mã nguồn, rồi chạy:
 
 ```powershell
-& $python manage.py nap_pharma_sales ..\du_lieu_goc\salesdaily.csv
+& $python manage.py nap_pharma_sales <đường dẫn tới salesdaily.csv>
 & $python manage.py chay_du_bao
 ```
 
-Dữ liệu chia theo thời gian 60/20/20; mô hình được chọn theo MAE rồi RMSE trên tập xác thực, sau đó mới đánh giá trên tập kiểm thử. Chi tiết trong [thuc_nghiem_du_bao](thuc_nghiem_du_bao/README.md).
+Dữ liệu chia theo thời gian 60/20/20; mô hình được chọn theo MAE rồi RMSE trên tập xác thực, sau đó mới đánh giá trên tập kiểm thử. Chi tiết trong [thuc_nghiem_du_bao](dacn_qlcnt/thuc_nghiem_du_bao/README.md).
 
 ### Email
 
 Điền khóa `EMAIL_*` trong `.env` với mật khẩu ứng dụng Gmail. Khi chưa cấu hình SMTP, thư được in ra console. Kiểm tra bằng `manage.py kiem_tra_email --gui-toi <địa chỉ email>`. Khu quản lý có trang **Email hệ thống** để xem thư đã gửi, kết quả SMTP và gửi lại thư lỗi; mã OTP được che trong nhật ký.
 
 ## Kiểm thử
+
+Chạy trong thư mục `dacn_qlcnt`:
 
 ```powershell
 & .\.venv\Scripts\ruff.exe format --check
@@ -198,4 +208,4 @@ $env:DACN_TEST_REDIS_URL = 'redis://127.0.0.1:6379/0'
 - Dữ liệu dự báo: Pharma Sales Data (Kaggle), không kèm trong repo.
 - Ảnh thuốc và chi nhánh: Wikimedia Commons với giấy phép mở; tác giả và giấy phép được ghi công tại trang `/nguon-hinh-anh/` của website. Ảnh banner: StockSnap (CC0).
 - Bản đồ: © OpenStreetMap contributors; định tuyến OSRM; tìm địa chỉ Nominatim.
-- Thư viện giao diện giữ nguyên tệp giấy phép trong `static/vendor/`.
+- Thư viện giao diện giữ nguyên tệp giấy phép trong `dacn_qlcnt/static/vendor/`.

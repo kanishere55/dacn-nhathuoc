@@ -12,7 +12,7 @@ __pycache__/
 
 # Tệp sinh ra khi build hoặc chạy
 staticfiles/
-static/css/da_bien_dich.css
+dacn_qlcnt/static/css/da_bien_dich.css
 *.log
 *.rdb
 .coverage

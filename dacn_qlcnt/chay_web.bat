@@ -1,16 +1,14 @@
 @echo off
 chcp 65001 >nul
-rem Chay web BAN NOP (cong 8001). Lan dau phai chay cong_cu\khoi_tao_csdl_windows.ps1 de tao CSDL va du lieu.
+rem Chay web o cong 8001. Lan dau chay ..\csdl\khoi_tao_csdl_windows.ps1 de tao CSDL va du lieu mau.
 cd /d "%~dp0"
 set "PY=.venv\Scripts\python.exe"
-if not exist "%PY%" set "PY=..\dacn_nhathuoc\.venv\Scripts\python.exe"
 if not exist "%PY%" (
-    echo Không thấy môi trường Python .venv ở thư mục này hoặc ở ..\dacn_nhathuoc.
+    echo Không thấy môi trường Python .venv trong thư mục dacn_qlcnt. Tạo theo README trước.
     pause
     exit /b 1
 )
 set "REDIS=.venv\cong_cu\redis\Redis-8.10.3-Windows-x64-msys2\redis-server.exe"
-if not exist "%REDIS%" set "REDIS=..\dacn_nhathuoc\.venv\cong_cu\redis\Redis-8.10.3-Windows-x64-msys2\redis-server.exe"
 netstat -ano | findstr /r /c:":6379 .*LISTENING" >nul
 if errorlevel 1 (
     if exist "%REDIS%" (
@@ -21,7 +19,7 @@ if errorlevel 1 (
     )
 )
 echo.
-echo BẢN NỘP đang chạy. Mở trình duyệt:
+echo Web đang chạy. Mở trình duyệt:
 echo   Website khách : http://127.0.0.1:8001/
 echo   Khu quản lý   : http://127.0.0.1:8001/quan-ly/
 echo Đóng cửa sổ này hoặc bấm Ctrl+C để tắt web.

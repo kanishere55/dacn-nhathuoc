@@ -78,7 +78,7 @@ ASGI_APPLICATION = "cau_hinh.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": os.environ.get("POSTGRES_DB", "dacn_nhathuoc"),
+        "NAME": os.environ.get("POSTGRES_DB", "dacn_nhathuoc_nop"),
         "USER": os.environ.get("POSTGRES_USER", "dacn_ung_dung"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
         "HOST": os.environ.get("POSTGRES_HOST", "127.0.0.1"),
@@ -114,8 +114,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_HTTPONLY = True
-# Bản nộp chạy cạnh bản đầy đủ trên cùng máy (cổng 8001 và 8000); cookie không phân biệt cổng nên
-# đặt tên riêng để đăng nhập ở bản này không đá phiên hay làm hỏng mã CSRF của bản kia.
+# Cookie không phân biệt cổng nên đặt tên riêng, để khi chạy cạnh một ứng dụng Django khác trên cùng
+# máy, đăng nhập ở ứng dụng này không đá phiên hay làm hỏng mã CSRF của ứng dụng kia.
 SESSION_COOKIE_NAME = "dacn_nop_phien"
 CSRF_COOKIE_NAME = "dacn_nop_csrf"
 SESSION_COOKIE_SECURE = not DEBUG

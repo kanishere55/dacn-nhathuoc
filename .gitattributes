@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.ttf binary
+*.woff2 binary
+*.png binary
+dacn_qlcnt/static/vendor/leaflet/** -text whitespace=cr-at-eol
+*.bat text eol=crlf
+dacn_qlcnt/static/vendor/splide/** -text

@@ -1,12 +1,12 @@
-﻿# Khởi tạo hoặc sửa kết nối CSDL của BẢN NỘP (nhánh ban-nop) trên PostgreSQL 18 cài bằng bộ cài Windows.
-# Bản nộp dùng CSDL riêng dacn_nhathuoc_nop và chạy ở cổng 8001, cạnh bản đầy đủ (cổng 8000).
-# Chưa có .venv riêng thì dùng chung .venv của thư mục dacn_nhathuoc bên cạnh (cùng requirements).
+﻿# Khởi tạo CSDL và chạy thử hệ thống trên PostgreSQL 18 cài bằng bộ cài Windows.
+# Tạo vai trò dacn_ung_dung, CSDL dacn_nhathuoc_nop kèm PostGIS, cập nhật dacn_qlcnt\.env, chạy migrate,
+# nạp dữ liệu mẫu rồi chạy web ở cổng 8001. Cần tạo dacn_qlcnt\.venv theo README trước.
 # Chạy lại được: chỉ tạo phần còn thiếu, không xóa dữ liệu đang có.
-#   powershell -ExecutionPolicy Bypass -File cong_cu\khoi_tao_csdl_windows.ps1
+#   powershell -ExecutionPolicy Bypass -File csdl\khoi_tao_csdl_windows.ps1
 # Mật khẩu chỉ nhập từ bàn phím hoặc đọc từ .env, không in ra màn hình.
 
 $ErrorActionPreference = 'Continue'
-$goc = Split-Path -Parent $PSScriptRoot
+$goc = Join-Path (Split-Path -Parent $PSScriptRoot) 'dacn_qlcnt'
 
 $laAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -24,9 +24,6 @@ $env:PGCLIENTENCODING = 'UTF8'
 $env:PYTHONUTF8 = '1'
 
 $venv = Join-Path $goc '.venv'
-if (-not (Test-Path (Join-Path $venv 'Scripts\python.exe'))) {
-    $venv = Join-Path (Split-Path -Parent $goc) 'dacn_nhathuoc\.venv'
-}
 $python = Join-Path $venv 'Scripts\python.exe'
 $tepEnv = Join-Path $goc '.env'
 $pg = 'C:\Program Files\PostgreSQL\18'
@@ -66,7 +63,7 @@ function Sql([string]$csdl, [string]$lenh) {
 function Chuoi-Sql([string]$s) { "'" + $s.Replace("'", "''") + "'" }
 function Ten-Sql([string]$s) { '"' + $s.Replace('"', '""') + '"' }
 
-if (-not (Test-Path $python)) { Dung 'Không thấy .venv (của thư mục này hoặc của dacn_nhathuoc bên cạnh). Tạo môi trường ảo theo README trước.' }
+if (-not (Test-Path $python)) { Dung 'Không thấy dacn_qlcnt\.venv. Tạo môi trường ảo theo README trước.' }
 Write-Host "Dùng Python tại $python"
 if (-not (Test-Path $psql)) { Dung "Không thấy $psql. Script này dành cho PostgreSQL 18 cài bằng bộ cài Windows." }
 if (-not (Test-Path $tepEnv)) { Copy-Item (Join-Path $goc '.env.example') $tepEnv }
@@ -131,12 +128,6 @@ for ($lan = 1; $lan -le 4; $lan++) {
 
 $cauHinh = Doc-Env
 $tenCsdl = if ($cauHinh['POSTGRES_DB']) { $cauHinh['POSTGRES_DB'] } else { 'dacn_nhathuoc_nop' }
-if ($tenCsdl -eq 'dacn_nhathuoc') {
-    # CSDL của bản đầy đủ: bản nộp không dùng chung để không làm hỏng dữ liệu bản dự phòng.
-    $tenCsdl = 'dacn_nhathuoc_nop'
-    Ghi-Env 'POSTGRES_DB' $tenCsdl
-    Write-Host 'Đổi POSTGRES_DB sang dacn_nhathuoc_nop (CSDL riêng của bản nộp).'
-}
 $tenVaiTro = if ($cauHinh['POSTGRES_USER']) { $cauHinh['POSTGRES_USER'] } else { 'dacn_ung_dung' }
 $matKhau = $cauHinh['POSTGRES_PASSWORD']
 if (-not $matKhau) {
@@ -193,7 +184,7 @@ Buoc 'Cập nhật .env'
 Ghi-Env 'POSTGRES_HOST' '127.0.0.1'
 Ghi-Env 'POSTGRES_PORT' '5432'
 Ghi-Env 'URL_WEBSITE' "http://127.0.0.1:$cong"
-# Redis dùng chung máy chủ với bản đầy đủ nhưng khác số CSDL (1) để tin nhắn không lẫn.
+# Dùng CSDL số 1 của Redis để tin nhắn không lẫn với ứng dụng khác chạy trên cùng máy.
 Ghi-Env 'REDIS_URL' 'redis://127.0.0.1:6379/1'
 Write-Host 'POSTGRES_HOST=127.0.0.1, POSTGRES_PORT=5432'
 
